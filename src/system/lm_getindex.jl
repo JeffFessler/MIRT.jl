@@ -79,7 +79,7 @@ end
 
 # tests for getindex for LinearMaps
 
-function LinearMap_test_getindex(A::LinearMap)
+function ir_LinearMap_test_getindex(A::LinearMap)
 	B = Matrix(A)
 	@assert all(size(A) .>= (4,4)) # required by tests
 	@assert B[1] == A[1]
@@ -109,9 +109,9 @@ end
 
 # tests for cumsum()
 # note: the adjoint of cumsum is reverse(cumsum(reverse(y)))
-function LinearMap_test_getindex_cumsum(;N::Integer=5)
+function ir_lm_test_getindex_cumsum(;N::Integer=5)
 	A = LinearMap(cumsum, y -> reverse(cumsum(reverse(y))), N)
-	LinearMap_test_getindex(A)
+	ir_LinearMap_test_getindex(A)
 	@assert Matrix(A)' == Matrix(A')
 #	@show A[:,4]
 end

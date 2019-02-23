@@ -1,1 +1,1 @@
-@test LinearMap_test_getindex_cumsum()
+@test ir_lm_test_getindex_cumsum()
