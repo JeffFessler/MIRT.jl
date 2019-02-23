@@ -30,7 +30,7 @@ out
 """
 function jim(x;
 	aspect_ratio = :equal,
-	clim = (minimum(x), maximum(x)),
+	clim = [],
 	color = :grays,
 	ncol = 0,
 	padval = minimum(x),
@@ -44,6 +44,10 @@ function jim(x;
 	if !isreal(x)
 		@warn "magnitude"
 		x = abs.(x)
+	end
+
+	if isempty(clim) # must wait until after possible abs() to do this
+		clim = (minimum(x), maximum(x))
 	end
 
 	if ndims(x) > 2
