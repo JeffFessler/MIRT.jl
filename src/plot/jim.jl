@@ -30,7 +30,7 @@ returns plot handle
 """
 function jim(x;
 	aspect_ratio = :equal,
-	clim = (minimum(x), maximum(x))
+	clim = (minimum(x), maximum(x)),
 	color = :grays,
 	ncol = 0,
 	padval = minimum(x),
@@ -61,7 +61,7 @@ heatmap(z', transpose=false,
 	color=color,
 	title=title,
 	yflip=true,
-	ylabel=xlabel,
+	xlabel=xlabel,
 	ylabel=ylabel,
 	xtick=xtick,
 	ytick=ytick)
