@@ -3,28 +3,28 @@ using Plots
 using MosaicViews
 
 """
-jim(x, ...)
+`jim(x, ...)`
 
 jiffy image display of `x` using `heatmap`
 
-in:
-`x` image, can be 2D or higher, if higher then it uses mosaicviews
+in
+* `x` image, can be 2D or higher, if higher then it uses `mosaicviews`
 
-option:
-`aspect_ratio` for heatmap; default `:equal`
-`clim` for heatmap; default `[]`
-`color` colormap; default `:grays`
-`ncol` for mosaicview for 3D and higher arrays; default `0` does auto select
-`padval` padding value for mosaic view; default `(minimum(x),maximum(x))`
-`title` for heatmap; default `""`
-`xlabel` for heatmap; default `""`
-`ylabel` for heatmap; default `""`
-`yflip` for heatmap; default `true`
-`xtick` for heatmap; default `[1,size(x,1)]`
-`ytick` for heatmap; default `[1,size(x,2)]`
+option
+* `aspect_ratio` for heatmap; default `:equal`
+* `clim` for heatmap; default `(minimum(x),maximum(x))`
+* `color` colormap; default `:grays`
+* `ncol` for mosaicview for 3D and higher arrays; default `0` does auto select
+* `padval` padding value for mosaic view; default `(minimum(x)`
+* `title` for heatmap; default `""`
+* `xlabel` for heatmap; default `""`
+* `ylabel` for heatmap; default `""`
+* `yflip` for heatmap; default `true`
+* `xtick` for heatmap; default `[1,size(x,1)]`
+* `ytick` for heatmap; default `[1,size(x,2)]`
 
 out
-returns plot handle
+* returns plot handle
 
 2019-02-23 Jeff Fessler, University of Michigan
 """
@@ -67,3 +67,9 @@ heatmap(z', transpose=false,
 	ytick=ytick)
 
 end # jim
+
+
+# show docstring if user calls it with no arguments
+function jim()
+	@doc jim
+end
