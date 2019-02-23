@@ -33,7 +33,7 @@ function jim(x;
 	clim = [],
 	color = :grays,
 	ncol = 0,
-	padval = minimum(x),
+	padval = [],
 	title = "",
 	xlabel = "",
 	ylabel = "",
@@ -48,6 +48,10 @@ function jim(x;
 
 	if isempty(clim) # must wait until after possible abs() to do this
 		clim = (minimum(x), maximum(x))
+	end
+
+	if isempty(padval) # must wait until after possible abs() to do this
+		padval = minimum(x)
 	end
 
 	if ndims(x) > 2
