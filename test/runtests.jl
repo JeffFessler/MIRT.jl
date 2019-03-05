@@ -3,11 +3,21 @@
 using Test
 using MIRT
 
-include("../../data/z-list.jl")
+srclist = (
+"../data",
+"algorithm",
+"fbp",
+"io",
+"plot",
+"regularize",
+"system",
+)
 
-include("../algorithm/z-list.jl")
-include("../fbp/z-list.jl")
-include("../io/z-list.jl")
-include("../plot/z-list.jl")
-include("../regularize/z-list.jl")
-include("../system/z-list.jl")
+@testset "all MIRT" begin
+	for root in srclist
+	@show root
+		@testset "$root" begin
+			include("../src/" * root * "/z-test.jl")
+		end
+	end
+end

@@ -61,4 +61,5 @@ function test_Aodwt()
 	W, scales, mfun = Aodwt((M,N))
 	p1 = jim(scales)
 	plot(p1)
+	true
 end

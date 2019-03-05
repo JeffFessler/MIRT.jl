@@ -104,6 +104,7 @@ function ir_LinearMap_test_getindex(A::LinearMap)
 		@assert B[[1, 3, 4], :] == A[[1, 3, 4], :]
 		@assert B[4:7] == A[4:7]
 	end
+	true
 end
 
 
@@ -114,4 +115,5 @@ function ir_lm_test_getindex_cumsum(;N::Integer=5)
 	ir_LinearMap_test_getindex(A)
 	@assert Matrix(A)' == Matrix(A')
 #	@show A[:,4]
+	true
 end
