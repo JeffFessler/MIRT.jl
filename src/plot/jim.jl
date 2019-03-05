@@ -1,4 +1,5 @@
 # jim.jl
+
 using Plots
 using MosaicViews
 
@@ -80,4 +81,11 @@ end # jim
 # show docstring if user calls it with no arguments
 function jim()
 	@doc jim
+end
+
+
+function test_jim()
+	jim(ones(4,3), title="test2")
+	jim(ones(4,3,5), title="test3")
+	true
 end
