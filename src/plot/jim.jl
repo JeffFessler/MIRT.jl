@@ -41,7 +41,7 @@ function jim(z;
 	xlabel = "",
 	ylabel = "",
 	x = (1:size(z,1)),
-	y = (1:size(z,1)),
+	y = (1:size(z,2)),
 	xtick = [minimum(x),maximum(x)],
 	ytick = [minimum(y),maximum(y)],
 	yflip = true)
