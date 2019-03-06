@@ -2,4 +2,5 @@
 
 using Test
 
-@test test_Aodwt()
+@test Aodwt(:test)
+@test diff_map(:test)

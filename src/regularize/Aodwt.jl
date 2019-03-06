@@ -1,7 +1,10 @@
+# Aodwt.jl
+# 2019-02-23 Jeff Fessler, University of Michigan
+
 using Plots
 using LinearMaps
 using Wavelets
-# using MIRT
+using MIRT: jim
 
 """
 `A, levels, mfun = Aodwt(dims; level::Integer=3, wt=wavelet(WT.haar))`
@@ -50,16 +53,33 @@ function Aodwt()
 end
 
 
-# tester
-function test_Aodwt()
+"""
+`Aodwt_show(;M=32, N=64)` show scales
+"""
+function Aodwt_show(;M=32, N=64)
+	W, scales, mfun = Aodwt((M,N))
+	jim(scales)
+end
+
+
+
+
+"""
+`Aodwt(:test)` self test
+
+`Aodwt(:show)` visualize
+"""
+function Aodwt(test::Symbol)
+	if test == :show
+		return Aodwt_show()
+	end
+
+	@assert test == :test
 	Aodwt()
 
-	W,_ = Aodwt((8,16), level=2)
-	Matrix(W)' == Matrix(W') # check adjoint
+	W,_,_ = Aodwt((8,16), level=2)
+	@assert Matrix(W)' == Matrix(W') # check adjoint
 
-	M,N = 32, 64
-	W, scales, mfun = Aodwt((M,N))
-	p1 = jim(scales)
-	plot(p1)
+	Aodwt(:show)
 	true
 end
