@@ -2,4 +2,4 @@
 
 using Test
 
-#@test ir_dump_test()
+@test ir_dump(:test)

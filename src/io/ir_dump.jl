@@ -4,7 +4,7 @@
 using Printf
 
 """
-ir_dump(x::DataType)
+`ir_dump(x::DataType)`
 
 show all the filelds of a structure more nicely than dump() does
 """
@@ -26,5 +26,17 @@ function ir_dump(y::Any)
 			print(stdout, " '", getfield(y, fd), "'")
 		end
 	end
+	println()
 	nothing
+end
+
+
+"""
+`ir_dump(:test)`
+"""
+function ir_dump(test::Symbol)
+	@assert test == :test
+	x = (a=1, b=2)
+	ir_dump(x)
+	true
 end
