@@ -57,7 +57,11 @@ function image_geom_add_unitv(z; # starts with zeros()
 end
 
 
-function image_geom_add_unitv_test()
+"""
+`image_geom_add_unitv(:test)`
+"""
+function image_geom_add_unitv(test::Symbol)
+	@assert test == :test
 	image_geom_add_unitv(zeros(3,4), j=2)
 	image_geom_add_unitv(zeros(3,4), i=[2,3])
 	image_geom_add_unitv(zeros(3,4))
@@ -578,14 +582,23 @@ function image_geom_test3()
 	true
 end
 
-function image_geom_test()
+
+"""
+`image_geom(:test)`
+"""
+function image_geom(test::Symbol)
+	@assert test == :test
 	@test image_geom_test2()
 	@test image_geom_test3()
 	true
 end
 
 
-function embed_test()
+"""
+`embed(:test)`
+"""
+function embed(test::Symbol)
+	@assert test == :test
 	mask = [false true true; true false false]
 	@assert embed(1:3,mask) == [0 2 3; 1 0 0]
 	true

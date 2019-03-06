@@ -1,7 +1,7 @@
 # ellipse_im.jl
 # Copyright 2019-03-05, Jeff Fessler, University of Michigan
 
-using MIRT
+using MIRT: MIRT_image_geom, jim
 using Plots
 
 """
@@ -325,19 +325,8 @@ end
 
 
 """
-`ellipse_im("test")`
+`ellipse_im_show()`
 """
-function ellipse_im(arg::String)
-	if arg == "test"
-		ellipse_im_test()
-	else
-		error("bad arg :" * arg)
-	end
-	nothing
-end
-	
-
-# ellipse_im_show()
 function ellipse_im_show()
 	ig = image_geom(nx=2^8, ny=2^8+2, fov=250)
 #	ig.offset_y = 75.6 / ig.dy
@@ -404,7 +393,7 @@ function ellipse_im_test()
 	ellipse_im(30, :shepplogan_emis, oversample=2)
 
 	ig = image_geom(nx=80, dx=1)
-	fov = ig.fov 
+	fov = ig.fov
 	params = shepp_logan_parameters(fov, fov, case=:brainweb)
 	ellipse_im(ig, params)
 	ellipse_im(ig, params, oversample=2)
@@ -424,3 +413,17 @@ function ellipse_im_test()
 end
 
 
+"""
+`ellipse_im(:test)`
+
+`ellipse_im(:show)`
+"""
+function ellipse_im(test::Symbol)
+	if test == :show
+		return ellipse_im_show()
+	end
+	@assert test == :test
+	ellipse_im()
+	ellipse_im(:show)
+	ellipse_im_test()
+end
