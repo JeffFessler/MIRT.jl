@@ -4,7 +4,7 @@
 using Plots
 using LinearMaps
 using Wavelets
-using MIRT: jim
+#using MIRT: jim
 
 """
 `A, levels, mfun = Aodwt(dims; level::Integer=3, wt=wavelet(WT.haar))`

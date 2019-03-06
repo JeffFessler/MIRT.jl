@@ -1,7 +1,7 @@
 # ellipse_im.jl
 # Copyright 2019-03-05, Jeff Fessler, University of Michigan
 
-using MIRT: MIRT_image_geom, jim
+#using MIRT: MIRT_image_geom, jim
 using Plots
 
 """
