@@ -1,5 +1,5 @@
-include("ellipse_im.jl")
 include("image_geom.jl")
+include("ellipse_im.jl")
 
 export ir_dump
 export embed
