@@ -80,12 +80,27 @@ heatmap(x, y, z', transpose=false,
 end # jim
 
 
+"""
+`jim(z, title; kwargs...)`
+"""
+function jim(z, title::String; kwargs...)
+	return jim(z; title=title, kwargs...)
+end
+
 
 """
 `jim(x, y, z; kwargs...)`
 """
 function jim(x, y, z; kwargs...)
 	return jim(z; x=x, y=y, kwargs...)
+end
+
+
+"""
+`jim(x, y, z, title; kwargs...)`
+"""
+function jim(x, y, z, title::String; kwargs...)
+	return jim(z; x=x, y=y, title=title, kwargs...)
 end
 
 
