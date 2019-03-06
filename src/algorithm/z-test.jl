@@ -2,4 +2,4 @@
 
 using Test
 
-# @test test_pogm_restart.jl
+@test pogm_restart(:test)

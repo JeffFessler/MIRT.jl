@@ -249,3 +249,12 @@ end # for iter
 
 return ((mom == :pogm) ? xnew : ynew), out
 end # pogm_restart()
+
+
+"""
+`pogm_restart(:test)` self test (todo)
+"""
+function pogm_restart(test::Bool)
+	@assert test == :test
+	true
+end
