@@ -13,18 +13,18 @@ in
 
 option
 * `aspect_ratio` for heatmap; default `:equal`
-* `clim` for heatmap; default `(minimum(x),maximum(x))`
+* `clim` for heatmap; default `(minimum(z),maximum(z))`
 * `color` colormap; default `:grays`
 * `ncol` for mosaicview for 3D and higher arrays; default `0` does auto select
-* `padval` padding value for mosaic view; default `(minimum(x)`
+* `padval` padding value for mosaic view; default `(minimum(z)`
 * `title` for heatmap; default `""`
 * `xlabel` for heatmap; default `""`
 * `ylabel` for heatmap; default `""`
 * `yflip` for heatmap; default `true`
-* `xtick` for heatmap; default `[1,size(x,1)]`
-* `ytick` for heatmap; default `[1,size(x,2)]`
-* `x` for x axis; default `1:size(x,1)`
-* `y` for y axis; default `1:size(x,2)`
+* `x` for x axis; default `1:size(z,1)`
+* `y` for y axis; default `1:size(z,2)`
+* `xtick` for heatmap; default `[minimum(x),maximum(x)]`
+* `ytick` for heatmap; default `[minimum(y),maximum(y)]`
 
 out
 * returns plot handle
@@ -40,10 +40,10 @@ function jim(z;
 	title = "",
 	xlabel = "",
 	ylabel = "",
-	x = 1:size(z,1),
-	y = 1:size(z,1),
-	xtick = [1, size(z,1)],
-	ytick = [1, size(z,2)],
+	x = (1:size(z,1)),
+	y = (1:size(z,1)),
+	xtick = [minimum(x),maximum(x)],
+	ytick = [minimum(y),maximum(y)],
 	yflip = true)
 
 	if !isreal(z)
@@ -99,5 +99,7 @@ function test_jim()
 	jim(ones(4,3), title="test2")
 	jim(ones(4,3,5), title="test3")
 	jim(1:4, 5:9, zeros(4,5), title="test3")
+	jim(zeros(4,5), x=1:4, y=5:9, title="test3")
+	jim(x=1:4, y=5:9, rand(4,5), title="test4")
 	true
 end
