@@ -150,3 +150,15 @@ end
 #	z = fld_read(filey);
 #	if ~isequal(y, z), error 'aspire/matlab mismatch', end
 #end
+
+
+"""
+`downsample(:test)` self test
+"""
+function downsample(test::Symbol)
+	@assert test == :test
+	downsample1_test()
+	downsample2_test()
+	downsample3_test()
+	true
+end
