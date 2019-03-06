@@ -154,6 +154,7 @@ function cbct(ig::MIRT_image_geom)
 end
 
 
+# see https://docs.julialang.org/en/stable/manual/constructors/
 """
 Constructor for MIRT_image_geom
 ig = image_geom(...)
@@ -173,7 +174,6 @@ option:
    	offsets::String          = "" (e.g., "dsp")
    	mask_type::String        = "" (e.g., "all-but-edge")
 """
-# see https://docs.julialang.org/en/stable/manual/constructors/
 function image_geom(;
 		nx::Integer              = 128,
 		ny::Integer              = nx,
