@@ -10,6 +10,7 @@ srclist = (
 "plot",
 "regularize",
 "system",
+"utility",
 )
 
 
