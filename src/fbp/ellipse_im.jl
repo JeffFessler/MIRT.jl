@@ -21,8 +21,8 @@ option
 * `oversample`	oversampling factor, for grayscale boundaries
 * `hu_scale`	use 1000 to scale shepp-logan to HU
 * `replace`		replace ellipse values if true, else add
+* `how`			:fast is the only option
 * `return_params` if true return (phantom, params)
-* type		`:slow` :fast todo
 
 out
 * `phantom`		[nx ny]	image
@@ -37,29 +37,33 @@ function ellipse_im(ig::MIRT_image_geom,
 	oversample::Integer=1,
 	hu_scale::Real=1,
 	replace::Bool=false,
+	how::Symbol=:fast, # todo
 	return_params::Bool=false)
-#arg.type = ''; todo
 
 	params[:,6] .*= hu_scale
 
-#if streq(arg.type, 'fast') && arg.oversample == 1
-#	warn('ignoring ''fast'' option for oversample=1')
-#	arg.type = '';
+#if how == :fast && oversample == 1
+#	warning("ignoring :fast option for oversample=1")
+#	how = :slow
 #end
 
-#switch arg.type
-#case 'fast'
-#	fun = @ellipse_im_fast;
-#case {'', 'slow'}
-#	fun = @ellipse_im_slow;
-#otherwise
-#	fail('unknown type %s', arg.fast)
-#end
-
+	if oversample > 1
+		ig = ig.over(oversample)
+	end
 	args = (ig.nx, ig.ny, params, ig.dx, ig.dy, ig.offset_x, ig.offset_y,
 	rot, oversample, replace)
 
-	phantom = ellipse_im_fast(args...)
+	if how == :fast
+		phantom = ellipse_im_fast(args...)
+#	elseif how == :slow
+#		phantom = ellipse_im_slow(args...)
+	else
+		error("bad how")
+	end
+
+	if oversample > 1
+		phantom = downsample2(phantom, oversample)
+	end
 
 	if return_params
 		return (phantom, params)
@@ -149,13 +153,6 @@ function ellipse_im_fast(nx, ny, params_in, dx, dy,
 	y1 = ((0:ny-1) .- wy) * dy
 	(xx, yy) = ndgrid(x1, y1)
 
-#if over > 1
-#	tmp = ((1:over) - (over+1)/2) / over
-#	(xf, yf) = ndgrid(tmp*dx, tmp*dy)
-#	xf = xf(:)';
-#	yf = yf(:)';
-#end
-
 	hx = abs(dx) / 2
 	hy = abs(dy) / 2
 
@@ -176,37 +173,6 @@ for ie = 1:size(params,1)
 	# voxels that are entirely inside the ellipse:
 	(xr, yr) = rot2(xo, yo, theta)
 	is_inside = (xr / rx).^2 + (yr / ry).^2 .<= 1
-
-#	if over > 1
-#
-#		% coordinates of "inner" corner of each pixel, relative to ellipse center
-#		xi = xs - sign(xs) * hx;
-#		yi = ys - sign(ys) * hy;
-#
-#		% voxels that are entirely outside the ellipse:
-#		[xr yr] = rot2(xi, yi, theta);
-#		vo = (max(abs(xr),0) / rx).^2 + (max(abs(yr),0) / ry).^2 >= 1;
-#
-#		if 0 % examine "outside" voxels
-#			clf, plot(xx(vo), yy(vo), 'ro')
-#			hold on, pgrid(x1, y1, 'y-'), hold off
-#			axis equal, axis square
-#			plot_ellipse(cx, cy, rx, ry, theta, 'hold', 1)
-#		end
-#
-#		% subsampling for edge voxels
-#		edge = ~vi & ~vo;
-#		x = xx(edge);
-#		y = yy(edge);
-#		x = outer_sum(x, xf);
-#		y = outer_sum(y, yf);
-#
-#		[xr yr] = rot2(x - cx, y - cy, theta);
-#		in = (xr / rx).^2 + (yr / ry).^2 <= 1;
-#		tmp = mean(in, 2);
-#
-#		gray(edge) = tmp;
-#	end
 
 	if replace
 		phantom(is_inside) .= ell[6]
@@ -383,69 +349,71 @@ function ellipse_im_show()
 end
 
 
-# ellipse_im_test()
-function ellipse_im_test()
-	shepp_logan_parameters(fov, fov)
-	shepp_logan_parameters(fov, fov, case=:kak)
-	shepp_logan_parameters(fov, fov, case=:emis)
-	shepp_logan_parameters(fov, fov, case=:brainweb)
-	ellipse_im_show()
-
-#	ig = image_geom(nx=2^8, ny=2^8+2, fov=250)
-#	ig.offset_y = 75.6 / ig.dy
-
-
 # compare to aspire
-#if ~has_aspire, return, end
-#
-#nx = 2^6;
-#ig = image_geom('nx', nx, 'ny', nx+2, 'fov', 2^7);
-#ell = [10 20 30 40 50 1];
-#
-#file = [test_dir '/t.fld'];
-#com = sprintf('echo y | op -chat 99 ellipse %s %d %d  %g %g %g %g %g %g %d', ...
-#	file, ig.nx, ig.ny, ell ./ [ig.dx ig.dx ig.dx ig.dx 1 1], log2(over)+1);
-#os_run(com)
-#asp = fld_read(file);
-#im(4, asp, 'aspire'), cbar
+function ellipse_im_aspire()
+	nx = 2^6;
+	ig = image_geom(nx=nx, ny=nx+2, fov=2^7)
+	ell = [10, 20, 30, 40, 50, 1]
 
-#area.asp = sum(asp(:)) * abs(ig.dx * ig.dy);
-#
-#types = {'slow', 'fast'};
-#for ii=1:length(types)
-#	type = types{ii};
-#	cpu etic
-#	mat = ellipse_im(ig, ell, 'oversample', over, 'type', types{ii});
-#	area.(type) = sum(mat(:)) * abs(ig.dx * ig.dy);
-#	cpu('etoc', [type ' time:'])
-#
-#	im(1+ii, mat, sprintf('mat, %s', type)), cbar
-#	im(4+ii, (mat-asp)*over^2, 'difference: (mat-asp)*over$^2$'), cbar
-#
-#	pr max(abs(col(mat - asp))) / ell(6) * over^2
-#
-#%	equivs(mat, asp)
-#%	max_percent_diff(mat, asp)
-#end
+	ir_test_dir = "/tmp/" # todo
+	file = ir_test_dir * "t.fld"
+	over = 2^2
+	com = sprintf("echo y | op -chat 99 ellipse %s %d %d  %g %g %g %g %g %g %d",
+		file, ig.nx, ig.ny, ell ./ [ig.dx, ig.dx, ig.dx, ig.dx, 1, 1],
+		log2(over)+1)
+	os_run(com)
+	asp = fld_read(file)
+	jim(asp, title="aspire")
 
-#area.real = pi * ell(3) * ell(4) * ell(6);
-#pr area
+	area_asp = sum(asp[:]) * abs(ig.dx * ig.dy)
+
+	jul = ellipse_im(ig, ell, oversample=over) # 'type', types{ii})
+	area_jul = sum(jul[:]) * abs(ig.dx * ig.dy)
+
+	jim(jul, title="jul")
+	jim((jul-asp)*over^2, title="difference: (jul-asp)*over^2")
+
+	@show maximum(abs.(jul - mat)) / ell[6] * over^2
+	@assert isapprox(jul, mat)
+#	max_percent_diff(mat, asp)
+
+	area_real = pi * ell[3] * ell[4] * ell[6]
+	@show area_real, area_asp, area_jul
 
 	true
 end
 
 
-ellipse_im(20) # todo
-#ellipse_im_show() # todo
-ellipse_im(20, :shepplogan_emis) # todo
-# ellipse_im(20, :shepplogan_emis, oversample=2) # todo
+# ellipse_im_test()
+function ellipse_im_test()
+	fov = 100
+	shepp_logan_parameters(fov, fov)
+	shepp_logan_parameters(fov, fov, case=:kak)
+	shepp_logan_parameters(fov, fov, case=:emis)
+	shepp_logan_parameters(fov, fov, case=:brainweb)
 
-ig = image_geom(nx=80, dx=1)
-fov = ig.fov 
-params = shepp_logan_parameters(fov, fov, case=:brainweb)
-tmp = ellipse_im(ig, params)
-#jim(ig.x, ig.y, tmp)
-jim(tmp, x=ig.x(), y=ig.y())
-#ellipse_im_show()
-#over = 2^2
-#x0 = ellipse_im(ig, params, oversample=over)
+	# test various ways of calling
+	ellipse_im(20)
+	ellipse_im(30, :shepplogan_emis, oversample=2)
+
+	ig = image_geom(nx=80, dx=1)
+	fov = ig.fov 
+	params = shepp_logan_parameters(fov, fov, case=:brainweb)
+	ellipse_im(ig, params)
+	ellipse_im(ig, params, oversample=2)
+
+	if false
+		x1 = ellipse_im(100, :shepplogan_emis)
+		x2 = ellipse_im(100, :shepplogan_emis, oversample=2)
+		plot(jim(x1), jim(x2), jim(x2-x1))
+	end
+
+	ellipse_im_show()
+
+#	if has_aspire
+#		ellipse_im_aspire() # todo
+#	end
+	true
+end
+
+
