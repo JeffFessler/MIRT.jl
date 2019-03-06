@@ -22,11 +22,12 @@ function test_all_mirt()
 
 	@testset "all MIRT" begin
 		for root in srclist
-		@show root
+		#	@show root
 			@testset "$root" begin
 				include("../src/" * root * "/z-test.jl")
 			end
 		end
 	end
 
+	true
 end
