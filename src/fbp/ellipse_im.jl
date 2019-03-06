@@ -204,13 +204,20 @@ end
 
 
 """
-`phantom = ellipse_im(nx::Integer;
-	ny::Integer=nx, dx::Real=1; kwarg...)`
+`phantom = ellipse_im(nx::Integer; ny::Integer=nx, dx::Real=1, kwarg...)`
 	defaults to `:shepplogan_emis`
 """
 function ellipse_im(nx::Integer; ny::Integer=nx, dx::Real=1, kwarg...)
 	ig = image_geom(nx=nx, ny=ny, dx=dx)
-	return ellipse_im(nx, 1., :shepplogan_emis; kwarg...)
+	return ellipse_im(ig, :shepplogan_emis; kwarg...)
+end
+
+
+"""
+`phantom = ellipse_im(nx::Integer, ny::Integer; kwarg...)`
+"""
+function ellipse_im(nx::Integer, ny::Integer; kwarg...)
+	return ellipse_im(nx, ny=ny, dx=1.; kwarg...)
 end
 
 
