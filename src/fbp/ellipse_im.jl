@@ -2,41 +2,42 @@
 # Copyright 2019-03-05, Jeff Fessler, University of Michigan
 
 using MIRT
+using Plots
 
 """
-`phantom, params] = ellipse_im(ig::MIRT_image_geom,
-	params::AbstractArray{T,2} where T <: Real,
-	rot::Real=0,
-	oversample::Integer=1,
-	hu_scale::Real=1)`
+`phantom = ellipse_im(ig, params;
+rot=0, oversample=1, hu_scale=1, replace=false, return_params=false)`
 
-Generate ellipse phantom image from parameters.
+Generate ellipse phantom image from parameters:
 
-Parameters: `[x_center y_center x_radius y_radius angle_degrees amplitude]`
+`[x_center y_center x_radius y_radius angle_degrees amplitude]`
 
 in
-ig		image_geom()
-params	[ne 6]	ellipse parameters
+* `ig`		from `image_geom()`
+* `params`	[ne 6]	ellipse parameters
 
 option
-rot			rotate ellipses by this amount [degrees]; default 0
-oversample	oversampling factor, for grayscale boundaries
-hu_scale	use 1000 to scale shepp-logan to HU; default 1
-type		:slow :fast todo
+* `rot`			rotate ellipses by this amount [degrees]
+* `oversample`	oversampling factor, for grayscale boundaries
+* `hu_scale`	use 1000 to scale shepp-logan to HU
+* `replace`		replace ellipse values if true, else add
+* `return_params` if true return (phantom, params)
+* type		`:slow` :fast todo
 
 out
-phantom		[nx ny]	image
-params		[ne 6] parameters
+* `phantom`		[nx ny]	image
+* `params`		[ne 6] parameters (only if return_params=true)
 
-note: op ellipse in aspire with nsub=3 is oversample=4 = 2^(3-1) here
+note: `op ellipse` in aspire with `nsub=3` is `oversample=4 = 2^(3-1)` here
 
 """
 function ellipse_im(ig::MIRT_image_geom,
-	params::AbstractArray{T,2} where T <: Real,
+	params::AbstractArray{T,2} where T <: Real;
 	rot::Real=0,
 	oversample::Integer=1,
 	hu_scale::Real=1,
-	replace::Bool=false)
+	replace::Bool=false,
+	return_params::Bool=false)
 #arg.type = ''; todo
 
 	params[:,6] .*= hu_scale
@@ -56,9 +57,14 @@ function ellipse_im(ig::MIRT_image_geom,
 #end
 
 	args = (ig.nx, ig.ny, params, ig.dx, ig.dy, ig.offset_x, ig.offset_y,
-	rot, over, replace)
+	rot, oversample, replace)
 
-	return ellipse_im_fast(args...)
+	phantom = ellipse_im_fast(args...)
+
+	if return_params
+		return (phantom, params)
+	end
+	return phantom
 end
 
 
@@ -66,7 +72,7 @@ end
 #% ellipse_im_slow()
 #% brute force fine grid - can use lots of memory
 #%
-#function [phantom, params] = ellipse_im_slow(nx, ny, params, dx, dy, ...
+#function phantom = ellipse_im_slow(nx, ny, params, dx, dy, ...
 	#offset_x, offset_y, rot, over, replace)
 #
 #if size(params,2) ~= 6
@@ -76,11 +82,11 @@ end
 #% optional rotation of ellipse parameters
 #if rot ~= 0
 	#th = deg2rad(rot);
-	#cx = params(:,1);
-	#cy = params(:,2);
-	#params(:,1) = cx * cos(th) + cy * sin(th);
-	#params(:,2) = -cx * sin(th) + cy * cos(th);
-	#params(:,5) = params(:,5) + rot;
+	#cx = params[:,1);
+	#cy = params[:,2);
+	#params[:,1) = cx * cos(th) + cy * sin(th);
+	#params[:,2) = -cx * sin(th) + cy * cos(th);
+	#params[:,5) = params[:,5) + rot;
 	#clear cx cy th
 #end
 #
@@ -97,7 +103,7 @@ end
 #for ie = 1:ne
 	#ticker(mfilename, ie, ne)
 #
-	#ell = params(ie, :);
+	#ell = params[ie, :);
 	#cx = ell(1);	rx = ell(3);
 	#cy = ell(2);	ry = ell(4);
 	#theta = deg2rad(ell(5));
@@ -115,48 +121,49 @@ end
 
 
 """
-ellipse_im_fast()
+`phantom = ellipse_im_fast()`
 """
-function ellipse_im_fast(nx, ny, params, dx, dy,
+function ellipse_im_fast(nx, ny, params_in, dx, dy,
 	offset_x, offset_y, rot, over, replace)
 
-if size(params,2) ~= 6
-	error("bad ellipse parameter vector size")
-end
+	params = copy(params_in)
+	if size(params,2) != 6
+		error("bad ellipse parameter vector size")
+	end
 
-# optional rotation
-if rot ~= 0
-	th = rot * 180/pi
-	cx = params[:,1]
-	cy = params[:,2]
-	params[:,1] = cx * cos(th) + cy * sin(th)
-	params[:,2] = -cx * sin(th) + cy * cos(th)
-	params[:,5] .+= rot
-end
+	# optional rotation
+	if rot != 0
+		th = rot * 180/pi
+		cx = params[:,1]
+		cy = params[:,2]
+		params[:,1] = cx * cos(th) + cy * sin(th)
+		params[:,2] = -cx * sin(th) + cy * cos(th)
+		params[:,5] .+= rot
+	end
 
-phantom = zeros(Float32, nx, ny)
+	phantom = zeros(Float32, nx, ny)
 
-wx = (nx-1)/2 + offset_x
-wy = (ny-1)/2 + offset_y
-x1 = ((0:nx-1) - wx) * dx
-y1 = ((0:ny-1) - wy) * dy
-(xx, yy) = ndgrid(x1, y1)
+	wx = (nx-1)/2 + offset_x
+	wy = (ny-1)/2 + offset_y
+	x1 = ((0:nx-1) .- wx) * dx
+	y1 = ((0:ny-1) .- wy) * dy
+	(xx, yy) = ndgrid(x1, y1)
 
 #if over > 1
 #	tmp = ((1:over) - (over+1)/2) / over
 #	(xf, yf) = ndgrid(tmp*dx, tmp*dy)
 #	xf = xf(:)';
 #	yf = yf(:)';
-#
-#	hx = abs(dx) / 2
-#	hy = abs(dy) / 2
 #end
 
-for ie = 1:nrow(params)
+	hx = abs(dx) / 2
+	hy = abs(dy) / 2
+
+for ie = 1:size(params,1)
 
 	ell = params[ie, :]
 	cx = ell[1];	rx = ell[3]
-	cy = ell[2];	ry = ell.4]
+	cy = ell[2];	ry = ell[4]
 	theta = ell[5] * pi/180
 
 	xs = xx .- cx # shift per ellipse center
@@ -207,56 +214,65 @@ for ie = 1:nrow(params)
 		phantom += ell[6] * Float32.(is_inside)
 	end
 
-	return (phantom, params)
-end
+end # ie loop
+
+	return phantom
+end # ellipse_im_fast()
 
 
 """
-`[phantom, params] = ellipse_im(nx, dx, params; kwargs...)`
+`phantom = ellipse_im(nx, dx, params; kwarg...)`
 """
-function ellipse_im(nx::Integer, dx::Real, params; kwargs...)
+function ellipse_im(nx::Integer, dx::Real, params; kwarg...)
 	ig = image_geom(nx=nx, dx=1)
-	return ellipse_im(ig, params; kwargs...)
+	return ellipse_im(ig, params; kwarg...)
 end
 
 
 """
-`[phantom, params] = ellipse_im(nx::Integer, params; kwargs...)`
+`phantom = ellipse_im(nx::Integer, params; kwarg...)`
 """
-function ellipse_im(nx::Integer, params; kwargs...)
-	return ellipse_im(nx, 1., params; kwargs...)
+function ellipse_im(nx::Integer, params; kwarg...)
+	return ellipse_im(nx, 1., params; kwarg...)
 end
 
 
 """
-`[phantom, params] = ellipse_im(nx::Integer;
-	ny::Integer=nx, dx::Real=1; kwargs...)`
-	:shepplogan_emis
+`phantom = ellipse_im(nx::Integer;
+	ny::Integer=nx, dx::Real=1; kwarg...)`
+	defaults to `:shepplogan_emis`
 """
-function ellipse_im(nx::Integer; ny::Integer=nx, dx::Real=1, kwargs...)
+function ellipse_im(nx::Integer; ny::Integer=nx, dx::Real=1, kwarg...)
 	ig = image_geom(nx=nx, ny=ny, dx=dx)
-	return ellipse_im(nx, 1., :shepplogan_emis; kwargs...)
+	return ellipse_im(nx, 1., :shepplogan_emis; kwarg...)
 end
 
 
 """
-`phantom, params] = ellipse_im(ig, code, kwargs...)
- code = :shepplogan | :shepplogan_emis | :shepplogan_brainweb
+`phantom = ellipse_im(ig, code, kwarg...)`
+
+`code = :shepplogan | :shepplogan_emis | :shepplogan_brainweb`
 """
-function ellipse_im(ig::MIRT_image_geom, params::Symbol; kwargs...)
+function ellipse_im(ig::MIRT_image_geom, params::Symbol; kwarg...)
 	fov = ig.fov
 	if params == :shepplogan
-		params = shepp_logan_parameters(fov, fov)
+		params = shepp_logan_parameters(fov, fov, case=:kak)
 	elseif params == :shepplogan_emis
-		params = shepp_logan_parameters(fov, fov)
-		params[:,6] = [1, 1, -2, 2, 3, 4, 5, 6, 1, 1]
+		params = shepp_logan_parameters(fov, fov, case=:emis)
 	elseif params == :shepplogan_brainweb
-		params = shepp_logan_parameters(fov, fov)
-		params[:,6] = [1, 0, 2, 3, 4, 5, 6, 7, 8, 9] # brainweb uses index 1-10
+		params = shepp_logan_parameters(fov, fov, case=:brainweb)
 	else
 		error("bad phantom symbol")
 	end
-	return ellipse_im(ig, params; kwargs...)
+	return ellipse_im(ig, params; kwarg...)
+end
+
+
+"""
+`phantom = ellipse_im(ig; kwarg...)`
+"""
+function ellipse_im(ig::MIRT_image_geom; kwarg...)
+	return ellipse_im(ig, :shepplogan; kwarg...)
 end
 
 
@@ -287,8 +303,8 @@ parameters from Kak and Slaney text, p. 255
 
 the first four columns are unitless "fractions of field of view"
 """
-function shepp_logan_parameters(xfov::Real, yfov::Real)
-	params = [...
+function shepp_logan_parameters(xfov::Real, yfov::Real; case::Symbol=:kak)
+	params = [
 	0	0	0.92	0.69	90	2;
 	0	-0.0184	0.874	0.6624	90	-0.98;
 	0.22	0	0.31	0.11	72	-0.02;
@@ -300,8 +316,17 @@ function shepp_logan_parameters(xfov::Real, yfov::Real)
 	0	-0.605	0.023	0.023	0	0.01;
 	0.06	-0.605	0.046	0.023	90	0.01];
 
-	params(:,[1,3]) .*= xfov/2
-	params(:,[2,4]) .*= yfov/2
+	params[:,[1,3]] .*= xfov/2
+	params[:,[2,4]] .*= yfov/2
+
+	if case == :emis
+		params[:,6] = [1, 1, -2, 2, 3, 4, 5, 6, 1, 1]
+	elseif case == :brainweb
+		params[:,6] = [1, 0, 2, 3, 4, 5, 6, 7, 8, 9] # brainweb uses index 1-10
+	elseif case != :kak
+		error("bad phantom case")
+	end
+
 	return params
 end
 
@@ -345,13 +370,13 @@ function ellipse_im_show()
 #	ig.offset_y = 75.6 / ig.dy
 
 	over = 2^2
-	x0 = ellipse_im(ig, oversample=over, fov=250)
-	p1 = jim(ig.x, ig.y, x0, title="Shepp Logan", clim=[0.9,1.1])
+	x0 = ellipse_im(ig, oversample=over)
+	p1 = jim(ig.x(), ig.y(), x0, title="Shepp Logan", clim=[0.9,1.1])
 
-	x1 = ellipse_im(ig, :shepplogan_emis, oversample=over, fov=250)
+	x1 = ellipse_im(ig, :shepplogan_emis, oversample=over)
 	p4 = jim(x1, title="Shepp Logan Emission")
 
-	x3 = ellipse_im(ig, :shepplogan_brainweb, fov=250)
+	x3 = ellipse_im(ig, :shepplogan_brainweb)
 	p5 = jim(x3, title="Shepp Logan Brainweb")
 
 	plot(p1,p4,p5)
@@ -360,6 +385,10 @@ end
 
 # ellipse_im_test()
 function ellipse_im_test()
+	shepp_logan_parameters(fov, fov)
+	shepp_logan_parameters(fov, fov, case=:kak)
+	shepp_logan_parameters(fov, fov, case=:emis)
+	shepp_logan_parameters(fov, fov, case=:brainweb)
 	ellipse_im_show()
 
 #	ig = image_geom(nx=2^8, ny=2^8+2, fov=250)
@@ -404,3 +433,19 @@ function ellipse_im_test()
 
 	true
 end
+
+
+ellipse_im(20) # todo
+#ellipse_im_show() # todo
+ellipse_im(20, :shepplogan_emis) # todo
+# ellipse_im(20, :shepplogan_emis, oversample=2) # todo
+
+ig = image_geom(nx=80, dx=1)
+fov = ig.fov 
+params = shepp_logan_parameters(fov, fov, case=:brainweb)
+tmp = ellipse_im(ig, params)
+#jim(ig.x, ig.y, tmp)
+jim(tmp, x=ig.x(), y=ig.y())
+#ellipse_im_show()
+#over = 2^2
+#x0 = ellipse_im(ig, params, oversample=over)
