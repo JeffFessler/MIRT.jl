@@ -12,6 +12,7 @@ include("io/z-list.jl")
 include("plot/z-list.jl")
 include("regularize/z-list.jl")
 include("system/z-list.jl")
+include("utility/z-list.jl")
 
 include("../test/test_all_mirt.jl")
 export test_all_mirt
