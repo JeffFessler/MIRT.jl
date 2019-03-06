@@ -2,4 +2,4 @@
 
 using Test
 
-@test test_jim()
+@test jim(:test)

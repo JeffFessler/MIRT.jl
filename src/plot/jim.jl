@@ -2,6 +2,11 @@
 
 using Plots
 using MosaicViews
+using FFTViews
+
+# global state variable(s)
+jim_state_abswarn = true # warn when taking abs of complex images?
+
 
 """
 `jim(z, ...)`
@@ -17,10 +22,11 @@ option
 * `color` colormap; default `:grays`
 * `ncol` for mosaicview for 3D and higher arrays; default `0` does auto select
 * `padval` padding value for mosaic view; default `(minimum(z)`
+* `fft0` if true use FFTView to display; default false
 * `title` for heatmap; default `""`
 * `xlabel` for heatmap; default `""`
 * `ylabel` for heatmap; default `""`
-* `yflip` for heatmap; default `true`
+* `yflip` for heatmap; default `true` if minimum(y) >= 0
 * `x` for x axis; default `1:size(z,1)`
 * `y` for y axis; default `1:size(z,2)`
 * `xtick` for heatmap; default `[minimum(x),maximum(x)]`
@@ -40,14 +46,21 @@ function jim(z;
 	title = "",
 	xlabel = "",
 	ylabel = "",
-	x = (1:size(z,1)),
-	y = (1:size(z,2)),
-	xtick = [minimum(x),maximum(x)],
-	ytick = [minimum(y),maximum(y)],
-	yflip = true)
+	fft0::Bool = false,
+	x = fft0 ? Int.(-size(z,1)/2:size(z,1)/2-1) : (1:size(z,1)),
+	y = fft0 ? Int.(-size(z,2)/2:size(z,2)/2-1) : (1:size(z,2)),
+	xtick = (minimum(x) < 0 && maximum(x) > 0) ?
+		 [minimum(x),0,maximum(x)] : [minimum(x),maximum(x)],
+	ytick = (minimum(y) < 0 && maximum(y) > 0) ?
+		 [minimum(y),0,maximum(y)] : [minimum(y),maximum(y)],
+	yflip = minimum(y) >= 0,
+	abswarn::Bool = jim_state_abswarn,
+	)
 
 	if !isreal(z)
-		@warn "magnitude"
+		if abswarn
+			@warn "magnitude"
+		end
 		z = abs.(z)
 	end
 
@@ -64,6 +77,8 @@ function jim(z;
 			ncol = Int(floor(sqrt(prod(size(z)[3:end]))))
 		end
 		z = mosaicview(z, padval, ncol=ncol, npad=1)
+	elseif fft0
+		z = FFTView(z)[x,y]
 	end
 
 heatmap(x, y, z', transpose=false,
@@ -71,7 +86,7 @@ heatmap(x, y, z', transpose=false,
 	clim=clim,
 	color=color,
 	title=title,
-	yflip=true,
+	yflip=yflip,
 	xlabel=xlabel,
 	ylabel=ylabel,
 	xtick=xtick,
@@ -110,7 +125,19 @@ function jim()
 end
 
 
-function test_jim()
+"""
+`jim(abswarn=false)`
+"""
+function jim(; abswarn::Bool=jim_state_abswarn)
+	global jim_state_abswarn = abswarn
+end
+
+
+"""
+`jim(:test)`
+"""
+function jim(test::Symbol)
+	@assert test == :test
 	jim(ones(4,3), title="test2")
 	jim(ones(4,3,5), title="test3")
 	jim(1:4, 5:9, zeros(4,5), title="test3")
