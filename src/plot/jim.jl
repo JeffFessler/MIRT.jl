@@ -4,12 +4,12 @@ using Plots
 using MosaicViews
 
 """
-`jim(x, ...)`
+`jim(z, ...)`
 
 jiffy image display of `x` using `heatmap`
 
 in
-* `x` image, can be 2D or higher, if higher then it uses `mosaicviews`
+* `z` image, can be 2D or higher, if higher then it uses `mosaicviews`
 
 option
 * `aspect_ratio` for heatmap; default `:equal`
@@ -23,13 +23,15 @@ option
 * `yflip` for heatmap; default `true`
 * `xtick` for heatmap; default `[1,size(x,1)]`
 * `ytick` for heatmap; default `[1,size(x,2)]`
+* `x` for x axis; default `1:size(x,1)`
+* `y` for y axis; default `1:size(x,2)`
 
 out
 * returns plot handle
 
 2019-02-23 Jeff Fessler, University of Michigan
 """
-function jim(x;
+function jim(z;
 	aspect_ratio = :equal,
 	clim = [],
 	color = :grays,
@@ -38,33 +40,33 @@ function jim(x;
 	title = "",
 	xlabel = "",
 	ylabel = "",
-	xtick = [1, size(x,1)],
-	ytick = [1, size(x,2)],
+	x = 1:size(z,1),
+	y = 1:size(z,1),
+	xtick = [1, size(z,1)],
+	ytick = [1, size(z,2)],
 	yflip = true)
 
-	if !isreal(x)
+	if !isreal(z)
 		@warn "magnitude"
-		x = abs.(x)
+		z = abs.(z)
 	end
 
 	if isempty(clim) # must wait until after possible abs() to do this
-		clim = (minimum(x), maximum(x))
+		clim = (minimum(z), maximum(z))
 	end
 
 	if isempty(padval) # must wait until after possible abs() to do this
-		padval = minimum(x)
+		padval = minimum(z)
 	end
 
-	if ndims(x) > 2
+	if ndims(z) > 2
 		if ncol == 0
-			ncol = Int(floor(sqrt(prod(size(x)[3:end]))))
+			ncol = Int(floor(sqrt(prod(size(z)[3:end]))))
 		end
-		z = mosaicview(x, padval, ncol=ncol, npad=1)
-	else
-		z = x
+		z = mosaicview(z, padval, ncol=ncol, npad=1)
 	end
 
-heatmap(z', transpose=false,
+heatmap(x, y, z', transpose=false,
 	aspect_ratio=aspect_ratio,
 	clim=clim,
 	color=color,
@@ -78,6 +80,15 @@ heatmap(z', transpose=false,
 end # jim
 
 
+
+"""
+`jim(x, y, z; kwargs...)`
+"""
+function jim(x, y, z; kwargs...)
+	return jim(z; x=x, y=y, kwargs...)
+end
+
+
 # show docstring if user calls it with no arguments
 function jim()
 	@doc jim
@@ -87,5 +98,6 @@ end
 function test_jim()
 	jim(ones(4,3), title="test2")
 	jim(ones(4,3,5), title="test3")
+	jim(1:4, 5:9, zeros(4,5), title="test3")
 	true
 end
