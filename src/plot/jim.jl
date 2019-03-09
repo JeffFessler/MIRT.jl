@@ -21,7 +21,8 @@ option
 * `clim` for heatmap; default `(minimum(z),maximum(z))`
 * `color` colormap; default `:grays`
 * `ncol` for mosaicview for 3D and higher arrays; default `0` does auto select
-* `padval` padding value for mosaic view; default `(minimum(z)`
+* `padval` padding value for mosaic view; default `minimum(z)`
+* `mosaic_npad` # of pixel padding for mosaic view; default 1
 * `fft0` if true use FFTView to display; default false
 * `title` for heatmap; default `""`
 * `xlabel` for heatmap; default `""`
@@ -41,8 +42,9 @@ function jim(z;
 	aspect_ratio = :equal,
 	clim = [],
 	color = :grays,
-	ncol = 0,
+	ncol::Integer = 0,
 	padval = [],
+	mosaic_npad::Integer = 1,
 	title = "",
 	xlabel = "",
 	ylabel = "",
@@ -53,7 +55,7 @@ function jim(z;
 		 [minimum(x),0,maximum(x)] : [minimum(x),maximum(x)],
 	ytick = (minimum(y) < 0 && maximum(y) > 0) ?
 		 [minimum(y),0,maximum(y)] : [minimum(y),maximum(y)],
-	yflip = minimum(y) >= 0,
+	yflip::Bool = minimum(y) >= 0,
 	abswarn::Bool = jim_state_abswarn,
 	)
 
@@ -72,16 +74,18 @@ function jim(z;
 		padval = minimum(z)
 	end
 
+	xy = (x, y)
 	if ndims(z) > 2
 		if ncol == 0
 			ncol = Int(floor(sqrt(prod(size(z)[3:end]))))
 		end
-		z = mosaicview(z, padval, ncol=ncol, npad=1)
+		z = mosaicview(z, padval, ncol=ncol, npad=mosaic_npad)
+		xy = () # no x,y for mosaic
 	elseif fft0
 		z = FFTView(z)[x,y]
 	end
 
-heatmap(x, y, z', transpose=false,
+heatmap(xy..., z', transpose=false,
 	aspect_ratio=aspect_ratio,
 	clim=clim,
 	color=color,
