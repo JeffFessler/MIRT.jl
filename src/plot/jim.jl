@@ -4,8 +4,21 @@ using Plots
 using MosaicViews
 using FFTViews
 
-# global state variable(s)
-jim_state_abswarn = true # warn when taking abs of complex images?
+# global default key/values
+jim_def = Dict([
+	:aspect_ratio => :equal,
+	:clim => [],
+	:color => :grays,
+	:ncol => 0,
+	:padval => 0,
+	:mosaic_npad => 1,
+	:title => "",
+	:xlabel => "",
+	:ylabel => "",
+	:fft0 => false,
+	:yflip => nothing, # defer to minimum value of y - see default below
+	:abswarn => true, # warn when taking abs of complex images?
+	])
 
 
 """
@@ -36,27 +49,28 @@ option
 out
 * returns plot handle
 
+
 2019-02-23 Jeff Fessler, University of Michigan
 """
 function jim(z;
-	aspect_ratio = :equal,
-	clim = [],
-	color = :grays,
-	ncol::Integer = 0,
-	padval = [],
-	mosaic_npad::Integer = 1,
-	title = "",
-	xlabel = "",
-	ylabel = "",
-	fft0::Bool = false,
+	aspect_ratio = jim_def[:aspect_ratio],
+	clim = jim_def[:clim],
+	color = jim_def[:color],
+	ncol::Integer = jim_def[:ncol],
+	padval = jim_def[:padval],
+	mosaic_npad::Integer = jim_def[:mosaic_npad],
+	title = jim_def[:title],
+	xlabel = jim_def[:xlabel],
+	ylabel = jim_def[:ylabel],
+	fft0::Bool = jim_def[:fft0],
 	x = fft0 ? Int.(-size(z,1)/2:size(z,1)/2-1) : (1:size(z,1)),
 	y = fft0 ? Int.(-size(z,2)/2:size(z,2)/2-1) : (1:size(z,2)),
 	xtick = (minimum(x) < 0 && maximum(x) > 0) ?
 		 [minimum(x),0,maximum(x)] : [minimum(x),maximum(x)],
 	ytick = (minimum(y) < 0 && maximum(y) > 0) ?
 		 [minimum(y),0,maximum(y)] : [minimum(y),maximum(y)],
-	yflip::Bool = minimum(y) >= 0,
-	abswarn::Bool = jim_state_abswarn,
+	yflip::Bool = isnothing(jim_def[:yflip]) ? minimum(y) >= 0 : jim_def[:yflip],
+	abswarn::Bool = jim_def[:abswarn],
 	)
 
 	if !isreal(z)
@@ -129,18 +143,38 @@ function jim()
 end
 
 
+#"""
+#`jim(abswarn=false)`
+#"""
+#function jim(; abswarn::Bool=jim_state_abswarn)
+#	global jim_state_abswarn = abswarn
+#end
+
 """
-`jim(abswarn=false)`
+`jim(key, value)` set default value for one of the keys
 """
-function jim(; abswarn::Bool=jim_state_abswarn)
-	global jim_state_abswarn = abswarn
+function jim(key::Symbol, value)
+	if !haskey(jim_def, key)
+		error("no key $key")
+	end
+	jim_def(key) = value
 end
 
 
 """
 `jim(:test)`
+
+`jim(:keys)` return default keys
+
+`jim(:defs)` return Dict of default keys / vals
 """
 function jim(test::Symbol)
+	if test == :keys
+		return keys(jim_def)
+	end
+	if test == :defs
+		return jim_def
+	end
 	@assert test == :test
 	jim(ones(4,3), title="test2")
 	jim(ones(4,3,5), title="test3")
