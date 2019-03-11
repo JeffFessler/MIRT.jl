@@ -254,7 +254,7 @@ end # pogm_restart()
 """
 `pogm_restart(:test)` self test (todo)
 """
-function pogm_restart(test::Bool)
+function pogm_restart(test::Symbol)
 	@assert test == :test
 	true
 end
