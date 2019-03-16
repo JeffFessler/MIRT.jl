@@ -156,31 +156,31 @@ function ellipse_im_fast(nx, ny, params_in, dx, dy,
 	hx = abs(dx) / 2
 	hy = abs(dy) / 2
 
-for ie = 1:size(params,1)
+	for ie = 1:size(params,1)
 
-	ell = params[ie, :]
-	cx = ell[1];	rx = ell[3]
-	cy = ell[2];	ry = ell[4]
-	theta = ell[5] * pi/180
+		ell = params[ie, :]
+		cx = ell[1];	rx = ell[3]
+		cy = ell[2];	ry = ell[4]
+		theta = ell[5] * pi/180
 
-	xs = xx .- cx # shift per ellipse center
-	ys = yy .- cy
+		xs = xx .- cx # shift per ellipse center
+		ys = yy .- cy
 
-	# coordinates of "outer" corner of each pixel, relative to ellipse center
-	xo = xs + sign.(xs) * hx
-	yo = ys + sign.(ys) * hy
+		# coordinates of "outer" corner of each pixel, relative to ellipse center
+		xo = xs + sign.(xs) * hx
+		yo = ys + sign.(ys) * hy
 
-	# voxels that are entirely inside the ellipse:
-	(xr, yr) = rot2(xo, yo, theta)
-	is_inside = (xr / rx).^2 + (yr / ry).^2 .<= 1
+		# voxels that are entirely inside the ellipse:
+		(xr, yr) = rot2(xo, yo, theta)
+		is_inside = (xr / rx).^2 + (yr / ry).^2 .<= 1
 
-	if replace
-		phantom(is_inside) .= ell[6]
-	else
-		phantom += ell[6] * Float32.(is_inside)
-	end
+		if replace
+			phantom(is_inside) .= ell[6]
+		else
+			phantom += ell[6] * Float32.(is_inside)
+		end
 
-end # ie loop
+	end # ie loop
 
 	return phantom
 end # ellipse_im_fast()
@@ -188,6 +188,9 @@ end # ellipse_im_fast()
 
 """
 `phantom = ellipse_im(nx, dx, params; kwarg...)`
+
+square image of size `nx` by `nx`,
+specifying pixel size `dx` and ellipse `params`
 """
 function ellipse_im(nx::Integer, dx::Real, params; kwarg...)
 	ig = image_geom(nx=nx, dx=1)
@@ -197,6 +200,9 @@ end
 
 """
 `phantom = ellipse_im(nx::Integer, params; kwarg...)`
+
+square image of size `nx` by `nx` with
+pixel size `dx=1` and ellipse `params`
 """
 function ellipse_im(nx::Integer, params; kwarg...)
 	return ellipse_im(nx, 1., params; kwarg...)
@@ -205,7 +211,9 @@ end
 
 """
 `phantom = ellipse_im(nx::Integer; ny::Integer=nx, dx::Real=1, kwarg...)`
-	defaults to `:shepplogan_emis`
+
+image of size `nx` by `ny` (default `nx`) with specified `dx` (default 1),
+defaults to `:shepplogan_emis`
 """
 function ellipse_im(nx::Integer; ny::Integer=nx, dx::Real=1, kwarg...)
 	ig = image_geom(nx=nx, ny=ny, dx=dx)
@@ -215,6 +223,8 @@ end
 
 """
 `phantom = ellipse_im(nx::Integer, ny::Integer; kwarg...)`
+
+`:shepplogan_emis` of size `nx` by `ny`
 """
 function ellipse_im(nx::Integer, ny::Integer; kwarg...)
 	return ellipse_im(nx, ny=ny, dx=1.; kwarg...)
@@ -243,6 +253,8 @@ end
 
 """
 `phantom = ellipse_im(ig; kwarg...)`
+
+`:shepplogan` (default) for given image geometry `ig`
 """
 function ellipse_im(ig::MIRT_image_geom; kwarg...)
 	return ellipse_im(ig, :shepplogan; kwarg...)
@@ -278,15 +290,15 @@ the first four columns are unitless "fractions of field of view"
 """
 function shepp_logan_parameters(xfov::Real, yfov::Real; case::Symbol=:kak)
 	params = [
-	0	0	0.92	0.69	90	2;
-	0	-0.0184	0.874	0.6624	90	-0.98;
-	0.22	0	0.31	0.11	72	-0.02;
-	-0.22	0	0.41	0.16	108	-0.02;
-	0	0.35	0.25	0.21	90	0.01;
-	0	0.1	0.046	0.046	0	0.01;
-	0	-0.1	0.046	0.046	0	0.01;
+	0		0		0.92	0.69	90	2;
+	0		-0.0184	0.874	0.6624	90	-0.98;
+	0.22	0		0.31	0.11	72	-0.02;
+	-0.22	0		0.41	0.16	108	-0.02;
+	0		0.35	0.25	0.21	90	0.01;
+	0		0.1		0.046	0.046	0	0.01;
+	0		-0.1	0.046	0.046	0	0.01;
 	-0.08	-0.605	0.046	0.023	0	0.01;
-	0	-0.605	0.023	0.023	0	0.01;
+	0		-0.605	0.023	0.023	0	0.01;
 	0.06	-0.605	0.046	0.023	90	0.01];
 
 	params[:,[1,3]] .*= xfov/2
@@ -318,6 +330,8 @@ end
 
 """
 `ellipse_im()`
+
+show docstring(s)
 """
 function ellipse_im()
 	@doc ellipse_im
@@ -357,7 +371,7 @@ function ellipse_im_aspire()
 	com = sprintf("echo y | op -chat 99 ellipse %s %d %d  %g %g %g %g %g %g %d",
 		file, ig.nx, ig.ny, ell ./ [ig.dx, ig.dx, ig.dx, ig.dx, 1, 1],
 		log2(over)+1)
-	os_run(com)
+	os_run(com) # todo: not done
 	asp = fld_read(file)
 	jim(asp, title="aspire")
 
@@ -417,6 +431,8 @@ end
 `ellipse_im(:test)`
 
 `ellipse_im(:show)`
+
+run tests
 """
 function ellipse_im(test::Symbol)
 	if test == :show
