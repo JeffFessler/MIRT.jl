@@ -154,10 +154,11 @@ end
 `jim(key, value)` set default value for one of the keys
 """
 function jim(key::Symbol, value)
+	global jim_def
 	if !haskey(jim_def, key)
 		error("no key $key")
 	end
-	jim_def(key) = value
+	jim_def[key] = value
 end
 
 
@@ -169,6 +170,7 @@ end
 `jim(:defs)` return Dict of default keys / vals
 """
 function jim(test::Symbol)
+	global jim_def
 	if test == :keys
 		return keys(jim_def)
 	end
@@ -176,6 +178,7 @@ function jim(test::Symbol)
 		return jim_def
 	end
 	@assert test == :test
+	jim(:abswarn, false)
 	jim(ones(4,3), title="test2")
 	jim(ones(4,3,5), title="test3")
 	jim(1:4, 5:9, zeros(4,5), title="test3")
