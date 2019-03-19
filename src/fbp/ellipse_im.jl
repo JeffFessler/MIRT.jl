@@ -32,7 +32,7 @@ note: `op ellipse` in aspire with `nsub=3` is `oversample=4 = 2^(3-1)` here
 
 """
 function ellipse_im(ig::MIRT_image_geom,
-	params::AbstractArray{T,2} where T <: Real;
+	params::AbstractArray{<:Real,2};
 	rot::Real=0,
 	oversample::Integer=1,
 	hu_scale::Real=1,
@@ -264,8 +264,8 @@ end
 """
 `(xx,yy) = ndgrid(x,y)`
 """
-function ndgrid(x::AbstractVector{S} where S <: Number,
-		y::AbstractVector{T} where T <: Number)
+function ndgrid(x::AbstractVector{<:Number},
+				y::AbstractVector{<:Number})
 	return (repeat(x, 1, length(y)), repeat(y', length(x), 1))
 end
 

@@ -13,7 +13,8 @@ using SparseArrays: issparse#, find, ind,
 
 embed vector v of length sum(mask) into elements of an array where mask is true
 """
-function embed(v::AbstractArray{T,1} where T <: Number,
+function embed(
+		v::AbstractArray{<:Number,1},
 		mask::AbstractArray{Bool,N} where N)
 	array = zeros(eltype(v), size(mask))
 	array[mask] .= v

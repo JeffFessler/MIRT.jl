@@ -22,7 +22,7 @@ It cannot be a Vector!  (But it can be a `Mx1` or `1xN` 2D array.)
 out
 * `d`		vector of length `N*(M-1) + (N-1)*M`
 """
-function diff2d_forw(x::AbstractMatrix)
+function diff2d_forw(x::AbstractMatrix{<:Number})
 
 return [diff(x,dims=1)[:]; diff(x,dims=2)[:]]
 end
@@ -49,7 +49,7 @@ out
 * `z`		`M*N` vector or `M x N` array (typically a 2D image)
 
 """
-function diff2d_adj(d::AbstractVector, M, N; out2d=false)
+function diff2d_adj(d::AbstractVector{<:Number}, M, N; out2d=false)
 
 @assert length(d) == N*(M-1) + (N-1)*M
 
