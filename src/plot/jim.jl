@@ -69,7 +69,7 @@ function jim(z;
 		 [minimum(x),0,maximum(x)] : [minimum(x),maximum(x)],
 	ytick = (minimum(y) < 0 && maximum(y) > 0) ?
 		 [minimum(y),0,maximum(y)] : [minimum(y),maximum(y)],
-	yflip::Bool = isnothing(jim_def[:yflip]) ? minimum(y) >= 0 : jim_def[:yflip],
+	yflip::Bool = jim_def[:yflip] == nothing ? minimum(y) >= 0 : jim_def[:yflip],
 	abswarn::Bool = jim_def[:abswarn],
 	)
 
