@@ -16,6 +16,17 @@
 
 using LinearMaps
 
+# A[end]
+function Base.lastindex(A::LinearMap)
+    return prod(size(A))
+end
+
+# A[?,end] and A[end,?]
+function Base.lastindex(A::LinearMap, d::Integer)
+    return size(A, d)
+end
+
+
 # A[i,j]
 function Base.getindex(A::LinearMap, i::Integer, j::Integer)
 	e = zeros(size(A,2)); e[j] = 1
@@ -94,6 +105,8 @@ function ir_LinearMap_test_getindex(A::LinearMap)
 	@assert B'[3] == A'[3]
 	@assert B'[:,4] == A'[:,4]
 	@assert B'[2,:] == A'[2,:]
+	@assert B[end] == A[end] # lastindex
+	@assert B[3,end-1] == A[3,end-1]
 
 	# The following do not work because currently LinearMap is not a
 	# subtype of AbstractMatrix.  If it were such a subtype, then LinearMap
@@ -110,7 +123,7 @@ end
 
 # tests for cumsum()
 # note: the adjoint of cumsum is reverse(cumsum(reverse(y)))
-function ir_lm_test_getindex_cumsum(;N::Integer=5)
+function ir_lm_test_getindex_cumsum( ; N::Integer=5)
 	A = LinearMap(cumsum, y -> reverse(cumsum(reverse(y))), N)
 	ir_LinearMap_test_getindex(A)
 	@assert Matrix(A)' == Matrix(A')
