@@ -89,9 +89,9 @@ uuid = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 
 [[Distributions]]
 deps = ["Distributed", "LinearAlgebra", "PDMats", "Printf", "QuadGK", "Random", "SpecialFunctions", "Statistics", "StatsBase", "StatsFuns", "Test"]
-git-tree-sha1 = "c24e9b6500c037673f0241a2783472b8c3d080c7"
+git-tree-sha1 = "dec0ebacfbc3a2126c614ab5e903c9ef063688d0"
 uuid = "31c24e10-a181-5473-b8eb-7969acd0382f"
-version = "0.16.4"
+version = "0.17.0"
 
 [[FFTViews]]
 deps = ["CustomUnitRanges", "FFTW", "Test"]
