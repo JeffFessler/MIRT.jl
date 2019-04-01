@@ -31,6 +31,17 @@ or
 
 todo, binder?
 
+You can test drive some jupyter notebooks in your browser
+without installing any local software
+by using the free service at
+https://mybinder.org/
+
+Introduction:
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/JeffFessler/MIRT.jl/master?filepath=demo%2Fisbi19%2F00-intro.ipynb)
+
+MRI compressed sensing demo:
+todo
+
 https://github.com/JeffFessler/mirt-demo.git
 
 
