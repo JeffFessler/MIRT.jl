@@ -18,24 +18,26 @@ and his
 
 ## Getting started
 
-See
-[doc/start.md]
+For installation instructions, see:
+[doc/start.md](https://github.com/JeffFessler/MIRT.jl/blob/master/doc/start.md)
 
-Install Julia (version 1.1 or later)
+For development,
+use the `dev` command in Julia's package manager,
+or
+`git clone https://github.com/JeffFessler/MIRT.jl`
 
-git clone https://github.com/JeffFessler/MIRT.jl
-
-todo
 
 ## Examples
 
-todo
+todo, binder?
 
 https://github.com/JeffFessler/mirt-demo.git
 
 
 ## Reproducible research
 
-todo: link to Donghwan Kim's adaptive restart
+This package includes some tools from
+https://gitlab.eecs.umich.edu/michigan-fast-optimization
 
-Jeff Fessler and group, University of Michigan
+For additional reproducible research code, see
+http://web.eecs.umich.edu/~fessler/irt/reproduce/
