@@ -1,6 +1,7 @@
 # jim.jl
 
 using Plots
+using LaTeXStrings
 using MosaicViews
 using FFTViews
 
@@ -116,7 +117,7 @@ end # jim
 """
 `jim(z, title; kwargs...)`
 """
-function jim(z, title::String; kwargs...)
+function jim(z, title::Union{String,LaTeXString}; kwargs...)
 	return jim(z; title=title, kwargs...)
 end
 
@@ -132,7 +133,7 @@ end
 """
 `jim(x, y, z, title; kwargs...)`
 """
-function jim(x, y, z, title::String; kwargs...)
+function jim(x, y, z, title::Union{String,LaTeXString}; kwargs...)
 	return jim(z; x=x, y=y, title=title, kwargs...)
 end
 
