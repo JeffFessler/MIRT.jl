@@ -33,19 +33,8 @@ You can test drive some jupyter notebooks in your browser
 without installing any local software
 by using the free service at
 https://mybinder.org/
-
-* Introduction:
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/JeffFessler/MIRT.jl/master?filepath=demo%2Fisbi19%2F00-intro.ipynb)
-
-* MRI compressed sensing demo:
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/JeffFessler/MIRT.jl/master?filepath=demo%2Fisbi19%2F01-odwt.ipynb)
-
-If binder is too slow for you, you can view static html versions:
-* http://web.eecs.umich.edu/~fessler/demo/00-isbi.html
-* http://web.eecs.umich.edu/~fessler/demo/01-odwt.html
-
-You can also view the notebook code directly:
-* [demo/](https://github.com/JeffFessler/MIRT.jl/blob/master/demo/)
+through the links at the companion demonstration repository
+* https://github.com/JeffFessler/mirt-demo
 
 
 ## Reproducible research
