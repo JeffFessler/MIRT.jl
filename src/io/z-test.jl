@@ -3,3 +3,4 @@
 using Test
 
 @test ir_dump(:test)
+@test fld_read(:test)
