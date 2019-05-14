@@ -3,40 +3,52 @@
 
 using Printf
 
+
+
 """
-`ir_dump(x::DataType)`
+`ir_dump([io::IO,] x::DataType)`
 
 show all the filelds of a structure more nicely than dump() does
 """
 function ir_dump(y::Any)
+	ir_dump(stdout, y)
+end
+
+function ir_dump(io::IO, y::Any)
 	x = typeof(y)
-	print(x)
+	print(io, x)
 	fields = fieldnames(x)
 	fieldtypes = x.types
 	for idx in 1:length(fields)
-		println()
+		println(io)
 		fd = fields[idx]
-		print(stdout, " ", fd, "::")
+		print(io, " ", fd, "::")
 		ft = fieldtypes[idx]
-		print(ft)
+		print(io, ft)
 		if ft <: Number
-			print(stdout, " ", getfield(y, fd))
+			print(io, " ", getfield(y, fd))
 		end
 		if ft == String
-			print(stdout, " '", getfield(y, fd), "'")
+			print(io, " '", getfield(y, fd), "'")
 		end
 	end
-	println()
+	println(io)
 	nothing
 end
 
 
 """
-`ir_dump(:test)`
+`ir_dump([io::IO,] :test)`
+
+self test
 """
 function ir_dump(test::Symbol)
+	ir_dump(IOBuffer(), test)
+end
+
+function ir_dump(io::IO, test::Symbol)
 	@assert test == :test
 	x = (a=1, b=2)
-	ir_dump(x)
+	ir_dump(io, x)
 	true
 end
