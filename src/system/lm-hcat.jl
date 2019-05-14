@@ -67,7 +67,7 @@ function hcat_lm_test()
 	@test C' * ones(size(C,1)) == [3.0, 3.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0]
 	@test Matrix(C)' == Matrix(C')
 
-	@show D = [I A]
+	D = [I A] # LinearMap
 	@test Matrix(D)' == Matrix(D')
 	true
 end
