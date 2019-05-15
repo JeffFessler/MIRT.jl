@@ -4,21 +4,23 @@
 
 """
 `dir = ir_test_dir!(path)`
+
 set default test directory
 """
 function ir_test_dir!(path::String)
-	ENV["TEST_DIR"] = path
+	ENV["MIRT_TEST_DIR"] = path
 end
 
 
 """
 `dir = ir_test_dir`
-returns default test directory; default is `/tmp`
+
+return default test directory `ENV["MIRT_TEST_DIR"]`; default is `/tmp`
 """
 function ir_test_dir()
-#	get(ENV, "TEST_DIR", "/tmp")
+#	get(ENV, "MIRT_TEST_DIR", "/tmp")
 	try
-		return ENV["TEST_DIR"]
+		return ENV["MIRT_TEST_DIR"]
 	catch
 		return "/tmp"
 	end
@@ -37,65 +39,51 @@ in
 * `data` real data array
 
 option
-* `check`	Bool	report error if file exists; default `true`
-* `dir`		String	directory name to prepend file name; default `""`
-* `head`	Array{String}	comment information for file header
-* `how`		Symbol	what file data type; default `data` infer from data
-					todo: e.g., 'short_be'.  default is 'xdr_float'
-* `raw`		Bool	put raw data in `name.raw`, header in `name.fld`
-					where `file` = `name.fld`; default `false`
-
-At this point, only little endian is supported
-* `endian`	String	'ieee-le' or 'ieee-be' for little/big endian
-				default inferred from 'how'
-				with bias to 'ieee-le' - todo: not yet implemented
+* `check::Bool`			report error if file exists; default `true`
+* `dir::String`			directory name to prepend file name; default `""`
+* `endian::`Symbol`		`:le` little endian (default), `:be` big endian
+* `head::Array{String}`	comment information for file header
+* `raw::Bool`			put raw data in `name.raw`, header in `name.fld`
+						where `file` = `name.fld`; default `false`
 """
 
+# * `how::Symbol`			file data type; default `:data` infer from data
+
 function fld_write(file::String, data::AbstractArray{<:Real};
-	check::Number = true,
+	check::Bool = true,
 	dir::String = "",
-	how::Symbol = :data,
+	endian::Symbol = :le,
 	head::Array{String} = empty([""]),
+#	how::Symbol = :data,
 	raw::Bool = false,
-#	endian:: = ?, # infer below from arg.type
 	)
-
-
-#if isempty(arg.endian)
-#	switch arg.type
-#case {'short_be', 'int_be', 'float_be', 'double_be', ...
-#	'xdr_int', 'xdr_double' 'xdr_float'}
-#		arg.endian = 'ieee-be'
-#	otherwise
-#		arg.endian = 'ieee-le'
-#	end
-#end
 
 	data = fld_write_data_fix(data) # make data suitable for writing in .fld
 
+	endian != :le && endian != :be && throw("endian '$endian' unknown")
+
 	typedict = Dict([
-		(Float32, "float_le"),
-		(Float64, "double_le"),
+		(Float32, endian == :le ? "float_le" : "xdr_float"),
+		(Float64, endian == :le ? "double_le" : "xdr_double"),
 		(Int8, "byte"),
-		(Int16, "short_le"),
-		(Int32, "int_le"),
+		(Int16, endian == :le ? "short_le" : "short_be"),
+		(Int32, endian == :le ? "int_le" : "xdr_int"),
 		])
 
 	dtype = eltype(data)
 	datatype = typedict[dtype] # throws error if not there
 
 	file = joinpath(dir, file)
-#	printm('file = "%s"', file)
+#	@show file
 
-	check && isfile(file) && throw("file $file exists")
+	check && isfile(file) && throw("file '$file' exists")
 
-	# write data to separate ".raw" file?
-	if raw
+	if raw # if writing data to separate ".raw" file, ensure it does not exist
 		fileraw = file[1:(end-3)] * "raw"
 		check && isfile(fileraw) && throw("file $fileraw exists")
 	end
 
-	# open avs file for writing
+	# open output avs file for writing
 	fid = open(file, "w")
 	fraw = fid # default
 	if raw
@@ -105,18 +93,18 @@ function fld_write(file::String, data::AbstractArray{<:Real};
 	# write header
 	ndim = ndims(data)
 
-	println(fid, "# created by $(basename(@__FILE__))")
+	println(fid, "# AVS field file ($(basename(@__FILE__)))")
 	for ii=1:length(head)
 		println(fid, "# $(head[ii])")
 	end
 
 	println(fid, "ndim=$ndim")
-#	println(fid, "nspace=$ndim")
 	for ii=1:ndim
 		println(fid, "dim$ii=$(size(data,ii))")
 	end
-	println(fid, "data=$datatype")
+	println(fid, "nspace=$ndim")
 	println(fid, "veclen=1")
+	println(fid, "data=$datatype")
 	println(fid, "field=uniform")
 
 	if raw
@@ -126,7 +114,14 @@ function fld_write(file::String, data::AbstractArray{<:Real};
 	end
 
 	# finally, write the binary data
-	write(fraw, data)
+	host_is_le = ENDIAN_BOM == 0x04030201
+	if host_is_le == (endian == :le) # host/file same endian
+		write(fraw, data) # finally, write the binary data
+	elseif host_is_le && (endian == :be)
+		write(fraw, hton.(data))
+	elseif !host_is_le && (endian == :le)
+		write(fraw, htol.(data))
+	end
 
 	close(fid)
 
@@ -201,39 +196,24 @@ end
 
 """
 `fld_write(:test)`
+
+tests writing and reading AVS `.fld` files of all key types
 """
 function fld_write(test::Symbol; chat::Bool=false)
 	test != :test && throw("bug")
 
 	file = joinpath(ir_test_dir(), "fld-write-test.fld")
 
-	if true
-		chat && @info "test1"
-		data = Float32.([5:8; 1:4])
-		fld_write_test1(file, data, check=true)
+	for dtype in (Int8, Int16, Int32, Float32, Float64)
+		for endian in (:le, :be)
+			for raw in (false, true)
+				chat && @info "dtype=$dtype endian=$endian raw=$raw"
+				data = convert.(dtype, [5:8; 1:4])
+				fld_write_test1(file, data, endian=endian, raw=raw,
+					check=true, chat=chat)
+			end
+		end
 	end
-
-	if true
-		chat && @info "test2"
-		data = Int32.([5:8; 1:4])
-		fld_write_test1(file, data, check=true)
-	end
-
-	if true # test raw/header
-		chat && @info "test3"
-		fld_write_test1(file, data, check=true, raw=true, chat=chat)
-	end
-
-#	formats = {'float_be', 'float_le', 'float', 'xdr_float'}
-#	for ii=1:length(formats)
-	#	format = formats{ii}
-	#	pr format
-	#	fld_write_test1(file, data, 'check', 1, 'type', format)
-	#	%		 'endian', 'ieee-le', ... % nah, defer from type
-#	end
-	#	format = 'short_le'
-	#	pr format
-	#	fld_write_test1(file, int16(data), 'check', 1, 'type', format)
 
 	true
 end
