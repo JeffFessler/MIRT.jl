@@ -65,7 +65,7 @@ function fld_write(file::String, data::AbstractArray{<:Real};
 	typedict = Dict([
 		(Float32, endian == :le ? "float_le" : "xdr_float"),
 		(Float64, endian == :le ? "double_le" : "xdr_double"),
-		(Int8, "byte"),
+		(UInt8, "byte"),
 		(Int16, endian == :le ? "short_le" : "short_be"),
 		(Int32, endian == :le ? "int_le" : "xdr_int"),
 		])
@@ -140,8 +140,6 @@ function fld_write_data_fix(data::AbstractArray{<:Real})
 
 	dtype = eltype(data)
 
-	dtype <: Unsigned && throw("Only Real and Signed types supported")
-
 	if dtype == BigFloat
 		@warn "BigFloat downgraded to Float64"
 		return Float64.(data)
@@ -168,9 +166,12 @@ function fld_write_data_fix(data::AbstractArray{<:Real})
 	end
 
 	if eltype(data) == Bool
-		@warn "Bool upgraded to Int8"
-		return Int8.(data)
+		@warn "Bool upgraded to UInt8"
+		return UInt8.(data)
 	end
+
+	!in(dtype, (Float32, Float64, UInt8, Int16, Int32)) &&
+		throw("unsupported type $dtype")
 
 	return data
 end
@@ -204,7 +205,7 @@ function fld_write(test::Symbol; chat::Bool=false)
 
 	file = joinpath(ir_test_dir(), "fld-write-test.fld")
 
-	for dtype in (Int8, Int16, Int32, Float32, Float64)
+	for dtype in (UInt8, Int16, Int32, Float32, Float64)
 		for endian in (:le, :be)
 			for raw in (false, true)
 				chat && @info "dtype=$dtype endian=$endian raw=$raw"
