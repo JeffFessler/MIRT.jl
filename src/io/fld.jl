@@ -1,35 +1,29 @@
-# todo:
-# + [ ] 'raw'	0|1	1: return raw data class (default), 0: return doubles
-# + [ ] 'slice' int	specify which slice to read from 3D file. (0 ... nz-1)
-# + [ ] 'chat'	0|1	enable verbosity
-# + [ ] 'dim_only' 0|1	returns dims. data and coord are equal to [].
-# + [ ] 'coord' 0|1	returns coordinates too (default: 0)
-# + [ ] 'coord_format'	default: 'n'; see fopen() for machine format options
-#	(needed for some UM .fld files with 'vaxd' coordinates)
-# + [ ] add tests
-# + [ ] add ir_usage?
-# + [ ] multi files
-# + [ ] short datatype
+# fld.jl
+# Jeff Fessler and David Hong
 
 """
-`fld_read(file)`
+`head = fld_header(file)`
 
-read data from AVS format `.fld` file
+`head, is_external_file, fid = fld_header(file, keepopen=true)`
+
+read header data from AVS format `.fld` file
 
 in
-* `file`	file name, usually ending in `.fld`
+* `file::String`	file name, usually ending in `.fld`
 
 option
-* `dir`		String	prepend file name with this directory; default ""
-* `chat`	Bool	verbose?
+* `dir::String`		prepend file name with this directory; default ""
+* `chat::Bool`		verbose?
+* `keepopen::Bool`	true to leave file open for more reading; default false to close
 
 out
-* `data`	Array (1D - 5D) in the data type of the file itself
+* `head`		String array of header information
 
 """
-function fld_read(file::AbstractString;
+function fld_header(file::AbstractString;
 	dir::String = "",
 	chat::Bool = false,
+	keepopen::Bool = false,
 	)
 
 	file = joinpath(dir, file)
@@ -71,6 +65,52 @@ function fld_read(file::AbstractString;
 	header = string_to_array(header) # convert to array
 	chat && @info(header)
 
+	if keepopen
+		return header, is_external_file, fid
+	end
+
+	# else
+	close(fid)
+	return header
+end
+
+
+# todo:
+# + [ ] 'raw'	0|1	1: return raw data class (default), 0: return doubles
+# + [ ] 'slice' int	specify which slice to read from 3D file. (0 ... nz-1)
+# + [ ] 'chat'	0|1	enable verbosity
+# + [ ] 'dim_only' 0|1	returns dims. data and coord are equal to [].
+# + [ ] 'coord' 0|1	returns coordinates too (default: 0)
+# + [ ] 'coord_format'	default: 'n'; see fopen() for machine format options
+#	(needed for some UM .fld files with 'vaxd' coordinates)
+# + [ ] multi files
+# + [ ] short datatype
+
+"""
+`fld_read(file)`
+
+read data from AVS format `.fld` file
+
+in
+* `file`	file name, usually ending in `.fld`
+
+option
+* `dir`		String	prepend file name with this directory; default ""
+* `chat`	Bool	verbose?
+
+out
+* `data`	Array (1D - 5D) in the data type of the file itself
+
+"""
+function fld_read(file::AbstractString;
+	dir::String = "",
+	chat::Bool = false,
+	)
+
+	file = joinpath(dir, file)
+
+	header, is_external_file, fid = fld_header(file, keepopen=true, chat=chat)
+
 	# parse header to determine data dimensions and type
 	ndim = arg_get(header, "ndim")
 	dims = [arg_get(header, "dim$ii") for ii in 1:ndim]
@@ -81,7 +121,7 @@ function fld_read(file::AbstractString;
 	chat && @info("dims=$dims")
 
 	# external file (binary data in another file)
-	# fix: external ASCII files to be implemented (from fld_read.m)
+	# todo: external ASCII files to be implemented (from fld_read.m)
 	_skip = 0
 	if is_external_file
 		close(fid)
@@ -155,11 +195,11 @@ end
 
 
 """
-`string_to_array(header_lines)`
+`header = string_to_array(header_lines)`
 
 convert long string with embedded newlines into string array
 """
-function string_to_array(header_lines)
+function string_to_array(header_lines::String)
 	newline = '\n'
 
 	# ensure there is a newline at end, since dumb editors can forget...
@@ -184,10 +224,10 @@ end
 
 parse an argument from header, of the name=value form
 """
-function arg_get(head, name, toint=true)
+function arg_get(head::Array{<:AbstractString}, name::String, toint::Bool=true)
 	for ll = 1:length(head)
 		line = head[ll]
-		start = findfirst(name*'=',line)
+		start = findfirst(name * '=',line)
 		if !isnothing(start)
 			!isnothing(findnext(name*'=',line,start[end]+1)) && @error("bug: multiples?")
 			line = line[(start[end]+1):end]
@@ -271,5 +311,6 @@ end
 `fld_read(:test)`
 """
 function fld_read(test::Symbol)
+	# todo: test read slices when that feature is added
 	return fld_write(test)
 end
