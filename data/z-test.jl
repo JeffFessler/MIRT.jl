@@ -2,4 +2,4 @@
 
 using Test
 
-@test ir_load_brainweb_t1_256() !== nothing
+@test extrema(ir_load_brainweb_t1_256()) == (0.0f0, 241.0f0)
