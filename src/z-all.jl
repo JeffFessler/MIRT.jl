@@ -12,8 +12,3 @@ include("utility/z-list.jl")
 
 include("../test/test_all_mirt.jl")
 export test_all_mirt
-
-tmp = homedir() * "/l/src/julia/mirt/um/"
-if isdir(tmp) # UM-only tools
-	include(tmp * "z-list.jl")
-end
