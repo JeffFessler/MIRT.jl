@@ -48,7 +48,7 @@ function ncg(
 	betahow::Symbol=:dai_yuan,
 	fun::Function = (x,iter) -> 0)
 
-out = similar(Array{Any}, niter+1)
+out = Array{Any}(undef, niter+1)
 out[1] = fun(x0, 0)
 
 J = length(B)

@@ -98,7 +98,7 @@ function loadpfile(pfile::String;
 	if nviews == 2
 		# Seek to view slice 2, echo 1, view 2, coil 1:
 		seek(fid, rdb_hdr.off_data + (2 * ptsize * (sliceres + 2*ndat)))
-		view2tmp = similar(Array{Int16}, 2*ndat)
+		view2tmp = Array{Int16}(undef, 2*ndat)
 		view2tmp = read!(fid, view2tmp)
 		if all(view2tmp .== Int16(0))
 			nviews = 1 # set nviews to 1 so we don't read in all the empty data
@@ -141,8 +141,8 @@ function loadpfile(pfile::String;
 	# Read data from file
 	# Julia stores complex data as real1,imag1, real2,imag2, ... unlike matlab!
 	# This simplifies the IO here!
-	data = similar(Array{Complex{Int16}}, dims)
-	dtmp = similar(Array{Complex{Int16}}, ndat) # one readout
+	data = Array{Complex{Int16}}(undef, dims)
+	dtmp = Array{Complex{Int16}}(undef, ndat) # one readout
 #	!quiet && textprogressbar('Loading data: ')
 	for icoil = coils
 		@show icoil

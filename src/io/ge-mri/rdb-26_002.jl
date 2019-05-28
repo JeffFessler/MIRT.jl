@@ -25,7 +25,7 @@ function read_rdb_hdr_26_002(fid::IOStream)
 
 	fread = (n::Integer, T::DataType) ->
 		begin
-			data = similar(Array{T}, n)
+			data = Array{T}(undef, n)
 			read!(fid, data)
 			return data
 		end

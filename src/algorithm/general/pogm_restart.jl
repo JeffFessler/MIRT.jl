@@ -129,7 +129,7 @@ Fcostold = Fcost(x0)
 Fgradold = zeros(size(x0)) # dummy
 
 # save initial
-out = similar(Array{Any}, niter+1)
+out = Array{Any}(undef, niter+1)
 out[1] = fun(0, x0, x0, false)
 
 xnew = []

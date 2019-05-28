@@ -44,7 +44,7 @@ function ogm_ls(
 	ninner::Integer=5,
 	fun::Function = (x,iter) -> 0)
 
-out = similar(Array{Any}, niter+1)
+out = Array{Any}(undef, niter+1)
 out[1] = fun(x0, 0)
 
 J = length(B)
