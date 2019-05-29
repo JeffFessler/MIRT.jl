@@ -9,7 +9,7 @@ include("rdb-26_002.jl")
 
 Read GE raw (RDB) header for MRI scans
 
-Returns NamedTuple `s` with header values accessible by s.key
+Returns NamedTuple `s` with header values accessible by `s.key`
 
 Matlab version is:
 Copyright (c) 2012 by General Electric Company. All rights reserved.
@@ -36,10 +36,21 @@ end
 
 """
 `s = read_rdb_hdr(file::String)`
+read from `file`
 """
 function read_rdb_hdr(file::String)
-	fid = open(file)
-	s = read_rdb_hdr(fid)
-	close(fid)
-	return s
+	return open(read_rdb_hdr, file)
+end
+
+
+"""
+`read_rdb_hdr(:test)`
+self test
+"""
+function read_rdb_hdr(test::Symbol)
+	file = "/n/ir71/d3/fessler/fmri-data-michelle-L+S/P97792.7"
+	if isfile(file)
+		return read_rdb_hdr(file).dab[2] == 31
+	end
+	true
 end
