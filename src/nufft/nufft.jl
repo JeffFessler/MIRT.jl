@@ -3,8 +3,7 @@
 # todo: open issues: small N, odd N, nufft!, adjoint!
 # 2019-06-06, Jeff Fessler, University of Michigan
 
-include("dtft.jl")
-
+#using MIRT: dtft_init()
 using NFFT
 using Plots
 using Random: seed!
