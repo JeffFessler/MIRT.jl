@@ -1,5 +1,10 @@
 In reverse chronological order
 
+0.4.0 2019-06-12
+
+2019-06-12
+add dtft, nufft
+
 2019-06-10
 add poweriter
 
