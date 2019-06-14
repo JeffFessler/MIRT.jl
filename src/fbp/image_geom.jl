@@ -63,7 +63,7 @@ end
 `image_geom_add_unitv(:test)`
 """
 function image_geom_add_unitv(test::Symbol)
-	@assert test == :test
+	test != :test && throw(ArgumentError("test $test"))
 	image_geom_add_unitv(zeros(3,4), j=2)
 	image_geom_add_unitv(zeros(3,4), i=[2,3])
 	image_geom_add_unitv(zeros(3,4))
@@ -206,13 +206,13 @@ function image_geom(;
   if offsets == "dsp"
     # now check for errors
     if offset_x == 0 || offset_y == 0
-      error("offsets usage incorrect")
+      throw("offsets usage incorrect")
     end
     offset_x = 0.5
     offset_y = 0.5
     if is3
       if offset_z == 0
-        error("offsets usage incorrect")
+        throw("offsets usage incorrect")
       end
     end
   end
@@ -221,12 +221,12 @@ function image_geom(;
 	if true
 		if isnan(fov)
 			if isnan(dx)
-				error("dx or fov required")
+				throw("dx or fov required")
 			end
 			fov = nx * dx
 		else
 			if !isnan(dx)
-				error("dx and fov?")
+				throw("dx and fov?")
 			end
         	dx = fov / nx
         	dy = fov / ny
@@ -240,12 +240,12 @@ function image_geom(;
 		if isnan(zfov)
 			if isnan(dz)
 			#	dz = dx # nah, too risky; voxels rarely cubic
-				error("dz or zfov required")
+				throw("dz or zfov required")
 			end
 			zfov = nz * dz
 		else
         	if !isnan(dz)
-				error("dz and zfov?")
+				throw("dz and zfov?")
 			end
         	dz = zfov / nz
 		end
@@ -265,7 +265,7 @@ function image_geom(;
   if mask_type == ""
     mask = is3 ? trues(nx, ny, nz) : trues(nx, ny)
   elseif size(mask,1) != nx || size(mask,2) != ny || (is3 && size(mask,3) != nz)
-    error(@sprintf("bad input mask size, nx=%d ny=%d", nx, ny))
+    throw("bad input mask size, nx=$nx ny=$ny")
   end
 
   # start is 0, and end is ny for a single thread
@@ -279,7 +279,7 @@ function image_geom(;
 	rx::Real = min(abs((nx/2-1)*dx), abs((ny/2-1)*dy)),
 	ry::Real=rx, cx::Real=0, cy::Real=0) ->
     begin
-		error("todo: replace the 'ellipse_im' function")
+		throw("todo: replace the 'ellipse_im' function")
 		circ = ones(nx,ny)
 		if is3
 			circ = repmat(circ, 1, nz)
@@ -413,7 +413,7 @@ function image_geom(;
   _expand_nz = (nz_pad::Integer=0) ->
     begin
       if !is3
-        error("expand_nz only valid for 3D")
+        throw("expand_nz only valid for 3D")
       end
       out_nz = nz + 2*nz_pad
       out_zfov = out_nz / nz * zfov
@@ -501,14 +501,14 @@ function downsample(ig::MIRT_image_geom; down::Integer=1)
       down_mask = _downsample3(ig.mask, downv)
       #down_mask = trues(ig.mask)
     else
-      error("bug: bad mask size. need to address mask downsampling")
+      throw("bug: bad mask size. need to address mask downsampling")
     end
   else
     if down_nx * downv[1] == size(ig.mask,1) && down_ny * downv[2] == size(ig.mask,2)
       # mask = downsample2(mask, downv) > 0
       down_mask = trues(ig.mask)
     elseif down_nx != size(ig.mask,1) || down_ny != size(ig.mask,2)
-      error("bug: bad mask size. need to address mask downsampling")
+      throw("bug: bad mask size. need to address mask downsampling")
     end
  end
 
@@ -590,7 +590,7 @@ end
 `image_geom(:test)`
 """
 function image_geom(test::Symbol)
-	@assert test == :test
+	test != :test && throw(ArgumentError("test $test"))
 	@test image_geom_test2()
 	@test image_geom_test3()
 	true
@@ -601,8 +601,8 @@ end
 `embed(:test)`
 """
 function embed(test::Symbol)
-	@assert test == :test
+	test != :test && throw(ArgumentError("test $test"))
 	mask = [false true true; true false false]
-	@assert embed(1:3,mask) == [0 2 3; 1 0 0]
+	@test embed(1:3,mask) == [0 2 3; 1 0 0]
 	true
 end
