@@ -11,10 +11,11 @@ using SparseArrays: issparse#, find, ind,
 """
 `array = embed(v, mask)`
 
-embed vector v of length sum(mask) into elements of an array where mask is true
+embed vector `v` of length `sum(mask)`
+into elements of an array where `mask` is `true`
 """
 function embed(
-		v::AbstractArray{<:Number,1},
+		v::AbstractVector{<:Number},
 		mask::AbstractArray{Bool,N} where N)
 	array = zeros(eltype(v), size(mask))
 	array[mask] .= v
@@ -161,38 +162,39 @@ end
 
 # see https://docs.julialang.org/en/stable/manual/constructors/
 """
-Constructor for MIRT_image_geom
-ig = image_geom(...)
+`ig = image_geom(...)`
+
+Constructor for `MIRT_image_geom`
 
 option:
-	nx::Integer              = 128
-	ny::Integer              = nx
-	dx::Real                 = ?
-	dy::Real                 = -dx
-	offset_x::Real           = 0
-	offset_y::Real           = 0
-	fov::Real                = ? (if specific, then nx*dx=ny*dy)
-   	nz::Integer              = 0
-   	dz::Real                 = ?
-   	zfov::Real               = ?
-   	offset_z::Real           = 0
-   	offsets::String          = "" (e.g., "dsp")
-   	mask_type::String        = "" (e.g., "all-but-edge")
+* `nx::Integer              = 128`
+* `ny::Integer              = nx`
+* `dx::Real                 = ?`
+* `dy::Real                 = -dx`
+* `offset_x::Real           = 0`
+* `offset_y::Real           = 0`
+* `fov::Real                = ?` (if specific, then `nx*dx=ny*dy`)
+* `nz::Integer              = 0`
+* `dz::Real                 = ?`
+* `zfov::Real               = ?`
+* `offset_z::Real           = 0`
+* `offsets::String          = ""` (e.g., "dsp")
+* `mask_type::String        = ""` (e.g., "all-but-edge")
 """
 function image_geom(;
-		nx::Integer              = 128,
-		ny::Integer              = nx,
-		dx::Real                 = NaN,
-		dy::Real                 = NaN,
-		offset_x::Real           = 0,
-		offset_y::Real           = 0,
+		nx::Integer             = 128,
+		ny::Integer             = nx,
+		dx::Real                = NaN,
+		dy::Real                = NaN,
+		offset_x::Real          = 0,
+		offset_y::Real          = 0,
 		fov::Real				= NaN,
-		nz::Integer              = 0,
-		dz::Real                 = NaN,
-		zfov::Real               = NaN,
-		offset_z::Real           = 0,
-		offsets::String          = "",
-		mask_type::String        = "",
+		nz::Integer             = 0,
+		dz::Real                = NaN,
+		zfov::Real              = NaN,
+		offset_z::Real          = 0,
+		offsets::String         = "",
+		mask_type::String       = "",
 	) where T <: Real
 
   # now for the constructor
