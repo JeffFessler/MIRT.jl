@@ -4,9 +4,6 @@
 # 2019-06-06, Jeff Fessler, University of Michigan
 
 #using MIRT: dtft_init, map_many
-#using MIRT: dtft_init # todo tmp
-include("dtft.jl") # todo
-include("../utility/map_many.jl") # todo
 using NFFT
 using Plots
 using Random: seed!
