@@ -3,7 +3,10 @@
 # todo: open issues: small N, odd N, nufft!, adjoint!
 # 2019-06-06, Jeff Fessler, University of Michigan
 
-#using MIRT: dtft_init()
+#using MIRT: dtft_init, map_many
+#using MIRT: dtft_init # todo tmp
+include("dtft.jl") # todo
+include("../utility/map_many.jl") # todo
 using NFFT
 using Plots
 using Random: seed!
@@ -27,6 +30,7 @@ end
 
 # the following convenience routine ensures correct type passed to nfft()
 # see https://github.com/tknopp/NFFT.jl/pull/33
+# todo: may be unnecessary with future version of nfft()
 """
 `nufft_typer(T::DataType, x::AbstractArray{<:Real}; warn::Bool=true)`
 type conversion wrapper for `nfft()`
@@ -59,6 +63,7 @@ option
 * `n_shift::Real`		often is N/2; default 0
 * `pi_error::Bool`		throw error if ``|w| > π``, default `true`
    + Set to `false` only if you are very sure of what you are doing!
+* `do_many::Bool`	support extended inputs via `map_many`? default `true`
 
 out
 * `p NamedTuple` with fields
@@ -74,6 +79,7 @@ function nufft_init(w::AbstractArray{<:Real}, N::Int;
 		nfft_m::Int = 4,
 		nfft_sigma::Real = 2.0,
 		pi_error::Bool = true,
+		do_many::Bool = true,
 	)
 
 	N < 6 && throw("NFFT may be erroneous for small N")
@@ -89,10 +95,19 @@ function nufft_init(w::AbstractArray{<:Real}, N::Int;
 	# extra phase here because NFFT always starts from -N/2
 	phasor = CT.(cis.(-w * (N/2 - n_shift)))
 	phasor_conj = conj.(phasor)
-	forw = x -> nfft(p, nufft_typer(CT, x)) .* phasor
+	forw1 = x -> nfft(p, nufft_typer(CT, x)) .* phasor
 #	forw! = x,y -> nfft!(p, nufft_typer(CT, x)) .* phasor # todo
-	back = y -> nfft_adjoint(p, nufft_typer(CT, y .* phasor_conj))
-	A = LinearMap{CT}(x -> forw(x), y -> back(y), M, N)
+	back1 = y -> nfft_adjoint(p, nufft_typer(CT, y .* phasor_conj))
+
+	A = LinearMap{CT}(x -> forw1(x), y -> back1(y), M, N) # no "many" here!
+
+	if do_many
+		forw = x -> map_many(forw1, x, (N,))
+		back = y -> map_many(back1, y, (M,))
+	else
+		forw = forw1
+		back = back1
+	end
 
 	return (nufft=forw, adjoint=back, A=A)
 end
@@ -117,10 +132,17 @@ option
 * `n_shift::AbstractVector{<:Real}`	`[D]`	often is N/2; default zeros(D)
 * `pi_error::Bool`		throw error if ``|w| > π``, default `true`
    + Set to `false` only if you are very sure of what you are doing!
+* `do_many::Bool`	support extended inputs via `map_many`? default `true`
+
+The default `do_many` option is designed for parallel MRI where the k-space
+sampling pattern applies to every coil.
+It may also be useful for dynamic MRI with repeated sampling patterns.
+The coil and/or time dimensions must come after the spatial dimensions.
 
 out
 * `p NamedTuple` with fields
 	`nufft = x -> nufft(x), adjoint = y -> nufft_adj(y), A=LinearMap`
+	(The LinearMap does not support `do_many`.)
 """
 function nufft_init(w::AbstractMatrix{<:Real},
 		N::Dims;
@@ -128,6 +150,7 @@ function nufft_init(w::AbstractMatrix{<:Real},
 		nfft_m::Int = 4,
 		nfft_sigma::Real = 2.0,
 		pi_error::Bool = true,
+		do_many::Bool = true,
 	)
 
 	any(N .< 6) && throw("NFFT may be erroneous for small N")
@@ -147,9 +170,19 @@ function nufft_init(w::AbstractMatrix{<:Real},
 	# extra phase here because NFFT always starts from -N/2
 	phasor = CT.(cis.(-w * (collect(N)/2. - n_shift)))
 	phasor_conj = conj.(phasor)
-	forw = x -> nfft(p, nufft_typer(CT, x)) .* phasor
-	back = y -> nfft_adjoint(p, nufft_typer(CT, y .* phasor_conj))
-	A = LinearMap{CT}(x -> forw(reshape(x,N)), y -> back(y)[:], M, prod(N))
+	forw1 = x -> nfft(p, nufft_typer(CT, x)) .* phasor
+	back1 = y -> nfft_adjoint(p, nufft_typer(CT, y .* phasor_conj))
+
+	# no "many" for LinearMap:
+	A = LinearMap{CT}(x -> forw1(reshape(x,N)), y -> back1(y)[:], M, prod(N))
+
+	if do_many
+		forw = x -> map_many(forw1, x, N)
+		back = y -> map_many(back1, y, (M,))
+	else
+		forw = forw1
+		back = back1
+	end
 
 	return (nufft=forw, adjoint=back, A=A)
 end
@@ -237,6 +270,11 @@ function nufft_test2(;
 	a2 = reshape(a2, N)
 	@test isequal(a1, a2)
 	@test isapprox(Matrix(sn.A)', Matrix(sn.A')) # 2D adjoint test
+
+	@test isequal(sn.nufft(cat(dims=4, x, 2x)),
+		cat(dims=3, sn.nufft(x), sn.nufft(2x)))
+	@test isequal(sn.adjoint(cat(dims=3, y, 2y)),
+			cat(dims=4, sn.adjoint(y), sn.adjoint(2y)))
 	true
 end
 
