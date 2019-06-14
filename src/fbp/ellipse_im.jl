@@ -58,7 +58,7 @@ function ellipse_im(ig::MIRT_image_geom,
 #	elseif how == :slow
 #		phantom = ellipse_im_slow(args...)
 	else
-		error("bad how")
+		throw("bad how $how")
 	end
 
 	if oversample > 1
@@ -132,7 +132,7 @@ function ellipse_im_fast(nx, ny, params_in, dx, dy,
 
 	params = copy(params_in)
 	if size(params,2) != 6
-		error("bad ellipse parameter vector size")
+		throw("bad ellipse parameter vector size")
 	end
 
 	# optional rotation
@@ -234,7 +234,7 @@ end
 """
 `phantom = ellipse_im(ig, code, kwarg...)`
 
-`code = :shepplogan | :shepplogan_emis | :shepplogan_brainweb`
+`code = :shepplogan | :shepplogan_emis | :shepplogan_brainweb | :southpark`
 """
 function ellipse_im(ig::MIRT_image_geom, params::Symbol; kwarg...)
 	fov = ig.fov
@@ -244,8 +244,10 @@ function ellipse_im(ig::MIRT_image_geom, params::Symbol; kwarg...)
 		params = shepp_logan_parameters(fov, fov, case=:emis)
 	elseif params == :shepplogan_brainweb
 		params = shepp_logan_parameters(fov, fov, case=:brainweb)
+	elseif params == :southpark
+		params = south_park_parameters(fov=fov)
 	else
-		error("bad phantom symbol")
+		throw("bad phantom symbol $params")
 	end
 	return ellipse_im(ig, params; kwarg...)
 end
@@ -309,10 +311,27 @@ function shepp_logan_parameters(xfov::Real, yfov::Real; case::Symbol=:kak)
 	elseif case == :brainweb
 		params[:,6] = [1, 0, 2, 3, 4, 5, 6, 7, 8, 9] # brainweb uses index 1-10
 	elseif case != :kak
-		error("bad phantom case")
+		throw("bad phantom case $case")
 	end
 
 	return params
+end
+
+
+"""
+`param = south_park_parameters(;fov::Real = 100)`
+"""
+function south_park_parameters(;fov::Real = 100)
+	xell = [
+		0. 0 85 115 0 100;
+		0 -60 30 20 0 -80; # mouth
+		30 20 25 35 30 20; # eyes
+		-30 20 25 35 -30 20;
+		35 25 7 7 0 -100; # pupils
+		-15 25 7 7 0 -100;
+		0 75 60 15 0 -50]; # hat
+	xell[:,1:4] .*= fov/256
+	return xell
 end
 
 
@@ -352,10 +371,13 @@ function ellipse_im_show()
 	x1 = ellipse_im(ig, :shepplogan_emis, oversample=over)
 	p4 = jim(x1, title="Shepp Logan Emission")
 
+	x2 = ellipse_im(ig, :southpark)
+	p2 = jim(x2, title="South Park")
+
 	x3 = ellipse_im(ig, :shepplogan_brainweb)
 	p5 = jim(x3, title="Shepp Logan Brainweb")
 
-	plot(p1,p4,p5)
+	plot(p1,p2,p4,p5)
 end
 
 
@@ -384,7 +406,7 @@ function ellipse_im_aspire()
 	jim((jul-asp)*over^2, title="difference: (jul-asp)*over^2")
 
 	@show maximum(abs.(jul - mat)) / ell[6] * over^2
-	@assert isapprox(jul, mat)
+	!isapprox(jul, mat) && throw("approximation error")
 #	max_percent_diff(mat, asp)
 
 	area_real = pi * ell[3] * ell[4] * ell[6]
@@ -438,7 +460,7 @@ function ellipse_im(test::Symbol)
 	if test == :show
 		return ellipse_im_show()
 	end
-	@assert test == :test
+	test != :test && throw(ArgumentError("test $test"))
 	ellipse_im()
 	ellipse_im(:show)
 	ellipse_im_test()
