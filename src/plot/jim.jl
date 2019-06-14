@@ -8,10 +8,10 @@ using FFTViews
 # global default key/values
 jim_def = Dict([
 	:aspect_ratio => :equal,
-	:clim => [],
+	:clim => nothing,
 	:color => :grays,
 	:ncol => 0,
-	:padval => 0,
+	:padval => nothing,
 	:mosaic_npad => 1,
 	:title => "",
 	:xlabel => "",
@@ -20,6 +20,15 @@ jim_def = Dict([
 	:yflip => nothing, # defer to minimum value of y - see default below
 	:abswarn => true, # warn when taking abs of complex images?
 	])
+
+
+"""
+`nothing_else(x, y)`
+return `y` if `x` is nothing, else return `x`
+"""
+function nothing_else(x, y)
+	return x == nothing ? y : x
+end
 
 
 """
@@ -37,11 +46,11 @@ option
 * `ncol` for mosaicview for 3D and higher arrays; default `0` does auto select
 * `padval` padding value for mosaic view; default `minimum(z)`
 * `mosaic_npad` # of pixel padding for mosaic view; default 1
-* `fft0` if true use FFTView to display; default false
+* `fft0` if true use FFTView to display; default `false`
 * `title` for heatmap; default `""`
 * `xlabel` for heatmap; default `""`
 * `ylabel` for heatmap; default `""`
-* `yflip` for heatmap; default `true` if minimum(y) >= 0
+* `yflip` for heatmap; default `true` if `minimum(y) >= 0`
 * `x` for x axis; default `1:size(z,1)`
 * `y` for y axis; default `1:size(z,2)`
 * `xtick` for heatmap; default `[minimum(x),maximum(x)]`
@@ -50,19 +59,18 @@ option
 out
 * returns plot handle
 
-
 2019-02-23 Jeff Fessler, University of Michigan
 """
-function jim(z;
+function jim(z::AbstractArray{<:Real};
 	aspect_ratio = jim_def[:aspect_ratio],
-	clim = jim_def[:clim],
+	clim = nothing_else(jim_def[:clim], (minimum(z), maximum(z))),
 	color = jim_def[:color],
 	ncol::Integer = jim_def[:ncol],
-	padval = jim_def[:padval],
+	padval = nothing_else(jim_def[:padval], minimum(z)),
 	mosaic_npad::Integer = jim_def[:mosaic_npad],
-	title = jim_def[:title],
-	xlabel = jim_def[:xlabel],
-	ylabel = jim_def[:ylabel],
+	title::String = jim_def[:title],
+	xlabel::String = jim_def[:xlabel],
+	ylabel::String = jim_def[:ylabel],
 	fft0::Bool = jim_def[:fft0],
 	x = fft0 ? Int.(-size(z,1)/2:size(z,1)/2-1) : (1:size(z,1)),
 	y = fft0 ? Int.(-size(z,2)/2:size(z,2)/2-1) : (1:size(z,2)),
@@ -70,24 +78,9 @@ function jim(z;
 		 [minimum(x),0,maximum(x)] : [minimum(x),maximum(x)],
 	ytick = (minimum(y) < 0 && maximum(y) > 0) ?
 		 [minimum(y),0,maximum(y)] : [minimum(y),maximum(y)],
-	yflip::Bool = jim_def[:yflip] == nothing ? minimum(y) >= 0 : jim_def[:yflip],
-	abswarn::Bool = jim_def[:abswarn],
+	yflip::Bool = nothing_else(jim_def[:yflip], minimum(y) >= 0),
+	abswarn::Bool = jim_def[:abswarn], # ignored here
 	)
-
-	if !isreal(z)
-		if abswarn
-			@warn "magnitude"
-		end
-		z = abs.(z)
-	end
-
-	if isempty(clim) # must wait until after possible abs() to do this
-		clim = (minimum(z), maximum(z))
-	end
-
-	if isempty(padval) # must wait until after possible abs() to do this
-		padval = minimum(z)
-	end
 
 	xy = (x, y)
 	if ndims(z) > 2
@@ -100,18 +93,34 @@ function jim(z;
 		z = FFTView(z)[x,y]
 	end
 
-heatmap(xy..., z', transpose=false,
-	aspect_ratio=aspect_ratio,
-	clim=clim,
-	color=color,
-	title=title,
-	yflip=yflip,
-	xlabel=xlabel,
-	ylabel=ylabel,
-	xtick=xtick,
-	ytick=ytick)
+	heatmap(xy..., z', transpose=false,
+		aspect_ratio=aspect_ratio,
+		clim=clim,
+		color=color,
+		title=title,
+		yflip=yflip,
+		xlabel=xlabel,
+		ylabel=ylabel,
+		xtick=xtick,
+		ytick=ytick)
 
 end # jim
+
+
+# handle case of complex image
+function jim(z::AbstractArray{<:Number};
+		abswarn::Bool = jim_def[:abswarn],
+		kwargs...
+		)
+
+	if !(eltype(z) <: Real)
+		if abswarn
+			@warn "magnitude"
+		end
+		z = abs.(z)
+	end
+	jim(z; kwargs...)
+end
 
 
 """
@@ -168,7 +177,7 @@ end
 
 `jim(:keys)` return default keys
 
-`jim(:defs)` return Dict of default keys / vals
+`jim(:defs)` return `Dict` of default keys / vals
 """
 function jim(test::Symbol)
 	global jim_def
@@ -178,12 +187,14 @@ function jim(test::Symbol)
 	if test == :defs
 		return jim_def
 	end
-	@assert test == :test
+	test != :test && throw("symbol $test")
 	jim(:abswarn, false)
 	jim(ones(4,3), title="test2")
 	jim(ones(4,3,5), title="test3")
 	jim(1:4, 5:9, zeros(4,5), title="test3")
 	jim(zeros(4,5), x=1:4, y=5:9, title="test3")
 	jim(x=1:4, y=5:9, rand(4,5), title="test4")
+	jim(complex(rand(4,3)))
+	jim(complex(rand(4,3)), "complex")
 	true
 end
