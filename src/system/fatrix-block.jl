@@ -2,8 +2,11 @@
 # 2019-06-15, Jeff Fessler, University of Michigan
 
 using LinearMaps
-const FatrixVector{T} = Vector{Union{LinearMap,AbstractMatrix{T}}}
-# todo: include I
+using LinearAlgebra: I
+#const FatrixVector{T} = Vector{Union{LinearMap,AbstractMatrix{T}}}
+if !@isdefined(FatrixVector)
+	FatrixVector{T} = Vector{<:Any} # include I etc.
+end
 
 """
 `ob = block_fatrix(blocks, ...)`
@@ -11,30 +14,28 @@ const FatrixVector{T} = Vector{Union{LinearMap,AbstractMatrix{T}}}
 Construct block_fatrix object composed of fatrix blocks.
 such as block_diag(A_1, A_2, ..., A_M)
 
-See `block_fatrix_test()` for example usage.
+See `block_fatrix(:test)` for example usage.
 
 in
 * `blocks::FatrixVector`	array of the blocks
 
 * option
 * `how::Symbol` options:
-	+ `:diag` for block diagonal (default)
 	+ `:col` for `[A_1; A_2; ...; A_M]`
+	+ `:diag` for block diagonal (default)
 	+ `:kron` for `kron(eye(Mkron), blocks[1])`
 	+ `:row` for `[A1, A2, ..., A_M]`
 	+ `:sum` for `A1 + A2 + ... + A_M`
-* `T::DataType` default `Float32`
+* `T::DataType` default `promote_type(eltype.(blocks)...)`
 * `Mkron::Int' required for `:kron` type
 * `tomo::Bool` special support for tomography-type objects; default `false`
 
 out
 * `ob`	LinearMap
 """
-
 function block_fatrix(
-	#	blocks::Vector{Union{LinearMap,AbstractMatrix}};
 		blocks::FatrixVector;
-		T::DataType = Float32,
+		T::DataType = promote_type(eltype.(blocks)...),
 		how::Symbol = :diag,
 		tomo::Bool = false,
 		Mkron::Int = 0,
@@ -60,20 +61,25 @@ end
 """
 `block_fatrix_col()`
 """
-function block_fatrix_col(blocks::FatrixVector, T::DataType, tomo::Int)
+function block_fatrix_col(blocks::FatrixVector, T::DataType, tomo::Bool)
 
 	MM = length(blocks)
-	dims = zeros(MM, 2)
+	dims = zeros(Int, MM, 2)
 	for mm=1:MM
-		dims[mm,:] = size(blocks[mm])
+		B = blocks[mm]
+		if B == I
+			throw("I not yet supported")
+		end
+		dims[mm,:] .= size(B)
 		dims[mm,2] != dims[1,2] && throw("all blocks must have same #cols for :col")
 	end
+	@show dims
 
 	# start/end indices for selecting parts of x and y
-	istart = cumsum([1; dims[1:end-1,1]])
-	iend = istart + dims[:,1] .- 1
+	@show istart = cumsum([1; dims[1:end-1,1]])
+	@show iend = istart + dims[:,1] .- 1
 
-	dim = [sum(dims[:,1]), dims(1,2)]
+	dim = [sum(dims[:,1]), dims[1,2]]
 
 #	if tomo # prep for mat2cell later
 #		for mm=1:MM
@@ -93,74 +99,11 @@ function block_fatrix_col(blocks::FatrixVector, T::DataType, tomo::Int)
 
 	# build Fatrix object
 	return LinearMap{T}(
-			x -> block_fatrix_col_forw(blocks, x),
-			y -> block_fatrix_col_back(blocks, y, istart, iend),
+			x -> vcat([blocks[mm] * x for mm=1:MM]...),
+			y -> sum([blocks[mm]' * (@view y[istart[mm]:iend[mm]]) for mm=1:MM]),
 			dim[1], dim[2])
 end
 
-
-#
-# block_fatrix_col_forw(): y = A * x
-#
-function block_fatrix_col_forw(blocks::FatrixVector, x::AbstractVector{<:Number})
-	MM = length(blocks)
-	return vcat([blocks[mm] * x for mm=1:MM]...)
-
-#	y = Array{Any}(undef, MM)
-#	for mm=1:MM
-#		y[mm] = blocks[mm] * x
-#	end
-
-	#if ~arg.tomo || ncol(y{1}) == 1 ...
-	#	|| (arg.tomo && arg.dim(2) == size(x,1)) % [np (L)]
-	#	y = cat(1, y{:})
-	#else % handle 'tomo' case where x is not a single column
-	#	y = cat(arg.tomo_dim, y{:})
-	#end
-
-#	return vcat(y...)
-end
-
-
-#
-# block_fatrix_col_back(): x = A' * y
-#
-function block_fatrix_col_back(blocks::FatrixVector,
-		y::AbstractVector{<:Number},
-		istart::Vector{Int},
-		iend::Vector{Int})
-
-	MM = length(blocks)
-	#if arg.tomo
-	#	if arg.dim(1) == size(y,1) % [nd (L)]
-	#		arg.tomo = 0
-	#	else % [(odim) (L)] split into separate parts, undoing cat(?, y{:})
-	#		tmp = size(y)
-	#		if length(tmp) == arg.tomo_ndim
-	#			yc = mat2cell(y, arg.mat2cell_arg{:})
-	#		elseif length(tmp) > arg.tomo_ndim
-	#			yc = mat2cell(y, arg.mat2cell_arg{:}, ...
-	#				tmp((arg.tomo_ndim+1):end)); % handle (L)
-	#		else
-	#			error 'bug'
-	#		end
-	#	end
-	#end
-
-#	x = 0
-#	for mm=1:MM
-#		if ~arg.tomo % [nd (L)]
-#			jj = istart[mm]:iend[mm]
-#			yi = y(jj,:)
-#		else
-#			yi = yc[mm]
-#		end
-#			t = arg.blocks[mm]' * yi
-#		x = x + t
-#	end
-
-	return sum([blocks[mm]' * y[istart[mm]:iend[mm]] for mm=1:MM])
-end
 
 
 """
@@ -412,6 +355,18 @@ self test
 """
 function block_fatrix(test::Symbol)
 	test != :test && throw(ArgumentError("test $test"))
-	todo
+
+	# test :col
+	A = ones(4,3)
+	B = LinearMap(x -> A*x, y -> A'*y, 4, 3)
+#	C = I # todo later
+	C = [2A; 3A]
+	blocks = [A, B, C]
+	T = block_fatrix(blocks, how=:col)
+	T * ones(3)
+	T' * ones(size(T,1))
+#	todo
 	true
 end
+
+block_fatrix(:test) # todo
