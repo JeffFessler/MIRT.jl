@@ -56,7 +56,7 @@ end
 # A[i,:]
 function Base.getindex(A::LinearMap, i::Integer, ::Colon)
 	# in Julia: A[i,:] = A'[:,i] for real matrix A else need conjugate
-	return isreal(A) ? A'[:,i] : conj.(A'[:,i])
+	return eltype(A) <: Complex ? conj.(A'[:,i]) : A'[:,i]
 end
 
 # A[:,j:k]
@@ -92,30 +92,30 @@ end
 
 function ir_LinearMap_test_getindex(A::LinearMap)
 	B = Matrix(A)
-	@assert all(size(A) .>= (4,4)) # required by tests
-	@assert B[1] == A[1]
-	@assert B[7] == A[7]
-	@assert B[:,5] == A[:,5]
-	@assert B[3,:] == A[3,:]
-	@assert B[1,3] == A[1,3]
-	@assert B[:,1:3] == A[:,1:3]
-	@assert B[1:3,:] == A[1:3,:]
-	@assert B[1:3,2:4] == A[1:3,2:4]
-	@assert B == A[:,:]
-	@assert B'[3] == A'[3]
-	@assert B'[:,4] == A'[:,4]
-	@assert B'[2,:] == A'[2,:]
-	@assert B[end] == A[end] # lastindex
-	@assert B[3,end-1] == A[3,end-1]
+	@test all(size(A) .>= (4,4)) # required by tests
+	@test B[1] == A[1]
+	@test B[7] == A[7]
+	@test B[:,5] == A[:,5]
+	@test B[3,:] == A[3,:]
+	@test B[1,3] == A[1,3]
+	@test B[:,1:3] == A[:,1:3]
+	@test B[1:3,:] == A[1:3,:]
+	@test B[1:3,2:4] == A[1:3,2:4]
+	@test B == A[:,:]
+	@test B'[3] == A'[3]
+	@test B'[:,4] == A'[:,4]
+	@test B'[2,:] == A'[2,:]
+	@test B[end] == A[end] # lastindex
+	@test B[3,end-1] == A[3,end-1]
 
 	# The following do not work because currently LinearMap is not a
 	# subtype of AbstractMatrix.  If it were such a subtype, then LinearMap
 	# would inherit general Base.getindex abilities
 	if false # todo later, if/when LinearMap is a subtype of AbstractMatrix
-		@assert B[[1, 3, 4]] == A[[1, 3, 4]]
-		@assert B[:, [1, 3, 4]] == A[:, [1, 3, 4]]
-		@assert B[[1, 3, 4], :] == A[[1, 3, 4], :]
-		@assert B[4:7] == A[4:7]
+		@test B[[1, 3, 4]] == A[[1, 3, 4]]
+		@test B[:, [1, 3, 4]] == A[:, [1, 3, 4]]
+		@test B[[1, 3, 4], :] == A[[1, 3, 4], :]
+		@test B[4:7] == A[4:7]
 	end
 	true
 end
@@ -126,7 +126,7 @@ end
 function ir_lm_test_getindex_cumsum( ; N::Integer=5)
 	A = LinearMap(cumsum, y -> reverse(cumsum(reverse(y))), N)
 	ir_LinearMap_test_getindex(A)
-	@assert Matrix(A)' == Matrix(A')
+	@test Matrix(A)' == Matrix(A')
 #	@show A[:,4]
 	true
 end
