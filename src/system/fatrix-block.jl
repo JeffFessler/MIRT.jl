@@ -1,25 +1,26 @@
-# fatrix-block.jl
+# lm-block.jl
+# block operations for linear maps
 # 2019-06-15, Jeff Fessler, University of Michigan
 
 using LinearMaps
 using LinearAlgebra: I
 using Test: @test
 
-#const FatrixVector{T} = Vector{Union{LinearMap,AbstractMatrix{T}}}
-if !@isdefined(FatrixVector)
-	FatrixVector{T} = Vector{<:Any} # include I etc.
+#const BlockVector{T} = Vector{Union{LinearMap,AbstractMatrix{T}}}
+if !@isdefined(BlockVector)
+	BlockVector{T} = Vector{<:Any} # include I etc.
 end
 
 """
-`ob = block_fatrix(blocks, ...)`
+`ob = block_lm(blocks, ...)`
 
-Construct block_fatrix object composed of fatrix blocks.
+Construct LinearMap object composed of blocks.
 such as block_diag(A_1, A_2, ..., A_M)
 
-See `block_fatrix(:test)` for example usage.
+See `block_lm(:test)` for example usage.
 
 in
-* `blocks::FatrixVector`	array of the blocks
+* `blocks::BlockVector`	array of the blocks
 
 * option
 * `how::Symbol` options:
@@ -35,8 +36,8 @@ in
 out
 * `ob`	LinearMap
 """
-function block_fatrix(
-		blocks::FatrixVector;
+function block_lm(
+		blocks::BlockVector;
 		T::DataType = promote_type(eltype.(blocks)...),
 		how::Symbol = :diag,
 		tomo::Bool = false,
@@ -44,15 +45,15 @@ function block_fatrix(
 	)
 
 	if how == :col
-		 return block_fatrix_col(blocks, T, tomo)
+		 return block_lm_col(blocks, T, tomo)
 	elseif how == :diag
-		return block_fatrix_diag(blocks, T)
+		return block_lm_diag(blocks, T)
 	elseif how == :kron
-		return block_fatrix_kron(blocks, T, Mkron)
+		return block_lm_kron(blocks, T, Mkron)
 	elseif how == :row
-		return block_fatrix_row(blocks, T)
+		return block_lm_row(blocks, T)
 	elseif how == :sum
-		return block_fatrix_sum(blocks, T)
+		return block_lm_sum(blocks, T)
 	else
 		throw(ArgumentError("unknown block type $how"))
 	end
@@ -60,9 +61,9 @@ end
 
 
 """
-`block_fatrix_col()`
+`block_lm_col()`
 """
-function block_fatrix_col(blocks::FatrixVector, T::DataType, tomo::Bool)
+function block_lm_col(blocks::BlockVector, T::DataType, tomo::Bool)
 
 	MM = length(blocks)
 	dims = zeros(Int, MM, 2)
@@ -97,7 +98,6 @@ function block_fatrix_col(blocks::FatrixVector, T::DataType, tomo::Bool)
 #		end
 #	end
 
-	# build Fatrix object
 	return LinearMap{T}(
 			x -> vcat([blocks[mm] * x for mm=1:MM]...),
 			y -> sum([blocks[mm]' * (@view y[istart[mm]:iend[mm]]) for mm=1:MM]),
@@ -108,9 +108,9 @@ end
 
 """
 #
-# block_fatrix_col_gram()
+# block_lm_col_gram()
 #
-function [T, reuse] = block_fatrix_col_gram(ob, W, reuse, varargin)
+function [T, reuse] = block_lm_col_gram(ob, W, reuse, varargin)
 
 blocks = ob.blocks
 T = cell(size(blocks))
@@ -131,30 +131,30 @@ for mm=1:length(blocks)
 				T[mm] = build_gram(A, W.blocks[mm], ...
 					reuse, varargin{:})
 			else
-				fail('block_fatrix_col_gram needs block diag W')
+				fail('block_lm_col_gram needs block diag W')
 			end
 		end
 	end
 end
-T = fatrix_plus(T{:})
+T = block_lm(T, how=:sum)
 """
 
 
 """
-`block_fatrix_row()`
+`block_lm_row()`
 trick: just reuse col via transpose!
-cannot use hcat(blocks...) because there might be a mix of matrix/fatrix
+cannot use hcat(blocks...) because there might be a mix of Matrix/LinearMaps
 """
-function block_fatrix_row(blocks::FatrixVector, T::DataType)
+function block_lm_row(blocks::BlockVector, T::DataType)
 	tblocks = [b' for b in blocks] # trick: transpose
-	return block_fatrix(tblocks, how=:col)' # trick: transpose
+	return block_lm(tblocks, how=:col)' # trick: transpose
 end
 
 
 """
-`block_fatrix_diag()`
+`block_lm_diag()`
 """
-function block_fatrix_diag(blocks::FatrixVector, T::DataType)
+function block_lm_diag(blocks::BlockVector, T::DataType)
 
 	MM = length(blocks)
 #	@show dims = vcat(map(size, blocks))
@@ -171,7 +171,6 @@ function block_fatrix_diag(blocks::FatrixVector, T::DataType)
 
 	dim = sum(dims, dims=1)
 
-	# build Fatrix object
 	return LinearMap{T}(
 		x -> vcat([blocks[mm] * x[jstart[mm]:jend[mm]] for mm=1:MM]...),
 		y -> vcat([blocks[mm]' * y[istart[mm]:iend[mm]] for mm=1:MM]...),
@@ -181,21 +180,21 @@ end
 
 """
 #
-# block_fatrix_diag_mtimes_block()
+# block_lm_diag_mtimes_block()
 # caution: it is quite unclear whether these are useful!
 #
-function y = block_fatrix_diag_mtimes_block(arg, is_transpose, x, istart, nblock)
+function y = block_lm_diag_mtimes_block(arg, is_transpose, x, istart, nblock)
 if is_transpose
-	y = block_fatrix_diag_block_back(arg, x, istart, nblock)
+	y = block_lm_diag_block_back(arg, x, istart, nblock)
 else
-	y = block_fatrix_diag_block_forw(arg, x, istart, nblock)
+	y = block_lm_diag_block_forw(arg, x, istart, nblock)
 end
 
 
 #
-# block_fatrix_diag_block_forw()
+# block_lm_diag_block_forw()
 #
-function y = block_fatrix_diag_block_forw(arg, x, istart, nblock)
+function y = block_lm_diag_block_forw(arg, x, istart, nblock)
 
 if nrow(x) ~= dim(2)
 	error('x size=%d vs dim(2)=%d', nrow(x), dim(2))
@@ -208,9 +207,9 @@ end
 
 
 #
-# block_fatrix_diag_block_back()
+# block_lm_diag_block_back()
 #
-function x = block_fatrix_diag_block_back(arg, y, istart, nblock)
+function x = block_lm_diag_block_back(arg, y, istart, nblock)
 
 if nrow(y) ~= dim(1), error 'bad y size', end
 x = []
@@ -221,9 +220,9 @@ end
 
 
 #
-# block_fatrix_diag_gram()
+# block_lm_diag_gram()
 #
-function [T, reuse] = block_fatrix_diag_gram(ob, W, reuse, varargin)
+function [T, reuse] = block_lm_diag_gram(ob, W, reuse, varargin)
 
 blocks = ob.blocks
 T = cell(size(blocks))
@@ -239,14 +238,14 @@ for mm=1:length(blocks)
 		T[mm] = build_gram(A, W, reuse, varargin{:})
 	end
 end
-T = block_fatrix(T, 'type', 'diag')
+T = block_lm(T, 'type', 'diag')
 """
 
 
 #
-# block_fatrix_kron()
+# block_lm_kron()
 #
-function block_fatrix_kron(blocks::FatrixVector, T::DataType, Mkron::Int)
+function block_lm_kron(blocks::BlockVector, T::DataType, Mkron::Int)
 
 	length(blocks) != 1 && throw(ArgumentError("kron expects exactly one block"))
 
@@ -267,9 +266,9 @@ end
 
 """
 #
-# block_fatrix_kron_mtimes_block(): y = A{ib} * x
+# block_lm_kron_mtimes_block(): y = A{ib} * x
 #
-function y = block_fatrix_kron_mtimes_block(arg, is_transpose, x, iblock, nblock)
+function y = block_lm_kron_mtimes_block(arg, is_transpose, x, iblock, nblock)
 
 bl1 = blocks{1}; % base block, already put through Gblock
 warn 'todo: size check not done'
@@ -301,9 +300,9 @@ end
 
 
 #
-# block_fatrix_sum()
+# block_lm_sum()
 #
-function block_fatrix_sum(blocks::FatrixVector, T::DataType)
+function block_lm_sum(blocks::BlockVector, T::DataType)
 	dim = size(blocks[1])
 	MM = length(blocks)
 	for mm=1:MM
@@ -311,7 +310,6 @@ function block_fatrix_sum(blocks::FatrixVector, T::DataType)
 			throw(DimensionMismatch("blocks must have same size for :sum"))
 	end
 
-	# build Fatrix object
 	return LinearMap{T}(
 			x -> sum([blocks[mm] * x for mm=1:MM]),
 			y -> sum([blocks[mm]' * y for mm=1:MM]),
@@ -321,11 +319,11 @@ end
 
 """
 #
-# block_fatrix_free()
+# block_lm_free()
 #
-function block_fatrix_free(arg)
+function block_lm_free(arg)
 if chat
-	printm 'freeing block_fatrix object static memory'
+	printm 'freeing block_lm object static memory'
 end
 for mm=1:length(blocks)
 	try
@@ -338,18 +336,18 @@ end
 
 """
 #
-# block_fatrix_update()
+# block_lm_update()
 #
-function out = block_fatrix_update(ob, varargin)
+function out = block_lm_update(ob, varargin)
 # todo: figure out how to update, e.g., new_zmap(s), ...
 """
 
 
 """
-`block_fatrix(:test)`
+`block_lm(:test)`
 self test
 """
-function block_fatrix(test::Symbol)
+function block_lm(test::Symbol)
 	test != :test && throw(ArgumentError("test $test"))
 
 	# test :col
@@ -358,7 +356,7 @@ function block_fatrix(test::Symbol)
 #	C = I # todo later
 	C = [2A; 3A]
 	blocks = [A, B, C]
-	Tc = block_fatrix(blocks, how=:col)
+	Tc = block_lm(blocks, how=:col)
 	Tc * ones(3)
 	Tc' * ones(16)
 	@test Matrix(Tc)' == Matrix(Tc')
@@ -370,13 +368,13 @@ function block_fatrix(test::Symbol)
 #	C = I # todo later
 	C = [2M; 3M]
 	blocks = [A, B, C]
-	Td = block_fatrix(blocks, how=:diag)
+	Td = block_lm(blocks, how=:diag)
 	Td * ones(8)
 	Td' * ones(15)
 	@test Matrix(Td)' == Matrix(Td')
 
 	# test :kron
-	Tk = block_fatrix([ones(3,2)], how=:kron, Mkron=4)
+	Tk = block_lm([ones(3,2)], how=:kron, Mkron=4)
 	Tk * ones(4*2)
 	Tk' * ones(4*3)
 	@test Matrix(Tk)' == Matrix(Tk')
@@ -387,7 +385,7 @@ function block_fatrix(test::Symbol)
 #	C = I # todo later
 	C = [2A 3A]
 	blocks = [A, B, C]
-	Tr = block_fatrix(blocks, how=:row)
+	Tr = block_lm(blocks, how=:row)
 	Tr * ones(12)
 	Tr' * ones(4)
 	@test Matrix(Tr)' == Matrix(Tr')
@@ -398,7 +396,7 @@ function block_fatrix(test::Symbol)
 #	C = I # todo later
 	C = 2A
 	blocks = [A, B, C]
-	Ts = block_fatrix(blocks, how=:sum)
+	Ts = block_lm(blocks, how=:sum)
 	Ts * ones(3)
 	Ts' * ones(4)
 	@test Matrix(Ts)' == Matrix(Ts')
@@ -406,4 +404,4 @@ function block_fatrix(test::Symbol)
 	true
 end
 
-# block_fatrix(:test)
+block_lm(:test)
