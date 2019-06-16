@@ -14,8 +14,9 @@ end
 """
 `ob = block_lm(blocks, ...)`
 
-Construct LinearMap object composed of blocks.
-such as block_diag(A_1, A_2, ..., A_M)
+Construct `LinearMap` object composed of blocks.
+such as `block_diag(A_1, A_2, ..., A_M)`.
+Each block can be anything like a `LinearMap` such as an `AbstractMatrix`.
 
 See `block_lm(:test)` for example usage.
 
@@ -24,17 +25,18 @@ in
 
 * option
 * `how::Symbol` options:
-	+ `:col` for `[A_1; A_2; ...; A_M]`
-	+ `:diag` for block diagonal (default)
-	+ `:kron` for `kron(eye(Mkron), blocks[1])`
-	+ `:row` for `[A1, A2, ..., A_M]`
-	+ `:sum` for `A1 + A2 + ... + A_M`
+  + `:col` for `[A_1; A_2; ...; A_M]`
+  + `:diag` for block diagonal (default)
+  + `:kron` for `kron(eye(Mkron), blocks[1])`
+  + `:row` for `[A1, A2, ..., A_M]`
+  + `:sum` for `A1 + A2 + ... + A_M`
 * `T::DataType` default `promote_type(eltype.(blocks)...)`
 * `Mkron::Int' required for `:kron` type
 * `tomo::Bool` special support for tomography-type objects; default `false`
+	(not implemented)
 
 out
-* `ob`	LinearMap
+* `ob` `LinearMap`
 """
 function block_lm(
 		blocks::BlockVector;
