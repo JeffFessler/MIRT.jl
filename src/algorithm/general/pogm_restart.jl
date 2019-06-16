@@ -37,7 +37,7 @@ Iterative proximal algorithms (PGM=ISTA, FPGM=FISTA, POGM) with restart.
   - `:fr` function restart
   - `:none` no restart
 * `restart_cutoff` for `:gr` restart if cos(angle) < this; default 0.
-* `bsig` gradient "gamma" decrease option (value within [0 1]); default 1  
+* `bsig` gradient "gamma" decrease option (value within [0 1]); default 1
   - see ``\\bar{\\sigma}`` in [KF18]
 * `niter` number of iterations; default 10
 * `fun` function`(iter, xk, yk, is_restart)` user-defined function evaluated each `iter` with secondary `xk`, primary `yk`, and boolean `is_restart` indicating whether this iteration was a restart
@@ -90,50 +90,51 @@ and use the proximal operater
  SIAM J. Opt. 2017
  [http://doi.org/10.1137/16m108104x]
 
-Copyright 2017-3-31, Donghwan Kim and Jeff Fessler, University of Michigan  
-2018-08-13 Julia 0.7.0  
+Copyright 2017-3-31, Donghwan Kim and Jeff Fessler, University of Michigan
+2018-08-13 Julia 0.7.0
 2019-02-24 interface redesign
 """
 function pogm_restart(x0, Fcost::Function, f_grad::Function, f_L::Real;
-	f_mu::Real = 0.,
-	mom::Symbol = :pogm, # :ogm :gm
-	restart::Symbol = :gr, # :fr :none 
-	restart_cutoff::Real = 0.,
-	bsig::Real = 1,
-	niter::Integer = 10,
-	g_prox::Function = (z, c::Real) -> z,
-	fun::Function = (iter::Integer, xk, yk, is_restart::Bool) -> 0)
+		f_mu::Real = 0.,
+		mom::Symbol = :pogm, # :ogm :gm
+		restart::Symbol = :gr, # :fr :none
+		restart_cutoff::Real = 0.,
+		bsig::Real = 1,
+		niter::Integer = 10,
+		g_prox::Function = (z, c::Real) -> z,
+		fun::Function = (iter::Integer, xk, yk, is_restart::Bool) -> 0)
 
-@assert in(mom, (:pgm, :fpgm, :pogm))
-@assert in(restart, (:none, :gr, :fr))
-@assert f_L >= 0
-@assert f_mu >= 0
-@assert bsig >= 0
-@assert (-1 < restart_cutoff) && (restart_cutoff < 1)
+	!in(mom, (:pgm, :fpgm, :pogm)) && throw(ArgumentError("mom $mom"))
+	!in(restart, (:none, :gr, :fr)) && throw(ArgumentError("restart $restart"))
+	f_L < 0 && throw(ArgumentError("f_L=$f_L < 0"))
+	f_mu < 0 && throw(ArgumentError("f_mu=$f_mu < 0"))
+	bsig < 0 && throw(ArgumentError("bsig=$bsig < 0"))
+	!((-1 < restart_cutoff) && (restart_cutoff < 1)) &&
+		throw(ArgumentError("restart_cutoff=$restart_cutoff"))
 
-L = f_L
-mu = f_mu
-q = mu/L
+	L = f_L
+	mu = f_mu
+	q = mu/L
 
-# initialize parameters
-told = 1
-sig = 1
-zetaold = 1 # dummy
+	# initialize parameters
+	told = 1
+	sig = 1
+	zetaold = 1 # dummy
 
-# initialize x
-xold = x0
-yold = x0
-uold = x0
-zold = x0
-Fcostold = Fcost(x0)
-Fgradold = zeros(size(x0)) # dummy
+	# initialize x
+	xold = x0
+	yold = x0
+	uold = x0
+	zold = x0
+	Fcostold = Fcost(x0)
+	Fgradold = zeros(size(x0)) # dummy
 
-# save initial
-out = Array{Any}(undef, niter+1)
-out[1] = fun(0, x0, x0, false)
+	# save initial
+	out = Array{Any}(undef, niter+1)
+	out[1] = fun(0, x0, x0, false)
 
-xnew = []
-ynew = []
+	xnew = []
+	ynew = []
 
 # iterations
 for iter=1:niter
@@ -247,7 +248,7 @@ for iter=1:niter
 	end
 end # for iter
 
-return ((mom == :pogm) ? xnew : ynew), out
+	return ((mom == :pogm) ? xnew : ynew), out
 end # pogm_restart()
 
 
@@ -255,6 +256,6 @@ end # pogm_restart()
 `pogm_restart(:test)` self test (todo)
 """
 function pogm_restart(test::Symbol)
-	@assert test == :test
+	test != :test && throw(ArgumentError("test $test"))
 	true
 end
