@@ -1,6 +1,7 @@
 # fatrix-block.jl
 # 2019-06-15, Jeff Fessler, University of Michigan
 
+#using MIRT: hcat_lm
 using LinearMaps
 using LinearAlgebra: I
 using Test: @test
@@ -84,7 +85,7 @@ function block_fatrix_col(blocks::FatrixVector, T::DataType, tomo::Bool)
 
 #	if tomo # prep for mat2cell later
 #		for mm=1:MM
-#			odim = blocks[mm].arg.odim
+#			odim = blocks[mm].odim
 #			tomo_ndim = length(odim)
 #			tomo_dim = tomo_ndim # insist on last dimension
 #			if mm==1
@@ -113,7 +114,7 @@ end
 #
 function [T, reuse] = block_fatrix_col_gram(ob, W, reuse, varargin)
 
-blocks = ob.arg.blocks
+blocks = ob.blocks
 T = cell(size(blocks))
 for mm=1:length(blocks)
 	A = blocks[mm]
@@ -128,8 +129,8 @@ for mm=1:length(blocks)
 		if isempty(W)
 			T[mm] = build_gram(A, [], reuse, varargin{:})
 		else
-			if isvar('W.arg.blocks[mm]')
-				T[mm] = build_gram(A, W.arg.blocks[mm], ...
+			if isvar('W.blocks[mm]')
+				T[mm] = build_gram(A, W.blocks[mm], ...
 					reuse, varargin{:})
 			else
 				fail('block_fatrix_col_gram needs block diag W')
@@ -203,12 +204,12 @@ end
 #
 function y = block_fatrix_diag_block_forw(arg, x, istart, nblock)
 
-if nrow(x) ~= arg.dim(2)
-	error('x size=%d vs dim(2)=%d', nrow(x), arg.dim(2))
+if nrow(x) ~= dim(2)
+	error('x size=%d vs dim(2)=%d', nrow(x), dim(2))
 end
 y = []
-for mm=istart:nblock:length(arg.blocks)
-	t = arg.blocks[mm] * x([arg.jstart(mm):arg.jend(mm)], :)
+for mm=istart:nblock:length(blocks)
+	t = blocks[mm] * x([jstart(mm):jend(mm)], :)
 	y = [y; t]
 end
 
@@ -218,10 +219,10 @@ end
 #
 function x = block_fatrix_diag_block_back(arg, y, istart, nblock)
 
-if nrow(y) ~= arg.dim(1), error 'bad y size', end
+if nrow(y) ~= dim(1), error 'bad y size', end
 x = []
-for mm=istart:nblock:length(arg.blocks)
-	t = arg.blocks[mm]' * y([arg.istart(mm):arg.iend(mm)], :)
+for mm=istart:nblock:length(blocks)
+	t = blocks[mm]' * y([istart(mm):iend(mm)], :)
 	x = [x; t]
 end
 
@@ -231,7 +232,7 @@ end
 #
 function [T, reuse] = block_fatrix_diag_gram(ob, W, reuse, varargin)
 
-blocks = ob.arg.blocks
+blocks = ob.blocks
 T = cell(size(blocks))
 for mm=1:length(blocks)
 	A = blocks[mm]
@@ -277,25 +278,25 @@ end
 #
 function y = block_fatrix_kron_mtimes_block(arg, is_transpose, x, iblock, nblock)
 
-bl1 = arg.blocks{1}; % base block, already put through Gblock
+bl1 = blocks{1}; % base block, already put through Gblock
 warn 'todo: size check not done'
 
 if ~is_transpose % forw
-#	if nrow(x) ~= arg.dim(2)
-#		fail('x size=%d vs dim(2)=%d', nrow(x), arg.dim(2))
+#	if nrow(x) ~= dim(2)
+#		fail('x size=%d vs dim(2)=%d', nrow(x), dim(2))
 #	end
 	y = []
-	for mm=1:arg.Mkron
-		t = bl1{iblock} * x([arg.jstart(mm):arg.jend(mm)], :)
+	for mm=1:Mkron
+		t = bl1{iblock} * x([jstart(mm):jend(mm)], :)
 		y = [y; t]
 	end
 
 else % back
 	y = x
-#	if nrow(y) ~= arg.dim(1), error 'bad y size', end
+#	if nrow(y) ~= dim(1), error 'bad y size', end
 	x = []
-	for mm=1:arg.Mkron
-		tmp = [arg.istart(mm):arg.iend(mm)]; % i list (if all data)
+	for mm=1:Mkron
+		tmp = [istart(mm):iend(mm)]; % i list (if all data)
 		% todo: we need a certain subset of that list
 		fail('todo: kron subset backprojector not done')
 		t = bl1{iblock}' * y(tmp, :)
@@ -318,9 +319,9 @@ function block_fatrix_sum(blocks::FatrixVector, T::DataType)
 	end
 
 	# build Fatrix object
-	return LinearMap{T}(arg,
-			x -> sum([blocks[mm] * x for mm=1:MM]...),
-			y -> sum([blocks[mm]' * y for mm=1:MM]...),
+	return LinearMap{T}(
+			x -> sum([blocks[mm] * x for mm=1:MM]),
+			y -> sum([blocks[mm]' * y for mm=1:MM]),
 			dim[1], dim[2])
 end
 
@@ -330,10 +331,10 @@ end
 # block_fatrix_free()
 #
 function block_fatrix_free(arg)
-if arg.chat
+if chat
 	printm 'freeing block_fatrix object static memory'
 end
-for mm=1:length(arg.blocks)
+for mm=1:length(blocks)
 	try
 		free(blocks[mm])
 	catch
@@ -383,14 +384,33 @@ function block_fatrix(test::Symbol)
 
 	# test :kron
 	Tk = block_fatrix([ones(3,2)], how=:kron, Mkron=4)
-	@show size(Tk)
 	Tk * ones(4*2)
 	Tk' * ones(4*3)
 	@test Matrix(Tk)' == Matrix(Tk')
 
-#	todo
+	# test :row
+	A = ones(4,3)
+	B = LinearMap(x -> A*x, y -> A'*y, 4, 3)
+#	C = I # todo later
+	C = [2A 3A]
+	blocks = [A, B, C]
+	Tr = block_fatrix(blocks, how=:row)
+	Tr * ones(12)
+	Tr' * ones(4)
+	@test Matrix(Tr)' == Matrix(Tr')
+
+	# test :sum
+	A = ones(4,3)
+	B = LinearMap(x -> A*x, y -> A'*y, 4, 3)
+#	C = I # todo later
+	C = 2A
+	blocks = [A, B, C]
+	Ts = block_fatrix(blocks, how=:sum)
+	Ts * ones(3)
+	Ts' * ones(4)
+	@test Matrix(Ts)' == Matrix(Ts')
 
 	true
 end
 
-block_fatrix(:test) # todo
+# block_fatrix(:test)
