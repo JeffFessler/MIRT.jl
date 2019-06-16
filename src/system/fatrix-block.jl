@@ -3,6 +3,8 @@
 
 using LinearMaps
 using LinearAlgebra: I
+using Test: @test
+
 #const FatrixVector{T} = Vector{Union{LinearMap,AbstractMatrix{T}}}
 if !@isdefined(FatrixVector)
 	FatrixVector{T} = Vector{<:Any} # include I etc.
@@ -43,14 +45,14 @@ function block_fatrix(
 
 	if how == :col
 		 return block_fatrix_col(blocks, T, tomo)
-	elseif how == :diag'
+	elseif how == :diag
 		return block_fatrix_diag(blocks, T)
-	elseif how == :kron'
+	elseif how == :kron
 		return block_fatrix_kron(blocks, Mkron)
-	elseif how == :row'
+	elseif how == :row
 #		return block_fatrix_row(blocks)
 		return hcat_lm(blocks...)
-	elseif how == :sum'
+	elseif how == :sum
 		return block_fatrix_sum(blocks, T)
 	else
 		throw(ArgumentError("unknown block type $how"))
@@ -73,11 +75,10 @@ function block_fatrix_col(blocks::FatrixVector, T::DataType, tomo::Bool)
 		dims[mm,:] .= size(B)
 		dims[mm,2] != dims[1,2] && throw("all blocks must have same #cols for :col")
 	end
-	@show dims
 
 	# start/end indices for selecting parts of x and y
-	@show istart = cumsum([1; dims[1:end-1,1]])
-	@show iend = istart + dims[:,1] .- 1
+	istart = cumsum([1; dims[1:end-1,1]])
+	iend = istart + dims[:,1] .- 1
 
 	dim = [sum(dims[:,1]), dims[1,2]]
 
@@ -162,9 +163,10 @@ ob = block_fatrix(blocks, 'type', 'col')'; % trick: transpose
 function block_fatrix_diag(blocks::FatrixVector, T::DataType)
 
 	MM = length(blocks)
-	dims = zeros(MM, 2)
+#	@show dims = vcat(map(size, blocks))
+	dims = zeros(Int, MM, 2)
 	for mm=1:MM
-		dims[mm,:] = size(blocks[mm])
+		dims[mm,:] .= size(blocks[mm])
 	end
 
 	# start/end indices for selecting parts of x and y
@@ -173,7 +175,7 @@ function block_fatrix_diag(blocks::FatrixVector, T::DataType)
 	jstart = cumsum([1; dims[1:end-1,2]])
 	jend = jstart + dims[:,2] .- 1
 
-	dim = sum(dims, 1)
+	dim = sum(dims, dims=1)
 
 	# build Fatrix object
 	return LinearMap{T}(
@@ -362,10 +364,25 @@ function block_fatrix(test::Symbol)
 #	C = I # todo later
 	C = [2A; 3A]
 	blocks = [A, B, C]
-	T = block_fatrix(blocks, how=:col)
-	T * ones(3)
-	T' * ones(size(T,1))
+	Tc = block_fatrix(blocks, how=:col)
+	Tc * ones(3)
+	Tc' * ones(16)
+	@test Matrix(Tc)' == Matrix(Tc')
+
+	# test :diag
+	A = ones(3,2)
+	M = ones(4,3)
+	B = LinearMap(x -> M*x, y -> M'*y, 4, 3)
+#	C = I # todo later
+	C = [2M; 3M]
+	blocks = [A, B, C]
+	Td = block_fatrix(blocks, how=:diag)
+	Td * ones(8)
+#	Td' * ones(15)
+#	@test Matrix(Td)' == Matrix(Td')
+
 #	todo
+
 	true
 end
 
