@@ -44,7 +44,7 @@ downsample1_test()
 function downsample1_test()
 	x = reshape(2:2:48, 4, 6)
 	y = downsample1(x, 2)
-	@assert y == reshape(3:4:47, 2, 6)
+	@test y == reshape(3:4:47, 2, 6)
 	true
 end
 
@@ -78,7 +78,7 @@ end
 function downsample2_test()
 	x = reshape(1:24, 4, 6)
 	y = downsample2(x, 2)
-	@assert y ==  [3.5 11.5 19.5; 5.5 13.5 21.5]
+	@test y ==  [3.5 11.5 19.5; 5.5 13.5 21.5]
 	true
 end
 
@@ -103,17 +103,17 @@ function downsample3(x, down; warn::Bool=true)
 	if ndims(x) == 2
 		@warn("2d case")
 		if length(down) == 1; down = [down, down, 1]; end
-		@assert length(down) == 3
+		length(down) != 3 & throw(DimensionMismatch("$(length(down)) != 3"))&
 		return downsample2(x, down[1:2])
 	end
 
-	@assert ndims(x) == 3
+	ndims(x) != 3 && throw(DimensionMismatch("ndims(x)=$(ndims(x)) != 3"))
 	
 	if length(down) == 1
 		down = [down,down,down]
 	end
 
-	@assert length(down) == ndims(x)
+	length(down) != ndims(x) && throw(DimensionMismatch("length(down) != ndims(x)"))
 
 	# downsample along each dimension
 	y = downsample1(x, down[1])
@@ -131,9 +131,9 @@ function downsample3_test()
 	for down = 1:2
 		y = downsample3(x, down)
 		if down == 1
-			@assert y == x
+			@test y == x
 		elseif down == 2
-			@assert y == reshape([39 63; 43 67; 47 71], 3,2,1) # squeeze
+			@test y == reshape([39 63; 43 67; 47 71], 3,2,1) # squeeze
 		end
 	end
 	true
@@ -156,7 +156,7 @@ end
 `downsample(:test)` self test
 """
 function downsample(test::Symbol)
-	@assert test == :test
+	test != :test && throw(ArgumentError("test $test"))
 	downsample1_test()
 	downsample2_test()
 	downsample3_test()
