@@ -3,7 +3,7 @@
 # 2019-06-15, Jeff Fessler, University of Michigan
 
 using LinearMaps
-using LinearAlgebra: I
+using LinearAlgebra: UniformScaling
 using Test: @test
 
 #const BlockVector{T} = Vector{Union{LinearMap,AbstractMatrix{T}}}
@@ -71,7 +71,7 @@ function block_lm_col(blocks::BlockVector, T::DataType, tomo::Bool)
 	dims = zeros(Int, MM, 2)
 	for mm=1:MM
 		B = blocks[mm]
-		if B == I
+		if isa(B, UniformScaling)
 			throw("I not yet supported")
 		end
 		dims[mm,:] .= size(B)
@@ -249,7 +249,7 @@ T = block_lm(T, 'type', 'diag')
 #
 function block_lm_kron(blocks::BlockVector, T::DataType, Mkron::Int)
 
-	length(blocks) != 1 && throw(ArgumentError("kron expects exactly one block"))
+	length(blocks) != 1 && throw(ArgumentError("kron expects one block"))
 
 	dims = repeat(collect(size(blocks[1]))', Mkron, 1)
 	# start/end indices for selecting parts of x and y
