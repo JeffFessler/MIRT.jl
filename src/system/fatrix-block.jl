@@ -1,7 +1,6 @@
 # fatrix-block.jl
 # 2019-06-15, Jeff Fessler, University of Michigan
 
-#using MIRT: hcat_lm
 using LinearMaps
 using LinearAlgebra: I
 using Test: @test
@@ -51,8 +50,7 @@ function block_fatrix(
 	elseif how == :kron
 		return block_fatrix_kron(blocks, T, Mkron)
 	elseif how == :row
-#		return block_fatrix_row(blocks)
-		return hcat_lm(blocks...)
+		return block_fatrix_row(blocks, T)
 	elseif how == :sum
 		return block_fatrix_sum(blocks, T)
 	else
@@ -142,20 +140,15 @@ T = fatrix_plus(T{:})
 """
 
 
-
 """
-#
-# block_fatrix_row()
-# trick: just reuse col via transpose!
-#
-function block_fatrix_row(blocks, arg)
-
-for mm=1:length(blocks)
-	blocks[mm] = blocks[mm]'; % trick: transpose
+`block_fatrix_row()`
+trick: just reuse col via transpose!
+cannot use hcat(blocks...) because there might be a mix of matrix/fatrix
+"""
+function block_fatrix_row(blocks::FatrixVector, T::DataType)
+	tblocks = [b' for b in blocks] # trick: transpose
+	return block_fatrix(tblocks, how=:col)' # trick: transpose
 end
-
-ob = block_fatrix(blocks, 'type', 'col')'; % trick: transpose
-"""
 
 
 """
