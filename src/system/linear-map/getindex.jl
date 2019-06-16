@@ -1,9 +1,11 @@
-# lm_getindex.jl
+# linear-map/getindex.jl
 #
-# Provides getindex() capabilities like A[:,j] for LinearMap objects
+# Provides getindex() capabilities like A[:,j] for LinearMap objects.
+#
 # Currently this provides only a partial set of the possible ways
 # one can use indexing for a matrix, because currently
 # LinearMap is not a subtype of an AbstractMatrix.
+#
 # If LinearMap were a subtype of an AbstractMatrix, then all possible
 # indexing will be supported by Base.getindex, albeit very likely
 # by quite inefficient iterators.
@@ -15,6 +17,7 @@
 # 2018-01-19, Jeff Fessler, University of Michigan
 
 using LinearMaps
+using Test
 
 # A[end]
 function Base.lastindex(A::LinearMap)
