@@ -74,11 +74,11 @@ function Aodwt(test::Symbol)
 		return Aodwt_show()
 	end
 
-	@assert test == :test
+	test != :test && throw(ArgumentError("test $test"))
 	Aodwt()
 
 	W,_,_ = Aodwt((8,16), level=2)
-	@assert Matrix(W)' == Matrix(W') # check adjoint
+	@test Matrix(W)' == Matrix(W') # check adjoint
 
 	Aodwt(:show)
 	true
