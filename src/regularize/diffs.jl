@@ -51,24 +51,19 @@ out
 """
 function diff2d_adj(d::AbstractVector{<:Number}, M, N; out2d=false)
 
-@assert length(d) == N*(M-1) + (N-1)*M
+	length(d) != N*(M-1) + (N-1)*M && throw("length(d)")
 
-dx = d[1:(N*(M-1))]
-dx = reshape(dx, M-1, N)
-dy = d[1+(N*(M-1)):end]
-dy = reshape(dy, M, N-1)
-zx = [-transpose(dx[1,:]);
-	(@views dx[1:end-1,:] - dx[2:end,:]);
-	transpose(dx[end,:])]
-zy = [-dy[:,1] (@views dy[:,1:end-1] - dy[:,2:end]) dy[:,end]]
-z = zx + zy # M by N
+	dx = d[1:(N*(M-1))]
+	dx = reshape(dx, M-1, N)
+	dy = d[1+(N*(M-1)):end]
+	dy = reshape(dy, M, N-1)
+	zx = [-transpose(dx[1,:]);
+		(@views dx[1:end-1,:] - dx[2:end,:]);
+		transpose(dx[end,:])]
+	zy = [-dy[:,1] (@views dy[:,1:end-1] - dy[:,2:end]) dy[:,end]]
+	z = zx + zy # M by N
 
-if out2d # 2D array
-	return z
-else # vector
-	return z[:]
-end
-
+	return out2d ? z : z[:] # array or vector?
 end
 
 
@@ -101,9 +96,9 @@ end
 `diff_map(:test)` self test
 """
 function diff_map(test::Symbol)
-	@assert test == :test
+	test != :test && throw(ArgumentError("test $test"))
 	M,N = 4,5
 	T = diff_map(M,N)
-	@assert Matrix(T)' == Matrix(T') # adjoint test
+	@test Matrix(T)' == Matrix(T') # adjoint test
 	true
 end
