@@ -53,6 +53,10 @@ Base.hcat(A::LinearMap, Bs...) = hcat_lm(A, Bs...)
 Base.hcat(I::UniformScaling{<:Number}, A::LinearMap, Bs...) =
 	hcat_lm(I, A, Bs...)
 
+# this will support a single leading matrix, but not more than one
+Base.hcat(A::AbstractMatrix{<:Number}, B::LinearMap, Cs...) =
+	hcat_lm(A, B, Cs...)
+
 
 function hcat_lm_test()
 	a = ones(3,2)
@@ -69,6 +73,9 @@ function hcat_lm_test()
 
 	D = [I A] # LinearMap
 	@test Matrix(D)' == Matrix(D')
+
+	E = [a B] # LinearMap
+	@test Matrix(E)' == Matrix(E')
 	true
 end
 
