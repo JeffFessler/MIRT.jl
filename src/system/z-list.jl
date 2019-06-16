@@ -1,5 +1,7 @@
-include("fatrix-block.jl")
-export block_fatrix
+# system/z-list,jl
 
-include("lm_getindex.jl")
-include("lm-hcat.jl")
+include("linear-map/block.jl")
+export block_lm
+
+include("linear-map/getindex.jl")
+include("linear-map/hcat.jl")
