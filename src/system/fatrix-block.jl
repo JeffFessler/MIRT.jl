@@ -48,7 +48,7 @@ function block_fatrix(
 	elseif how == :diag
 		return block_fatrix_diag(blocks, T)
 	elseif how == :kron
-		return block_fatrix_kron(blocks, Mkron)
+		return block_fatrix_kron(blocks, T, Mkron)
 	elseif how == :row
 #		return block_fatrix_row(blocks)
 		return hcat_lm(blocks...)
@@ -256,13 +256,13 @@ function block_fatrix_kron(blocks::FatrixVector, T::DataType, Mkron::Int)
 
 	length(blocks) != 1 && throw(ArgumentError("kron expects exactly one block"))
 
-	dims = repeat(size(blocks[1]), (Mkron,1))
+	dims = repeat(collect(size(blocks[1]))', Mkron, 1)
 	# start/end indices for selecting parts of x and y
 	istart = cumsum([1; dims[1:end-1,1]])
-	iend = istart + dims(:,1) .- 1
+	iend = istart + dims[:,1] .- 1
 	jstart = cumsum([1; dims[1:end-1,2]])
 	jend = jstart + dims[:,2] .- 1
-	dim = sum(dims,1)
+	dim = sum(dims,dims=1)
 
 	return LinearMap{T}(
 			x -> vcat([blocks[1] * x[jstart[mm]:jend[mm]] for mm=1:Mkron]...),
@@ -378,8 +378,15 @@ function block_fatrix(test::Symbol)
 	blocks = [A, B, C]
 	Td = block_fatrix(blocks, how=:diag)
 	Td * ones(8)
-#	Td' * ones(15)
-#	@test Matrix(Td)' == Matrix(Td')
+	Td' * ones(15)
+	@test Matrix(Td)' == Matrix(Td')
+
+	# test :kron
+	Tk = block_fatrix([ones(3,2)], how=:kron, Mkron=4)
+	@show size(Tk)
+	Tk * ones(4*2)
+	Tk' * ones(4*3)
+	@test Matrix(Tk)' == Matrix(Tk')
 
 #	todo
 
