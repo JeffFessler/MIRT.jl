@@ -2,6 +2,6 @@
 
 using Test
 
-@test fatrix_block(:test)
+@test block_fatrix(:test)
 @test ir_lm_test_getindex_cumsum()
 @test hcat_lm(:test)
