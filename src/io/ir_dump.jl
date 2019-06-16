@@ -47,7 +47,7 @@ function ir_dump(test::Symbol)
 end
 
 function ir_dump(io::IO, test::Symbol)
-	@assert test == :test
+	test != :test && throw(ArgumentError("test $test"))
 	x = (a=1, b=2)
 	ir_dump(io, x)
 	true
