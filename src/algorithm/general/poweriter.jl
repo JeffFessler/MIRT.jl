@@ -26,12 +26,9 @@ out
 * `σ1` spectral norm of `A`
 """
 function poweriter(A; niter=200,
-	tol::Real = 1e-6,
-	x0::AbstractArray{<:Number} = begin
-		N = size(A,2)
-		isreal(A) ? ones(N) : complex.(ones(N), ones(N))
-		end,
-	chat::Bool = true,
+		tol::Real = 1e-6,
+		x0::AbstractArray{<:Number} = ones(eltype(A), size(A,2)),
+		chat::Bool = true,
 	)
 	x = copy(x0)
 	ratio_old = Inf
@@ -59,9 +56,17 @@ function poweriter(test::Symbol)
 	seed!(0)
 	M = 30
 	N = 20
-	A = randn(M,N)
+
+	A = randn(M,N) # real
 	s0 = opnorm(A)
-	_,s1 = poweriter(A; tol=1e-9, chat=false)
+	chat = false
+	_,s1 = poweriter(A; tol=1e-9, chat=chat)
 	@test isequal(round(s0,digits=7), round(s1,digits=7))
+
+	A = randn(ComplexF32, M, N) # complex
+	s0 = opnorm(A)
+	_,s1 = poweriter(A; tol=1e-9, chat=chat)
+	@test isequal(round(s0,digits=5), round(s1,digits=5))
+
 	true
 end
