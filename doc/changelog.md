@@ -1,5 +1,9 @@
 In reverse chronological order
 
+0.5.0 2019-06-16
+
+add `block_lm`
+
 0.4.0 2019-06-12
 
 2019-06-12
