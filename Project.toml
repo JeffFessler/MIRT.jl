@@ -1,7 +1,10 @@
 name = "MIRT"
 uuid = "7035ae7a-3787-11e9-139a-5545ed3dc201"
 authors = ["fessler <fessler@umich.edu>"]
-version = "0.4.0"
+version = "0.5.0"
+
+[compat]
+julia = "1.1"
 
 [deps]
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
@@ -24,6 +27,3 @@ SharedArrays = "1a1011a3-84de-559e-8e89-a11a2f7dc383"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 Wavelets = "29a6e085-ba6d-5f35-a997-948ac2efa89a"
-
-[compat]
-julia = "1.1"
