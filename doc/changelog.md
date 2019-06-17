@@ -7,16 +7,16 @@ add `block_lm`
 0.4.0 2019-06-12
 
 2019-06-12
-add dtft, nufft
+add `dtft` `nufft`
 
 2019-06-10
-add poweriter
+add `poweriter`
 
 0.3.0 2019-05-23
 
-add loadpfile for reading GE MRI scan Pfile (raw k-space data)
+add `loadpfile` for reading GE MRI scan Pfile (raw k-space data)
 fix minor path problem
 
 0.2.0 2019-05-14
 
-add fld_read and fld_write
+add `fld_read` and `fld_write`
