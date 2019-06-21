@@ -6,8 +6,7 @@ generate rectangle phantom image from parameters:
 
 in
     ig          image_geom() object
-    params      rect parameters, if empty use the default
-                params = rect_im_default_parameters(xfov, yfov)
+    params      [Nrect,6] rect parameters
 
 options
     `oversample'    int     oversampling factor, for grayscale boundaries
@@ -36,20 +35,28 @@ function rect_im(ig::MIRT_image_geom,
 		@warn("not yet done")
     end
 
-
     params[:,6] .*= hu_scale
 
-	if how == :fast
-		phantom = rect_im_fast(params)
-	else
-		phantom = 0
+    do_fast = params[:,5] == 0 # default for :auto
+    if how == :fast
+            do_fast[:] .= true
+    elseif how == :slow
+            do_fast[:] .= false
+    elseif how != :auto
+         throw("bad how :how")
+    end
+    
+    phantom = zeros(Float32, ig.nx, ig.,ny)
+    
+    if any(do_fast)
+        phantom += rect_im_fast(params todo)
 	end
 
-	if how == :slow
-		phantom = phantom + rect_im_slow(params)
+	if any(!.do_fast)
+		phantom += rect_im_slow(params)
 	end
 
-	# might be done but not sure if correct
+	return phantom
 end
 
 
