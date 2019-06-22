@@ -234,9 +234,9 @@ end
 
 """
 `downsample(ig; down::Int=1)`
-cf image_geom_downsample
+cf `image_geom_downsample`
 """
-function downsample(ig::MIRT_image_geom; down::Int=1)
+function downsample(ig::MIRT_image_geom; down::Union{Int,Vector{Int}}=1)
 
 	# check if it is a scalar by seeing if the collection of size is empty
 	if isempty(size(down))
@@ -245,31 +245,32 @@ function downsample(ig::MIRT_image_geom; down::Int=1)
 		downv = down
 	end
 
-	# now call the down round function
+	# call the down round function
 	down_nx, down_dx = _down_round(ig.nx, ig.dx, downv[1])
 	down_ny, down_dy = _down_round(ig.ny, ig.dy, downv[2])
 	# adjust to "pixel" units
 	down_offset_x = ig.offset_x / downv[1]
 	down_offset_y = ig.offset_y / downv[2]
-	# now the 3d case
-	if ig.is3
+
+	if ig.is3 # 3d case
 		down_nz, down_dz = _down_round(ig.nz, ig.dz, downv[3])
 		down_offset_z = ig.offset_z / downv[3]
 	else
 		down_nz = 0; down_dz = 0; down_offset_z = 0
 	end
-	# now to correctly downsample the mask
+
+	# carefully down-sample the mask
 	mdim_vec = [size(ig.mask)...] # tuple to vector
 	if ig.is3
-		if all([down_nx,down_ny,down_nz] .* downv == mdim_vec)
+		if [down_nx,down_ny,down_nz] .* downv == mdim_vec
 			down_mask = downsample3(ig.mask, downv) .> 0
 		else
 			throw("bug: bad mask size. need to address mask downsampling")
 		end
 	else
-		if down_nx * downv[1] == size(ig.mask,1) && down_ny * downv[2] == size(ig.mask,2)
-			mask = downsample2(mask, downv) .> 0
-		elseif down_nx != size(ig.mask,1) || down_ny != size(ig.mask,2)
+		if [down_nx,down_ny] .* downv == mdim_vec
+			down_mask = downsample2(mask, downv) .> 0
+		else
 			throw("bug: bad mask size. need to address mask downsampling")
 		end
 	end
@@ -299,12 +300,16 @@ end
 `image_geom_over(ig, over)`
 """
 function image_geom_over(ig::MIRT_image_geom, over::Real)
-	throw("not done")
+	if all(ig.mask .== true)
+		mask_over = trues(ig.dim...)
+	else
+		throw("not done") # todo
+	end
 	return MIRT_image_geom(
 		ig.nx*over, ig.ny*over, ig.dx/over, ig.dy/over,
 		ig.offset_x*over, ig.offset_y*over,
 		ig.nz*over, ig.dz/over, ig.offset_z*over,
-		mask)
+		mask_over)
 end
 
 
@@ -475,7 +480,7 @@ function image_geom_test2(ig::MIRT_image_geom)
 	ig.ones
 	ig.zeros
 #	ig.circ()
-#	ig.over(2)
+	ig.over(2)
 #	ig.plot()
 	ig.u
 	ig.v
