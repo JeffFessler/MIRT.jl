@@ -4,130 +4,22 @@
 # 2019-03-05 Jeff Fessler, Julia 1.1 + tests
 
 using Test
-using DSP: conv2
-#using SparseArrays: sparse, findnz, AbstractSparseVector
 
 
-"""
-`array = embed(v, mask)`
-
-embed vector `v` of length `sum(mask)`
-into elements of an array where `mask` is `true`
-"""
-function embed(
-		v::AbstractVector{<:Number},
-		mask::AbstractArray{Bool,N} where N)
-	array = zeros(eltype(v), size(mask))
-	array[mask] .= v
-	return array
-end
-
-
-#=
-this is needed only for "unpacking" sparse system matrices so ignore for now
-# image_geom_embed_sparse
-# called by image_geom_embed
-# function _embed_sparse(x::Array{T}) where {T <: Number}
-function embed(x::AbstractSparseVector{<:Number},
-				mask::AbstractArray{Bool,N} where N)
-	i, v = findnz(x)
-	ind = findall(mask)
-	j = ind(j)
-	return sparsevec(i, j, a, size(x,1), length(mask))
-end
-=#
-
-
-"""
-`embed(:test)`
-"""
-function embed(test::Symbol)
-	test != :test && throw(ArgumentError("test $test"))
-	mask = [false true true; true false false]
-	@test embed(1:3,mask) == [0 2 3; 1 0 0]
-#	@test embed(sparse(1:3),mask) == sparse([0 2 3; 1 0 0]) # later
-	true
-end
-
-
-"""
-`maskit(x::AbstractArray{<:Number})`
-opposite of embed
-"""
-function maskit(x::AbstractArray{<:Number}, mask::Array{Bool})
-	dim = size(x)
-	x = reshape(x, length(mask), :)
-	x = x[mask[:],:] # reshape(mask, prod(_dim()))]
-	if length(dim) == ndims(mask)
-		x = dropdims(x, dims=2) # squeeze
-	elseif length(dim) > ndims(mask)
-		x = reshape(x, :, dim[(1+ndims(mask)):end])
-	else
-		throw(DimensionMismatch("size(x) = $(size(x))"))
-	end
-	return x
-end
-
-
-"""
-`out = image_geom_add_unitv(z; j=?, i=?, c=?)`
-
-add a unit vector to an initial array `z` (typically of zeros)
-
-option;
-`j` single index from 1 to length(z)
-`i` [ix,iy[,iz]] index from 1 to nx,ny
-`c` [cx,cy[,cz]] index from +/- n/2 center at floor(n/2)+1
-
-default with no arguments gives unit vector at center c=[0,0]
-"""
-function image_geom_add_unitv(z; # starts with zeros()
-		j::Integer=0,
-		i::AbstractVector{<:Int} = zeros(Int, ndims(z)),
-		c::AbstractVector{<:Int} = zeros(Int, ndims(z))
-		)
-	out = copy(z)
-
-	if j > 0 && all(i .== 0)
-		out[j] += 1
-	elseif j == 0 && any(i .> 0)
-		out[i...] += 1
-	else
-		tmp = c .+ Int.(floor.(size(out) ./ 2)) .+ 1
-		out[tmp...] += 1
-	end
-
-	return out
-end
-
-
-"""
-`image_geom_add_unitv(:test)`
-"""
-function image_geom_add_unitv(test::Symbol)
-	test != :test && throw(ArgumentError("test $test"))
-	image_geom_add_unitv(zeros(3,4), j=2)
-	image_geom_add_unitv(zeros(3,4), i=[2,3])
-	image_geom_add_unitv(zeros(3,4))
-	image_geom_add_unitv(zeros(3,4), c=[-1,-2])
-	true
-end
-
-
-# Image geometry "struct" with some parameters and methods included
+# Image geometry "struct" with essential parameters
 struct MIRT_image_geom
 	# options for 2D image geometry
-	nx::Int				# image dimension one
-	ny::Int				# image dimension (default: nx) two
-	dx::Float32			# pixel size ('dx' or 'fov' required)
-	dy::Float32			# pixel size (default: -dx). (value | 'dx' | '-dx' | '2*dx')
-	offset_x::Float32	# unitless (default: 0)
-	offset_y::Float32	# unitless (default: 0)
+	nx::Int				# image dimension 1
+	ny::Int				# image dimension 2
+	dx::Float32			# pixel size
+	dy::Float32			# pixel size
+	offset_x::Float32	# unitless
+	offset_y::Float32	# unitless
 
 	# options for 3D image geometry
-	nz::Int				# image dimension three
-	dz::Float32			# pixel size (default: dx)
-	offset_z::Float32	# unitless (default: 0)
+	nz::Int				# image dimension 3
+	dz::Float32			# voxel size
+	offset_z::Float32	# unitless
 
 	mask::Array{Bool}	# logical mask
 end
@@ -233,20 +125,19 @@ end
 `ig = image_geom(...)`
 
 Constructor for `MIRT_image_geom`
-Must specify at least one of `dx` or `fov`
 
 option:
 * `nx::Int			= 128`
 * `ny::Int			= nx`
-* `dx::Real			= ?`
+* `dx::Real			= ?` (must specify one of `dx` or `fov`)
 * `dy::Real			= -dx`
-* `offset_x::Real	= 0`
-* `offset_y::Real	= 0`
+* `offset_x::Real	= 0` (unitless)
+* `offset_y::Real	= 0` (unitless)
 * `fov::Real		= ?` (if specified, then `nx*dx=ny*dy`)
 * `nz::Int			= 0`
 * `dz::Real			= ?`
 * `zfov::Real		= ?` (if specified, then `nz*dz`)
-* `offset_z::Real	= 0`
+* `offset_z::Real	= 0` (unitless)
 * `offsets::Symbol	= :none` or :dsp
 * `mask::Union{Symbol,AbstractArray{Bool}} = :all` or `:all_but_edge`
 """
@@ -266,18 +157,17 @@ function image_geom(;
 		mask::Union{Symbol,AbstractArray{Bool}}	= :all,
 	)
 
-	# now for the constructor
-	# start by setting variables if optional arguments not used
+	# handle optional arguments
 
 	is3 = !isnan(dz) || !isnan(zfov) || (nz > 0)
 
 	# offsets
 	if offsets == :dsp
-		# now check for errors
-		(offset_x == 0 || offset_y == 0) && throw("offsets usage incorrect")
+		# check that no nonzero offset was specified
+		(offset_x != 0 || offset_y != 0) && throw("offsets usage incorrect")
 		offset_x = 0.5
 		offset_y = 0.5
-		is3 && offset_z == 0 && throw("offsets usage incorrect")
+		is3 && offset_z != 0 && throw("offsets usage incorrect")
 	elseif offsets != :none
 		throw("offsets $offsets")
 	end
@@ -286,7 +176,7 @@ function image_geom(;
 	if true
 		if isnan(fov)
 			isnan(dx) && throw("dx or fov required")
-			fov = nx * dx
+		#	fov = nx * dx
 		else
 			!isnan(dx) && throw("dx and fov?")
 			dx = fov / nx
@@ -299,11 +189,8 @@ function image_geom(;
 	# 3D geometry
 	if is3
 		if isnan(zfov)
-			if isnan(dz)
-			#	dz = dx # nah, too risky; voxels rarely cubic
-				throw("dz or zfov required")
-			end
-			zfov = nz * dz
+			isnan(dz) && throw("dz or zfov required")
+		#	zfov = nz * dz
 		else
 			!isnan(dz) && throw("dz and zfov?")
 			dz = zfov / nz
@@ -325,7 +212,7 @@ function image_geom(;
 		throw("mask size $(size(mask)), nx=$nx ny=$ny nz=$nz")
 	end
 
-	# finally return the object
+	# return the object
 	return MIRT_image_geom(nx, ny, dx, dy, offset_x, offset_y,
 		nz, dz, offset_z, mask)
 end
@@ -343,28 +230,6 @@ function _down_round(val::Real=1, dd::Real=1, down::Real=1)
 	dd = dd * down
 	return Int(out), dd
 end
-
-
-#=
-function _downsample1(x::AbstractArray{<:Number}, down::Int)
-	dim = size(x)
-	x = reshape(x, dim[1], prod(dim[2:end]))
-	m1 = floor(Int, dim[1] / down)
-	if m1*down < dim[1]
-		x = x[1:(m1*down), :]
-	end
-	y = reshape(x, down, :)
-	y = mean(y,1)
-	return reshape(y, (m1, dim[2], dim[3]))
-end
-
-function _downsample3(x::AbstractArray{<:Number}, m::Array{Int})
-	ret = _downsample1(x, m[1])
-	ret = _downsample1(permutedims(ret, [2, 1, 3]), m[2])
-	ret = _downsample1(permutedims(ret, [3, 2, 1]), m[3])
-	return permutedims(ret, [2, 1, 3])
-end
-=#
 
 
 """
@@ -458,6 +323,51 @@ end
 
 
 """
+`out = image_geom_add_unitv(z; j=?, i=?, c=?)`
+
+add a unit vector to an initial array `z` (typically of zeros)
+
+option;
+`j` single index from 1 to length(z)
+`i` [ix,iy[,iz]] index from 1 to nx,ny
+`c` [cx,cy[,cz]] index from +/- n/2 center at floor(n/2)+1
+
+default with no arguments gives unit vector at center c=[0,0]
+"""
+function image_geom_add_unitv(z; # starts with zeros()
+		j::Integer=0,
+		i::AbstractVector{<:Int} = zeros(Int, ndims(z)),
+		c::AbstractVector{<:Int} = zeros(Int, ndims(z))
+		)
+	out = copy(z)
+
+	if j > 0 && all(i .== 0)
+		out[j] += 1
+	elseif j == 0 && any(i .> 0)
+		out[i...] += 1
+	else
+		tmp = c .+ Int.(floor.(size(out) ./ 2)) .+ 1
+		out[tmp...] += 1
+	end
+
+	return out
+end
+
+
+"""
+`image_geom_add_unitv(:test)`
+"""
+function image_geom_add_unitv(test::Symbol)
+	test != :test && throw(ArgumentError("test $test"))
+	image_geom_add_unitv(zeros(3,4), j=2)
+	image_geom_add_unitv(zeros(3,4), i=[2,3])
+	image_geom_add_unitv(zeros(3,4))
+	image_geom_add_unitv(zeros(3,4), c=[-1,-2])
+	true
+end
+
+
+"""
 `image_geom_plot(ig)`
 """
 function image_geom_plot(ig::MIRT_image_geom; kwargs...)
@@ -514,33 +424,19 @@ fun0 = Dict([
 						zeros(ig.nx, ig.ny)),
 	(:fg, ig -> ig.is3 ? (ig.ug, ig.vg, ig.wg) : (ig.ug, ig.vg)),
 
-	(:mask_or, ig -> ig.is3 ? dropdims(sum(ig.mask, dims=3) .> 0, dims=3) :
-							ig.mask),
 	(:np, ig -> sum(ig.mask)),
-
-	(:mask_outline, ig ->
-		begin
-			mask2 = ig.mask_or
-			tmp = conv2(Float32.(mask2), ones(Float32,3,3)) # todo: imfilter
-			tmp = tmp[2:end-1,2:end-1] # 'same'
-			return (tmp .> 1) .& (.! mask2)
-		end),
+	(:mask_or, ig -> mask_or(ig.mask)),
+	(:mask_outline, ig -> mask_outline(ig.mask)),
 
 	# functions
 
 	(:plot, ig -> ((;kwargs...) -> image_geom_plot(ig; kwargs...))),
-
 	(:embed, ig -> (x::AbstractArray{<:Number} -> embed(x, ig.mask))),
-
 	(:maskit, ig -> (x::AbstractArray{<:Number} -> maskit(x, ig.mask))),
-
 	(:shape, ig -> (x::AbstractArray{<:Number} -> reshape(x, ig.dim...))),
-
 	(:unitv, ig -> ((;kwargs...) -> image_geom_add_unitv(ig.zeros; kwargs...))),
-
 	(:expand_nz, ig -> (nz_pad::Int -> image_geom_expand_nz(ig, nz_pad))),
 	(:over, ig -> (over::Int -> image_geom_over(ig, over))),
-
 	(:circ, ig -> ((;kwargs...) ->
 		image_geom_circle(ig.nx,ig.ny,ig.dx,ig.dy; kwargs...))),
 
@@ -556,12 +452,6 @@ Base.getproperty(ig::MIRT_image_geom, s::Symbol) =
 Base.propertynames(ig::MIRT_image_geom) =
 	(fieldnames(typeof(ig))..., keys(fun0)...)
 
-
-function image_geom_test2()
-	ig = image_geom(nx=16, dx=2)
-	image_geom_test2(ig)
-	true
-end
 
 function image_geom_test2(ig::MIRT_image_geom)
 	# test 2D functions provided by the constructor
@@ -595,6 +485,13 @@ function image_geom_test2(ig::MIRT_image_geom)
 	true
 end
 
+function image_geom_test2()
+	ig = image_geom(nx=16, dx=2)
+	image_geom_test2(ig)
+	true
+end
+
+
 function image_geom_test3(ig::MIRT_image_geom)
 	@test image_geom_test2(ig)
 	ig.wz
@@ -623,5 +520,6 @@ function image_geom(test::Symbol)
 	test != :test && throw(ArgumentError("test $test"))
 	@test image_geom_test2()
 	@test image_geom_test3()
+	@test image_geom_add_unitv(:test)
 	true
 end
