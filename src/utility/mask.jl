@@ -5,7 +5,7 @@ Methods related to a image support mask:
 =#
 
 using Test
-using Images: imfilter, centered
+using ImageFiltering: imfilter, centered
 #using DSP: conv2
 #using SparseArrays: sparse, findnz, AbstractSparseVector
 
