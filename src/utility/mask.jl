@@ -28,10 +28,10 @@ self test
 """
 function mask_or(test::Symbol)
 	test != :test && throw(ArgumentError("test $test"))
-	mask2 = ones(Bool, 3,4)
+	mask2 = trues(3,4)
 	@test mask_or(mask2) == mask2
-	mask3 = ones(Bool, 3,4,5)
-	@test mask_or(mask3) == ones(Bool, 3,4)
+	mask3 = trues(3,4,5)
+	@test mask_or(mask3) == trues(3,4)
 	true
 end
 
@@ -55,8 +55,8 @@ self test
 """
 function mask_outline(test::Symbol)
 	test != :test && throw(ArgumentError("test $test"))
-	mask2 = ones(Bool, 3,4)
-	@test mask_outline(mask2) == zeros(Bool, 3,4)
+	mask2 = trues(3,4)
+	@test mask_outline(mask2) == falses(3,4)
 	true
 end
 
@@ -131,7 +131,9 @@ function maskit(test::Symbol)
 end
 
 
+#=
 @test mask_or(:test)
 @test mask_outline(:test)
 @test embed(:test)
 @test maskit(:test)
+=#
