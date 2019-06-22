@@ -117,17 +117,17 @@ end
 # Image geometry "struct" with some parameters and methods included
 struct MIRT_image_geom
 	# options for 2D image geometry
-	nx::Integer		# image dimension one
-	ny::Integer		# image dimension (default: nx) two
-	dx::Real		# pixel size ('dx' or 'fov' required)
-	dy::Real		# pixel size (default: -dx). (value | 'dx' | '-dx' | '2*dx')
-	offset_x::Real	# unitless (default: 0)
-	offset_y::Real	# unitless (default: 0)
+	nx::Int				# image dimension one
+	ny::Int				# image dimension (default: nx) two
+	dx::Float32			# pixel size ('dx' or 'fov' required)
+	dy::Float32			# pixel size (default: -dx). (value | 'dx' | '-dx' | '2*dx')
+	offset_x::Float32	# unitless (default: 0)
+	offset_y::Float32	# unitless (default: 0)
 
 	# options for 3D image geometry
-	nz::Integer		# image dimension three
-	dz::Real		# pixel size (default: dx)
-	offset_z::Real	# unitless (default: 0)
+	nz::Int				# image dimension three
+	dz::Float32			# pixel size (default: dx)
+	offset_z::Float32	# unitless (default: 0)
 
 	mask::Array{Bool}	# logical mask
 end
@@ -233,6 +233,7 @@ end
 `ig = image_geom(...)`
 
 Constructor for `MIRT_image_geom`
+Must specify at least one of `dx` or `fov`
 
 option:
 * `nx::Int			= 128`
