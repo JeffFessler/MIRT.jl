@@ -3,7 +3,6 @@
 # 2017-10-02 Samuel Rohrer, University of Michigan
 # 2019-03-05 Jeff Fessler, Julia 1.1 + tests
 
-#using Printf
 using Test
 using DSP: conv2
 #using SparseArrays: sparse, findnz, AbstractSparseVector
@@ -86,7 +85,7 @@ function image_geom_add_unitv(z; # starts with zeros()
 		j::Integer=0,
 		i::AbstractVector{<:Int} = zeros(Int, ndims(z)),
 		c::AbstractVector{<:Int} = zeros(Int, ndims(z))
-		) # todo where {T1 <: Integer, T2 <: Integer}
+		)
 	out = copy(z)
 
 	if j > 0 && all(i .== 0)
@@ -117,38 +116,20 @@ end
 
 # Image geometry "struct" with some parameters and methods included
 struct MIRT_image_geom
-  # options for 2D image geometry
-  nx::Integer		# image dimension one
-  ny::Integer		# image dimension (default: nx) two
-  dx::Real			# pixel size ('dx' or 'fov' required)
-  dy::Real			# pixel size (default: -dx). (value | 'dx' | '-dx' | '2*dx')
-  offset_x::Real	# unitless (default: 0)
-  offset_y::Real	# unitless (default: 0)
-  fov::Real			# nx*dx = ny*dy (if specified)
+	# options for 2D image geometry
+	nx::Integer		# image dimension one
+	ny::Integer		# image dimension (default: nx) two
+	dx::Real		# pixel size ('dx' or 'fov' required)
+	dy::Real		# pixel size (default: -dx). (value | 'dx' | '-dx' | '2*dx')
+	offset_x::Real	# unitless (default: 0)
+	offset_y::Real	# unitless (default: 0)
 
-  # options for 3D image geometry
-  nz::Integer		# image dimension three
-  dz::Real			# pixel size (default: dx)
-  zfov::Real		# dz*nz
-  offset_z::Real	# unitless (default: 0)
+	# options for 3D image geometry
+	nz::Integer		# image dimension three
+	dz::Real		# pixel size (default: dx)
+	offset_z::Real	# unitless (default: 0)
 
-  # general image orientation
-  offsets::String	# this is a string, only 'dsp' has meaning now
-  mask_type::String	# a string stored to make downsample easier
-  mask::Array{Bool}	# logical mask
-  iy_start::Array{Int}	# size [nthread]
-  iy_end::Array{Int}	# size [nthread]
-  is3::Bool			# storing this to make life easier
-
-  # functions provided by the constructor
-  # methods for 2D images
-#  unitv::Function		# (ix,iy) | (jj) | ('c', [cx cy])
-  circ::Function		# (rx,ry,cx,cy) circle of radius rx, ry (cylinder in 3D)
-  expand_nz::Function	# '(nx_pad)'
-  over::Function		#
-  plot::Function		# plot the image geometry
-
-  # methods for 3D images
+	mask::Array{Bool}	# logical mask
 end
 
 
@@ -162,6 +143,7 @@ function image_geom_help()
 	"
 	Derived values for 2D (and 3D) images:
 
+	is3	is it 3d (nz > 0?)
 	fovs [|dx|*nx |dy|*ny ...]
 	np	sum(mask) = # pixels to be estimated
 
@@ -204,6 +186,13 @@ function image_geom_help()
 				j: single index from 1 to length(z)
 				i: [ix,iy[,iz]] index from 1 to nx,ny
 				c: [cx,cy[,cz]] index from +/- n/2 center at floor(n/2)+1
+	circ(rx=,ry=,cx=,cy=)	circle of given radius and center (cylinder in 3D)
+	plot()		plot the image geometry
+
+	Methods that return a new MIRT_image_geom:
+
+	over(over::Real)		over-sample geometry by given factor
+	expand_nz(nz_pad)	expand image geometry in z by nz_pad on both ends
 	"
 end
 
@@ -226,12 +215,15 @@ struct MIRT_cbct_ig
 end
 
 # constructor for MIRT_cbct_ig
-function cbct(ig::MIRT_image_geom)
+function cbct(ig::MIRT_image_geom; nthread::Int=1)
+	iy_start = [0]
+	iy_end = [ig.ny]
+	nthread != 1 && throw("only nthread=1 for now due to iy_start")
 	return MIRT_cbct_ig(
-		Cint.(ig.nx), Cint.(ig.ny), Cint.(ig.nz), Cfloat.(ig.dx),
-		Cfloat.(ig.dy), Cfloat.(ig.dz), Cfloat.(ig.offset_x),
-		Cfloat.(ig.offset_y), Cfloat.(ig.offset_z),
-		pointer(ig.mask), pointer(ig.iy_start),pointer(ig.iy_end)
+		Cint(ig.nx), Cint(ig.ny), Cint(ig.nz), Cfloat(ig.dx),
+		Cfloat(ig.dy), Cfloat(ig.dz),
+		Cfloat(ig.offset_x), Cfloat(ig.offset_y), Cfloat(ig.offset_z),
+		pointer(ig.mask_or), pointer(iy_start), pointer(iy_end),
 		)
 end
 
@@ -243,35 +235,35 @@ end
 Constructor for `MIRT_image_geom`
 
 option:
-* `nx::Integer			= 128`
-* `ny::Integer			= nx`
-* `dx::Real				= ?`
-* `dy::Real				= -dx`
-* `offset_x::Real		= 0`
-* `offset_y::Real		= 0`
-* `fov::Real			= ?` (if specific, then `nx*dx=ny*dy`)
-* `nz::Integer			= 0`
-* `dz::Real				= ?`
-* `zfov::Real			= ?`
-* `offset_z::Real		= 0`
-* `offsets::String		= ""` (e.g., "dsp")
-* `mask_type::String	= ""` (e.g., "all-but-edge")
+* `nx::Int			= 128`
+* `ny::Int			= nx`
+* `dx::Real			= ?`
+* `dy::Real			= -dx`
+* `offset_x::Real	= 0`
+* `offset_y::Real	= 0`
+* `fov::Real		= ?` (if specified, then `nx*dx=ny*dy`)
+* `nz::Int			= 0`
+* `dz::Real			= ?`
+* `zfov::Real		= ?` (if specified, then `nz*dz`)
+* `offset_z::Real	= 0`
+* `offsets::Symbol	= :none` or :dsp
+* `mask::Union{Symbol,AbstractArray{Bool}} = :all` or `:all_but_edge`
 """
 function image_geom(;
-		nx::Integer			= 128,
-		ny::Integer			= nx,
+		nx::Int				= 128,
+		ny::Int				= nx,
 		dx::Real			= NaN,
 		dy::Real			= NaN,
 		offset_x::Real		= 0,
 		offset_y::Real		= 0,
 		fov::Real			= NaN,
-		nz::Integer			= 0,
+		nz::Int				= 0,
 		dz::Real			= NaN,
 		zfov::Real			= NaN,
 		offset_z::Real		= 0,
-		offsets::String		= "",
-		mask_type::String	= "",
-	) where T <: Real
+		offsets::Symbol		= :none,
+		mask::Union{Symbol,AbstractArray{Bool}}	= :all,
+	)
 
 	# now for the constructor
 	# start by setting variables if optional arguments not used
@@ -279,31 +271,23 @@ function image_geom(;
 	is3 = !isnan(dz) || !isnan(zfov) || (nz > 0)
 
 	# offsets
-	if offsets == "dsp"
+	if offsets == :dsp
 		# now check for errors
-		if offset_x == 0 || offset_y == 0
-			throw("offsets usage incorrect")
-		end
+		(offset_x == 0 || offset_y == 0) && throw("offsets usage incorrect")
 		offset_x = 0.5
 		offset_y = 0.5
-		if is3
-			if offset_z == 0
-				throw("offsets usage incorrect")
-			end
-		end
+		is3 && offset_z == 0 && throw("offsets usage incorrect")
+	elseif offsets != :none
+		throw("offsets $offsets")
 	end
 
 	# transverse plane (2d) distances
 	if true
 		if isnan(fov)
-			if isnan(dx)
-				throw("dx or fov required")
-			end
+			isnan(dx) && throw("dx or fov required")
 			fov = nx * dx
 		else
-			if !isnan(dx)
-				throw("dx and fov?")
-			end
+			!isnan(dx) && throw("dx and fov?")
 			dx = fov / nx
 			dy = fov / ny
 		end
@@ -320,101 +304,48 @@ function image_geom(;
 			end
 			zfov = nz * dz
 		else
-			if !isnan(dz)
-				throw("dz and zfov?")
-			end
+			!isnan(dz) && throw("dz and zfov?")
 			dz = zfov / nz
 		end
 	end
 
 	# mask
-	flag_mask_all_but_edge = false
-	if mask_type == "all-but-edge"
-		flag_mask_all_but_edge = true
+	if mask == :all
+		mask = is3 ? trues(nx, ny, nz) : trues(nx, ny)
+	elseif mask_type == :all_but_edge
 		mask = trues(nx,ny,nz)
 		mask[  1,   :, :] .= false
 		mask[end,   :, :] .= false
 		mask[  :,   1, :] .= false
 		mask[  :, end, :] .= false
-	end
-
-	if mask_type == ""
-		mask = is3 ? trues(nx, ny, nz) : trues(nx, ny)
+	elseif isa(mask, Symbol)
+		throw("mask symbol $mask_type")
 	elseif size(mask,1) != nx || size(mask,2) != ny || (is3 && size(mask,3) != nz)
-		throw("bad input mask size, nx=$nx ny=$ny")
+		throw("mask size $(size(mask)), nx=$nx ny=$ny nz=$nz")
 	end
 
-  # start is 0, and end is ny for a single thread
-  iy_start = [0]
-  iy_end   = [0]
-
-  # image_geom_circle()
-  # default is a circle that just inscribes the square
-  # but keeping a 1 pixel border due to ASPIRE regularization restriction
-  _circ = (;
-	rx::Real = min(abs((nx/2-1)*dx), abs((ny/2-1)*dy)),
-	ry::Real=rx, cx::Real=0, cy::Real=0) ->
-	begin
-		throw("todo: replace the 'ellipse_im' function")
-		circ = ones(nx,ny)
-		if is3
-			circ = repmat(circ, 1, nz)
-		end
-		return circ
-	end
-
-  # image_geom_over()
-  _over = (over::Real=1) -> MIRT_image_geom(
-		nx*over, ny*over, dx/over, dy/over,
-		offset_x*over, offset_y*over, fov,
-		nz*over, dz/over, zfov, offset_z*over,
-		offsets, mask_type, mask, iy_start, iy_end, is3,
- #todo
-		_circ, _expand_nz, _over,
-		_plot)
-
-  # image_geom_plot()
-  _plot = () ->
-	begin
-		# todo: figure out plotting with ct geom
-	end
-
-	# image_geom_expand_nz
-	_expand_nz = (nz_pad::Integer=0) ->
-	begin
-		if !is3
-			throw("expand_nz only valid for 3D")
-		end
-		out_nz = nz + 2*nz_pad
-		out_zfov = out_nz / nz * zfov
-		out_mask = cat(dims=3, repeat(mask[:,:,1], 1, 1, nz_pad), mask,
-		repeat(mask[:,:,end], 1, 1, nz_pad))
-		return out_nz, out_zfov, out_mask, [nx ny out_nz]
-	end
-
-	# and finally return the new object
-	return MIRT_image_geom(
-		# set the variables
-		nx, ny, dx, dy, offset_x, offset_y, fov, nz, dz, zfov, offset_z,
-		offsets, mask_type, mask, iy_start, iy_end, is3,
-		# set the functions, todo
-		_circ, _expand_nz, _over,
-		_plot, #_wx, _wy, _wz, _u, _v, _ug, _vg, _zg, _z,
-		)
+	# finally return the object
+	return MIRT_image_geom(nx, ny, dx, dy, offset_x, offset_y,
+		nz, dz, offset_z, mask)
 end
 
-# define a helper function needed to downsample image_geom
-# image_geom_down_round()
+
+"""
+`image_geom_down_round()`
+helper function needed to downsample `image_geom`
+"""
 function _down_round(val::Real=1, dd::Real=1, down::Real=1)
 	out = val / down
 	if out != round(out)
-		out = 2 * round(out / 2)
+		out = 2 * round(out / 2) # keep it even if not an integer
 	end
 	dd = dd * down
 	return Int(out), dd
 end
 
-function _downsample1(x::Array{T}, down::Integer) where {T<:Number}
+
+#=
+function _downsample1(x::AbstractArray{<:Number}, down::Int)
 	dim = size(x)
 	x = reshape(x, dim[1], prod(dim[2:end]))
 	m1 = floor(Int, dim[1] / down)
@@ -426,23 +357,24 @@ function _downsample1(x::Array{T}, down::Integer) where {T<:Number}
 	return reshape(y, (m1, dim[2], dim[3]))
 end
 
-function _downsample3(x::Array{T}, m::Array{Int}) where {T<:Number}
+function _downsample3(x::AbstractArray{<:Number}, m::Array{Int})
 	ret = _downsample1(x, m[1])
 	ret = _downsample1(permutedims(ret, [2, 1, 3]), m[2])
 	ret = _downsample1(permutedims(ret, [3, 2, 1]), m[3])
 	return permutedims(ret, [2, 1, 3])
 end
+=#
 
-# define the image_geom_downsample function as its own functions
-function downsample(ig::MIRT_image_geom; down::Integer=1)
 
-	# check if its a scalar by seeing if the collection of size is empty
+"""
+`downsample(ig; down::Int=1)`
+cf image_geom_downsample
+"""
+function downsample(ig::MIRT_image_geom; down::Int=1)
+
+	# check if it is a scalar by seeing if the collection of size is empty
 	if isempty(size(down))
-		if ig.is3
-			downv = [ down down down]
-		else
-			downv = [ down down]
-		end
+		downv = ig.is3 ? [down,down,down] : downv = [down,down]
 	else
 		downv = down
 	end
@@ -453,7 +385,7 @@ function downsample(ig::MIRT_image_geom; down::Integer=1)
 	# adjust to "pixel" units
 	down_offset_x = ig.offset_x / downv[1]
 	down_offset_y = ig.offset_y / downv[2]
-	# now the 3 d case
+	# now the 3d case
 	if ig.is3
 		down_nz, down_dz = _down_round(ig.nz, ig.dz, downv[3])
 		down_offset_z = ig.offset_z / downv[3]
@@ -461,38 +393,74 @@ function downsample(ig::MIRT_image_geom; down::Integer=1)
 		down_nz = 0; down_dz = 0; down_offset_z = 0
 	end
 	# now to correctly downsample the mask
-	# size is a tuple, all in Julia expects an array so we must convert
-	mdim_vec = [size(ig.mask)[1] size(ig.mask)[2] size(ig.mask)[3]]
+	mdim_vec = [size(ig.mask)...] # tuple to vector
 	if ig.is3
-		if all([down_nx down_ny down_nz] .* downv == mdim_vec)
-			down_mask = _downsample3(ig.mask, downv)
-			#down_mask = trues(ig.mask)
+		if all([down_nx,down_ny,down_nz] .* downv == mdim_vec)
+			down_mask = downsample3(ig.mask, downv) .> 0
 		else
 			throw("bug: bad mask size. need to address mask downsampling")
 		end
 	else
 		if down_nx * downv[1] == size(ig.mask,1) && down_ny * downv[2] == size(ig.mask,2)
-		# mask = downsample2(mask, downv) > 0
-		down_mask = trues(ig.mask)
+			mask = downsample2(mask, downv) .> 0
 		elseif down_nx != size(ig.mask,1) || down_ny != size(ig.mask,2)
 			throw("bug: bad mask size. need to address mask downsampling")
 		end
 	end
 
-	return image_geom(
-			# new downsampled version to be constructed
-			nx			= down_nx,
-			ny			= down_ny,
-			dx			= down_dx,
-			dy			= down_dy,
-			offset_x	= down_offset_x,
-			offset_y	= down_offset_y,
-			nz			= down_nz,
-			dz			= down_dz,
-			offset_z	= down_offset_z,
-			offsets		= ig.offsets,
-			mask_type	= ig.mask_type,
-		)
+	return MIRT_image_geom(
+		down_nx, down_ny, down_dx, down_dy, down_offset_x, down_offset_y,
+		down_nz, down_dz, down_offset_z, down_mask)
+end
+
+
+"""
+`image_geom_expand_nz(ig, nz_pad)`
+pad both ends
+"""
+function image_geom_expand_nz(ig::MIRT_image_geom, nz_pad::Int)
+	!ig.is3 && throw("expand_nz only valid for 3D")
+	out_nz = ig.nz + 2*nz_pad
+	out_mask = cat(dims=3, repeat(ig.mask[:,:,1], 1, 1, nz_pad), ig.mask,
+			repeat(ig.mask[:,:,end], 1, 1, nz_pad))
+	return MIRT_image_geom(
+		ig.nx, ig.ny, ig.dx, ig.dy, ig.offset_x, ig.offset_y,
+		out_nz, ig.dz, ig.offset_z, out_mask)
+end
+
+
+"""
+`image_geom_over(ig, over)`
+"""
+function image_geom_over(ig::MIRT_image_geom, over::Real)
+	throw("not done")
+	return MIRT_image_geom(
+		ig.nx*over, ig.ny*over, ig.dx/over, ig.dy/over,
+		ig.offset_x*over, ig.offset_y*over,
+		ig.nz*over, ig.dz/over, ig.offset_z*over,
+		mask)
+end
+
+
+# default is a circle that just inscribes the square
+# but keeping a 1 pixel border due to ASPIRE regularization restriction
+function image_geom_circle(nx::Int, ny::Int, dx::Real, dy::Real;
+	rx::Real = min(abs((nx/2-1)*dx), abs((ny/2-1)*dy)),
+	ry::Real=rx, cx::Real=0, cy::Real=0)
+	throw("todo: replace the 'ellipse_im' function")
+	circ = ones(nx,ny)
+	if is3
+		circ = repmat(circ, 1, nz)
+	end
+	return circ
+end
+
+
+"""
+`image_geom_plot(ig)`
+"""
+function image_geom_plot(ig::MIRT_image_geom; kwargs...)
+	@warn "todo" # todo: figure out plotting with ct geom
 end
 
 
@@ -506,6 +474,7 @@ end
 fun0 = Dict([
 	(:help, ig -> print(image_geom_help())),
 
+	(:is3, ig -> ig.nz > 0),
 	(:dim, ig -> ig.is3 ? [ig.nx ig.ny ig.nz] : [ig.nx ig.ny]),
 	(:fovs, ig -> ig.is3 ?
 		[abs(ig.dx)*ig.nx, abs(ig.dy)*ig.ny, abs(ig.dz)*ig.nz] :
@@ -558,6 +527,8 @@ fun0 = Dict([
 
 	# functions
 
+	(:plot, ig -> ((;kwargs...) -> image_geom_plot(ig; kwargs...))),
+
 	(:embed, ig -> (x::AbstractArray{<:Number} -> embed(x, ig.mask))),
 
 	(:maskit, ig -> (x::AbstractArray{<:Number} -> maskit(x, ig.mask))),
@@ -565,6 +536,12 @@ fun0 = Dict([
 	(:shape, ig -> (x::AbstractArray{<:Number} -> reshape(x, ig.dim...))),
 
 	(:unitv, ig -> ((;kwargs...) -> image_geom_add_unitv(ig.zeros; kwargs...))),
+
+	(:expand_nz, ig -> (nz_pad::Int -> image_geom_expand_nz(ig, nz_pad))),
+	(:over, ig -> (over::Int -> image_geom_over(ig, over))),
+
+	(:circ, ig -> ((;kwargs...) ->
+		image_geom_circle(ig.nx,ig.ny,ig.dx,ig.dy; kwargs...))),
 
 	])
 
@@ -607,7 +584,7 @@ function image_geom_test2(ig::MIRT_image_geom)
 	ig.ones
 	ig.zeros
 #	ig.circ()
-	ig.over(2)
+#	ig.over(2)
 #	ig.plot()
 	ig.u
 	ig.v
@@ -618,7 +595,7 @@ function image_geom_test2(ig::MIRT_image_geom)
 end
 
 function image_geom_test3(ig::MIRT_image_geom)
-	image_geom_test2(ig)
+	@test image_geom_test2(ig)
 	ig.wz
 	ig.zg
 	ig.expand_nz(2)
@@ -635,6 +612,7 @@ end
 
 """
 `image_geom(:test)`
+self test
 """
 function image_geom(test::Symbol)
 	if test == :help
@@ -646,4 +624,3 @@ function image_geom(test::Symbol)
 	@test image_geom_test3()
 	true
 end
-
