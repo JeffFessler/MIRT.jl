@@ -1,5 +1,8 @@
 In reverse chronological order
 
+2019-06-22
+major update to `image_geom`
+
 0.5.0 2019-06-16
 
 add `block_lm`
