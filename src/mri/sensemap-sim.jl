@@ -93,8 +93,8 @@ function ir_mri_sensemap_sim(;
 	ny = dims[2]
 	nz = (length(dims) == 3) ? dims[3] : 0
 
-	@debug coils_per_ring = round(Int, ncoil / nring)
-	nring * coils_per_ring != ncoil && throw("nring must be divisor of ncoil")
+	coils_per_ring = round(Int, ncoil / nring)
+	ncoil != nring * coils_per_ring && throw("nring must be divisor of ncoil")
 
 	(smap, info) = ir_mri_sensemap_sim_do(
 			nx, ny, nz,
@@ -107,7 +107,7 @@ function ir_mri_sensemap_sim(;
 		1 / sqrt(sum(abs.(smap[round(Int,nx/2),round(Int,ny/2),round(Int,nz/2),:].^2)))
 
 	if scale == :ssos_center
-		smap *= scale_center
+		smap *= Float32(scale_center)
 	elseif scale != :nothing
 		throw("scale $scale")
 	end
@@ -124,7 +124,7 @@ function ir_mri_sensemap_sim_do(nx, ny, nz,
 		orbit, orbit_start, coil_distance, chat)
 
 	nring = Int(ncoil / ncoilpr)
-	rlist = rcoil * ones(Float32, ncoilpr, nring) # coil radii
+	rlist = Float32(rcoil) * ones(Float32, ncoilpr, nring) # coil radii
 
 	zerof = (arg...) -> zeros(Float32, arg...)
 	plist = zerof(ncoilpr, nring, 3) # position of coil center [x y z]
@@ -209,13 +209,14 @@ function ir_mri_sensemap_sim_do(nx, ny, nz,
 		end
 	end
 
-	smap = smap * rlist[1] / (2*pi) # trick: scale so maximum is near unity
+	smap *= rlist[1] / Float32(2*pi) # trick: scale so maximum is near unity
 	smap = nz == 0 ?  reshape(smap, nx, ny, ncoil) :
 		reshape(smap, nx, ny, nz, ncoil)
 
-	return smap, (x=x, y=y, z=z, dx=dx, dy=dy, dz=dz,
+	info = (x=x, y=y, z=z, dx=dx, dy=dy, dz=dz,
 		nlist=nlist, plist=plist, rlist=rlist, olist=olist, ulist=ulist,
 		nring=nring, ncoilpr=ncoilpr, rcoil=rcoil)
+	return smap, info
 end
 
 
