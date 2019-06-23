@@ -2,9 +2,10 @@
 # Methods related to an image geometry for image reconstruction
 # 2017-10-02 Samuel Rohrer, University of Michigan
 # 2019-03-05 Jeff Fessler, Julia 1.1 + tests
+# 2019-06-23 Jeff Fessler, overhaul
 
-using Test
-
+using Test: @test
+using ImageTransformations: imresize
 
 # Image geometry "struct" with essential parameters
 struct MIRT_image_geom
@@ -83,7 +84,8 @@ function image_geom_help()
 
 	Methods that return a new MIRT_image_geom:
 
-	over(over::Real)		over-sample geometry by given factor
+	down(down::Int)		down-sample geometry by given factor
+	over(over::Int)		over-sample geometry by given factor
 	expand_nz(nz_pad)	expand image geometry in z by nz_pad on both ends
 	"
 end
@@ -139,7 +141,7 @@ option:
 * `zfov::Real		= ?` (if specified, then `nz*dz`)
 * `offset_z::Real	= 0` (unitless)
 * `offsets::Symbol	= :none` or :dsp
-* `mask::Union{Symbol,AbstractArray{Bool}} = :all` or `:all_but_edge`
+* `mask::Union{Symbol,AbstractArray{Bool}} = :all` | `:circ` | `:all_but_edge`
 """
 function image_geom(;
 		nx::Int				= 128,
@@ -200,6 +202,8 @@ function image_geom(;
 	# mask
 	if mask == :all
 		mask = is3 ? trues(nx, ny, nz) : trues(nx, ny)
+	elseif mask == :circ
+		mask = image_geom_circle(nx, ny, dx, dy)
 	elseif mask_type == :all_but_edge
 		mask = trues(nx,ny,nz)
 		mask[  1,   :, :] .= false
@@ -233,10 +237,10 @@ end
 
 
 """
-`downsample(ig; down::Int=1)`
+`downsample(ig, down)`
 cf `image_geom_downsample`
 """
-function downsample(ig::MIRT_image_geom; down::Union{Int,Vector{Int}}=1)
+function downsample(ig::MIRT_image_geom, down::Union{Int,Vector{Int}})
 
 	# check if it is a scalar by seeing if the collection of size is empty
 	if isempty(size(down))
@@ -269,7 +273,7 @@ function downsample(ig::MIRT_image_geom; down::Union{Int,Vector{Int}}=1)
 		end
 	else
 		if [down_nx,down_ny] .* downv == mdim_vec
-			down_mask = downsample2(mask, downv) .> 0
+			down_mask = downsample2(ig.mask, downv) .> 0
 		else
 			throw("bug: bad mask size. need to address mask downsampling")
 		end
@@ -299,11 +303,11 @@ end
 """
 `image_geom_over(ig, over)`
 """
-function image_geom_over(ig::MIRT_image_geom, over::Real)
+function image_geom_over(ig::MIRT_image_geom, over::Int)
 	if all(ig.mask .== true)
 		mask_over = trues(ig.dim...)
 	else
-		throw("not done") # todo
+		mask_over = imresize(ig.mask, (ig.dim*over)...) .> 0
 	end
 	return MIRT_image_geom(
 		ig.nx*over, ig.ny*over, ig.dx/over, ig.dy/over,
@@ -317,11 +321,11 @@ end
 # but keeping a 1 pixel border due to ASPIRE regularization restriction
 function image_geom_circle(nx::Int, ny::Int, dx::Real, dy::Real;
 	rx::Real = min(abs((nx/2-1)*dx), abs((ny/2-1)*dy)),
-	ry::Real=rx, cx::Real=0, cy::Real=0)
-	throw("todo: replace the 'ellipse_im' function")
-	circ = ones(nx,ny)
-	if is3
-		circ = repmat(circ, 1, nz)
+	ry::Real = rx, cx::Real = 0, cy::Real = 0, nz::Int=0, over::Int=2)
+	ig = image_geom(nx=nx, ny=ny, dx=dx, dy=dy)
+	circ = ellipse_im(ig, [cx cy rx ry 0 1], oversample=over) .> 0
+	if nz > 0
+		circ = repeat(circ, 1, 1, nz)
 	end
 	return circ
 end
@@ -376,7 +380,10 @@ end
 `image_geom_plot(ig)`
 """
 function image_geom_plot(ig::MIRT_image_geom; kwargs...)
-	@warn "todo" # todo: figure out plotting with ct geom
+	return ig.is3 ?
+		jim(ig.x, ig.y, ig.mask_or,
+			"(dx,dy,dz)=$(ig.dx),$(ig.dy),$(ig.dz)"; kwargs...) :
+		jim(ig.x, ig.y, ig.mask, "(nx,ny)=$(ig.nx),$(ig.ny)"; kwargs...)
 end
 
 
@@ -398,8 +405,6 @@ fun0 = Dict([
 
 	(:zeros, ig -> zeros(Float32, ig.dim...)), # (nx, ny, nz) : zeros(nx, ny)
 	(:ones, ig -> ones(Float32, ig.dim...)), # (nx, ny, nz) : zeros(nx, ny)
-
-# _ones = () -> is3 ? ones(nx, ny, nz) : ones(nx, ny)
 
 	(:x, ig -> ((0:ig.nx-1) .- ig.wx) * ig.dx),
 	(:y, ig -> ((0:ig.ny-1) .- ig.wy) * ig.dy),
@@ -433,17 +438,21 @@ fun0 = Dict([
 	(:mask_or, ig -> mask_or(ig.mask)),
 	(:mask_outline, ig -> mask_outline(ig.mask)),
 
-	# functions
+	# simple functions
 
 	(:plot, ig -> ((;kwargs...) -> image_geom_plot(ig; kwargs...))),
 	(:embed, ig -> (x::AbstractArray{<:Number} -> embed(x, ig.mask))),
 	(:maskit, ig -> (x::AbstractArray{<:Number} -> maskit(x, ig.mask))),
 	(:shape, ig -> (x::AbstractArray{<:Number} -> reshape(x, ig.dim...))),
 	(:unitv, ig -> ((;kwargs...) -> image_geom_add_unitv(ig.zeros; kwargs...))),
-	(:expand_nz, ig -> (nz_pad::Int -> image_geom_expand_nz(ig, nz_pad))),
-	(:over, ig -> (over::Int -> image_geom_over(ig, over))),
 	(:circ, ig -> ((;kwargs...) ->
-		image_geom_circle(ig.nx,ig.ny,ig.dx,ig.dy; kwargs...))),
+		image_geom_circle(ig.nx,ig.ny,ig.dx,ig.dy,nz=ig.nz; kwargs...))),
+
+	# functions that return new geometry:
+
+	(:down, ig -> (down::Int -> downsample(ig, down))),
+	(:over, ig -> (over::Int -> image_geom_over(ig, over))),
+	(:expand_nz, ig -> (nz_pad::Int -> image_geom_expand_nz(ig, nz_pad))),
 
 	])
 
@@ -469,24 +478,25 @@ function image_geom_test2(ig::MIRT_image_geom)
 	ig.yg
 	ig.fovs
 	ig.np
-	@test ig.embed(ig.ones[ig.mask]) == Float32.(ig.mask)
-	@test ig.maskit(ig.ones) == Float32.(ones(ig.np))
 	ig.mask_outline
-	@test ig.shape(ig.ones[:]) == ig.ones
-	ig.unitv(j=4) 
-	ig.unitv(i=ones(Int, length(ig.dim)))
-	ig.unitv(c=zeros(Int, length(ig.dim)))
-	ig.unitv() 
 	ig.ones
 	ig.zeros
-#	ig.circ()
-	ig.over(2)
-#	ig.plot()
 	ig.u
 	ig.v
 	ig.ug
 	ig.vg
 	ig.fg
+	@test ig.shape(ig.ones[:]) == ig.ones
+	@test ig.embed(ig.ones[ig.mask]) == Float32.(ig.mask)
+	@test ig.maskit(ig.ones) == Float32.(ones(ig.np))
+	ig.unitv(j=4)
+	ig.unitv(i=ones(Int, length(ig.dim)))
+	ig.unitv(c=zeros(Int, length(ig.dim)))
+	ig.unitv()
+	ig.circ()
+	ig.plot()
+	ig.down(2) # needs dims after down-sampling to be even
+	ig.over(2)
 	true
 end
 
@@ -501,13 +511,13 @@ function image_geom_test3(ig::MIRT_image_geom)
 	@test image_geom_test2(ig)
 	ig.wz
 	ig.zg
-	ig.expand_nz(2)
 	ig.mask_or
+	ig.expand_nz(2)
 	true
 end
 
 function image_geom_test3()
-	ig = image_geom(nx=16, nz=3, dx=2, dz=4)
+	ig = image_geom(nx=16, nz=4, dx=2, dz=3)
 	image_geom_test3(ig)
 	true
 end
@@ -525,6 +535,5 @@ function image_geom(test::Symbol)
 	test != :test && throw(ArgumentError("test $test"))
 	@test image_geom_test2()
 	@test image_geom_test3()
-	@test image_geom_add_unitv(:test)
 	true
 end
