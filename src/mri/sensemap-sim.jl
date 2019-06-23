@@ -2,7 +2,7 @@
 # Simulate coil sensitivity maps
 # 2019-06-18, Jeff Fessler, University of Michigan
 
-using MIRT: jim, image_geom # todo
+#using MIRT: jim, image_geom
 
 using Elliptic: ellipke
 using Test: @test
