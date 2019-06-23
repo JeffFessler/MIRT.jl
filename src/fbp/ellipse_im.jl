@@ -25,7 +25,7 @@ option
 * `return_params` if true return (phantom, params)
 
 out
-* `phantom`		[nx ny]	image
+* `phantom`		[nx ny]	image (Float32)
 * `params`		[ne 6] parameters (only if return_params=true)
 
 note: `op ellipse` in aspire with `nsub=3` is `oversample=4 = 2^(3-1)` here
@@ -162,10 +162,10 @@ function ellipse_im_fast(nx, ny, params_in, dx, dy,
 
 	for ie = 1:size(params,1)
 
-		ell = params[ie, :]
+		ell = Float32.(params[ie, :])
 		cx = ell[1];	rx = ell[3]
 		cy = ell[2];	ry = ell[4]
-		theta = ell[5] * pi/180
+		theta = ell[5] * Float32(pi/180)
 
 		xs = xx .- cx # shift per ellipse center
 		ys = yy .- cy
