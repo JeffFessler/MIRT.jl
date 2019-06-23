@@ -1,6 +1,7 @@
 In reverse chronological order
 
-2019-06-23
+0.6.0 2019-06-23
+
 add `prompt` `ir_mri_sense_map_sim`
 
 2019-06-22
