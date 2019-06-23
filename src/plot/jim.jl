@@ -1,9 +1,13 @@
 # jim.jl
+# jiffy image display
+# 2019-02-23 Jeff Fessler, University of Michigan
 
-using Plots
+using Plots: heatmap
+using Plots: ColorGradient
 using LaTeXStrings
 using MosaicViews
 using FFTViews
+using Colors: HSV
 
 # global default key/values
 jim_def = Dict([
@@ -91,6 +95,11 @@ function jim(z::AbstractArray{<:Real};
 		xy = () # no x,y for mosaic
 	elseif fft0
 		z = FFTView(z)[x,y]
+	end
+
+	# attempt an HSV colormap for phase images
+	if color == :hsv
+		color = ColorGradient([HSV(h,1,1) for h=LinRange(0,350,351)])
 	end
 
 	heatmap(xy..., z', transpose=false,
@@ -194,6 +203,7 @@ function jim(test::Symbol)
 	jim(1:4, 5:9, zeros(4,5), title="test3")
 	jim(zeros(4,5), x=1:4, y=5:9, title="test3")
 	jim(x=1:4, y=5:9, rand(4,5), title="test4")
+	jim(rand(4,5), color=:hsv)
 	jim(complex(rand(4,3)))
 	jim(complex(rand(4,3)), "complex")
 	true
