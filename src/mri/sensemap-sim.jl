@@ -93,7 +93,7 @@ function ir_mri_sensemap_sim(;
 	ny = dims[2]
 	nz = (length(dims) == 3) ? dims[3] : 0
 
-	@show coils_per_ring = round(Int, ncoil / nring)
+	@debug coils_per_ring = round(Int, ncoil / nring)
 	nring * coils_per_ring != ncoil && throw("nring must be divisor of ncoil")
 
 	(smap, info) = ir_mri_sensemap_sim_do(
@@ -445,13 +445,10 @@ function ir_mri_sensemap_sim_test1()
 	zlist = Float32[0.1, 0.2, 0.5, 1.0]
 #	(xx,yy,zz) = ndgrid(x, y, zlist)
 	tmp = Iterators.product(x, y, zlist)
-#	@show typeof(tmp)
 	tmp = [ir_mri_smap1(i[1], i[2], i[3], a) for i in tmp]
-#	@show typeof(tmp)
 	smap_x = [p[1] for p in tmp]
 	smap_y = [p[2] for p in tmp]
 	smap_z = [p[3] for p in tmp]
-#	@show typeof(smap_z)
 #	(smap_x, smap_y, smap_z) = ir_mri_smap1.(xx, yy, zz, a)
 	smap_b = @. sqrt(smap_x^2 + smap_y^2)
 #	return plot(ir_mri_sensemap_sim_test1_show(smap_x, x, y, zlist, "x")...)
