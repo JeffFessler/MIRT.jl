@@ -173,8 +173,8 @@ function rect_im_default_parameters(xfov, yfov)
 		18    0     1      1      0     1
 	]
 
-	params(:,[1,3]) .*= xfov/64
-	params(:,[2,4]) .*= yfov/64
+	params[:,[1,3]] .*= xfov/64
+	params[:,[2,4]] .*= yfov/64
 
 	return params
 end
