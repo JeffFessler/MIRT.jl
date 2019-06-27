@@ -124,7 +124,7 @@ function jim(z::AbstractArray{<:Number};
 
 	if !(eltype(z) <: Real)
 		if abswarn
-			@warn "magnitude"
+			@warn "magnitude at $(caller_name())"
 		end
 		z = abs.(z)
 	end
