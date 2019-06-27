@@ -1,73 +1,70 @@
+# rect_im.jl
+
 using Plots
+
 
 """
 `phantom = rect_im(ig, params;
-oversample=1, hu_scale=1, fov=ig.fov, chat=false, how=:auto, replace=false, return_params=false)`
+	oversample=1, hu_scale=1, fov=maximum(ig.fovs), chat=false, how=:auto,
+	replace=false, return_params=false)`
 
 generate rectangle phantom image from parameters:
-    `[x_center y_center x_width y_width angle_degrees amplitude]`
+ `[x_center y_center x_width y_width angle_degrees amplitude]`
 
 in
-    `ig`						image_geom() object
-    `params`		[Nrect,6]	rect parameters. if empty use default
+* `ig`				`image_geom()` object
+* `params`			`[Nrect,6]` rect parameters. if empty use default
 
 options
-    `oversample`	int     oversampling factor, for grayscale boundaries
-    `hu_scale`		float   use 1000 to scale
-    `fov`           float   default ig.fov
-	`chat`		   	bool
-	`how`			symbol	:fast or :slow
-	`replace`		bool
-	`return_params` bool	if true, return both phantom and params
+* `oversample::Integer`	oversampling factor, for grayscale boundaries
+* `hu_scale::Real`		use 1000 to scale
+* `fov::Real`			default `maximum(ig.fovs)`
+* `chat::Bool`			verbosity?
+* `how::Symbol`			`:fast` or `:slow`; default `:auto`
+* `replace::Bool`		default `false`
+* `return_params::Bool`	if true, return both phantom and params
 
 out
-    `phantom`			[nx ny] image
-	`params`			[Nrect,6] rect parameters (only return if return_params=true)
-
+* `phantom`		`[nx ny]` image (Float32)
+* `params`		`[Nrect 6]` rect parameters (only return if `return_params=true`)
 """
 function rect_im(ig::MIRT_image_geom,
-    params::AbstractArray{<:Real,2};
-    oversample::Integer=1,
-    hu_scale::Real=1,
-    fov::Real=ig.fov,
-	chat::Bool=false,
-	how::Symbol=:auto,
-	replace::Bool=false,
-	return_params::Bool=false)
+		params::AbstractArray{<:Real,2};
+		oversample::Integer = 1,
+		hu_scale::Real = 1,
+		fov::Real = maximum(ig.fovs),
+		chat::Bool = false,
+		how::Symbol = :auto,
+		replace::Bool = false,
+		return_params::Bool = false)
+
+	size(params,2) != 6 && throw("bad ellipse parameter vector size")
 
 	if oversample > 1
-    	ig = ig.over(oversample)
-    end
-    args = (ig.nx, ig.ny, ig.dx, ig.dy, ig.offset_x, ig.offset_y, replace)
-
-	if isempty(fov)
-		fov = ig.fov
+		ig = ig.over(oversample)
 	end
-	#=
-	if isempty(params)
-		params = rect_im_default_parameters(xfov, yfov)
+	args = (ig.nx, ig.ny, ig.dx, ig.dy, ig.offset_x, ig.offset_y, replace)
+
+	params[:,6] .*= hu_scale
+
+	do_fast = params[:,5] .== 0 # default for :auto
+	if how == :fast
+		do_fast[:] .= true
+	elseif how == :slow
+		do_fast[:] .= false
+	elseif how != :auto
+		throw("bad how :how")
 	end
-	=#
 
-    params[:,6] .*= hu_scale
+	phantom = zeros(Float32, ig.nx, ig.ny)
 
-    do_fast = params[:,5] .== 0 # default for :auto
-    if how == :fast
-            do_fast[:] .= true
-    elseif how == :slow
-            do_fast[:] .= false
-    elseif how != :auto
-         throw("bad how :how")
-    end
-
-    phantom = zeros(Float32, ig.nx, ig.ny)
-
-    if any(do_fast)
-        phantom += rect_im_fast(params[do_fast,:], args...)
+	if any(do_fast)
+		phantom += rect_im_fast(params[do_fast,:], args...)
 	end
 
 	if any(.!do_fast)
-		phantom += rect_im_slow(params[.!do_fast,:], args..., oversample)
+		tmp = rect_im_slow(params[.!do_fast,:], args...)
+		phantom += tmp
 	end
 
 	if oversample > 1
@@ -77,18 +74,16 @@ function rect_im(ig::MIRT_image_geom,
 	if return_params
 		return (phantom, params)
 	end
+
 	return phantom
 end
 
+
 """
 `phantom = rect_im_fast()`
+for non-rotated rectangles
 """
-function rect_im_fast(params_in, nx, ny, dx, dy, offset_x, offset_y, replace)
-    params = copy(params_in)
-    if size(params,2) != 6
-		throw("bad ellipse parameter vector size")
-	end
-
+function rect_im_fast(params, nx, ny, dx, dy, offset_x, offset_y, replace)
 	phantom = zeros(Float32, nx, ny)
 
 	wx = (nx-1)/2 + offset_x # scalars
@@ -108,64 +103,67 @@ function rect_im_fast(params_in, nx, ny, dx, dy, offset_x, offset_y, replace)
 		cy = rect[2]
 		wy = rect[4]
 		theta = rect[5] * (pi/180)
-		if theta != 0
-			throw("theta=0 required")
-		end
+		theta != 0 && throw("theta=0 required")
+		value = Float32(rect[6])
+
 		x = x1 .- cx
 		y = y1 .- cy
-		tx = fun.(x.-abs(dx)/2, x.+abs(dx)/2, wx) / abs(dx)
-		ty = fun.(y.-abs(dy)/2, y.+abs(dy)/2, wy) / abs(dy)
+		tx = fun.(x .- abs(dx)/2, x .+ abs(dx)/2, wx) / abs(dx)
+		ty = fun.(y .- abs(dy)/2, y .+ abs(dy)/2, wy) / abs(dy)
 		tmp = Float32.(tx) * Float32.(ty)' # outer product (separable)
 		if replace
-			phantom[tmp .> 0] .= rect[6]
+			phantom[tmp .> 0] .= value
 		else
-			phantom = phantom + rect[6] * tmp
+			phantom += value * tmp
 		end
 	end
 	return phantom
 end
 
+
 """
 `phantom = rect_im_slow()`
+for rotated rectangles
 """
-function rect_im_slow(params_in, nx, ny, dx, dy, offset_x, offset_y, replace, over)
+function rect_im_slow(params_in, nx, ny, dx, dy, offset_x, offset_y, replace)
+
 	params = copy(params_in)
 	if size(params,2) != 6
 		throw("bad rect parameter vector size")
 	end
-	phantom = zeros(Float32, nx*over, ny*over)
+	phantom = zeros(Float32, nx, ny)
 
-	wx = (nx*over - 1)/2 + offset_x*over # scalar
-	wy = (ny*over - 1)/2 + offset_y*over
-	xx = ((0:nx*over-1) .- wx) * dx / over # Array{Float64,2}
-	yy = ((0:ny*over-1) .- wy) * dy / over
-	(xx, yy) = ndgrid(xx, yy)
+	wx = (nx - 1)/2 + offset_x # scalar
+	wy = (ny - 1)/2 + offset_y
+	x = ((0:nx-1) .- wx) * dx
+	y = ((0:ny-1) .- wy) * dy
+	(xx, yy) = ndgrid(x, y)
+
 	# ticker reset
 	ne = size(params)[1]
 	for ie in 1:ne
 		#ticker(mfilename, ie, ne)
 
 		rect = params[ie, :]
-		cx = rect[1] # float64
+		cx = rect[1]
 		wx = rect[3]
 		cy = rect[2]
 		wy = rect[4]
-		theta = rect[5] * (pi/180) #float64
+		theta = rect[5] * (pi/180) # Float64
+		value = Float32(rect[6])
 
-		x = cos(theta) .* (xx.-cx) + sin(theta) .* (yy.-cy) #Array{Float64,2}
-		y = -sin(theta) .* (xx.-cx) + cos(theta) .* (yy.-cy) #Array{Float64,2}
-		#typeof(x / wx) is Array{Float64,2}
-		#typeof(abs.(x / wx) .< 1/2) is a bit array
-		tmp = (abs.(x / wx) .< 1/2) .& (abs.(y / wy) .< 1/2) # typeof(tmp) ?
+		(x,y) = rotate2d(xx .- cx, yy .- cy, theta)
+		tmp = (abs.(x / wx) .< 1/2) .& (abs.(y / wy) .< 1/2) # 2d rect
 
 		if replace
-			phantom[tmp .> 0] .= rect[6]
+			phantom[tmp .> 0] .= value
 		else
-			phantom = phantom + rect[6] * tmp
+			phantom += value * tmp
 		end
 	end
 	return phantom
 end
+
 
 """
 `phantom = rect_im(nx, dx, params; args...)`
@@ -178,6 +176,7 @@ function rect_im(nx::Integer, dx::Real, params; args...)
 	return rect_im(ig, params; args...)
 end
 
+
 """
 `phantom = rect_im(nx::Integer, params; args...)`
 
@@ -187,6 +186,7 @@ pixel size `dx=1` and ellipse `params`
 function rect_im(nx::Integer, params; args...)
 	return ellipse_im(nx, 1., params; args...)
 end
+
 
 """
 `phantom = rect_im(nx::Integer; ny::Integer=nx, dx::Real=1)`
@@ -200,6 +200,7 @@ function rect_im(nx::Integer; ny::Integer=nx, dx::Real=1, args...)
 	end
 end
 
+
 """
 `phantom = rect_im(nx::Integer, ny::Integer; args...)`
 
@@ -209,24 +210,26 @@ function rect_im(nx::Integer, ny::Integer; args...)
 	return rect_im(nx, ny=ny, dx=1.; args...)
 end
 
+
 """
-`phantom = rect_im(ig, code, args...)`
+`phantom = rect_im(ig, code; args...)`
 
 `code = :my_rect | :default`
 """
-function rect_im(ig::MIRT_image_geom, params::Symbol; oversample, chat, args...)
-	fov = ig.fov
+function rect_im(ig::MIRT_image_geom, params::Symbol; args...)
+	fov = ig.fovs
 	if params == :my_rect
-		params = my_rect(fov, fov)
+		params = my_rect(fov...)
 	elseif params == :default
-		params = rect_im_default_parameters(fov, fov)
+		params = rect_im_default_parameters(fov...)
 	elseif params == :smiley
-		params = smiley_parameters(fov, fov)
+		params = smiley_parameters(fov...)
 	else
 		throw("bad phantom symbol $params")
 	end
 	return rect_im(ig, params; args...)
 end
+
 
 """
 `phantom = rect_im(ig; args...)`
@@ -238,24 +241,6 @@ function rect_im(ig::MIRT_image_geom; args...)
 end
 
 
-
-"""
-`(xx,yy) = ndgrid(x,y)`
-"""
-function ndgrid(x::AbstractVector{<:Number},
-				y::AbstractVector{<:Number})
-	return (repeat(x, 1, length(y)), repeat(y', length(x), 1))
-end
-
-"""
-`(xr,yr) = rot2(x, y, theta)`
-2D rotation
-"""
-function rot2(x, y, theta)
-	xr = cos(theta) * x + sin(theta) * y
-	yr = -sin(theta) * x + cos(theta) * y
-	return (xr, yr)
-end
 
 """
 `params = rect_im_default_parameters(xfov, yfov)`
@@ -288,19 +273,20 @@ end
 `params = my_rect(xfov, yfov)`
 """
 function my_rect(xfov, yfov)
-	f=1/64
+	f = 1/64
 	rect = [
-	35	35	20	10	45	1
-	35	-35	20	10	-45	1
-	-35	-35	20	10	45	1
-	-35	35	20	10	-45	1
-	0	0	40	40	45	1
-	0	0	40	40	0	0.5
-	40	0	12	1.5	0	1.5
-	-40	0	12	1.5	0	1.5
+		35	35	20	10	45	1
+		35	-35	20	10	-45	1
+		-35	-35	20	10	45	1
+		-35	35	20	10	-45	1
+		0	0	40	40	45	1
+		0	0	40	40	0	0.5
+		40	0	12	1.5	0	1.5
+		-40	0	12	1.5	0	1.5
 	]
 	return rect
 end
+
 
 """
 `params = smiley_parameters(xfov, yfov)`
@@ -309,15 +295,16 @@ smiley face out of rects
 """
 function smiley_parameters(xfov, yfov)
 	rect = [
-	0	0	80	80	0	0.5
-	-20	-20	10	15	0	1 #eyes
-	20	-20	10	15	0	1
-	0	25	50	6	0	1 #mouth
-	-23	19	4	6	0	1
-	23	19	4	6	0	1
+		0	0	80	80	0	0.5
+		-20	-20	10	15	0	1 #eyes
+		20	-20	10	15	0	1
+		0	25	50	6	0	1 #mouth
+		-23	19	4	6	0	1
+		23	19	4	6	0	1
 	]
 	return rect
 end
+
 
 """
 `rect_im()`
@@ -327,6 +314,7 @@ show docstring(s)
 function rect_im()
 	@doc rect_im
 end
+
 
 """
 `rect_im_show()`
@@ -349,6 +337,7 @@ function rect_im_show()
 
 	plot(p1, p2, p3, p4)
 end
+
 
 function rect_im_test()
 	fov = 100
@@ -373,4 +362,5 @@ function rect_im(test::Symbol)
 	rect_im()
 	rect_im(:show)
 	rect_im_test()
+	true
 end
