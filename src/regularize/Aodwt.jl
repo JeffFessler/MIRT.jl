@@ -3,8 +3,9 @@
 
 using Plots
 using LinearMaps
-using Wavelets
+using Wavelets: dwt, idwt, wavelet, WT
 #using MIRT: jim
+
 
 """
 `A, levels, mfun = Aodwt(dims; level::Integer=3, wt=wavelet(WT.haar))`
@@ -54,20 +55,21 @@ end
 
 
 """
-`Aodwt_show(;M=32, N=64)` show scales
+`Aodwt_show(;M=32, N=64)`
+show scales
 """
-function Aodwt_show(;M=32, N=64)
+function Aodwt_show(; M=32, N=64)
 	W, scales, mfun = Aodwt((M,N))
 	jim(scales)
 end
 
 
-
-
 """
-`Aodwt(:test)` self test
+`Aodwt(:test)`
+self test
 
-`Aodwt(:show)` visualize
+`Aodwt(:show)`
+visualize
 """
 function Aodwt(test::Symbol)
 	if test == :show

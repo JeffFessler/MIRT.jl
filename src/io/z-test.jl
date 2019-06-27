@@ -6,3 +6,4 @@ using Test
 @test fld_read(:test)
 @test fld_write(:test)
 #@test loadpfile(:test)
+#@test prompt(:test)

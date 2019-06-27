@@ -1,5 +1,12 @@
 In reverse chronological order
 
+0.6.0 2019-06-23
+
+add `prompt` `ir_mri_sense_map_sim`
+
+2019-06-22
+major update to `image_geom`
+
 0.5.0 2019-06-16
 
 add `block_lm`
