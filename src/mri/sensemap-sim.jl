@@ -13,25 +13,6 @@ using Plots: Plot, plot, plot!, gui, contour!, scatter!, quiver, quiver!,
 
 
 """
-`(xx,yy) = ndgrid(x::AbstractVector{<:Any}, y::AbstractVector{<:Any})`
-todo - improve?
-"""
-function ndgrid(x::AbstractVector{<:Any}, y::AbstractVector{<:Any})
-	tmp = Iterators.product(x, y)
-	return [p[1] for p in tmp], [p[2] for p in tmp]
-end
-
-"""
-`(xx,yy,zz) = ndgrid(x::AbstractVector{<:Any}, y::..., z::...)`
-todo - improve?
-"""
-function ndgrid(x::AbstractVector{<:Any}, y::AbstractVector{<:Any}, z::AbstractVector{<:Any})
-	tmp = Iterators.product(x, y, z)
-	return [p[1] for p in tmp], [p[2] for p in tmp], [p[3] for p in tmp]
-end
-
-
-"""
 `function (smap,info) = ir_mri_sensemap_sim(...)`
 
 Simulate 2D or 3D sensitivity maps for sensitivity-encoded MRI based on
@@ -497,7 +478,7 @@ function ir_mri_sensemap_sim_test2(;chat::Bool=false)
 			@test isapprox(abs.(tmp), abs.(smap[:,:,ic]))
 			p1 = angle.(tmp) .+ (ic-1) * pi/2 # add pi/2 to rotated
 			p2 = angle.(smap[:,:,ic])
-			tmp = cis.(p2 - p1)
+			tmp = ComplexF32.(cis.(p2 - p1))
 			@test isapprox(tmp, ones(size(tmp))) # trick: equivs mod 2*pi
 		end
 	end
@@ -524,12 +505,12 @@ function ir_mri_sensemap_sim_test3(;chat::Bool=false)
 
 	if true
 		tmp = smap .* repeat(ig.mask, 1,1,1,ncoil)
-		jim(ncol=ig.nz, tmp)
+		jim(ncol=ig.nz, tmp, abswarn=false)
 		chat && prompt()
 		tmp = permutedims(tmp, [1,3,2,4]) # [nx nz ny ncoil] z cuts are smooth
-		jim(ncol=ig.ny, tmp)
+		jim(ncol=ig.ny, tmp, abswarn=false)
 		chat && prompt()
-		jim(ncol=1, tmp[:,:,round(Int,end/2),:])
+		jim(ncol=1, tmp[:,:,round(Int,end/2),:], abswarn=false)
 		chat && prompt()
 	end
 
