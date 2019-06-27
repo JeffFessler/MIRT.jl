@@ -15,3 +15,5 @@ export mask_outline
 export embed
 export maskit
 
+include("ndgrid.jl")
+export ndgrid

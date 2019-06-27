@@ -9,3 +9,4 @@ using Test
 @test mask_outline(:test)
 @test embed(:test)
 @test maskit(:test)
+@test ndgrid(:test)
