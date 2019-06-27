@@ -6,3 +6,5 @@ using Test
 @test embed(:test)
 @test image_geom_add_unitv(:test)
 @test image_geom(:test)
+@test rect_im(:test)
+@test rotate2d(:test)
