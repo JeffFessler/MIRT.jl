@@ -80,7 +80,7 @@ Base.getindex(A::LinearMap, r1::UnitRange, r2::UnitRange) = A[:,r2][r1,:]
 
 # A[???]
 # informative error message in case we have overlooked any types
-if false
+#=
 function Base.getindex(A::LinearMap, kw...)
 	@show kw
 	for arg in kw
@@ -88,7 +88,7 @@ function Base.getindex(A::LinearMap, kw...)
 	end
 	error("unsupported indexing type")
 end
-end
+=#
 
 
 # tests for getindex for LinearMaps
