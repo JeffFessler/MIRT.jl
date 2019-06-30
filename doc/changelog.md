@@ -1,5 +1,10 @@
 In reverse chronological order
 
+2019-06-29
+add travis.yml, improve codecov
+add `rect_im` `caller_name`
+isolate `ndgrid` `rotate2d`
+
 0.6.0 2019-06-23
 
 add `prompt` `ir_mri_sense_map_sim`
