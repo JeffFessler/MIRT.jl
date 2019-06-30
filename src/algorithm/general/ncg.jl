@@ -75,7 +75,7 @@ for iter = 1:niter
 				betaval = grad_new' * (P * grad_new) / denom
 			end
 		else
-			error("unknown beta choice: $betahow")
+			throw(ArgumentError("unknown beta choice: $betahow"))
 		end
 		dir = npgrad + betaval * dir # search direction
 	end
