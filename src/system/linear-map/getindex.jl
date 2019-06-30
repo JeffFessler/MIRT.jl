@@ -114,12 +114,14 @@ function ir_LinearMap_test_getindex(A::LinearMap)
 	# The following do not work because currently LinearMap is not a
 	# subtype of AbstractMatrix.  If it were such a subtype, then LinearMap
 	# would inherit general Base.getindex abilities
-	if false # todo later, if/when LinearMap is a subtype of AbstractMatrix
-		@test B[[1, 3, 4]] == A[[1, 3, 4]]
-		@test B[:, [1, 3, 4]] == A[:, [1, 3, 4]]
-		@test B[[1, 3, 4], :] == A[[1, 3, 4], :]
-		@test B[4:7] == A[4:7]
-	end
+#=
+	# todo later, if/when LinearMap is a subtype of AbstractMatrix
+	@test B[[1, 3, 4]] == A[[1, 3, 4]]
+	@test B[:, [1, 3, 4]] == A[:, [1, 3, 4]]
+	@test B[[1, 3, 4], :] == A[[1, 3, 4], :]
+	@test B[4:7] == A[4:7]
+=#
+
 	true
 end
 

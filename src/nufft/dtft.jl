@@ -341,25 +341,26 @@ function dtft_test1c(; N::Int=2^10, M::Int=2^11, n_shift::Real=7)
 	b3 = d.A' * o1
 	@test isapprox(b3, b1)
 
-	if false # time DTFT
-		@btime fft($x)
-		@btime dtft_loop_n($w, $x)
-		@btime dtft_loop_m($w, $x)
-		@btime dtft_dist_m($w, $x)
-		@btime dtft_pmap_m($w, $x)
-		@btime dtft_matvec($w, $x)
+#=
+	# time DTFT
+	@btime fft($x)
+	@btime dtft_loop_n($w, $x)
+	@btime dtft_loop_m($w, $x)
+	@btime dtft_dist_m($w, $x)
+	@btime dtft_pmap_m($w, $x)
+	@btime dtft_matvec($w, $x)
 
-		# jf28 results:
-		# 12.351 μs (51 allocations: 19.08 KiB)
-		# 38.608 ms (6146 allocations: 80.34 MiB)
-		# 43.119 ms (2051 allocations: 32.30 MiB)
-		# 44.179 ms (11965 allocations: 32.64 MiB)
-		# 51.865 ms (20518 allocations: 32.67 MiB)
-		# 53.091 ms (7 allocations: 48.03 MiB)
+	# jf28 results:
+	# 12.351 μs (51 allocations: 19.08 KiB)
+	# 38.608 ms (6146 allocations: 80.34 MiB)
+	# 43.119 ms (2051 allocations: 32.30 MiB)
+	# 44.179 ms (11965 allocations: 32.64 MiB)
+	# 51.865 ms (20518 allocations: 32.67 MiB)
+	# 53.091 ms (7 allocations: 48.03 MiB)
 
-		# conclusion: dtft_loop_n is the fastest
-		# (also amenable to parfor=pmap but unhelpful!?)
-	end
+	# conclusion: dtft_loop_n is the fastest
+	# (also amenable to parfor=pmap but unhelpful!?)
+=#
 
 	true
 end
