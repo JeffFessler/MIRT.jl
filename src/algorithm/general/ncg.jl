@@ -4,6 +4,7 @@
 
 using LinearAlgebra: I, norm
 using Test: @test, @test_throws
+using Plots: Plot
 
 
 """
@@ -191,6 +192,6 @@ run test
 """
 function ncg(test::Symbol)
 	test != :test && throw("test")
-	@test ncg_test()
+	@test ncg_test() isa Plots.Plot
 	true
 end
