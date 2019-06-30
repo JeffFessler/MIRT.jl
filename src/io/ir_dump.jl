@@ -1,20 +1,13 @@
 # ir_dump.jl
 # 2019-03-05 Jeff Fessler
 
-using Printf
-
-
 
 """
-`ir_dump([io::IO,] x::DataType)`
+`ir_dump(x::Any; io::IO = stdout)`
 
-show all the filelds of a structure more nicely than dump() does
+Show all the fields of a structure or `NamedTuple` more nicely than dump() does
 """
-function ir_dump(y::Any)
-	ir_dump(stdout, y)
-end
-
-function ir_dump(io::IO, y::Any)
+function ir_dump(y::Any; io::IO = stdout)
 	x = typeof(y)
 	print(io, x)
 	fields = fieldnames(x)
@@ -38,17 +31,13 @@ end
 
 
 """
-`ir_dump([io::IO,] :test)`
+`ir_dump(:test; io::IO = IOBuffer())`
 
 self test
 """
-function ir_dump(test::Symbol)
-	ir_dump(IOBuffer(), test)
-end
-
-function ir_dump(io::IO, test::Symbol)
+function ir_dump(test::Symbol; io=IOBuffer())
 	test != :test && throw(ArgumentError("test $test"))
 	x = (a=1, b=2)
-	ir_dump(io, x)
+	ir_dump(x, io=io)
 	true
 end
