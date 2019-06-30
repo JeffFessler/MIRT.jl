@@ -86,7 +86,7 @@ function Base.getindex(A::LinearMap, kw...)
 	for arg in kw
 		@show typeof(arg)
 	end
-	error("unsupported indexing type")
+	throw("unsupported indexing type")
 end
 =#
 
