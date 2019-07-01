@@ -210,6 +210,7 @@ end
 function default_parameters(xfov, yfov, zfov)
 	params = [
 	0	0	0	60	60	2	0	0	1
+	20	20	3	10	20	2	0	0	1
 	]
 
 	return params
@@ -360,5 +361,5 @@ function cuboid_im(test::Symbol)
 end
 
 
-#cuboid_im(:show)
+cuboid_im(:show)
 #cuboid_im(:test)
