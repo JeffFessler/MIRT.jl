@@ -3,6 +3,9 @@
 # 2019-03-16, Jeff Fessler, University of Michigan
 
 using LinearAlgebra: I, norm
+using Test: @test, @test_throws
+using Plots: Plot
+
 
 """
 `(x,out) = ncg(B, gradf, curvf, x0; ...)`
@@ -75,7 +78,7 @@ for iter = 1:niter
 				betaval = grad_new' * (P * grad_new) / denom
 			end
 		else
-			error("unknown beta choice: $betahow")
+			throw(ArgumentError("unknown beta choice: $betahow"))
 		end
 		dir = npgrad + betaval * dir # search direction
 	end
@@ -159,6 +162,8 @@ function ncg_test()
 	!isapprox(x1, xh) && throw("bug: x1 vs xh")
 	!isapprox(x2, xh) && throw("bug: x2 vs xh")
 
+	@test_throws ArgumentError ncg(grad1, curv1, zeros(N), betahow=:test)
+
 	lf = x -> log10(max(x,1e-17))
 	costk = out -> lf.([out[k][1] for k=1:niter+1])
 	errk = out -> lf.([out[k][2] for k=1:niter+1])
@@ -187,6 +192,6 @@ run test
 """
 function ncg(test::Symbol)
 	test != :test && throw("test")
-	ncg_test()
+	@test ncg_test() isa Plots.Plot
 	true
 end

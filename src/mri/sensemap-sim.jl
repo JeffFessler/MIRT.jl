@@ -149,10 +149,11 @@ function ir_mri_sensemap_sim_do(nx, ny, nz,
 			xr =	xx .* nlist[ic,ir,2] - yy .* nlist[ic,ir,1]
 			yr = zz .- plist[ic,ir,3] # translate along object z axis
 
-			if false # show coordinates
-				jim(x, y, xr) #, xlabel x, ylabel y
-				jim(x, y, zr)
-			end
+#=
+			# show coordinates
+			jim(x, y, xr) #, xlabel x, ylabel y
+			jim(x, y, zr)
+=#
 
 			# compute sensitivity vectors in coil coordinates
 			tmp = ir_mri_smap1.(xr, yr, zr, rlist[ic,ir])
@@ -214,13 +215,14 @@ function ir_mri_sensemap_sim_show3(smap, x, y, z, dx, dy, dz,
 	ir_plot3_cube(x,y,z)
 	scatter!(plist[:,:,1], plist[:,:,2], plist[:,:,3], label="") # coil centers
 
-	if false # coil normals - todo: 3d quiver not yet working
-		tmp1 = reshape(plist, :, 3)
-		tmp2 = reshape(nlist, :, 3)
-		quiver!(tmp1[:,1], tmp1[:,2], tmp1[:,3],
-			quiver=(tmp2[:,1], tmp2[:,2], tmp2[:,3]), label="3d")
-		prompt()
-	end
+#=
+	# coil normals - todo: 3d quiver not yet working
+	tmp1 = reshape(plist, :, 3)
+	tmp2 = reshape(nlist, :, 3)
+	quiver!(tmp1[:,1], tmp1[:,2], tmp1[:,3],
+		quiver=(tmp2[:,1], tmp2[:,2], tmp2[:,3]), label="3d")
+	prompt()
+=#
 
 	if true # coils
 		for ir = 1:nring
@@ -359,13 +361,15 @@ function ir_mri_smap1(x, y, z, a)
 		(K + (1 - r^2 - z^2) / ((1 - r)^2 + z^2) * E)
 	smap_z /= a
 
-	if false && any(r == 0) # test code to explore when r is near 0
+#=
+	if any(r == 0) # test code to explore when r is near 0
 		r0 = LinRange(0,5e-7,101)
 		z0 = 0.4
 		t0 = ir_mri_smap_r.(r0, z0)
 		slope = 3*pi * z0 / ((1+z0^2)^2.5)
 		plot(r0, t0); plot!(r0, slope * r0)
 	end
+=#
 
 	# the following is B_r in eqn (17) in grivich:00:tmf
 	smap_r = 2 * z / r * ((1+r)^2 + z^2)^(-0.5) *

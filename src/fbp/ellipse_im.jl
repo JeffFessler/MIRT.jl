@@ -419,11 +419,11 @@ function ellipse_im_test()
 	ellipse_im(ig, params)
 	ellipse_im(ig, params, oversample=2)
 
-	if false
-		x1 = ellipse_im(100, :shepplogan_emis)
-		x2 = ellipse_im(100, :shepplogan_emis, oversample=2)
-		plot(jim(x1), jim(x2), jim(x2-x1))
-	end
+#=
+	x1 = ellipse_im(100, :shepplogan_emis)
+	x2 = ellipse_im(100, :shepplogan_emis, oversample=2)
+	plot(jim(x1), jim(x2), jim(x2-x1))
+=#
 
 	ellipse_im_show()
 

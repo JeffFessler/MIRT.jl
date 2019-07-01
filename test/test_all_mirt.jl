@@ -7,6 +7,8 @@ srclist = (
 "algorithm",
 "fbp",
 "io",
+"mri",
+"nufft",
 "plot",
 "regularize",
 "system",

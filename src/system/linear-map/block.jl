@@ -199,7 +199,7 @@ end
 function y = block_lm_diag_block_forw(arg, x, istart, nblock)
 
 if nrow(x) ~= dim(2)
-	error('x size=%d vs dim(2)=%d', nrow(x), dim(2))
+	throw('x size=%d vs dim(2)=%d', nrow(x), dim(2))
 end
 y = []
 for mm=istart:nblock:length(blocks)

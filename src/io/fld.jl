@@ -43,7 +43,7 @@ function fld_header(file::AbstractString;
 				break # end of header file!
 			else
 				chat && @info(header)
-				@error("end of file before form feeds?")
+				throw("end of file before form feeds?")
 			end
 		end
 
@@ -51,9 +51,9 @@ function fld_header(file::AbstractString;
 
 		# form feed means embedded file
 		if inchar == formfeed
-			eof(fid) && @error("end of file before 2nd form feed?")
+			eof(fid) && throw("end of file before 2nd form feed?")
 			inchar = read(fid, Char)
-			(inchar != formfeed) && @error("not two form feeds?")
+			(inchar != formfeed) && throw("not two form feeds?")
 			chat && @info("embedded data file")
 			break
 		end
@@ -116,7 +116,7 @@ function fld_read(file::AbstractString;
 	dims = [arg_get(header, "dim$ii") for ii in 1:ndim]
 	fieldtype = arg_get(header, "field", false)
 	datatype = arg_get(header, "data", false)
-	(arg_get(header, "veclen") != 1) && @error("only veclen=1 done")
+	(arg_get(header, "veclen") != 1) && throw("only veclen=1 done")
 	chat && @info("ndim=$ndim")
 	chat && @info("dims=$dims")
 
@@ -138,13 +138,13 @@ function fld_read(file::AbstractString;
 			if !isfile(extfile)
 				fdir = file
 				slash = findlast(isequal('/'),fdir)
-				isnothing(slash) && @error("cannot find external file $extfile")
+				isnothing(slash) && throw("cannot find external file $extfile")
 				fdir = fdir[1:slash]
 				extfile = fdir*extfile # add directory
-				!isfile(extfile) && @error("no external ref file $extfile")
+				!isfile(extfile) && throw("no external ref file $extfile")
 			end
 		else
-			@error("multi not supported yet")
+			throw("multi not supported yet")
 		end
 	else
 		filetype = ""
@@ -182,7 +182,7 @@ function fld_read_single(file, fid, dims, datatype, fieldtype,
 		read!(fid,data)
 	catch
 		@info("rdims=$rdims")
-		@error("file count != data count")
+		throw("file count != data count")
 	end
 	if endian == "ieee-le"
 		data .= htol.(data)
@@ -208,7 +208,7 @@ function string_to_array(header_lines::String)
 	end
 
 	ends = findall(isequal(newline), header_lines)
-	(length(ends) <= 0) && @error("no newlines?")
+	(length(ends) <= 0) && throw("no newlines?")
 
 	header = split(header_lines, newline, keepempty=false)
 
@@ -229,14 +229,14 @@ function arg_get(head::Array{<:AbstractString}, name::String, toint::Bool=true)
 		line = head[ll]
 		start = findfirst(name * '=',line)
 		if !isnothing(start)
-			!isnothing(findnext(name*'=',line,start[end]+1)) && @error("bug: multiples?")
+			!isnothing(findnext(name*'=',line,start[end]+1)) && throw("bug: multiples?")
 			line = line[(start[end]+1):end]
 			arg = split(line)[1]
 			toint && (arg = parse(Int,arg))
 			return arg
 		end
 	end
-	@error("could not find $name in header")
+	throw("could not find $name in header")
 end
 
 
@@ -300,7 +300,7 @@ function datatype_fld_to_mat(datatype)
 		bytes = 8
 
 	else
-		@error("format '$datatype' not yet implemented. ask jeff!")
+		throw("format '$datatype' not yet implemented. ask jeff!")
 	end
 
 	return format, endian, bytes

@@ -80,15 +80,15 @@ Base.getindex(A::LinearMap, r1::UnitRange, r2::UnitRange) = A[:,r2][r1,:]
 
 # A[???]
 # informative error message in case we have overlooked any types
-if false
+#=
 function Base.getindex(A::LinearMap, kw...)
 	@show kw
 	for arg in kw
 		@show typeof(arg)
 	end
-	error("unsupported indexing type")
+	throw("unsupported indexing type")
 end
-end
+=#
 
 
 # tests for getindex for LinearMaps
@@ -114,12 +114,14 @@ function ir_LinearMap_test_getindex(A::LinearMap)
 	# The following do not work because currently LinearMap is not a
 	# subtype of AbstractMatrix.  If it were such a subtype, then LinearMap
 	# would inherit general Base.getindex abilities
-	if false # todo later, if/when LinearMap is a subtype of AbstractMatrix
-		@test B[[1, 3, 4]] == A[[1, 3, 4]]
-		@test B[:, [1, 3, 4]] == A[:, [1, 3, 4]]
-		@test B[[1, 3, 4], :] == A[[1, 3, 4], :]
-		@test B[4:7] == A[4:7]
-	end
+#=
+	# todo later, if/when LinearMap is a subtype of AbstractMatrix
+	@test B[[1, 3, 4]] == A[[1, 3, 4]]
+	@test B[:, [1, 3, 4]] == A[:, [1, 3, 4]]
+	@test B[[1, 3, 4], :] == A[[1, 3, 4], :]
+	@test B[4:7] == A[4:7]
+=#
+
 	true
 end
 
