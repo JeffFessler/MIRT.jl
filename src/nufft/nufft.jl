@@ -227,17 +227,19 @@ function nufft_test2(;
 
 	seed!(0)
 	w = []
-	if false # fft sampling
-		M = prod(N)
-		w1 = (2*pi) * (0:N[1]-1) / N[1]
-    	w2 = (2*pi) * (0:N[2]-1) / N[2]
-    	w1 = repeat(w1, 1, N[2])
-    	w2 = repeat(w2', N[1], 1)
-    	w = [w1[:] w2[:]]
-		n_shift = [0,0]
-	else
-		w = (rand(M,2) .- 0.5) * 2 * pi
-	end
+
+#=
+	# fft sampling
+	M = prod(N)
+	w1 = (2*pi) * (0:N[1]-1) / N[1]
+    w2 = (2*pi) * (0:N[2]-1) / N[2]
+    w1 = repeat(w1, 1, N[2])
+    w2 = repeat(w2', N[1], 1)
+    w = [w1[:] w2[:]]
+	n_shift = [0,0]
+=#
+
+	w = (rand(M,2) .- 0.5) * 2 * pi
 
 	w = T.(w)
 	sd = dtft_init(w, N; n_shift=n_shift)
@@ -248,14 +250,15 @@ function nufft_test2(;
 	o1 = sn.nufft(x)
 	@test norm(o1 - o0, Inf) / norm(o0, Inf) < tol
 
-	if false # fft test only
-		o2 = fft(x)
-		o0 = reshape(o0, N)
-		o1 = reshape(o1, N)
-		@show norm(o2 - o0, Inf) / norm(o0, Inf)
-		@show norm(o1 - o0, Inf) / norm(o0, Inf)
-		@show norm(o2 - o1, Inf) / norm(o0, Inf)
-	end
+#=
+	# fft test only
+	o2 = fft(x)
+	o0 = reshape(o0, N)
+	o1 = reshape(o1, N)
+	@show norm(o2 - o0, Inf) / norm(o0, Inf)
+	@show norm(o1 - o0, Inf) / norm(o0, Inf)
+	@show norm(o2 - o1, Inf) / norm(o0, Inf)
+=#
 
 	y = Complex{T}.(o0 / norm(o0))
 	a0 = sd.adjoint(y)
@@ -374,7 +377,8 @@ function nufft(test::Symbol)
 end
 
 
-if false # todo: 1d vs 2d
+#=
+	# todo: 1d vs 2d
 	M = 4
 	N = (M,1)
 	seed!(0)
@@ -391,10 +395,11 @@ if false # todo: 1d vs 2d
 #	@show o1 = sn.nufft(x)
 #	@show o1-o0
 #	@test maximum(abs.(o1 - o0)) < tol
-end
+=#
 
 
-if false # todo MWE for 1D vs 2D
+#=
+	# todo MWE for 1D vs 2D
 	M = 6
 	x1 = collect((-Int(M/2)):(Int(M/2)-1))/M
 	N1 = M
@@ -414,7 +419,7 @@ if false # todo MWE for 1D vs 2D
 	display(round.(o2, digits=7))
 
 #	tmp = nufft_init(x1*2*pi, N1)
-end
+=#
 
 
 #nufft(:test)

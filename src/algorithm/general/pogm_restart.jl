@@ -173,7 +173,7 @@ for iter=1:niter
 		# unlike PGM, FPGM above
 
 	else
-		error("bad mom $mom")
+		throw("bad mom $mom")
 	end
 
 	# momentum coefficient "beta"

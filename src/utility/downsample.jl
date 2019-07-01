@@ -139,17 +139,19 @@ function downsample3_test()
 	true
 end
 
-#if has_aspire # todo
-#	filex = [test_dir filesep 'testx.fld'];
-#	filey = [test_dir filesep 'testy.fld'];
-#	fld_write(filex, x)
-#	delete(filey)
-#	com = ['op sample3 mean ' filey ' ' filex ' %d %d %d'];
-#	com = sprintf(com, down, down, down);
-#	os_run(com)
-#	z = fld_read(filey);
-#	if ~isequal(y, z), error 'aspire/matlab mismatch', end
-#end
+#=
+if has_aspire # todo
+	filex = [test_dir filesep 'testx.fld']
+	filey = [test_dir filesep 'testy.fld']
+	fld_write(filex, x)
+	delete(filey)
+	com = ['op sample3 mean ' filey ' ' filex ' %d %d %d']
+	com = sprintf(com, down, down, down)
+	os_run(com)
+	z = fld_read(filey)
+	!isequal(y, z) && throw("aspire/matlab mismatch")
+end
+=#
 
 
 """

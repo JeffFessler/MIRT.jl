@@ -124,7 +124,7 @@ function jim(z::AbstractArray{<:Number};
 
 	if !(eltype(z) <: Real)
 		if abswarn
-			@warn "magnitude"
+			@warn "magnitude at $(caller_name())"
 		end
 		z = abs.(z)
 	end
@@ -174,9 +174,7 @@ end
 """
 function jim(key::Symbol, value)
 	global jim_def
-	if !haskey(jim_def, key)
-		error("no key $key")
-	end
+	!haskey(jim_def, key) && throw(ArgumentError("no key $key"))
 	jim_def[key] = value
 end
 
@@ -197,6 +195,9 @@ function jim(test::Symbol)
 		return jim_def
 	end
 	test != :test && throw("symbol $test")
+	jim()
+	jim(:keys)
+	jim(:defs)
 	jim(:abswarn, false)
 	jim(ones(4,3), title="test2")
 	jim(ones(4,3,5), title="test3")
