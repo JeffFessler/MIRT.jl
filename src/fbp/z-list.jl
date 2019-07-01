@@ -1,5 +1,8 @@
 # fbp/z-list.jl
 
+include("cuboid_im.jl")
+export cuboid_im
+
 include("image_geom.jl")
 export image_geom
 export MIRT_image_geom
