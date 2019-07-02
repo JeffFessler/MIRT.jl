@@ -1,5 +1,6 @@
 using Plots
 
+
 """
 `phantom = cuboid_im(ig, params;
     oversample=1, hu_scale=1, type=:exact, return_params=false)`
@@ -18,7 +19,7 @@ options
 * `type::Symbol`          `:sample` use samples
                         	`:lowmem1` one slice per time
                             `:exact` perfect partial volume if angle* = 0
-                            default: `:exact` if angle* = 0, else `:sample`
+                            default: `:exact` if non rotated, else `:sample`
 * `return_params::Bool`    if true, return both phantom and params
 
 out
@@ -45,11 +46,11 @@ function cuboid_im(ig::MIRT_image_geom,
 
 	phantom = zeros(Float32, ig.nx, ig.ny, ig.nz)
 
-	default = params[:,7:8] .== 0
-#=	if all(default) # defaults to exact if non rotated
-		type = :exact
-	end=#
+	rotated = params[:, 7:8] .!= 0
 
+	if any(rotated)
+		type = :sample
+	end
     if type == :exact
         phantom += cuboid_im_exact(args...)
         if oversample != 1
@@ -114,6 +115,7 @@ function cuboid_im_sample(nx, ny, nz, params, dx, dy, dz, offset_x, offset_y, of
 		phantom += value * tmp
 	end
 	phantom = downsample3(phantom, over)
+
     return phantom
 end
 
@@ -170,12 +172,11 @@ function cuboid_im_exact(nx, ny, nz, params, dx, dy, dz, offset_x, offset_y, off
 		hy2 = ry / ady / 2
 		z = (zz .- cz) / adz
 		hz2 = rz / adz / 2
-		@show extrema(x), hx2
+
 		fx = fun2.(x, hx2)
 		fy = fun2.(y, hy2)
 		fz = fun2.(z, hz2)
 		tmp = (fx .* fy .* fz)
-		@show extrema(fx), extrema(fy), extrema(fz), extrema(tmp)
 		value = Float32(par[9])
 		phantom += value * tmp
 	end
@@ -194,8 +195,8 @@ function cuboid_im_lowmem1(nx, ny, nz, params, dx, dy, dz, offset_x, offset_y, o
 
 	for iz in 1:nz
 		offset_z_new = (nz - 1)/2 + offset_z - (iz-1)
-		phantom[:,:,iz] = cuboid_im_sample(nx, ny, 1, params, ig.nx, ig.ny, ig.nz, params,
-	    ig.dx, ig.dy, ig.dz, ig.offset_x, ig.offset_y, ig.offset_z, over)
+		phantom[:,:,iz] = cuboid_im_sample(nx, ny, 1, params,
+	    dx, dy, dz, offset_x, offset_y, offset_z, over)
 	end
 
     return phantom
@@ -209,10 +210,21 @@ end
 """
 function default_parameters(xfov, yfov, zfov)
 	params = [
-	0	0	0	60	60	2	0	0	1
-	20	20	3	10	20	2	0	0	1
+	0	0		0	60	60	2	0	0	1
+	20	20		3	10	20	2	0	0	1
+	1.4	-0.5	1	2	2.7	3.2	0	0	1
 	]
+	return params
+end
 
+"""
+`rotated_parameters()`
+"""
+function rotated_parameters(xfov, yfov, zfov)
+	params = [
+	0	0	0	60	60	2	45	0	1
+	0	0	0	50	50	3	45	0	1
+	]
 	return params
 end
 
@@ -260,18 +272,17 @@ end
 """
 `phantom = cuboid_im(ig, code, args...)`
 
-`code = :default` | # add more options
+`code = :default | :rotate` # add more options
 """
 function cuboid_im(ig::MIRT_image_geom, params::Symbol; args...)
 	fov = ig.fovs
-	@show "hi2"
 	if params == :default
 		params = default_parameters(fov, fov, fov)
+	elseif params == :rotate
+		params = rotated_parameters(fov, fov, fov)
 	else
 		throw("bad phantom symbol $params")
 	end
-	@show params
-	@show args
 	return cuboid_im(ig, params; args...)
 end
 
@@ -303,19 +314,19 @@ end
 function cuboid_im_show()
 	ig = image_geom(nx=2^3, ny=2^3, nz=2^3, dz=1, fov=240)
 
-	diam = abs.([2*ig.dx 2.7*ig.dy 3.2*ig.dz])
-
-#	params = [1.4 -0.5 1 [diam';] 0 0 1]
-
-
 	x1 = cuboid_im(ig, :default, type=:exact)
-	@show extrema(x1)
 	p1 = jim(x1, title="exact")
 
 	x2 = cuboid_im(ig, :default, type=:sample)
 	p2 = jim(x2, title="sample")
 
-	plot(p1, p2)
+	x3 = cuboid_im(ig, :default, type=:lowmem1)
+	p3 = jim(x3, title="lowmem")
+
+	x4 = cuboid_im(ig, :rotate, type=:exact)
+	p4 = jim(x4, title="rotate") # runs sample
+
+	plot(p1, p2, p3, p4)
 end
 
 
@@ -324,20 +335,18 @@ end
 `cuboid_im_test()`
 """
 function cuboid_im_test()
+	ig = image_geom(nx=2^3, ny=2^3, nz=2^3, dz=1, fov=240)
 	fov = 100
 	cuboid_im_show()
-	diam = abs.([2*dx 2.7*dy 3.2*dz])
-	params = params = [1.4, -0.5, 1, [diam';], 0, 0, 1]
-	phantom_exact = cuboid_im(ig, params, type=:exact)
-	dxyz = abs(dx * dy * dz)
-	vol_true = prod(diam)
-	vol_phantom = sum(phantom_exact[:]) * dxyz
-	isapprox(vol_true, vol_phantom)
+	phantom_exact = cuboid_im(ig, :default, type=:exact)
+	#dxyz = abs(dx * dy * dz)
+	#vol_true = prod(diam)
+	#vol_phantom = sum(phantom_exact[:]) * dxyz
+	#isapprox(vol_true, vol_phantom)
 
-	phantom2 = cuboid_im(ig, params, type==:sample)
-	vol_phantom2 = sum(phantom2[:]) * dxyz
-	isapprox(vol_phantom2, vol_true)
-
+	phantom_sample = cuboid_im(ig, :default, type=:sample)
+	#vol_phantom2 = sum(phantom2[:]) * dxyz
+	#isapprox(vol_phantom2, vol_true)
 	true
 end
 
@@ -350,7 +359,6 @@ run tests
 """
 function cuboid_im(test::Symbol)
 	if test == :show
-		@show "hi1"
 		return cuboid_im_show()
 	end
 	test != :test && throw(ArgumentError("test $test"))
@@ -360,6 +368,5 @@ function cuboid_im(test::Symbol)
 	true
 end
 
-
-cuboid_im(:show)
+#cuboid_im(:show)
 #cuboid_im(:test)
