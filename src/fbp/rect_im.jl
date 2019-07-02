@@ -38,7 +38,7 @@ function rect_im(ig::MIRT_image_geom,
 		replace::Bool = false,
 		return_params::Bool = false)
 
-	size(params,2) != 6 && throw("bad ellipse parameter vector size")
+	size(params,2) != 6 && throw("bad rect parameter vector size")
 
 	if oversample > 1
 		ig = ig.over(oversample)
@@ -82,6 +82,7 @@ end
 """
 `phantom = rect_im_fast()`
 for non-rotated rectangles
+	using exact integration over each pixel so over-sampling is irrelevant
 """
 function rect_im_fast(params, nx, ny, dx, dy, offset_x, offset_y, replace)
 	phantom = zeros(Float32, nx, ny)
@@ -181,10 +182,10 @@ end
 `phantom = rect_im(nx::Integer, params; args...)`
 
 square image of size `nx` by `nx` with
-pixel size `dx=1` and ellipse `params`
+pixel size `dx=1` and rect `params`
 """
 function rect_im(nx::Integer, params; args...)
-	return ellipse_im(nx, 1., params; args...)
+	return rect_im(nx, 1., params; args...)
 end
 
 
@@ -214,7 +215,7 @@ end
 """
 `phantom = rect_im(ig, code; args...)`
 
-`code = :my_rect | :default`
+`code = :my_rect | :default | :smiley`
 """
 function rect_im(ig::MIRT_image_geom, params::Symbol; args...)
 	fov = ig.fovs
@@ -342,7 +343,7 @@ end
 function rect_im_test()
 	fov = 100
 	rect_im_default_parameters(fov, fov)
-	ellipse_im_show()
+	rect_im_show()
 	true
 end
 
