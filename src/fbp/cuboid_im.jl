@@ -1,5 +1,5 @@
 using Plots
-
+using MIRT
 
 """
 `phantom = cuboid_im(ig, params;
