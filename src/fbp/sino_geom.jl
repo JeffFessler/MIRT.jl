@@ -6,7 +6,7 @@ sinogram geometry for 2D tomographic image reconstruction
 
 # using MIRT: jim, image_geom, MIRT_image_geom
 using Plots: Plot, plot!, plot, scatter!, gui
-using Test: @test
+using Test: @test, @test_throws
 
 
 struct MIRT_sino_geom
@@ -132,9 +132,9 @@ function sino_geom(how::Symbol; kwarg...)
 		sg = sino_geom_moj( ; kwarg...)
 	elseif how == :ge1
 		sg = sino_geom_ge1( ; kwarg...)
+#=
 	elseif how == :hd1
 		sg = sino_geom_hd1( ; kwarg...)
-#=
 	elseif how == :revo1fan
 		tmp = ir_fan_geom_revo1(type)
 		sg = sino_geom(:fan, tmp{:}, varargin{:})
@@ -572,6 +572,12 @@ function sino_geom_test( ; kwarg...)
 
 	plot(pl...)
 	gui()
+
+	sg = sino_geom(:ge1, orbit=:short)
+	display(sg)
+	sino_geom(:show)
+
+	@test_throws String sino_geom(:badhow)
 
 	true
 end
