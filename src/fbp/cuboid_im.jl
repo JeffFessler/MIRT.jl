@@ -353,6 +353,10 @@ function cuboid_im_test()
 	phantom_sample = cuboid_im(ig, :default, type=:sample)
 	#vol_phantom2 = sum(phantom2[:]) * dxyz
 	#isapprox(vol_phantom2, vol_true)
+
+	# test 
+	x4 = cuboid_im(ig, :rotate, type=:exact)
+	x3 = cuboid_im(ig, :default, type=:lowmem1)
 	true
 end
 
