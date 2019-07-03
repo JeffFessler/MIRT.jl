@@ -4,7 +4,7 @@ sinogram geometry for 2D tomographic image reconstruction
 2019-07-01, Jeff Fessler, University of Michigan
 =#
 
-using MIRT: jim, image_geom, MIRT_image_geom # todo
+# using MIRT: jim, image_geom, MIRT_image_geom
 using Plots: Plot, plot!, plot, scatter!, gui
 using Test: @test
 
@@ -24,9 +24,9 @@ struct MIRT_sino_geom
 	# for fan:
 	source_offset::Float32	# same units as d, etc., e.g., [mm]
 							# use with caution!
-	dsd::Float32			# dis_src_det, inf for parallel beam
+	dsd::Float32			# dis_src_det, Inf for parallel beam
 	dod::Float32			# dis_iso_det
-#	dso::Float32			# dis_src_iso = dsd-dod, inf for parallel beam
+#	dso::Float32			# dis_src_iso = dsd-dod, Inf for parallel beam
 	dfs::Float32			# distance from focal spot to source
 end
 
@@ -61,7 +61,7 @@ function sino_geom_help()
 
 	sg.gamma		[nb] gamma sample values [radians]
 	sg.gamma_max	half of fan angle [radians]
-	sg.dso			# dsd - dod, inf for parallel beam
+	sg.dso			# dsd - dod, Inf for parallel beam
 
 	Methods
 
@@ -70,7 +70,7 @@ function sino_geom_help()
 	sg.unitv(;ib,ia)	unit 'vector' with single nonzero element
 	sg.taufun(x,y)		projected s/ds for each (x,y) pair [numel(x) na]
 	sg.plot(;ig)		plot system geometry (most useful for fan)
-	"
+	\n"
 end
 
 
@@ -108,7 +108,7 @@ options for all geometries (including parallel-beam):
 options for fan-beam
 * `source_offset`		same units as d; use with caution! default 0
 fan beam distances:
-* `dsd`		cf 'dis_src_det'	default: inf (parallel beam)
+* `dsd`		cf 'dis_src_det'	default: Inf (parallel beam)
 * `dod`		cf 'dis_iso_det'	default: 0
 * `dfs`		cf 'dis_foc_src'	default: 0 (3rd generation CT arc),
 				use Inf for flat detector
@@ -123,7 +123,7 @@ function sino_geom(how::Symbol; kwarg...)
 		@test sino_geom_test( ; kwarg...)
 		return true
 	elseif how == :show
-		return sino_geom_plot(how; kwarg...) # throw("todo")
+		return sino_geom_plot(sino_geom(:ge1); kwarg...)
 	elseif how == :par
 		sg = sino_geom_par( ; kwarg...)
 	elseif how == :fan
@@ -177,6 +177,7 @@ function sino_geom_fan( ;
 		orbit_start::Real = 0,
 		strip_width::Real = d,
 		offset::Real = 0,
+		source_offset::Real = 0,
 		dsd::Real = 4*nb*d,	# dis_src_det
 	#	dso::Real = [],		# dis_src_iso
 		dod::Real = nb*d,	# dis_iso_det
@@ -187,14 +188,14 @@ function sino_geom_fan( ;
 	if orbit == :short # trick
 		sg_tmp = MIRT_sino_geom(:fan, units,
 			nb, na, d, 0, orbit_start, strip_width,
-			dsd, dod, dfs, 0)
+			source_offset, dsd, dod, dfs)
 		orbit = sg_tmp.orbit_short
 	end
 	isa(orbit, Symbol) && throw("orbit :orbit")
 
 	sg = MIRT_sino_geom(:fan, units,
 		nb, na, d, orbit, orbit_start, offset, strip_width,
-		dsd, dod, dfs, 0)
+		source_offset, dsd, dod, dfs)
 
 	return downsample(sg, down)
 end
@@ -252,7 +253,7 @@ gamma sample values for :fan
 """
 function sino_geom_gamma(sg)
 	return	sg.dfs == 0 ? sg.s / sg.dsd : # 3rd gen: equiangular
-			sg.dfs == Inf ? atan(sg.s / sg.dsd) : # flat
+			isinf(sg.dfs) ? atan.(sg.s / sg.dsd) : # flat
 			throw("bad dfs $(sg.dfs)")
 end
 
@@ -264,6 +265,7 @@ radial FOV
 function sino_geom_rfov(sg)
 	return	sg.how == :par ? maximum(abs.(sg.r)) :
 			sg.how == :fan ? sg.dso * sin(sg.gamma_max) :
+			sg.how == :moj ? maximum(abs.(sg.r)) : # todo: check
 				throw("bad how $(sg.how)")
 end
 
@@ -276,8 +278,9 @@ function sino_geom_taufun(sg, x, y)
 	size(x) != size(y) && throw("bad x,y size")
 	x = x[:]
 	y = y[:]
-	if sg.how == :par
-		tau = (x * cos.(sg.ar) + y * cos.(sg.ar)) / sg.dr
+	if sg.how == :par || sg.how == :moj # todo: check
+		ar = sg.ar' # row vector, for outer-product
+		tau = (x * cos.(ar) + y * sin.(ar)) / sg.dr
 	elseif sg.how == :fan
 		b = sg.ar' # row vector, for outer-product
 		xb = x * cos.(b) + y * sin.(b)
@@ -285,7 +288,7 @@ function sino_geom_taufun(sg, x, y)
 		tangam = (xb .- sg.source_offset) ./ (sg.dso .- yb) # e,tomo,fan,L,gam
 		if sg.dfs == 0 # arc
 			tau = sg.dsd / sg.ds * atan.(tangam)
-		elseif sg.dfs == Inf # flat
+		elseif isinf(sg.dfs) # flat
 			tau = sg.dsd / sg.ds * tangam
 		else
 			throw("bad dfs $(sg.dfs)")
@@ -304,17 +307,19 @@ center positions of detectors (for beta = 0)
 function sino_geom_xds(sg)
 	if sg.how == :par
 		xds = sg.s
+	elseif sg.how == :moj
+		xds = sg.s # todo: really should be angle dependent
 	elseif sg.how == :fan
 		if sg.dfs == 0 # arc
 			gam = sg.gamma
 			xds = sg.dsd * sin.(gam)
-		elseif sg.def == inf # flat
+		elseif isinf(sg.dfs) # flat
 			xds = sg.s
 		else
 			throw("bad dfs $(sg.dfs))")
 		end
 	else
-		throw("bad how $how")
+		throw("bad how $(sg.how)")
 	end
 	return xds .+ sg.source_offset
 end
@@ -325,19 +330,22 @@ end
 center positions of detectors (for beta = 0)
 """
 function sino_geom_yds(sg)
+
 	if sg.how == :par
+		yds = zeros(Float32, sg.nb)
+	elseif sg.how == :moj
 		yds = zeros(Float32, sg.nb)
 	elseif sg.how == :fan
 		if sg.dfs == 0 # arc
 			gam = sg.gamma
 			yds = sg.dso .- sg.dsd * cos.(gam)
-		elseif sg.def == inf # flat
+		elseif isinf(sg.dfs) # flat
 			yds = fill(-sg.dod, sg.nb)
 		else
 			throw("bad dfs $(sg.dfs))")
 		end
 	else
-		throw("bad how $how")
+		throw("bad how $(sg.how)")
 	end
 	return yds
 end
@@ -363,7 +371,7 @@ end
 
 # Extended properties
 
-fun0 = Dict([
+sino_geom_fun0 = Dict([
     (:help, sg -> print(sino_geom_help())),
 
 	(:dim, sg -> (sg.nb, sg.na)),
@@ -405,34 +413,36 @@ fun0 = Dict([
 # Tricky overloading here!
 
 Base.getproperty(sg::MIRT_sino_geom, s::Symbol) =
-		haskey(fun0, s) ? fun0[s](sg) :
+		haskey(sino_geom_fun0, s) ? sino_geom_fun0[s](sg) :
 		getfield(sg, s)
 
 Base.propertynames(sg::MIRT_sino_geom) =
-	(fieldnames(typeof(sg))..., keys(fun0)...)
+	(fieldnames(typeof(sg))..., keys(sino_geom_fun0)...)
 
 
 """
 `sino_geom_plot()`
 picture of the source position / detector geometry
 """
-function sino_geom_plot(sg; ig::Union{Nothing,MIRT_image_geom})
-	plot()
+function sino_geom_plot(sg; ig::Union{Nothing,MIRT_image_geom}=nothing)
+	plot(aspect_ratio=1)
 
+	xmax = sg.rfov; xmin = -xmax; (ymin,ymax) = (xmin,xmax)
 	if !isnothing(ig)
-		plot!(jim(ig.x, ig.y, ig.mask[:,:,1]))
+		plot!(jim(ig.x, ig.y, ig.mask[:,:,1]), clim=[0,1])
 		xmin = minimum(ig.x); xmax = maximum(ig.x)
 		ymin = minimum(ig.y); ymax = maximum(ig.y)
-		plot!([xmax, xmin, xmin, xmax, xmax],
-			[ymax, ymax, ymin, ymin, ymax], color=:green, label="")
 	end
+	plot!([xmax, xmin, xmin, xmax, xmax],
+		[ymax, ymax, ymin, ymin, ymax], color=:green, label="")
+	plot!(xtick=round.([xmin, 0, xmax], digits=2))
+	plot!(ytick=round.([ymin, 0, ymax], digits=2))
 
 	t = LinRange(0,2*pi,1001)
 	rmax = maximum(abs.(sg.r))
 	scatter!([0], [0], marker=:circle, label="")
-	plot!(rmax * cos.(t), rmax * sin.(t), label="fov") # fov circle
-	plot!(xlabel="x", ylabel="y", title = "fov = $(sg.rfov)")
-#	axis equal, axis tight
+	plot!(rmax * cos.(t), rmax * sin.(t), label="") # fov circle
+	plot!(xlabel="x", ylabel="y", title = "$(sg.how): fov = $(sg.rfov)")
 
 #	if sg.how == :par
 #	end
@@ -455,6 +465,7 @@ function sino_geom_plot(sg; ig::Union{Nothing,MIRT_image_geom})
 		plot!([pd[1,1], p0[1], pd[1,end]], [pd[2,1], p0[2], pd[2,end]],
 			color=:red, label="")
 		plot!(sg.rfov * cos.(t), sg.rfov * sin.(t), color=:magenta, label="") # fov circle
+		plot!(title="$(sg.how): dfs = $(sg.dfs)")
 	end
 
 #= todo
@@ -498,6 +509,7 @@ function sino_geom_ge1( ;
 	scale = units == :mm ? 1 :
 			units == :cm ? 10 :
 			throw("units $units")
+
 	return sino_geom(:fan, units=units,
 			nb=nb, na=na,
 			d = 1.0239/scale, offset = 1.25,
@@ -513,18 +525,23 @@ end
 function sino_geom_test( ; kwarg...)
 	ig = image_geom(nx=512, fov=500)
 
-	pl = Array{Plot}(undef, 2)
-	ii = 1
-	for dfs in (0,Inf) # arc flat
-		sg = sino_geom(:ge1, orbit_start=20, dfs=dfs)
+	sg_list = (
+		sino_geom(:par),
+		sino_geom(:moj),
+		sino_geom(:ge1, orbit_start=20, dfs=0), # arc
+		sino_geom(:ge1, orbit_start=20, dfs=Inf), # flat
+		)
+
+	sg_list[1].help
+
+	nsg = length(sg_list)
+	pl = Array{Plot}(undef, nsg)
+	for ii = 1:nsg
+		sg = sg_list[ii]
 
 		sg.ad[2]
-		sino_geom(:par)
-		sino_geom(:moj)
-		sg = sino_geom(:ge1)
 		sg.rfov
 		sd = sg.down(2)
-		ii == 1 && sg.help
 		sg.dim
 		sg.w
 		sg.ones
@@ -540,6 +557,7 @@ function sino_geom_test( ; kwarg...)
 		sg.ar
 		sg.xds
 		sg.yds
+		sg.dfs
 		sg.dso
 
 		sg.d_ang # angular dependent d for :moj
@@ -550,7 +568,6 @@ function sino_geom_test( ; kwarg...)
 		sg.unitv(ib=1, ia=2)
 
 		pl[ii] = sg.plot(ig=ig)
-		ii += 1
 	end
 
 	plot(pl...)
@@ -558,6 +575,3 @@ function sino_geom_test( ; kwarg...)
 
 	true
 end
-
-
-sino_geom(:test) # todo
