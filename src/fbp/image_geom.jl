@@ -394,7 +394,7 @@ end
 
 # Extended properties
 
-fun0 = Dict([
+image_geom_fun0 = Dict([
 	(:help, ig -> print(image_geom_help())),
 
 	(:is3, ig -> ig.nz > 0),
@@ -460,11 +460,11 @@ fun0 = Dict([
 # Tricky overloading here!
 
 Base.getproperty(ig::MIRT_image_geom, s::Symbol) =
-		haskey(fun0, s) ? fun0[s](ig) :
+		haskey(image_geom_fun0, s) ? image_geom_fun0[s](ig) :
 		getfield(ig, s)
 
 Base.propertynames(ig::MIRT_image_geom) =
-	(fieldnames(typeof(ig))..., keys(fun0)...)
+	(fieldnames(typeof(ig))..., keys(image_geom_fun0)...)
 
 
 function image_geom_test2(ig::MIRT_image_geom)
