@@ -183,7 +183,7 @@ function ellipse_im_fast(nx, ny, params_in, dx, dy,
 		is_inside = (xr / rx).^2 + (yr / ry).^2 .<= 1
 
 		if replace
-			phantom(is_inside) .= value
+			phantom[is_inside] .= value
 		else
 			phantom += value * is_inside
 		end
