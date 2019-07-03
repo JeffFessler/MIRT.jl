@@ -1,5 +1,8 @@
 In reverse chronological order
 
+2019-07-02
+add `cuboid_im` `sino_geom`
+
 2019-06-29
 add travis.yml, improve codecov
 add `rect_im` `caller_name`

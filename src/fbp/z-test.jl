@@ -9,3 +9,4 @@ using Test
 @test image_geom(:test)
 @test rect_im(:test)
 @test rotate2d(:test)
+@test sino_geom(:test)

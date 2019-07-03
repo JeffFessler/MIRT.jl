@@ -1,5 +1,11 @@
+#=
+cuboid_im.jl
+2019-07-01 Helena
+=#
+
 using Plots
-using MIRT
+#using MIRT
+
 
 """
 `phantom = cuboid_im(ig, params;

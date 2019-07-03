@@ -40,6 +40,10 @@ function ellipse_im(ig::MIRT_image_geom,
 		how::Symbol = :fast, # todo
 		return_params::Bool = false)
 
+	if size(params,2) != 6
+		throw("bad ellipse parameter vector size")
+	end
+
 	params[:,6] .*= hu_scale
 
 #=
@@ -137,9 +141,6 @@ function ellipse_im_fast(nx, ny, params_in, dx, dy,
 	offset_x, offset_y, rot, over, replace)
 
 	params = copy(params_in)
-	if size(params,2) != 6
-		throw("bad ellipse parameter vector size")
-	end
 
 	# optional rotation
 	if rot != 0
@@ -182,7 +183,7 @@ function ellipse_im_fast(nx, ny, params_in, dx, dy,
 		is_inside = (xr / rx).^2 + (yr / ry).^2 .<= 1
 
 		if replace
-			phantom(is_inside) .= value
+			phantom[is_inside] .= value
 		else
 			phantom += value * is_inside
 		end
@@ -367,6 +368,7 @@ function ellipse_im_show()
 end
 
 
+#=
 # compare to aspire
 function ellipse_im_aspire()
 	nx = 2^6
@@ -400,6 +402,7 @@ function ellipse_im_aspire()
 
 	true
 end
+=#
 
 
 # ellipse_im_test()
@@ -412,12 +415,20 @@ function ellipse_im_test()
 
 	# test various ways of calling
 	ellipse_im(20)
+	ellipse_im(20,22)
 	ellipse_im(30, :shepplogan_emis, oversample=2)
 
 	ig = image_geom(nx=80, dx=1)
 	params = shepp_logan_parameters(ig.fovs..., case=:brainweb)
 	ellipse_im(ig, params)
 	ellipse_im(ig, params, oversample=2)
+	ellipse_im(ig, params, how=:fast, replace=true)
+
+	@test_throws String ellipse_im(ig, params, how=:bad)
+	@test_throws String ellipse_im(ig, params')
+	@test_throws String shepp_logan_parameters(ig.fovs..., case=:bad)
+
+	ellipse_im(ig, params, return_params=true)
 
 #=
 	x1 = ellipse_im(100, :shepplogan_emis)
@@ -450,5 +461,6 @@ function ellipse_im(test::Symbol)
 	test != :test && throw(ArgumentError("test $test"))
 	ellipse_im()
 	ellipse_im(:show)
-	ellipse_im_test()
+	@test ellipse_im_test()
+	true
 end

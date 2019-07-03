@@ -4,6 +4,8 @@
 # 2019-03-05 Jeff Fessler, Julia 1.1 + tests
 # 2019-06-23 Jeff Fessler, overhaul
 
+export cbct
+
 using Test: @test
 using ImageTransformations: imresize
 
@@ -87,7 +89,7 @@ function image_geom_help()
 	down(down::Int)		down-sample geometry by given factor
 	over(over::Int)		over-sample geometry by given factor
 	expand_nz(nz_pad)	expand image geometry in z by nz_pad on both ends
-	"
+	\n"
 end
 
 
@@ -117,7 +119,8 @@ function cbct(ig::MIRT_image_geom; nthread::Int=1)
 		Cint(ig.nx), Cint(ig.ny), Cint(ig.nz), Cfloat(ig.dx),
 		Cfloat(ig.dy), Cfloat(ig.dz),
 		Cfloat(ig.offset_x), Cfloat(ig.offset_y), Cfloat(ig.offset_z),
-		pointer(ig.mask_or), pointer(iy_start), pointer(iy_end),
+			pointer(UInt8.(ig.mask_or)),
+			pointer(Cint.(iy_start)), pointer(Cint.(iy_end)),
 		)
 end
 
@@ -204,14 +207,14 @@ function image_geom(;
 		mask = is3 ? trues(nx, ny, nz) : trues(nx, ny)
 	elseif mask == :circ
 		mask = image_geom_circle(nx, ny, dx, dy)
-	elseif mask_type == :all_but_edge
+	elseif mask == :all_but_edge
 		mask = trues(nx,ny,nz)
 		mask[  1,   :, :] .= false
 		mask[end,   :, :] .= false
 		mask[  :,   1, :] .= false
 		mask[  :, end, :] .= false
 	elseif isa(mask, Symbol)
-		throw("mask symbol $mask_type")
+		throw("mask symbol $mask")
 	elseif size(mask,1) != nx || size(mask,2) != ny || (is3 && size(mask,3) != nz)
 		throw("mask size $(size(mask)), nx=$nx ny=$ny nz=$nz")
 	end
@@ -275,7 +278,7 @@ function downsample(ig::MIRT_image_geom, down::Union{Int,Vector{Int}})
 		if [down_nx,down_ny] .* downv == mdim_vec
 			down_mask = downsample2(ig.mask, downv) .> 0
 		else
-			throw("bug: bad mask size. need to address mask downsampling")
+			down_mask = imresize(ig.mask, (down_nx,down_ny)...) .> 0
 		end
 	end
 
@@ -394,7 +397,7 @@ end
 
 # Extended properties
 
-fun0 = Dict([
+image_geom_fun0 = Dict([
 	(:help, ig -> print(image_geom_help())),
 
 	(:is3, ig -> ig.nz > 0),
@@ -460,11 +463,11 @@ fun0 = Dict([
 # Tricky overloading here!
 
 Base.getproperty(ig::MIRT_image_geom, s::Symbol) =
-		haskey(fun0, s) ? fun0[s](ig) :
+		haskey(image_geom_fun0, s) ? image_geom_fun0[s](ig) :
 		getfield(ig, s)
 
 Base.propertynames(ig::MIRT_image_geom) =
-	(fieldnames(typeof(ig))..., keys(fun0)...)
+	(fieldnames(typeof(ig))..., keys(image_geom_fun0)...)
 
 
 function image_geom_test2(ig::MIRT_image_geom)
@@ -501,7 +504,11 @@ function image_geom_test2(ig::MIRT_image_geom)
 end
 
 function image_geom_test2()
+	image_geom(nx=16, dx=2, offsets=:dsp, mask=:all_but_edge)
+	@test_throws String image_geom(nx=16, dx=1, offsets=:bad)
+	@test_throws String image_geom(nx=16, dx=1, mask=:bad)
 	ig = image_geom(nx=16, dx=2)
+	display(ig)
 	image_geom_test2(ig)
 	true
 end
@@ -513,10 +520,12 @@ function image_geom_test3(ig::MIRT_image_geom)
 	ig.zg
 	ig.mask_or
 	ig.expand_nz(2)
+	cbct(ig)
 	true
 end
 
 function image_geom_test3()
+	ig = image_geom(nx=16, nz=4, dx=2, zfov=1)
 	ig = image_geom(nx=16, nz=4, dx=2, dz=3)
 	image_geom_test3(ig)
 	true
@@ -533,7 +542,9 @@ function image_geom(test::Symbol)
 		return true
 	end
 	test != :test && throw(ArgumentError("test $test"))
+	@test _down_round(4, 3, 2)[1] == 2
 	@test image_geom_test2()
 	@test image_geom_test3()
+	@test image_geom(:help)
 	true
 end
