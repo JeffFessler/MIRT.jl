@@ -416,7 +416,7 @@ image_geom_fun0 = Dict([
 	(:help, ig -> print(image_geom_help())),
 
 	(:is3, ig -> ig.nz > 0),
-	(:dim, ig -> ig.is3 ? [ig.nx ig.ny ig.nz] : [ig.nx ig.ny]),
+	(:dim, ig -> ig.is3 ? [ig.nx, ig.ny, ig.nz] : [ig.nx, ig.ny]),
 	(:fovs, ig -> ig.is3 ?
 		[abs(ig.dx)*ig.nx, abs(ig.dy)*ig.ny, abs(ig.dz)*ig.nz] :
 			[abs(ig.dx)*ig.nx, abs(ig.dy)*ig.ny]),
