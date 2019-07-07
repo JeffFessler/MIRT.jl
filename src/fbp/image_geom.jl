@@ -48,7 +48,7 @@ function image_geom_help()
 	fovs [|dx|*nx |dy|*ny ...]
 	np	sum(mask) = # pixels to be estimated
 
-	dim	[nx ny [nz]]
+	dim	(nx, ny, [nz])
 	x	1D x coordinates of each pixel
 	y	1D y coordiantes of each pixel
 	wx	(nx - 1/2) * dx + offset_x
@@ -283,7 +283,7 @@ function downsample(ig::MIRT_image_geom, down::Union{Int,Vector{Int}})
 	# carefully down-sample the mask
 	mdim_vec = [size(ig.mask)...] # tuple to vector
 	if ig.is3
-		if [down_nx,down_ny,down_nz] .* downv == mdim_vec
+		if [down_nx, down_ny, down_nz] .* downv == mdim_vec
 			down_mask = downsample3(ig.mask, downv) .> 0
 		else
 			throw("bug: bad mask size. need to address mask downsampling")
@@ -323,9 +323,9 @@ over-sample an image geometry by the factor `over`
 """
 function image_geom_over(ig::MIRT_image_geom, over::Integer)
 	if all(ig.mask .== true)
-		mask_over = trues(ig.dim...)
+		mask_over = trues(ig.dim)
 	else
-		mask_over = imresize(ig.mask, (ig.dim*over)...) .> 0
+		mask_over = imresize(ig.mask, ig.dim .* over) .> 0
 	end
 	return MIRT_image_geom(
 		ig.nx*over, ig.ny*over, ig.dx/over, ig.dy/over,
@@ -416,13 +416,13 @@ image_geom_fun0 = Dict([
 	(:help, ig -> print(image_geom_help())),
 
 	(:is3, ig -> ig.nz > 0),
-	(:dim, ig -> ig.is3 ? [ig.nx, ig.ny, ig.nz] : [ig.nx, ig.ny]),
+	(:dim, ig -> ig.is3 ? (ig.nx, ig.ny, ig.nz) : (ig.nx, ig.ny)),
 	(:fovs, ig -> ig.is3 ?
 		[abs(ig.dx)*ig.nx, abs(ig.dy)*ig.ny, abs(ig.dz)*ig.nz] :
 			[abs(ig.dx)*ig.nx, abs(ig.dy)*ig.ny]),
 
-	(:zeros, ig -> zeros(Float32, ig.dim...)), # (nx, ny, nz) : zeros(nx, ny)
-	(:ones, ig -> ones(Float32, ig.dim...)), # (nx, ny, nz) : zeros(nx, ny)
+	(:zeros, ig -> zeros(Float32, ig.dim)), # (nx, ny, nz) : zeros(nx, ny)
+	(:ones, ig -> ones(Float32, ig.dim)), # (nx, ny, nz) : zeros(nx, ny)
 
 	(:x, ig -> ((0:ig.nx-1) .- ig.wx) * ig.dx),
 	(:y, ig -> ((0:ig.ny-1) .- ig.wy) * ig.dy),
@@ -461,7 +461,7 @@ image_geom_fun0 = Dict([
 	(:plot, ig -> ((;kwargs...) -> image_geom_plot(ig; kwargs...))),
 	(:embed, ig -> (x::AbstractArray{<:Number} -> embed(x, ig.mask))),
 	(:maskit, ig -> (x::AbstractArray{<:Number} -> maskit(x, ig.mask))),
-	(:shape, ig -> (x::AbstractArray{<:Number} -> reshape(x, ig.dim...))),
+	(:shape, ig -> (x::AbstractArray{<:Number} -> reshape(x, ig.dim))),
 	(:unitv, ig -> ((;kwargs...) -> image_geom_add_unitv(ig.zeros; kwargs...))),
 	(:circ, ig -> ((;kwargs...) ->
 		image_geom_circle(ig.nx,ig.ny,ig.dx,ig.dy,nz=ig.nz; kwargs...))),
