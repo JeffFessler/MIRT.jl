@@ -38,7 +38,7 @@ option
 * `orbit::Real`			default 360 [degrees]
 * `orbit_start::Union{Real,AbstractVector{<:Real}} = 0` scalar or `nring` [degrees]
 * `scale::Symbol`
-  + `:nothing` (default)
+  + `:none` (default)
   +	`ssos_center` make SSoS of center = 1
 
 out
@@ -65,7 +65,7 @@ function ir_mri_sensemap_sim(;
 		coil_distance::Real = 1.2, # multiplies fov/2
 		orbit::Real = 360,
 		orbit_start::Union{Real,AbstractVector{<:Real}} = 0,
-		scale::Symbol = :nothing, # ssos_center
+		scale::Symbol = :none, # or :ssos_center
 		chat::Bool = false,
 	)
 
@@ -89,7 +89,7 @@ function ir_mri_sensemap_sim(;
 
 	if scale == :ssos_center
 		smap *= Float32(scale_center)
-	elseif scale != :nothing
+	elseif scale != :none
 		throw("scale $scale")
 	end
 
@@ -120,7 +120,7 @@ function ir_mri_sensemap_sim_do(nx, ny, nz,
 	end
 
 	# cylindrical coil configuration, like abdominal coils
-	alist = deg2rad(orbit) * (0:(ncoilpr-1)) / ncoilpr # coil angles [radians]
+	alist = deg2rad.(orbit) * (0:(ncoilpr-1)) / ncoilpr # coil angles [radians]
 	z_ring = ((1:nring) .- (nring+1)/2) * dz_coil
 	for ir = 1:nring
 		for ic = 1:ncoilpr
@@ -411,6 +411,7 @@ end
 show ellipke
 """
 function ir_mri_sensemap_sim_test0()
+	ir_mri_smap_r.(5e-7, 0.4)
 	m = LinRange(0,1,101)
 	(k,e) = ellipke_(m)
 	plot(m, k, label="k"); plot!(m, e, label="e")
@@ -472,9 +473,12 @@ end
 `ir_mri_sensemap_sim_test2(;chat)`
 return plot with 2D example
 """
-function ir_mri_sensemap_sim_test2(;chat::Bool=false)
+function ir_mri_sensemap_sim_test2( ; chat::Bool=true)
 
-	(smap,t) = ir_mri_sensemap_sim(dims=(32,32), chat=chat)
+	@test_throws String ir_mri_sensemap_sim(scale=:bug)
+	@test_throws String ir_mri_sensemap_sim(nring=2, orbit_start = [1,2,3])
+
+	(smap,t) = ir_mri_sensemap_sim(dims=(32,32), scale=:ssos_center, chat=chat)
 
 	if true # check rotational symmetry in 4-coil case
 		for ic=2:4
