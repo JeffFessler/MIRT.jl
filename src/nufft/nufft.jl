@@ -1,7 +1,11 @@
-# nufft.jl
-# Non-uniform FFT (NUFFT), currently a wrapper around NFFT.jl
-# todo: open issues: small N, odd N, nufft!, adjoint!
-# 2019-06-06, Jeff Fessler, University of Michigan
+#=
+nufft.jl
+Non-uniform FFT (NUFFT), currently a wrapper around NFFT.jl
+todo: open issues: small N, odd N, nufft!, adjoint!
+2019-06-06, Jeff Fessler, University of Michigan
+=#
+
+export nufft_init, nufft_plots, nufft
 
 #using MIRT: dtft_init, map_many
 using NFFT
@@ -16,7 +20,7 @@ ensure NFFTPlan is Float32 or Float64
 """
 function nufft_eltype(w::AbstractArray{<:Number})
 	T = eltype(w)
-	if T <: Int || T == Float16
+	if T <: Integer || T == Float16
 		return Float32 # require at least Float32
 	elseif T ∉ (Float32,Float64)
 		throw("unknown type $T")
@@ -365,6 +369,7 @@ self tests
 """
 function nufft(test::Symbol)
 	test != :test && throw("bad symbol $test")
+	@test_throws String nufft_eltype(ones(BigFloat,3))
 	@test_throws String nufft_init([0], 2)
 	@test_throws String nufft_init([0], 7)
 	@test_throws ArgumentError nufft_init([2π], 8)
