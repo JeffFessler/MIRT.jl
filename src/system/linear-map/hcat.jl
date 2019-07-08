@@ -1,8 +1,12 @@
-# lm-hcat.jl
-# provide hcat support for LinearMaps
-# Jeff Fessler, University of Michigan
-# with advice from Daniel Karrasch per
-# https://github.com/Jutho/LinearMaps.jl/issues/45
+#=
+hcat.jl
+provide hcat support for LinearMaps
+Jeff Fessler, University of Michigan
+with advice from Daniel Karrasch per
+https://github.com/Jutho/LinearMaps.jl/issues/45
+=#
+
+export hcat_lm
 
 using LinearMaps
 using LinearAlgebra: I, UniformScaling
@@ -36,11 +40,10 @@ function hcat_lm(As...) # helper routine for hcat of LinearMaps
 
 	lacks_fc = A -> isa(A, LinearMap) && A.fc == nothing
 	if any(map(A -> lacks_fc(A), As)) # any LinearMap missing adjoint?
-		fc = ()
-	else
-		fc = (y -> vcat(map(A -> A'*y, As)...), )
+		return LinearMap(f, nrow, sum(ncol)) # no fc
 	end
-	return LinearMap(f, fc..., nrow, sum(ncol))
+	fc = y -> vcat(map(A -> A'*y, As)...)
+	return LinearMap(f, fc, nrow, sum(ncol))
 end
 
 
@@ -76,10 +79,20 @@ function hcat_lm_test()
 
 	E = [a B] # LinearMap
 	@test Matrix(E)' == Matrix(E')
+
+	F = LinearMap(x -> b*x, size(b)...)
+	G = [A F] # LinearMap
+	@test Matrix(G) == [a b]
 	true
 end
 
+
+"""
+`hcat_lm(:test)`
+self test
+"""
 function hcat_lm(test::Symbol)
 	test != :test && throw("hcat_lm test")
-	hcat_lm_test()
+	@test hcat_lm_test()
+	true
 end

@@ -185,9 +185,11 @@ function sino_geom_fan( ;
 		down::Integer = 1,
 	)
 
+	dfs != 0 && !isinf(dfs) && throw("dfs $dfs") # must be 0 or Inf
+
 	if orbit == :short # trick
 		sg_tmp = MIRT_sino_geom(:fan, units,
-			nb, na, d, 0, orbit_start, strip_width,
+			nb, na, d, 0, orbit_start, offset, strip_width,
 			source_offset, dsd, dod, dfs)
 		orbit = sg_tmp.orbit_short
 	end
@@ -290,11 +292,11 @@ function sino_geom_taufun(sg, x, y)
 			tau = sg.dsd / sg.ds * atan.(tangam)
 		elseif isinf(sg.dfs) # flat
 			tau = sg.dsd / sg.ds * tangam
-		else
-			throw("bad dfs $(sg.dfs)")
+#		else
+#			throw("bad dfs $(sg.dfs)")
 		end
-	else
-		throw("bad how $(sg.how)")
+#	else
+#		throw("bad how $(sg.how)")
 	end
 	return tau
 end
@@ -315,11 +317,11 @@ function sino_geom_xds(sg)
 			xds = sg.dsd * sin.(gam)
 		elseif isinf(sg.dfs) # flat
 			xds = sg.s
-		else
-			throw("bad dfs $(sg.dfs))")
+	#	else
+	#		throw("bad dfs $(sg.dfs))")
 		end
-	else
-		throw("bad how $(sg.how)")
+#	else
+#		throw("bad how $(sg.how)")
 	end
 	return xds .+ sg.source_offset
 end
@@ -341,11 +343,11 @@ function sino_geom_yds(sg)
 			yds = sg.dso .- sg.dsd * cos.(gam)
 		elseif isinf(sg.dfs) # flat
 			yds = fill(-sg.dod, sg.nb)
-		else
-			throw("bad dfs $(sg.dfs))")
+	#	else
+	#		throw("bad dfs $(sg.dfs))")
 		end
-	else
-		throw("bad how $(sg.how)")
+#	else
+#		throw("bad how $(sg.how)")
 	end
 	return yds
 end
@@ -528,6 +530,7 @@ function sino_geom_test( ; kwarg...)
 	sg_list = (
 		sino_geom(:par),
 		sino_geom(:moj),
+		sino_geom(:fan, orbit=:short),
 		sino_geom(:ge1, orbit_start=20, dfs=0), # arc
 		sino_geom(:ge1, orbit_start=20, dfs=Inf), # flat
 		)
@@ -578,6 +581,6 @@ function sino_geom_test( ; kwarg...)
 	sino_geom(:show)
 
 	@test_throws String sino_geom(:badhow)
-
+	@test_throws String sino_geom(:ge1, dfs=-1)
 	true
 end

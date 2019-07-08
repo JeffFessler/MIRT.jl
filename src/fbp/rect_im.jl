@@ -129,9 +129,6 @@ for rotated rectangles
 function rect_im_slow(params_in, nx, ny, dx, dy, offset_x, offset_y, replace)
 
 	params = copy(params_in)
-	if size(params,2) != 6
-		throw("bad rect parameter vector size")
-	end
 	phantom = zeros(Float32, nx, ny)
 
 	wx = (nx - 1)/2 + offset_x # scalar
@@ -195,10 +192,10 @@ end
 image of size `nx` by `ny` (default `nx`) with specified `dx` (default 1),
 defaults to `:my_rect`
 """
-function rect_im(nx::Integer; ny::Integer=nx, dx::Real=1, args...)
-	if image_geom(nx=nx, ny=ny, dx=dx, args...)
-		return rect_im(ig, :my_rect; args...)
-	end
+function rect_im(nx::Integer; ny::Integer=nx, dx::Real=1,
+	params::Symbol=:my_rect, args...)
+	ig = image_geom(nx=nx, ny=ny, dx=dx)
+	return rect_im(ig, params; args...)
 end
 
 
@@ -251,16 +248,16 @@ default parameters
 function rect_im_default_parameters(xfov, yfov)
 	f = 1/64
 	params = [
-		0     0     50     50     0     1
-		10    -16	25	   16	  0	    -0.5
-		-13	  15	13	   13	  1*45  1
-		-18   0     1      1      0     1
-		-12   0     1      1      0     1
-		-6    0     1      1      0     1
-		0     0     1      1      0     1
-		6     0     1      1      0     1
-		12    0     1      1      0     1
-		18    0     1      1      0     1
+		0	0	50	50	0	1
+		10	-16	25	16	0	-0.5
+		-13	15	13	13	1*45	1
+		-18	0	1	1	0	1
+		-12	0	1	1	0	1
+		-6	0	1	1	0	1
+		0	0	1	1	0	1
+		6	0	1	1	0	1
+		12	0	1	1	0	1
+		18	0	1	1	0	1
 	]
 
 	params[:,[1,3]] .*= xfov/64 # x_center and x_width
@@ -360,8 +357,15 @@ function rect_im(test::Symbol)
 		return rect_im_show()
 	end
 	test != :test && throw(ArgumentError("test $test"))
-	rect_im()
+	ig = image_geom(nx=2^8, dx=3)
+	@test_throws String rect_im(ig, :bad)
+	rect_im(ig, :smiley, how=:fast, replace=true)
+	rect_im(ig, how=:slow, replace=true)
+	rect_im(32, ny=30, dx=3, params=:default, how=:slow, return_params=true)
+	rect_im(32, ny=30)
+	@test_throws String rect_im(32, :default, how=:bad)
 	rect_im(:show)
-	rect_im_test()
+	@test rect_im_test()
+	rect_im()
 	true
 end

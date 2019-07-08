@@ -66,24 +66,24 @@ out
 2019-02-23 Jeff Fessler, University of Michigan
 """
 function jim(z::AbstractArray{<:Real};
-	aspect_ratio = jim_def[:aspect_ratio],
-	clim = nothing_else(jim_def[:clim], (minimum(z), maximum(z))),
-	color = jim_def[:color],
-	ncol::Integer = jim_def[:ncol],
-	padval = nothing_else(jim_def[:padval], minimum(z)),
-	mosaic_npad::Integer = jim_def[:mosaic_npad],
-	title::String = jim_def[:title],
-	xlabel::String = jim_def[:xlabel],
-	ylabel::String = jim_def[:ylabel],
-	fft0::Bool = jim_def[:fft0],
-	x = fft0 ? Int.(-size(z,1)/2:size(z,1)/2-1) : (1:size(z,1)),
-	y = fft0 ? Int.(-size(z,2)/2:size(z,2)/2-1) : (1:size(z,2)),
-	xtick = (minimum(x) < 0 && maximum(x) > 0) ?
-		 [minimum(x),0,maximum(x)] : [minimum(x),maximum(x)],
-	ytick = (minimum(y) < 0 && maximum(y) > 0) ?
-		 [minimum(y),0,maximum(y)] : [minimum(y),maximum(y)],
-	yflip::Bool = nothing_else(jim_def[:yflip], minimum(y) >= 0),
-	abswarn::Bool = jim_def[:abswarn], # ignored here
+		aspect_ratio = jim_def[:aspect_ratio],
+		clim = nothing_else(jim_def[:clim], (minimum(z), maximum(z))),
+		color = jim_def[:color],
+		ncol::Integer = jim_def[:ncol],
+		padval = nothing_else(jim_def[:padval], minimum(z)),
+		mosaic_npad::Integer = jim_def[:mosaic_npad],
+		title::String = jim_def[:title],
+		xlabel::String = jim_def[:xlabel],
+		ylabel::String = jim_def[:ylabel],
+		fft0::Bool = jim_def[:fft0],
+		x = fft0 ? Int.(-size(z,1)/2:size(z,1)/2-1) : (1:size(z,1)),
+		y = fft0 ? Int.(-size(z,2)/2:size(z,2)/2-1) : (1:size(z,2)),
+		xtick = (minimum(x) < 0 && maximum(x) > 0) ?
+			[minimum(x),0,maximum(x)] : [minimum(x),maximum(x)],
+		ytick = (minimum(y) < 0 && maximum(y) > 0) ?
+			[minimum(y),0,maximum(y)] : [minimum(y),maximum(y)],
+		yflip::Bool = nothing_else(jim_def[:yflip], minimum(y) >= 0),
+		abswarn::Bool = jim_def[:abswarn], # ignored here
 	)
 
 	xy = (x, y)
@@ -123,9 +123,7 @@ function jim(z::AbstractArray{<:Number};
 		)
 
 	if !(eltype(z) <: Real)
-		if abswarn
-			@warn "magnitude at $(caller_name())"
-		end
+		abswarn && (@warn "magnitude at $(caller_name())")
 		z = abs.(z)
 	end
 	jim(z; kwargs...)
@@ -197,12 +195,13 @@ function jim(test::Symbol)
 	test != :test && throw("symbol $test")
 	jim()
 	jim(:keys)
-	jim(:defs)
+	@test typeof(jim(:defs)) <: Dict
 	jim(:abswarn, false)
 	jim(ones(4,3), title="test2")
 	jim(ones(4,3,5), title="test3")
 	jim(1:4, 5:9, zeros(4,5), title="test3")
 	jim(zeros(4,5), x=1:4, y=5:9, title="test3")
+	jim(zeros(4,6), fft0=true)
 	jim(x=1:4, y=5:9, rand(4,5), title="test4")
 	jim(rand(4,5), color=:hsv)
 	jim(complex(rand(4,3)))

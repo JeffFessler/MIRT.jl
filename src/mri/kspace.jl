@@ -7,7 +7,7 @@ using Test
 
 
 """
-kspace = `ir_mri_kspace_ga_radial(; Nro=?, Nspoke=?, ...)
+`kspace = ir_mri_kspace_ga_radial(; Nro=?, Nspoke=?, ...)`
 
 Generate k-space sampling pattern for "golden angle" radial sampling.
 

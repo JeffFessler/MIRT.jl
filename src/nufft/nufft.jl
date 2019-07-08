@@ -1,7 +1,11 @@
-# nufft.jl
-# Non-uniform FFT (NUFFT), currently a wrapper around NFFT.jl
-# todo: open issues: small N, odd N, nufft!, adjoint!
-# 2019-06-06, Jeff Fessler, University of Michigan
+#=
+nufft.jl
+Non-uniform FFT (NUFFT), currently a wrapper around NFFT.jl
+todo: open issues: small N, odd N, nufft!, adjoint!
+2019-06-06, Jeff Fessler, University of Michigan
+=#
+
+export nufft_init, nufft_plots, nufft
 
 #using MIRT: dtft_init, map_many
 using NFFT
@@ -16,7 +20,7 @@ ensure NFFTPlan is Float32 or Float64
 """
 function nufft_eltype(w::AbstractArray{<:Number})
 	T = eltype(w)
-	if T <: Int || T == Float16
+	if T <: Integer || T == Float16
 		return Float32 # require at least Float32
 	elseif T ∉ (Float32,Float64)
 		throw("unknown type $T")
@@ -190,7 +194,7 @@ end
 `nufft_test1(; M=30, N=20, n_shift=1.7, T=?, tol=?)`
 simple 1D tests
 """
-function nufft_test1(;
+function nufft_test1( ;
 		M::Int = 30, N::Int = 20, n_shift::Real = 1.7,
 		T::DataType = Float64, tol::Real = 1e-6)
 	seed!(0)
@@ -211,6 +215,12 @@ function nufft_test1(;
 	@test norm(a1 - a0, Inf) / norm(a0, Inf) < tol
 	@test isequal(a1, a2)
 	@test isapprox(Matrix(sn.A)', Matrix(sn.A')) # 1D adjoint test
+
+	sn = nufft_init(w, N, n_shift=n_shift, do_many=false)
+	o3 = sn.nufft(x)
+	@test norm(o3 - o0, Inf) / norm(o0, Inf) < tol
+
+	sn.nufft(ones(Int,N)) # should produce a warning
 	true
 end
 
@@ -275,6 +285,10 @@ function nufft_test2(;
 		cat(dims=3, sn.nufft(x), sn.nufft(2x)))
 	@test isequal(sn.adjoint(cat(dims=3, y, 2y)),
 			cat(dims=4, sn.adjoint(y), sn.adjoint(2y)))
+
+	sn = nufft_init(w, N, n_shift=n_shift, pi_error=false, do_many=false)
+	o3 = sn.nufft(x)
+	@test norm(o3 - o0, Inf) / norm(o0, Inf) < tol
 	true
 end
 
@@ -365,6 +379,7 @@ self tests
 """
 function nufft(test::Symbol)
 	test != :test && throw("bad symbol $test")
+	@test_throws String nufft_eltype(ones(BigFloat,3))
 	@test_throws String nufft_init([0], 2)
 	@test_throws String nufft_init([0], 7)
 	@test_throws ArgumentError nufft_init([2π], 8)

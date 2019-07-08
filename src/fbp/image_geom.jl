@@ -1,15 +1,23 @@
-# image_geom.jl
-# Methods related to an image geometry for image reconstruction
-# 2017-10-02 Samuel Rohrer, University of Michigan
-# 2019-03-05 Jeff Fessler, Julia 1.1 + tests
-# 2019-06-23 Jeff Fessler, overhaul
+#=
+image_geom.jl
+Methods related to an image geometry for image reconstruction
+2017-10-02 Samuel Rohrer, University of Michigan
+2019-03-05 Jeff Fessler, Julia 1.1 + tests
+2019-06-23 Jeff Fessler, overhaul
+=#
 
 export cbct
 
+#using MIRT: jim, downsample2, downsample3
 using Test: @test
 using ImageTransformations: imresize
 
-# Image geometry "struct" with essential parameters
+
+"""
+`MIRT_image_geom`
+
+Image geometry "struct" with essential parameters
+"""
 struct MIRT_image_geom
 	# options for 2D image geometry
 	nx::Int				# image dimension 1
@@ -42,7 +50,7 @@ function image_geom_help()
 	fovs [|dx|*nx |dy|*ny ...]
 	np	sum(mask) = # pixels to be estimated
 
-	dim	[nx ny [nz]]
+	dim	(nx, ny, [nz])
 	x	1D x coordinates of each pixel
 	y	1D y coordiantes of each pixel
 	wx	(nx - 1/2) * dx + offset_x
@@ -93,8 +101,12 @@ function image_geom_help()
 end
 
 
-# structure suitable for passing to C routines cbct_*
-# based on the struct cbct_ig found in cbct,def.h
+"""
+`MIRT_cbct_ig`
+
+Structure suitable for passing to C routines `cbct_*`
+based on the struct `cbct_ig` found in `cbct,def.h`
+"""
 struct MIRT_cbct_ig
 	nx::Cint
 	ny::Cint
@@ -110,7 +122,10 @@ struct MIRT_cbct_ig
 	iy_end::Ptr{Cint}	# [nthread] for mask2
 end
 
-# constructor for MIRT_cbct_ig
+"""
+`cbct(ig::MIRT_image_geom; nthread=1)`
+constructor for `MIRT_cbct_ig`
+"""
 function cbct(ig::MIRT_image_geom; nthread::Int=1)
 	iy_start = [0]
 	iy_end = [ig.ny]
@@ -131,34 +146,34 @@ end
 
 Constructor for `MIRT_image_geom`
 
-option:
-* `nx::Int			= 128`
-* `ny::Int			= nx`
-* `dx::Real			= ?` (must specify one of `dx` or `fov`)
-* `dy::Real			= -dx`
-* `offset_x::Real	= 0` (unitless)
-* `offset_y::Real	= 0` (unitless)
-* `fov::Real		= ?` (if specified, then `nx*dx=ny*dy`)
-* `nz::Int			= 0`
-* `dz::Real			= ?`
-* `zfov::Real		= ?` (if specified, then `nz*dz`)
-* `offset_z::Real	= 0` (unitless)
-* `offsets::Symbol	= :none` or :dsp
-* `mask::Union{Symbol,AbstractArray{Bool}} = :all` | `:circ` | `:all_but_edge`
+# Arguments
+- `nx::Int = 128`
+- `ny::Int = nx`
+- `dx::Real = ?` (must specify one of `dx` or `fov`)
+- `dy::Real = -dx`
+- `offset_x::Real = 0` (unitless)
+- `offset_y::Real = 0` (unitless)
+- `fov::Real = ?` (if specified, then `nx*dx=ny*dy`)
+- `nz::Int = 0`
+- `dz::Real = ?` (need one of `dz` or `zfov` if `nz > 0`)
+- `zfov::Real = ?` (if specified, then `nz*dz`)
+- `offset_z::Real = 0` (unitless)
+- `offsets::Symbol = :none` or :dsp
+- `mask::Union{Symbol,AbstractArray{Bool}} = :all` | `:circ` | `:all_but_edge`
 """
-function image_geom(;
-		nx::Int				= 128,
-		ny::Int				= nx,
-		dx::Real			= NaN,
-		dy::Real			= NaN,
-		offset_x::Real		= 0,
-		offset_y::Real		= 0,
-		fov::Real			= NaN,
-		nz::Int				= 0,
-		dz::Real			= NaN,
-		zfov::Real			= NaN,
-		offset_z::Real		= 0,
-		offsets::Symbol		= :none,
+function image_geom( ;
+		nx::Integer = 128,
+		ny::Integer = nx,
+		dx::Real = NaN,
+		dy::Real = NaN,
+		offset_x::Real = 0,
+		offset_y::Real = 0,
+		fov::Real = NaN,
+		nz::Integer = 0,
+		dz::Real = NaN,
+		zfov::Real = NaN,
+		offset_z::Real = 0,
+		offsets::Symbol = :none,
 		mask::Union{Symbol,AbstractArray{Bool}}	= :all,
 	)
 
@@ -240,7 +255,8 @@ end
 
 
 """
-`downsample(ig, down)`
+`ig_down = downsample(ig, down::Union{Int,Vector{Int}})`
+down sample an image geometry by the factor `down`
 cf `image_geom_downsample`
 """
 function downsample(ig::MIRT_image_geom, down::Union{Int,Vector{Int}})
@@ -269,7 +285,7 @@ function downsample(ig::MIRT_image_geom, down::Union{Int,Vector{Int}})
 	# carefully down-sample the mask
 	mdim_vec = [size(ig.mask)...] # tuple to vector
 	if ig.is3
-		if [down_nx,down_ny,down_nz] .* downv == mdim_vec
+		if [down_nx, down_ny, down_nz] .* downv == mdim_vec
 			down_mask = downsample3(ig.mask, downv) .> 0
 		else
 			throw("bug: bad mask size. need to address mask downsampling")
@@ -289,10 +305,10 @@ end
 
 
 """
-`image_geom_expand_nz(ig, nz_pad)`
+`ig_new = image_geom_expand_nz(ig::MIRT_image_geom, nz_pad::Integer)`
 pad both ends
 """
-function image_geom_expand_nz(ig::MIRT_image_geom, nz_pad::Int)
+function image_geom_expand_nz(ig::MIRT_image_geom, nz_pad::Integer)
 	!ig.is3 && throw("expand_nz only valid for 3D")
 	out_nz = ig.nz + 2*nz_pad
 	out_mask = cat(dims=3, repeat(ig.mask[:,:,1], 1, 1, nz_pad), ig.mask,
@@ -304,13 +320,14 @@ end
 
 
 """
-`image_geom_over(ig, over)`
+`ig_over = image_geom_over(ig::MIRT_image_geom, over::Integer)`
+over-sample an image geometry by the factor `over`
 """
-function image_geom_over(ig::MIRT_image_geom, over::Int)
+function image_geom_over(ig::MIRT_image_geom, over::Integer)
 	if all(ig.mask .== true)
-		mask_over = trues(ig.dim...)
+		mask_over = trues(ig.dim)
 	else
-		mask_over = imresize(ig.mask, (ig.dim*over)...) .> 0
+		mask_over = imresize(ig.mask, ig.dim .* over) .> 0
 	end
 	return MIRT_image_geom(
 		ig.nx*over, ig.ny*over, ig.dx/over, ig.dy/over,
@@ -339,12 +356,12 @@ end
 
 add a unit vector to an initial array `z` (typically of zeros)
 
-option;
-`j` single index from 1 to length(z)
-`i` [ix,iy[,iz]] index from 1 to nx,ny
-`c` [cx,cy[,cz]] index from +/- n/2 center at floor(n/2)+1
+# Arguments
+- `j` single index from 1 to length(z)
+- `i` [ix,iy[,iz]] index from 1 to nx,ny
+- `c` [cx,cy[,cz]] index from +/- n/2 center at floor(n/2)+1
 
-default with no arguments gives unit vector at center c=[0,0]
+default with no arguments gives unit vector at center `c=[0,0]`
 """
 function image_geom_add_unitv(z; # starts with zeros()
 		j::Integer=0,
@@ -401,13 +418,13 @@ image_geom_fun0 = Dict([
 	(:help, ig -> print(image_geom_help())),
 
 	(:is3, ig -> ig.nz > 0),
-	(:dim, ig -> ig.is3 ? [ig.nx ig.ny ig.nz] : [ig.nx ig.ny]),
+	(:dim, ig -> ig.is3 ? (ig.nx, ig.ny, ig.nz) : (ig.nx, ig.ny)),
 	(:fovs, ig -> ig.is3 ?
 		[abs(ig.dx)*ig.nx, abs(ig.dy)*ig.ny, abs(ig.dz)*ig.nz] :
 			[abs(ig.dx)*ig.nx, abs(ig.dy)*ig.ny]),
 
-	(:zeros, ig -> zeros(Float32, ig.dim...)), # (nx, ny, nz) : zeros(nx, ny)
-	(:ones, ig -> ones(Float32, ig.dim...)), # (nx, ny, nz) : zeros(nx, ny)
+	(:zeros, ig -> zeros(Float32, ig.dim)), # (nx, ny, nz) : zeros(nx, ny)
+	(:ones, ig -> ones(Float32, ig.dim)), # (nx, ny, nz) : zeros(nx, ny)
 
 	(:x, ig -> ((0:ig.nx-1) .- ig.wx) * ig.dx),
 	(:y, ig -> ((0:ig.ny-1) .- ig.wy) * ig.dy),
@@ -446,7 +463,7 @@ image_geom_fun0 = Dict([
 	(:plot, ig -> ((;kwargs...) -> image_geom_plot(ig; kwargs...))),
 	(:embed, ig -> (x::AbstractArray{<:Number} -> embed(x, ig.mask))),
 	(:maskit, ig -> (x::AbstractArray{<:Number} -> maskit(x, ig.mask))),
-	(:shape, ig -> (x::AbstractArray{<:Number} -> reshape(x, ig.dim...))),
+	(:shape, ig -> (x::AbstractArray{<:Number} -> reshape(x, ig.dim))),
 	(:unitv, ig -> ((;kwargs...) -> image_geom_add_unitv(ig.zeros; kwargs...))),
 	(:circ, ig -> ((;kwargs...) ->
 		image_geom_circle(ig.nx,ig.ny,ig.dx,ig.dy,nz=ig.nz; kwargs...))),
@@ -498,7 +515,7 @@ function image_geom_test2(ig::MIRT_image_geom)
 	ig.unitv()
 	ig.circ()
 	ig.plot()
-	ig.down(2) # needs dims after down-sampling to be even
+	ig.down(2)
 	ig.over(2)
 	true
 end
@@ -510,6 +527,10 @@ function image_geom_test2()
 	ig = image_geom(nx=16, dx=2)
 	display(ig)
 	image_geom_test2(ig)
+	ig = image_geom(nx=16, dx=2, mask=:circ)
+	ig.over(2)
+	ig.down(3) # test both even and non-even factors
+	ig.help
 	true
 end
 

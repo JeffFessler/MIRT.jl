@@ -23,4 +23,3 @@ include("ir_dump.jl")
 export ir_dump
 
 include("prompt.jl")
-export prompt
