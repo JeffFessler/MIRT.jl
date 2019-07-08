@@ -7,4 +7,4 @@ using Test
 @test fld_write(:test)
 @test ir_dump(:test)
 #@test loadpfile(:test)
-#@test prompt(:test)
+@test prompt(:test)
