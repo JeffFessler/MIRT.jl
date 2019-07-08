@@ -8,8 +8,10 @@ Methods related to an image geometry for image reconstruction
 
 export cbct
 
+#using MIRT: jim, downsample2, downsample3
 using Test: @test
 using ImageTransformations: imresize
+
 
 """
 `MIRT_image_geom`
@@ -513,7 +515,7 @@ function image_geom_test2(ig::MIRT_image_geom)
 	ig.unitv()
 	ig.circ()
 	ig.plot()
-	ig.down(2) # needs dims after down-sampling to be even
+	ig.down(2)
 	ig.over(2)
 	true
 end
@@ -525,6 +527,10 @@ function image_geom_test2()
 	ig = image_geom(nx=16, dx=2)
 	display(ig)
 	image_geom_test2(ig)
+	ig = image_geom(nx=16, dx=2, mask=:circ)
+	ig.over(2)
+	ig.down(3) # test both even and non-even factors
+	ig.help
 	true
 end
 
