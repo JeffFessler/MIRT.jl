@@ -293,8 +293,8 @@ function sino_geom_taufun(sg, x, y)
 		else
 			throw("bad dfs $(sg.dfs)")
 		end
-	else
-		throw("bad how $(sg.how)")
+#	else
+#		throw("bad how $(sg.how)")
 	end
 	return tau
 end
@@ -318,8 +318,8 @@ function sino_geom_xds(sg)
 		else
 			throw("bad dfs $(sg.dfs))")
 		end
-	else
-		throw("bad how $(sg.how)")
+#	else
+#		throw("bad how $(sg.how)")
 	end
 	return xds .+ sg.source_offset
 end
@@ -344,8 +344,8 @@ function sino_geom_yds(sg)
 		else
 			throw("bad dfs $(sg.dfs))")
 		end
-	else
-		throw("bad how $(sg.how)")
+#	else
+#		throw("bad how $(sg.how)")
 	end
 	return yds
 end
