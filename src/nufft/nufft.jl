@@ -219,6 +219,8 @@ function nufft_test1( ;
 	sn = nufft_init(w, N, n_shift=n_shift, do_many=false)
 	o3 = sn.nufft(x)
 	@test norm(o3 - o0, Inf) / norm(o0, Inf) < tol
+
+	sn.nufft(ones(Int,N)) # should produce a warning
 	true
 end
 
