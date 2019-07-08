@@ -5,7 +5,7 @@ pogm_restart.jl
 
 using LinearAlgebra: norm, opnorm
 using Random: seed!
-using Test: @test
+using Test: @test, @test_throws
 
 
 function gr_restart(Fgrad, ynew_yold, restart_cutoff)
