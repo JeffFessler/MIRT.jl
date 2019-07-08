@@ -81,9 +81,9 @@ function hcat_lm_test()
 	E = [a B] # LinearMap
 	@test Matrix(E)' == Matrix(E')
 
-	F = [A B] # LinearMap
-	@test Matrix(F)' == Matrix(F')
-@show 99
+	F = LinearMap(x -> b*x, size(b)...)
+	G = [A F] # LinearMap
+	@test Matrix(G) == [a b]
 	true
 end
 
