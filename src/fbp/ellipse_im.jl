@@ -1,7 +1,12 @@
-# ellipse_im.jl
-# Copyright 2019-03-05, Jeff Fessler, University of Michigan
+#=
+ellipse_im.jl
+Copyright 2019-03-05, Jeff Fessler, University of Michigan
+=#
 
-using Plots
+export ellipse_im
+
+# using MIRT: image_geom, disk_phantom_params, downsample2, rotate2d
+using Plots: plot
 
 
 """
@@ -13,20 +18,20 @@ Generate ellipse phantom image from parameters:
 `[x_center y_center x_radius y_radius angle_degrees amplitude]`
 
 in
-* `ig`		from `image_geom()`
-* `params`	[ne 6]	ellipse parameters
+- `ig`		from `image_geom()`
+- `params`	`[ne 6]` ellipse parameters
 
-option
-* `rot`			rotate ellipses by this amount [degrees]
-* `oversample`	oversampling factor, for grayscale boundaries
-* `hu_scale`	use 1000 to scale shepp-logan to HU
-* `replace`		replace ellipse values if true, else add
-* `how`			:fast is the only option
-* `return_params` if true return (phantom, params)
+# Arguments
+- `rot`			rotate ellipses by this amount [degrees]
+- `oversample`	oversampling factor, for grayscale boundaries
+- `hu_scale`	use 1000 to scale shepp-logan to HU
+- `replace`		replace ellipse values if true, else add
+- `how`			`:fast` is the only option
+- `return_params` if true return (phantom, params)
 
 out
-* `phantom`		[nx ny]	image (Float32)
-* `params`		[ne 6] parameters (only if return_params=true)
+- `phantom`		[nx ny]	image (Float32)
+- `params`		[ne 6] parameters (only if return_params=true)
 
 note: `op ellipse` in aspire with `nsub=3` is `oversample=4 = 2^(3-1)` here
 
@@ -245,7 +250,9 @@ end
 `code = :shepplogan | :shepplogan_emis | :shepplogan_brainweb | :southpark`
 """
 function ellipse_im(ig::MIRT_image_geom, params::Symbol; kwarg...)
-	if params == :shepplogan
+	if params == :disks
+		params = disk_phantom_params(fov=ig.fovs[1])
+	elseif params == :shepplogan
 		params = shepp_logan_parameters(ig.fovs..., case=:kak)
 	elseif params == :shepplogan_emis
 		params = shepp_logan_parameters(ig.fovs..., case=:emis)
@@ -420,7 +427,7 @@ function ellipse_im_test()
 
 	ig = image_geom(nx=80, dx=1)
 	params = shepp_logan_parameters(ig.fovs..., case=:brainweb)
-	ellipse_im(ig, params)
+	ellipse_im(ig, :disks)
 	ellipse_im(ig, params, oversample=2)
 	ellipse_im(ig, params, how=:fast, replace=true)
 

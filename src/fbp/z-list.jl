@@ -12,8 +12,8 @@ export MIRT_sino_geom
 include("cuboid_im.jl") # must be after image_geom.jl
 export cuboid_im
 
+include("disk-phantom.jl")
 include("ellipse_im.jl")
-export ellipse_im
 
 include("rect_im.jl")
 export rect_im
