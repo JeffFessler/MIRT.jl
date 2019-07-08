@@ -8,6 +8,9 @@ include("sino_geom.jl")
 export sino_geom
 export MIRT_sino_geom
 
+include("rotate2d.jl")
+export rotate2d
+
 
 include("cuboid_im.jl") # must be after image_geom.jl
 export cuboid_im
@@ -17,6 +20,3 @@ include("ellipse_im.jl")
 
 include("rect_im.jl")
 export rect_im
-
-include("rotate2d.jl")
-export rotate2d

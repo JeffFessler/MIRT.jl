@@ -2,6 +2,7 @@
 # Copyright 2019-03-05, Jeff Fessler, University of Michigan
 
 using Printf
+using Test
 
 """
 `y = downsample1(x, down; warn=true)`
@@ -108,7 +109,7 @@ function downsample3(x, down; warn::Bool=true)
 	end
 
 	ndims(x) != 3 && throw(DimensionMismatch("ndims(x)=$(ndims(x)) != 3"))
-	
+
 	if length(down) == 1
 		down = [down,down,down]
 	end
