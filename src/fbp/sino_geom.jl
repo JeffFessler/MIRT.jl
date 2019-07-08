@@ -187,7 +187,7 @@ function sino_geom_fan( ;
 
 	if orbit == :short # trick
 		sg_tmp = MIRT_sino_geom(:fan, units,
-			nb, na, d, 0, orbit_start, strip_width,
+			nb, na, d, 0, orbit_start, offset, strip_width,
 			source_offset, dsd, dod, dfs)
 		orbit = sg_tmp.orbit_short
 	end
@@ -528,6 +528,7 @@ function sino_geom_test( ; kwarg...)
 	sg_list = (
 		sino_geom(:par),
 		sino_geom(:moj),
+		sino_geom(:fan, orbit=:short),
 		sino_geom(:ge1, orbit_start=20, dfs=0), # arc
 		sino_geom(:ge1, orbit_start=20, dfs=Inf), # flat
 		)
