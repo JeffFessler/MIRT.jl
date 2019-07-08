@@ -129,9 +129,6 @@ for rotated rectangles
 function rect_im_slow(params_in, nx, ny, dx, dy, offset_x, offset_y, replace)
 
 	params = copy(params_in)
-	if size(params,2) != 6
-		throw("bad rect parameter vector size")
-	end
 	phantom = zeros(Float32, nx, ny)
 
 	wx = (nx - 1)/2 + offset_x # scalar
@@ -195,10 +192,10 @@ end
 image of size `nx` by `ny` (default `nx`) with specified `dx` (default 1),
 defaults to `:my_rect`
 """
-function rect_im(nx::Integer; ny::Integer=nx, dx::Real=1, args...)
-	if image_geom(nx=nx, ny=ny, dx=dx, args...)
-		return rect_im(ig, :my_rect; args...)
-	end
+function rect_im(nx::Integer; ny::Integer=nx, dx::Real=1,
+	params::Symbol=:my_rect, args...)
+	ig = image_geom(nx=nx, ny=ny, dx=dx)
+	return rect_im(ig, params; args...)
 end
 
 
@@ -360,8 +357,13 @@ function rect_im(test::Symbol)
 		return rect_im_show()
 	end
 	test != :test && throw(ArgumentError("test $test"))
-	rect_im()
+	ig = image_geom(nx=2^8, dx=3)
+	@test_throws String rect_im(ig, :bad)
+	rect_im(ig, :smiley, how=:fast, replace=true)
+	rect_im(32, ny=30, dx=3, params=:default, how=:slow, return_params=true)
+	@test_throws String rect_im(32, :default, how=:bad)
 	rect_im(:show)
-	rect_im_test()
+	@test rect_im_test()
+	rect_im()
 	true
 end
