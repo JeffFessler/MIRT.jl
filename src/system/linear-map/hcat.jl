@@ -40,11 +40,10 @@ function hcat_lm(As...) # helper routine for hcat of LinearMaps
 
 	lacks_fc = A -> isa(A, LinearMap) && A.fc == nothing
 	if any(map(A -> lacks_fc(A), As)) # any LinearMap missing adjoint?
-		fc = ()
-	else
-		fc = (y -> vcat(map(A -> A'*y, As)...), )
+		return LinearMap(f, nrow, sum(ncol)) # no fc
 	end
-	return LinearMap(f, fc..., nrow, sum(ncol))
+	fc = y -> vcat(map(A -> A'*y, As)...)
+	return LinearMap(f, fc, nrow, sum(ncol))
 end
 
 
