@@ -109,6 +109,7 @@ function disk_phantom_params(test::Symbol)
 	end
 
 	test != :test && throw(ArgumentError("test $test"))
+	disk_phantom_params(:show)
 	true
 end
 
