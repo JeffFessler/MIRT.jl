@@ -2,8 +2,10 @@
 # block operations for linear maps
 # 2019-06-15, Jeff Fessler, University of Michigan
 
+export block_lm
+
 using LinearMaps
-using LinearAlgebra: UniformScaling
+using LinearAlgebra: UniformScaling, I
 using Test: @test
 
 #const BlockVector{T} = Vector{Union{LinearMap,AbstractMatrix{T}}}
@@ -403,7 +405,10 @@ function block_lm(test::Symbol)
 	Ts' * ones(4)
 	@test Matrix(Ts)' == Matrix(Ts')
 
+	@test_throws ArgumentError block_lm(blocks, how=:bad)
+	@test_throws String block_lm([I], how=:col)
+
 	true
 end
 
-block_lm(:test)
+# block_lm(:test)

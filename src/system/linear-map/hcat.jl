@@ -1,8 +1,12 @@
-# lm-hcat.jl
-# provide hcat support for LinearMaps
-# Jeff Fessler, University of Michigan
-# with advice from Daniel Karrasch per
-# https://github.com/Jutho/LinearMaps.jl/issues/45
+#=
+hcat.jl
+provide hcat support for LinearMaps
+Jeff Fessler, University of Michigan
+with advice from Daniel Karrasch per
+https://github.com/Jutho/LinearMaps.jl/issues/45
+=#
+
+export hcat_lm
 
 using LinearMaps
 using LinearAlgebra: I, UniformScaling
@@ -76,10 +80,20 @@ function hcat_lm_test()
 
 	E = [a B] # LinearMap
 	@test Matrix(E)' == Matrix(E')
+
+	F = [A B] # LinearMap
+	@test Matrix(F)' == Matrix(F')
+@show 99
 	true
 end
 
+
+"""
+`hcat_lm(:test)`
+self test
+"""
 function hcat_lm(test::Symbol)
 	test != :test && throw("hcat_lm test")
-	hcat_lm_test()
+	@test hcat_lm_test()
+	true
 end
