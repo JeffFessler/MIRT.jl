@@ -287,7 +287,7 @@ function ellipsoid_im_check_fov(nx, ny, nz, params,
     xx = ((0:nx - 1) .- wx) * dx
     yy = ((0:ny - 1) .- wy) * dy
     zz = ((0:nz - 1) .- wz) * dz
-    @show wz, zz
+
     xmax = maximum(xx)
     xmin = minimum(xx)
     ymax = maximum(yy)
@@ -314,7 +314,7 @@ function ellipsoid_im_check_fov(nx, ny, nz, params,
             throw("fov: y range $ymin $ymax, cy=$cy, ry=$ry")
             ok = false
         end
-        @show cz, rz, zmax, zmin
+
         if (cz + rz > zmax) || (cz - rz < zmin)
             throw("fov: z range $zmin $zmax, cz=$cz, rz=$rz")
 		    ok = false
@@ -488,7 +488,7 @@ function ellipsoid_im_show()
     ig = ig.down(8)
 
     x = ellipsoid_im(ig, :zhu; hu_scale=1000, how=:slow)
-    p3 = jim(x, title="test") #clim=[900,1100]
+    p3 = jim(x, title="zhu") #clim=[900,1100]
 
     spheroid = ellipsoid_im(ig, :spheroid; how=:slow)
     p2 = jim(spheroid, title="spheroid")
@@ -538,5 +538,5 @@ function ellipsoid_im(test::Symbol)
 	true
 end
 
-ellipsoid_im(:show)
-ellipsoid_im(:test)
+#ellipsoid_im(:show)
+#ellipsoid_im(:test)
