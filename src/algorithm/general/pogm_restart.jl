@@ -5,7 +5,7 @@ pogm_restart.jl
 
 using LinearAlgebra: norm, opnorm
 using Random: seed!
-using Test: @test
+using Test: @test, @test_throws
 
 
 function gr_restart(Fgrad, ynew_yold, restart_cutoff)
@@ -177,8 +177,8 @@ for iter=1:niter
 		# restart + "gamma" decrease conditions checked later for POGM,
 		# unlike PGM, FPGM above
 
-	else
-		throw("bad mom $mom")
+#	else
+#		throw("bad mom $mom")
 	end
 
 	# momentum coefficient "beta"
@@ -280,12 +280,20 @@ function pogm_restart_test()
 		f_mu=0, mom=:pogm, restart=:gr, restart_cutoff=0.,
 		bsig=1, niter=100, g_prox=g_prox, fun=fun)
 	@test isapprox(x, xh)
+	x, out = pogm_restart(x0, Fcost, f_grad, a2;
+		f_mu=reg, mom=:pogm, restart=:gr, restart_cutoff=0., # with mu
+		bsig=1, niter=100, g_prox=g_prox, fun=fun)
+	@test isapprox(x, xh)
 	x, _ = pogm_restart(x0, Fcost, f_grad, a2;
 		f_mu=0, mom=:fpgm, niter=100, g_prox=g_prox, fun=fun)
 	pogm_restart(x0, Fcost, f_grad, a2;
-		f_mu=0, mom=:pgm, niter=10, g_prox=g_prox)
+		f_mu=0, mom=:pgm, niter=2, g_prox=g_prox)
+	pogm_restart(x0, Fcost, f_grad, a2;
+		f_mu=reg, mom=:fpgm, niter=2, g_prox=g_prox) # with mu
+	pogm_restart(x0, Fcost, f_grad, a2;
+		f_mu=reg, mom=:pgm, niter=2, g_prox=g_prox) # with mu
+	@test_throws ArgumentError pogm_restart(x0, Fcost, f_grad, a2; mom=:bad)
 	true
-# xx
 end
 
 
