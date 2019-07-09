@@ -3,7 +3,7 @@ using Plots
 
 """
 `phantom = ellipsoid_im(ig, params;
-    oversample=1, checkfov=false, type=:fast, showmem=false, hu_scale=1, return_params=false)`
+    oversample=1, checkfov=false, how=:slow, showmem=false, hu_scale=1, return_params=false)`
 
 generate ellipsoid phantom image from parameters:
     `[x_center, y_center, z_center, x_radius, y_radius, z_radius,
@@ -17,9 +17,9 @@ in
 option
 * `oversample::Integer`       oversampling factor (default:1)
 * `checkfov::Bool`            warn if any ellipsoid is out of fov
-* `type::Symbol`              `:fast` does it fast
+* `how::Symbol`              `:fast` does it fast -- to do, only works slow
                                 `:lowmem` uses less memory than :fast but a bit slower
-                                `:slow`
+                                `:slow` default
 * `showmem::Bool`
 * `hu_scale::Real`            use 1000 to scale shepp-logan to HU (default:1)
 * `return_params::Bool`       if true, return both phantom and params
@@ -32,7 +32,7 @@ function ellipsoid_im(ig::MIRT_image_geom,
     params::AbstractArray{<:Real,2};
     oversample::Integer=1,
     checkfov::Bool=false,
-    type::Symbol=:fast,
+    how::Symbol=:slow,
     showmem::Bool=false,
     hu_scale::Real=1,
     return_params::Bool=false)
@@ -50,15 +50,14 @@ function ellipsoid_im(ig::MIRT_image_geom,
     	end
     end
 
-
-    if type == :lowmem
+    if how == :lowmem
         phantom += ellipsoid_im_lowmem(args...)
-    elseif type == :fast
+    elseif how == :fast
         phantom += ellipsoid_im_fast(args...)
-    elseif type == :slow
+    elseif how == :slow
         phantom += ellipsoid_im_slow(args...)
     else
-        throw("bad type $type")
+        throw("bad how $how")
     end
 
     if return_params
@@ -81,15 +80,15 @@ function ellipsoid_im_slow(nx, ny, nz, params, dx, dy, dz,
     wx = (nx*over - 1)/2 + offset_x*over
     wy = (ny*over - 1)/2 + offset_y*over
     wz = (nz*over - 1)/2 + offset_z*over
-    x = ((0:nx*over-1) .- wx) * dx / over
-    y = ((0:ny*over-1) .- wy) * dy / over
-    z = ((0:nz*over-1) .- wz) * dz / over
-    xmax = max(xx)
-    xmin = min(xx)
-    ymax = max(yy)
-    ymin = min(yy)
-    zmax = max(zz)
-    zmin = min(zz)
+    x = ((0:(nx * over - 1)) .- wx) * dx / over
+    y = ((0:(ny * over - 1)) .- wy) * dy / over
+    z = ((0:(nz * over - 1)) .- wz) * dz / over
+    xmax = maximum(x)
+    xmin = minimum(x)
+    ymax = maximum(y)
+    ymin = minimum(y)
+    zmax = maximum(z)
+    zmin = minimum(z)
     (xx, yy, zz) = ndgrid(x, y, z)
 
     #ticker reset
@@ -107,8 +106,7 @@ function ellipsoid_im_slow(nx, ny, nz, params, dx, dy, dz,
 
         azim = par[7] * (pi/180)
         polar = par[8] * (pi/180)
-        (xr, yr, yz) = rot3(xx-cx, yy-cy, zz-cz, azim, polar)
-
+        (xr, yr, zr) = rot3(xx .- cx, yy .- cy, zz .- cz, azim, polar)
         tmp = ((xr / rx).^2 + (yr / ry).^2 + (zr / rz).^2) .<=1
         value = Float32(par[9])
         phantom += value * tmp
@@ -119,11 +117,14 @@ end
 
 """
 `ellipsoid_im_fast()`
+
+currently not working
+only slow option works
 """
-function ellipsoid_im_fast(nx, ny, nz, dx, dy, dz,
+function ellipsoid_im_fast(nx, ny, nz, params, dx, dy, dz,
     offset_x, offset_y, offset_z, over, showmem)
 
-    phantom = zeros(Float32, nx, ny, x)
+    phantom = zeros(Float32, nx, ny, nz)
 
     wx = (nx-1)/2 + offset_x
     wy = (ny-1)/2 + offset_y
@@ -131,6 +132,12 @@ function ellipsoid_im_fast(nx, ny, nz, dx, dy, dz,
     x = ((0:nx-1) .- wx) * dx
     y = ((0:ny-1) .- wy) * dy
     z = ((0:nz-1) .- wz) * dz
+    xmax = maximum(x)
+    xmin = minimum(x)
+    ymax = maximum(y)
+    ymin = minimum(y)
+    zmax = maximum(z)
+    zmin = minimum(z)
     (xx, yy, zz) = ndgrid(x, y, z)
 
     if over > 1
@@ -139,11 +146,11 @@ function ellipsoid_im_fast(nx, ny, nz, dx, dy, dz,
         xf = xf[:]'
         yf = yf[:]'
         zf = zf[:]'
-
-        hx = abs(dx) / 2
-        hy = abs(dy) / 2
-        hz = abs(dz) / 2
     end
+
+    hx = abs(dx) / 2
+    hy = abs(dy) / 2
+    hz = abs(dz) / 2
 
     #ticker reset
     np = size(params)[1]
@@ -160,13 +167,13 @@ function ellipsoid_im_fast(nx, ny, nz, dx, dy, dz,
         azim = par[7] * (pi/180)
         polar = par[8] * (pi/180)
 
-        xs = xx - cx
-        ys = yy - cy
-        zs = zz - cz
+        xs = xx .- cx
+        ys = yy .- cy
+        zs = zz .- cz
 
         (xr, yr, zr) = rot3(xs, ys, zs, azim, polar)
         if over == 1
-            vi = Float32(((xr / rx).^2 + (yr / ry).^2 + (zr / rz).^2) .<= 1)
+            vi = ((xr / rx).^2 + (yr / ry).^2 + (zr / rz).^2) .<= 1
             value = Float32(par[9])
             phantom += value * vi
         end
@@ -175,12 +182,15 @@ function ellipsoid_im_fast(nx, ny, nz, dx, dy, dz,
         all possible 3D rotations of the voxel =#
         hh = sqrt(hx^2 + hy^2 + hz^2)
         vi = true # voxels entirely inside the ellipsoid
+        #vo = true # voxels entirely outside the ellipsoid
+
         for ix in -1:1, iy in -1:1, iz in -1:1
-            xo = xr + ix*hh
-            yo = yr + iy*hh
-            zo = zr + iz*hh
-            vi = vi & (((xo/rx).^2 + (yo/ry).^2 + (zo/rz).^2) .< 1)
+            xo = xr .+ ix*hh
+            yo = yr .+ iy*hh
+            zo = zr .+ iz*hh
+            vi = vi .& (((xo/rx).^2 + (yo/ry).^2 + (zo/rz).^2) .< 1)
         end
+
         vo = false #to do. for now, "outside" test is failing
         if ip == 1
             throw("todo:must debug this")
@@ -220,12 +230,12 @@ function ellipsoid_im_fast(nx, ny, nz, dx, dy, dz,
                 sum(edge[:]), "/", prod(size(edge)))
         end
 
-        x = xx[edge] - cx
-        y = yy[edge] - cy
-        z = zz[edge] - cz
-        #x = outer_sum(x, xf)
-    	#y = outer_sum(y, yf)
-    	#z = outer_sum(z, zf)
+        x = xx[edge] .- cx
+        y = yy[edge] .- cy
+        z = zz[edge] .- cz
+        x = x .+ xf'
+    	y = y .+ yf'
+    	z = z .+ zf'
         (xr, yr, zr) = rot3(x, y, z, azim, polar)
         in = ((xr/rx).^2 + (yr/ry).^2 + (zr/rz).^2) .<= 1
         tmp = mean(in, 2)
@@ -253,7 +263,7 @@ end
 
 this version does 'one slice at a time' to reduce memory
 """
-function ellipsoid_im_lowmem(nx, ny, nz, dx, dy, dz,
+function ellipsoid_im_lowmem(nx, ny, nz, params, dx, dy, dz,
     offset_x, offset_y, offset_z, over, showmem)
 
     phantom = zeros(Float32, nx, ny, nz)
@@ -270,19 +280,20 @@ end
 `ellipsoid_im_check_fov()`
 """
 function ellipsoid_im_check_fov(nx, ny, nz, params,
-        dx, dy, dz, offset_x, offset_y, offset_z)
-    wx = (nx-1)/2 + offset_x
-    wy = (ny-1)/2 + offset_y
-    wz = (nz-1)/2 + offset_z
-    xx = ((0:nx-1) .- wx) * dx
-    yy = ((0:ny-1) .- wy) * dy
-    zz = ((0:nz-1) .- wz) * dz
-    xmax = max(xx)
-    xmin = min(xx)
-    ymax = max(yy)
-    ymin = min(yy)
-    zmax = max(zz)
-    zmin = min(zz)
+        dx, dy, dz, offset_x, offset_y, offset_z, over, showmem)
+    wx = (nx - 1)/2 + offset_x
+    wy = (ny - 1)/2 + offset_y
+    wz = (nz - 1)/2 + offset_z
+    xx = ((0:nx - 1) .- wx) * dx
+    yy = ((0:ny - 1) .- wy) * dy
+    zz = ((0:nz - 1) .- wz) * dz
+    @show wz, zz
+    xmax = maximum(xx)
+    xmin = minimum(xx)
+    ymax = maximum(yy)
+    ymin = minimum(yy)
+    zmax = maximum(zz)
+    zmin = minimum(zz)
 
     ok = true
 
@@ -303,15 +314,15 @@ function ellipsoid_im_check_fov(nx, ny, nz, params,
             throw("fov: y range $ymin $ymax, cy=$cy, ry=$ry")
             ok = false
         end
+        @show cz, rz, zmax, zmin
         if (cz + rz > zmax) || (cz - rz < zmin)
-            throw("fov: z range $zmin $zmac, cz=$cz, rz=$rz")
+            throw("fov: z range $zmin $zmax, cz=$cz, rz=$rz")
 		    ok = false
 	    end
     end
     return ok
 end
 
-# add more options for calling ellipsoid_im() nx nz etc.
 
 """
 `phantom = ellipsoid_im(nx, dx, params; args...)`
@@ -347,16 +358,21 @@ end
 """
 `phantom = ellipsoid_im(ig, ptype; args...)`
 
-`ptype = :zhu | :kak | :e3d`
+`ptype = :zhu | :kak | :e3d | :spheroid`
 """
 function ellipsoid_im(ig::MIRT_image_geom, ptype::Symbol; args...)
-    fov = ig.fovs
+    xfov = ig.fovs[1]
+    yfov = ig.fovs[2]
+    zfov = ig.fovs[3]
+
     if ptype == :zhu
-        params = shepp_logan_3d_parameters(fov, fov, fov, :zhu)
+        params = shepp_logan_3d_parameters(xfov, yfov, zfov, :zhu)
     elseif ptype == :kak
-        params = shepp_logan_3d_parameters(fov, fov, fov, :kak)
+        params = shepp_logan_3d_parameters(xfov, yfov, zfov, :kak)
     elseif ptype == :e3d
-        params = shepp_logan_3d_parameters(fov, fov, fov, :e3d)
+        params = shepp_logan_3d_parameters(xfov, yfov, zfov, :e3d)
+    elseif ptype == :spheroid
+        params = spheroid_params(xfov, yfov, zfov, ig.dx, ig.dy, ig.dz)
     else
         throw("bad phantom symbol $ptype")
     end
@@ -381,7 +397,7 @@ function rot3(x, y, z, azim, polar)
         throw("z (polar) rotation not done")
     end
     xr = cos(azim) * x + sin(azim) * y
-    yr = -sin(azim) * x + sin(azim) * y
+    yr = -sin(azim) * x + cos(azim) * y
     zr = z
     return (xr, yr, zr)
 end
@@ -395,35 +411,34 @@ most of these values are unitless 'fractions of field of view'
 function shepp_logan_3d_parameters(xfov, yfov, zfov, ptype)
     # parameters from Kak and Slaney, typos ?
     ekak = Float32[
-        0       0       0       0.69    0.92    0.9     0   2.0
-        0       0       0       0.6624  0.874   0.88    0   -0.98
-        -0.22   0       -0.25   0.41    0.16    0.21    0   -0.98
-        0.22    0       -0.25   0.31    0.11    0.22    72  -0.02
-        0       0.1     -0.25   0.046   0.046   0.046   0   0.02
-        0       0.1     -0.25   0.046   0.046   0.046   0   0.02
-        -0.8    -0.65   -0.25   0.046   0.023   0.02    0   0.01
-        0.06    -0.065  -0.25   0.046   0.023   0.02    90  0.01
-        0.06    -0.105  0.625   0.56    0.04    0.1     90  0.02
-        0       0.1     -0.625  0.056   0.056   0.1     0   -0.02
+        0       0       0       0.69    0.92    0.9     0   0   2.0
+        0       0       0       0.6624  0.874   0.88    0   0   -0.98
+        -0.22   0       -0.25   0.41    0.16    0.21    0   0   -0.98
+        0.22    0       -0.25   0.31    0.11    0.22    72  0  -0.02
+        0       0.1     -0.25   0.046   0.046   0.046   0   0   0.02
+        0       0.1     -0.25   0.046   0.046   0.046   0   0   0.02
+        -0.8    -0.65   -0.25   0.046   0.023   0.02    0   0   0.01
+        0.06    -0.065  -0.25   0.046   0.023   0.02    90  0  0.01
+        0.06    -0.105  0.625   0.56    0.04    0.1     90  0  0.02
+        0       0.1     -0.625  0.056   0.056   0.1     0   0   -0.02
     ]
 
     #parameters from leizhu@standford.edu, says kak&slaney are incorrect
     ezhu = Float32[
-    0      0         0       0.69        0.92        0.9     0       2.0
-	0      -0.0184   0       0.6624	     0.874       0.88	 0	     -0.98
-	-0.22  0	     -0.25   0.41	     0.16	     0.21	 -72	 -0.02
-	0.22   0	     -0.25	 0.31	     0.11	     0.22	 72	     -0.02
-	0	   0.35	     -0.25	 0.21	     0.25	     0.35	 0	     0.01
-	0	   0.1	     -0.25	 0.046	     0.046	     0.046	 0	     0.01
-	-0.08  -0.605	 -0.25	 0.046	     0.023	     0.02	 0	     0.01
-	0	   -0.1	     -0.25	 0.046	     0.046	     0.046	 0	     0.01
-	0	   -0.605	 -0.25   0.023	     0.023     	 0.023	 0	     0.01
-	0.06   -0.605	 -0.25	 0.046	     0.023	     0.02	 -90	 0.01
-	0.06   -0.105	 0.0625	 0.056	     0.04	     0.1	 -90	 0.02
-	0	   0.1	     0.625	 0.056	     0.056	     0.1	 0	     -0.02
+    0      0         0       0.69        0.92        0.9     0      0       2.0
+	0      -0.0184   0       0.6624	     0.874       0.88	 0      0	    -0.98
+	-0.22  0	     -0.25   0.41	     0.16	     0.21	 -72    0	    -0.02
+	0.22   0	     -0.25	 0.31	     0.11	     0.22	 72     0	     -0.02
+	0	   0.35	     -0.25	 0.21	     0.25	     0.35	 0      0	     0.01
+	0	   0.1	     -0.25	 0.046	     0.046	     0.046	 0      0	     0.01
+	-0.08  -0.605	 -0.25	 0.046	     0.023	     0.02	 0      0	     0.01
+	0	   -0.1	     -0.25	 0.046	     0.046	     0.046	 0      0	     0.01
+	0	   -0.605	 -0.25   0.023	     0.023     	 0.023	 0      0	     0.01
+	0.06   -0.605	 -0.25	 0.046	     0.023	     0.02	 -90    0     	 0.01
+	0.06   -0.105	 0.0625	 0.056	     0.04	     0.1	 -90    0      	 0.02
+	0	   0.1	     0.625	 0.056	     0.056	     0.1	 0      0	     -0.02
     ]
 
-    #parameters from
 
     if ptype == :zhu
         params = ezhu
@@ -435,14 +450,23 @@ function shepp_logan_3d_parameters(xfov, yfov, zfov, ptype)
         throw("unknown parameter type $ptype")
     end
 
-    @show typeof(params)
-    @show typeof(params[:,[1,4]])
+    params[:,[1,4]] .*= xfov/2
+    params[:,[2,5]] .*= yfov/2
+    params[:,[3,6]] .*= zfov/2
+    return params
+end
 
-    params[:,[1,4]] .*= xfov
-    params[:,[2,5]] .*= yfov
-    params[:,[3,6]] .*= zfov
-    params[:,9] .= params[:,8]
-    params[:,8] .= 0 # z rotation
+"""
+`spheroid_params()`
+"""
+function spheroid_params(xfov, yfov, zfov, dx, dy, dz)
+    #xfov = nx * dx, number * size
+    xradius = (xfov/2) - dx
+    yradius = (yfov/2) - dy
+    zradius = (zfov/2) - dz
+    params =[
+    0 0 0 xradius yradius zradius 0 0 1
+    ]
     return params
 end
 
@@ -460,12 +484,38 @@ end
 `ellipsoid_im_show()`
 """
 function ellipsoid_im_show()
-    ig = image_geom(nx=2^5, ny=2^5 - 2, nz=15, dz=-6, fov=240)
+    ig = image_geom(nx=512, nz=64, dz=0.625, fov=500)
+    ig = ig.down(8)
 
-    x1 = ellipsoid_im(ig, :zhu)
-    p1 = jim(x1, title="zhu")
+    x = ellipsoid_im(ig, :zhu; hu_scale=1000, how=:slow)
+    p3 = jim(x, title="test") #clim=[900,1100]
 
-    plot(p1)
+    spheroid = ellipsoid_im(ig, :spheroid; how=:slow)
+    p2 = jim(spheroid, title="spheroid")
+
+    #x2 = ellipsoid_im(ig, :zhu; how=:lowmem)
+    #p2 = jim(x2, title="zhu, lowmem")
+
+    plot(p2, p3)
+end
+
+"""
+`ellipsoid_im_test()`
+"""
+function ellipsoid_im_test()
+    ig = image_geom(nx=512, nz=64*2, dz=0.625, fov=500)
+    ig = ig.down(8)
+
+    #test different ellipses
+    e1 = ellipsoid_im(ig)
+    e2 = ellipsoid_im(ig, :zhu)
+    e3 = ellipsoid_im(ig, :kak)
+    e4 = ellipsoid_im(ig; checkfov=true)
+    e5 = ellipsoid_im(ig; showmem=true)
+    e6 = ellipsoid_im(ig; return_params=true)
+
+    #ell1 = ellipsoid_im(ig, :zhu; how=:fast) # fast doesn't work
+    #ell2 = ellipsoid_im(ig, :zhu; how=:lowmem) # lowmem calls fast - doesn't work
 end
 
 
@@ -483,9 +533,10 @@ function ellipsoid_im(test::Symbol)
 	end
 	test != :test && throw(ArgumentError("test $test"))
 	ellipsoid_im()
-	ellipsoid_im(:show)
+    ellipsoid_im(:show)
 	ellipsoid_im_test()
 	true
 end
 
 ellipsoid_im(:show)
+ellipsoid_im(:test)
