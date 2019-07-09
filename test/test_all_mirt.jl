@@ -1,6 +1,8 @@
 # test/test_all_mirt.jl
 
-using Test
+export test_all_mirt
+
+using Test: @testset
 
 srclist = (
 "../data",
@@ -17,9 +19,9 @@ srclist = (
 
 
 """
-test_all_mirt()
+`test_all_mirt()`
 
-run all MIRT tests
+run all MIRT tests; to reduce plotting, first do `jim(:show, false)`
 """
 function test_all_mirt()
 
