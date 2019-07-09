@@ -16,7 +16,6 @@ using Test: @test
 
 # global default key/values
 jim_def = Dict([
-	:show => true,
 	:aspect_ratio => :equal,
 	:clim => nothing,
 	:color => :grays,
@@ -91,10 +90,6 @@ function jim(z::AbstractArray{<:Real};
 		yflip::Bool = nothing_else(jim_def[:yflip], minimum(y) >= 0),
 		abswarn::Bool = jim_def[:abswarn], # ignored here
 	)
-
-	if !jim_def[:show]
-		return nothing
-	end
 
 	xy = (x, y)
 	if ndims(z) > 2
@@ -213,13 +208,9 @@ function jim(test::Symbol)
 	test != :test && throw("symbol $test")
 	jim()
 	jim(:keys)
+	jim(:clim)
 	@test typeof(jim(:defs)) <: Dict
 
-#	uncomment the following to force jim(:test) to show pics for codecov
-#	show_save = jim(:show)
-#	jim(:show, true)
-
-	jim(:abswarn, false)
 	jim(ones(4,3), title="test2")
 	jim(ones(4,3,5), title="test3")
 	jim(1:4, 5:9, zeros(4,5), title="test3")
@@ -227,9 +218,9 @@ function jim(test::Symbol)
 	jim(zeros(4,6), fft0=true)
 	jim(x=1:4, y=5:9, rand(4,5), title="test4")
 	jim(rand(4,5), color=:hsv)
+	jim(:abswarn, false)
 	jim(complex(rand(4,3)))
 	jim(complex(rand(4,3)), "complex")
-
-#	jim(:show, show_save) # return to previous state
+	jim(:abswarn, true)
 	true
 end
