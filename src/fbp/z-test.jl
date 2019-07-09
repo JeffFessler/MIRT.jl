@@ -5,6 +5,7 @@ using Test
 @test cuboid_im(:test)
 @test disk_phantom_params(:test)
 @test ellipse_im(:test)
+@test ellipsoid_im(:test)
 @test embed(:test)
 @test image_geom_add_unitv(:test)
 @test image_geom(:test)
