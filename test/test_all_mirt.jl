@@ -21,7 +21,8 @@ srclist = (
 """
 `test_all_mirt()`
 
-run all MIRT tests; to reduce plotting, first do `jim(:show, false)`
+Run all MIRT tests.
+To avoid plotting during tests, first do `default(show=false)`
 """
 function test_all_mirt()
 
