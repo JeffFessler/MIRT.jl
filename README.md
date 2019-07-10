@@ -1,8 +1,8 @@
 # MIRT (Michigan Image Reconstruction Toolbox) in Julia
 
 [![Build Status](https://travis-ci.org/JeffFessler/MIRT.jl.svg?branch=master)](https://travis-ci.org/JeffFessler/MIRT.jl) 
-[![codecov.io](http://codecov.io/github/JeffFessler/MIRT.jl/coverage.svg?branch=master)](http://codecov.io/github/JeffFessler/MIRT.jl?branch=master)
-[https://github.com/JeffFessler/MIRT.jl]
+[![codecov.io](http://codecov.io/github/JeffFessler/MIRT.jl/coverage.svg?branch=master)](http://codecov.io/github/JeffFessler/MIRT.jl?branch=master) 
+https://github.com/JeffFessler/MIRT.jl
 
 
 This is a collection of tools for
