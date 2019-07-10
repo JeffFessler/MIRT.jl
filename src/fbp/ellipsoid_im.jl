@@ -1,5 +1,6 @@
 using Plots
 
+export ellipsoid_im
 
 """
 `phantom = ellipsoid_im(ig, params;
