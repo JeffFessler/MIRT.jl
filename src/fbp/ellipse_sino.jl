@@ -1,6 +1,6 @@
 using Plots
 
-#export ellipse_sino
+export ellipse_sino
 
 """
 `(sino, pos, ang) = ellipse_sino(sg, ells;

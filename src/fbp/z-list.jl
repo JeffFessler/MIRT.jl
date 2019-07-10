@@ -18,6 +18,7 @@ export cuboid_im
 include("disk-phantom.jl")
 include("ellipse_im.jl")
 include("ellipsoid_im.jl")
+include("ellipsoid_sino.jl")
 
 
 include("rect_im.jl")
