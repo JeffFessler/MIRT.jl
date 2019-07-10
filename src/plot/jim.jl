@@ -6,11 +6,10 @@ jiffy image display
 
 export jim
 
-using Plots: heatmap
-using Plots: ColorGradient
+using Plots: heatmap, ColorGradient
 using LaTeXStrings
-using MosaicViews
-using FFTViews
+using MosaicViews: mosaicview
+using FFTViews: FFTView
 using Colors: HSV
 using Test: @test
 
