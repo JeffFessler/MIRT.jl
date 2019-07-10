@@ -1,5 +1,11 @@
-# plot/setup
-# 2019-06-24, Jeff Fessler, University of Michigan
+#=
+plot/setup
+2019-06-24, Jeff Fessler, University of Michigan
+=#
+
+# module MIRT_plot_setup # an experiment; would need Reexport
+
+export mirt_setup_plot
 
 using Plots: plot
 
@@ -30,3 +36,5 @@ function mirt_setup_plot()
 
 	nothing
 end
+
+# end
