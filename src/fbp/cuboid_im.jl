@@ -256,7 +256,7 @@ voxel size `dx=1` and cuboid `params`
 function cuboid_im(nx::Integer, params; args...)
 	return cuboid_im(nx, 1., params; args...)
 end
-=#
+
 
 """
 `phantom = cuboid_im(nx::Integer; ny::Integer=nx,dx::Real=1, args...)`
@@ -277,6 +277,7 @@ end
 function cuboid_im(nx::Integer, ny::Integer; args...)
 	return cuboid_im(nx, ny=ny, dx=1.; args...)
 end
+=#
 
 """
 `phantom = cuboid_im(ig, code, args...)`
@@ -361,7 +362,7 @@ function cuboid_im_test()
 	isapprox(vol_phantom2, vol_true)
 
 	# test
-	x4 = cuboid_im(ig, :rotate, how=:exact)
+	#x4 = cuboid_im(ig, :rotate, how=:exact) exact does not support rotation
 	x3 = cuboid_im(ig, :default, how=:lowmem1)
 	x5 = cuboid_im(ig)
 	true
