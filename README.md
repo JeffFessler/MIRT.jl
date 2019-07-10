@@ -1,19 +1,22 @@
 # MIRT (Michigan Image Reconstruction Toolbox) in Julia
 
 [![Build Status](https://travis-ci.org/JeffFessler/MIRT.jl.svg?branch=master)](https://travis-ci.org/JeffFessler/MIRT.jl) 
-[![codecov.io](http://codecov.io/github/JeffFessler/MIRT.jl/coverage.svg?branch=master)](http://codecov.io/github/JeffFessler/MIRT.jl?branch=master)
+[![codecov.io](http://codecov.io/github/JeffFessler/MIRT.jl/coverage.svg?branch=master)](http://codecov.io/github/JeffFessler/MIRT.jl?branch=master) 
+https://github.com/JeffFessler/MIRT.jl
 
 
-This is a collection of tools for image reconstruction
+This is a collection of tools for
+[image reconstruction](https://en.wikipedia.org/wiki/Iterative_reconstruction)
 in the open-source
 [Julia language](https://julialang.org/).
 
 Currently it contains a limited
 collection of the tools from the
-[Matlab version of MIRT](http://web.eecs.umich.edu/~fessler/code),
+[Matlab version of MIRT](https://github.com/JeffFessler/mirt),
 but this collection will grow over time.
 
-This software was developed at the University of Michigan
+This software was developed at the
+[University of Michigan](https://umich.edu/)
 by
 [Jeff Fessler](http://web.eecs.umich.edu/~fessler)
 and his
@@ -22,8 +25,12 @@ and his
 
 ## Getting started
 
-For installation instructions, see:
+For detailed installation instructions, see:
 [doc/start.md](https://github.com/JeffFessler/MIRT.jl/blob/master/doc/start.md)
+
+This package is registered in the
+[`General`](https://github.com/JuliaRegistries/General) registry,
+so you can install at the REPL with `] add MIRT`.
 
 For development,
 use the `dev` command in Julia's package manager,
