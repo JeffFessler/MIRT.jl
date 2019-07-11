@@ -37,12 +37,13 @@ end
 
 
 """
-`image_geom_help()`
+`image_geom_help( ; io)`
 """
-function image_geom_help()
-	print("propertynames:\n")
-	print(propertynames(image_geom(nx=1,dx=1)))
+function image_geom_help( ; io::IO = isinteractive() ? stdout : IOBuffer())
+	print(io, "propertynames:\n")
+	print(io, propertynames(image_geom(nx=1, dx=1)))
 
+	print(io,
 	"
 	Derived values for 2D (and 3D) images:
 
@@ -97,7 +98,7 @@ function image_geom_help()
 	down(down::Int)		down-sample geometry by given factor
 	over(over::Int)		over-sample geometry by given factor
 	expand_nz(nz_pad)	expand image geometry in z by nz_pad on both ends
-	\n"
+	\n")
 end
 
 
@@ -415,7 +416,7 @@ end
 # Extended properties
 
 image_geom_fun0 = Dict([
-	(:help, ig -> print(image_geom_help())),
+	(:help, ig -> image_geom_help()),
 
 	(:is3, ig -> ig.nz > 0),
 	(:dim, ig -> ig.is3 ? (ig.nx, ig.ny, ig.nz) : (ig.nx, ig.ny)),
@@ -559,7 +560,7 @@ self test
 """
 function image_geom(test::Symbol)
 	if test == :help
-		print(image_geom_help())
+		image_geom_help()
 		return true
 	end
 	test != :test && throw(ArgumentError("test $test"))
