@@ -305,7 +305,7 @@ end
 """
 function ellipse_sino(test::Symbol)
 	if test == :show
-		ellipse_sino_show()
+		return ellipse_sino_show()
 	end
 	#ellipse_sino()
 	ellipse_sino_test()
