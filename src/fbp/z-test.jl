@@ -6,7 +6,7 @@ using Test
 @test disk_phantom_params(:test)
 @test ellipse_im(:test)
 @test ellipsoid_im(:test)
-@test ellipsoid_sino(:test)
+@test ellipse_sino(:test)
 @test embed(:test)
 @test image_geom_add_unitv(:test)
 @test image_geom(:test)
