@@ -1,32 +1,36 @@
-# pfile.jl
-# read GE MRI k-space data from .p file
-# based on https://gitlab.com/fMRI/toppe/+toppe/+utils/loadpfile.m
+#=
+pfile.jl
+read GE MRI k-space data from .p file
+based on https://gitlab.com/fMRI/toppe/+toppe/+utils/loadpfile.m
+=#
+
+export loadpfile
 
 # using MIRT: read_rdb_hdr
 
 """
-`(dat, rdb_hdr) = loadpfile(pfile; ...)`
+`(dat, rdb_hdr) = loadpfile(pfile ; ...)`
 
 Load data for one or more echoes from GE MRI scan Pfile.
 
 in
-* `pfile::String` filename
+- `pfile::String` filename
 
 option
-* `coils::AbstractVector{<:Integer}`
+- `coils::AbstractVector{<:Integer}`
 	only get data for these coils; default: all coils
-* `echoes::AbstractVector{<:Integer}`
+- `echoes::AbstractVector{<:Integer}`
 	only get data for these echoes; default: all echoes
-* `slices::AbstractVector{<:Integer}`
+- `slices::AbstractVector{<:Integer}`
 	only get data for these slices; default: `2:nslices` (NB!)
 	because first slice (dabslice=0 slot) may contain corrupt data.
-* `views::AbstractVector{<:Integer}`
+- `views::AbstractVector{<:Integer}`
 	only get data for these views; default: all views
-* `quiet::Bool`	non-verbosity, default `false`
+- `quiet::Bool`	non-verbosity, default `false`
 
 out
-* `dat::Array{Complex{Int16}}` `[ndat, ncoil, nslice, necho, nview]`
-* `rdb_hdr::NamedTuple`	header information
+- `dat::Array{Complex{Int16}}` `[ndat, ncoil, nslice, necho, nview]`
+- `rdb_hdr::NamedTuple`	header information
 
 Note that to save memory the output type is complex-valued Int16.
 
@@ -54,12 +58,13 @@ Jon-Fredrik Nielsen, jfnielse@umich.edu
 
 2019-05-22 Julia version by Jeff Fessler
 """
-function loadpfile(pfile::String;
-	coils::AbstractVector{<:Integer} = empty([], Integer),
-	echoes::AbstractVector{<:Integer} = empty([], Integer),
-	slices::AbstractVector{<:Integer} = empty([], Integer),
-	views::AbstractVector{<:Integer} = empty([], Integer),
-	quiet::Bool = false)
+function loadpfile(pfile::String ;
+		coils::AbstractVector{<:Integer} = empty([], Integer),
+		echoes::AbstractVector{<:Integer} = empty([], Integer),
+		slices::AbstractVector{<:Integer} = empty([], Integer),
+		views::AbstractVector{<:Integer} = empty([], Integer),
+		quiet::Bool = false,
+	)
 
 	fid = open(pfile, "r") # open pfile
 	rdb_hdr = read_rdb_hdr(fid) # read header
@@ -169,11 +174,11 @@ end
 
 
 """
-`loadpfile(file, echo::Integer; ...)`
+`loadpfile(file, echo::Integer ; ...)`
 
 load a single echo
 """
-function loadpfile(pfile::String, echo::Integer; kwarg...)
+function loadpfile(pfile::String, echo::Integer ; kwarg...)
 	return loadpfile(pfile, echoes=[echo], kwarg...)
 end
 

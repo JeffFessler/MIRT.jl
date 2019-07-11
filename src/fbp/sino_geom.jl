@@ -34,10 +34,11 @@ end
 """
 `sino_geom_help()`
 """
-function sino_geom_help()
-    print("propertynames:\n")
-    print(propertynames(sino_geom(:par)))
+function sino_geom_help( ; io::IO = isinteractive() ? stdout : IOBuffer() )
+    print(io, "propertynames:\n")
+    print(io, propertynames(sino_geom(:par)))
 
+    print(io,
 	"
 	Derived values
 
@@ -70,7 +71,7 @@ function sino_geom_help()
 	sg.unitv(;ib,ia)	unit 'vector' with single nonzero element
 	sg.taufun(x,y)		projected s/ds for each (x,y) pair [numel(x) na]
 	sg.plot(;ig)		plot system geometry (most useful for fan)
-	\n"
+	\n")
 end
 
 
@@ -374,7 +375,7 @@ end
 # Extended properties
 
 sino_geom_fun0 = Dict([
-    (:help, sg -> print(sino_geom_help())),
+    (:help, sg -> sino_geom_help()),
 
 	(:dim, sg -> (sg.nb, sg.na)),
 	(:w, sg -> (sg.nb-1)/2 + sg.offset),

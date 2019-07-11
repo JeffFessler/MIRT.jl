@@ -1,19 +1,23 @@
-# dtft
-# discrete-time Fourier transform
-# The main purpose of this code is for testing the NUFFT code.
-# Jeff Fessler
-# 2019-06-05
-# Note: the multi-dimensional version uses collect(Tuple(idx))
-# that might be inefficient, but for efficiency one should just use NUFFT.
+#=
+dtft.jl
+discrete-time Fourier transform
+The main purpose of this code is for testing the NUFFT code.
+2019-06-05, Jeff Fessler, University of Michigan
+Note: the multi-dimensional version uses collect(Tuple(idx))
+that might be inefficient, but for efficiency one should just use NUFFT.
+=#
+
+export dtft_init, dtft, dtft_adj
+
 
 using FFTW: fft
 using Random: seed!
 #using LinearAlgebra: norm
-using BenchmarkTools: @btime
+#using BenchmarkTools: @btime
 using Distributed: @sync, @distributed, pmap
 using SharedArrays: SharedArray, sdata
-using Test
-using LinearMaps
+using Test: @test
+using LinearMaps: LinearMap
 
 
 """
@@ -22,17 +26,17 @@ using LinearMaps
 ``X[m] = sum_{n=0}^{N-1} x[n] exp(-i w[m] (n - n_shift)), m=1,…,M``
 
 in
-* `w::AbstractVector{<:Real}`	`[M]` frequency locations ("units" radians/sample)
-* `x::AbstractVector{<:Number}`	`[N]` 1D signal
+- `w::AbstractVector{<:Real}`	`[M]` frequency locations ("units" radians/sample)
+- `x::AbstractVector{<:Number}`	`[N]` 1D signal
 
 option
-* `n_shift::Real` often is N/2; default 0
+- `n_shift::Real` often is N/2; default 0
 
 out
-* `X::AbstractVector{ComplexF64}`		`[M]` DTFT
+- `X::AbstractVector{ComplexF64}`		`[M]` DTFT
 """
-function dtft(w::AbstractVector{<:Real}, x::AbstractVector{<:Number};
-	n_shift::Real = 0)
+function dtft(w::AbstractVector{<:Real}, x::AbstractVector{<:Number}
+		; n_shift::Real = 0)
 	return dtft_loop_n(w, x; n_shift=n_shift)
 end
 
@@ -44,14 +48,14 @@ end
 where here `n` is a `CartesianIndex`
 
 in
-* `w::AbstractMatrix{<:Real}`	`[M,D]` frequency locations ("units" radians/sample)
-* `x::AbstractArray{<:Number}`	`[(Nd)]` D-dimensional signal
+- `w::AbstractMatrix{<:Real}`	`[M,D]` frequency locations ("units" radians/sample)
+- `x::AbstractArray{<:Number}`	`[(Nd)]` D-dimensional signal
 
 option
-* `n_shift::AbstractVector{<:Real}` often is N/2; default zeros(D)
+- `n_shift::AbstractVector{<:Real}` often is N/2; default zeros(D)
 
 out
-* `X::AbstractVector{ComplexF64}`		`[M]` DTFT
+- `X::AbstractVector{ComplexF64}`		`[M]` DTFT
 """
 function dtft(w::AbstractMatrix{<:Real}, x::AbstractMatrix{<:Number};
 	n_shift::AbstractVector{<:Real} = zeros(Int, ndims(x)))
@@ -64,14 +68,14 @@ end
 `d = dtft_init(w, N; n_shift=?)` for 1D DTFT
 
 in
-* `w::AbstractVector{<:Real}`	`[M]` frequency locations ("units" radians/sample)
-* `N::Int` size of signal `x`
+- `w::AbstractVector{<:Real}`	`[M]` frequency locations ("units" radians/sample)
+- `N::Int` size of signal `x`
 
 option
-* `n_shift::Real` often is N/2; default 0
+- `n_shift::Real` often is N/2; default 0
 
 out
-* `d::NamedTuple` with fields
+- `d::NamedTuple` with fields
 	`dtft = x -> dtft(x), adjoint = y -> dtft_adj(y), A=LinearMap`
 """
 function dtft_init(w::AbstractVector{<:Real}, N::Int; n_shift::Real = 0)
@@ -87,14 +91,14 @@ end
 `d = dtft_init(w, N; n_shift=?)` for multi-dimensional DTFT (DSFT)
 
 in
-* `w::AbstractMatrix{<:Real}`	`[M,D]` frequency locations ("units" radians/sample)
-* `N::Dims` `[D]` dimensions of signal `x`
+- `w::AbstractMatrix{<:Real}`	`[M,D]` frequency locations ("units" radians/sample)
+- `N::Dims` `[D]` dimensions of signal `x`
 
 option
-* `n_shift::AbstractVector{<:Real}` often is N/2; default zeros(D)
+- `n_shift::AbstractVector{<:Real}` often is N/2; default zeros(D)
 
 out
-* `d::NamedTuple` with fields
+- `d::NamedTuple` with fields
 	`dtft = x -> dtft(x), adjoint = y -> dtft_adj(y), A=LinearMap`
 """
 function dtft_init(w::AbstractMatrix{<:Real}, N::Dims;
@@ -118,15 +122,15 @@ end
 This is the *adjoint* (transpose) of `dtft`, not an *inverse* DTFT.
 
 in
-* `w::AbstractVector{<:Real}`	`[M]` frequency locations ("units" radians/sample)
-* `X::AbstractVector{ComplexF64}`	`[M]` spectrum values
-* `N::Int` size of signal `x`
+- `w::AbstractVector{<:Real}`	`[M]` frequency locations ("units" radians/sample)
+- `X::AbstractVector{ComplexF64}`	`[M]` spectrum values
+- `N::Int` size of signal `x`
 
 option
-* `n_shift::Real` often is N/2; default 0
+- `n_shift::Real` often is N/2; default 0
 
 out
-* `x::AbstractVector{<:Number}`	signal [N]
+- `x::AbstractVector{<:Number}`	signal [N]
 """
 function dtft_adj(w::AbstractVector{<:Real}, X::AbstractVector{<:Number},
 		N::Int; n_shift::Real = 0)
@@ -148,18 +152,18 @@ end
 where here `n` is a `CartesianIndex`
 
 in
-* `X::AbstractVector{ComplexF64}`		`[M]` DTFT
-* `w::AbstractMatrix{<:Real}`	`[M,D]` frequency locations ("units" radians/sample)
-* `N::Dims`	`[D]` dimensions of signal `x`
+- `X::AbstractVector{ComplexF64}`		`[M]` DTFT
+- `w::AbstractMatrix{<:Real}`	`[M,D]` frequency locations ("units" radians/sample)
+- `N::Dims`	`[D]` dimensions of signal `x`
 
 option
-* `n_shift::AbstractVector{<:Real}` often is N/2; default zeros(D)
+- `n_shift::AbstractVector{<:Real}` often is N/2; default zeros(D)
 
 out
-* `x::AbstractArray{<:Number}`	`[(N)]` D-dimensional signal
+- `x::AbstractArray{<:Number}`	`[(N)]` D-dimensional signal
 """
 function dtft_adj(w::AbstractMatrix{<:Real}, X::AbstractVector{<:Number},
-		N::Dims;
+		N::Dims ;
 		n_shift::AbstractVector{<:Real} = zeros(Int, ndims(x)))
 
 	M,D = size(w)
@@ -179,8 +183,8 @@ end
 
 
 # 1D loop over signal values
-function dtft_loop_n(w::AbstractVector{<:Real}, x::AbstractVector{<:Number};
-	n_shift::Real = 0)
+function dtft_loop_n(w::AbstractVector{<:Real}, x::AbstractVector{<:Number}
+		; n_shift::Real = 0)
 	N = length(x)
 	out = fill(ComplexF64(0), size(w))
 	nshift1 = n_shift + 1
@@ -194,8 +198,8 @@ end
 # dD loop over signal values
 # * `w [M,D]`
 # * `x [(Nd)]`
-function dtft_loop_n(w::AbstractMatrix{<:Real}, x::AbstractMatrix{<:Number};
-	n_shift::AbstractVector{<:Real} = zeros(Int, size(w,2)))
+function dtft_loop_n(w::AbstractMatrix{<:Real}, x::AbstractMatrix{<:Number}
+		; n_shift::AbstractVector{<:Real} = zeros(Int, size(w,2)))
 	M,D = size(w)
 	N = size(x)
 	length(N) != D && throw(DimensionMismatch("length(N) vs D=$D"))
@@ -213,8 +217,8 @@ end
 
 
 # 1D loop over frequencies
-function dtft_loop_m(w::AbstractVector{<:Real}, x::AbstractVector{<:Number};
-	n_shift::Real = 0)
+function dtft_loop_m(w::AbstractVector{<:Real}, x::AbstractVector{<:Number}
+		; n_shift::Real = 0)
 	M = length(w)
 	N = length(x)
 	out = Array{ComplexF64}(undef, M)
@@ -228,32 +232,32 @@ end
 
 
 # 1D matrix * vector
-function dtft_matvec(w::AbstractVector{<:Real}, x::AbstractVector{<:Number};
-	n_shift::Real = 0)
+function dtft_matvec(w::AbstractVector{<:Real}, x::AbstractVector{<:Number}
+		; n_shift::Real = 0)
 	N = length(x)
 	return cis.(w * (-((0:(N-1)) .- n_shift))') * x
 end
 
 
 # 1D single frequency
-function dtft_one_w(w::Real, x::AbstractVector{<:Number};
-	n_shift::Real = 0)
+function dtft_one_w(w::Real, x::AbstractVector{<:Number}
+		; n_shift::Real = 0)
 	N = length(x)
 	return sum(cis.(-((0:(N-1)) .- n_shift) * w) .* x)
 end
 
 
 # 1D pmap
-function dtft_pmap_m(w::AbstractVector{<:Real}, x::AbstractVector{<:Number};
-	n_shift::Real = 0)
+function dtft_pmap_m(w::AbstractVector{<:Real}, x::AbstractVector{<:Number}
+		; n_shift::Real = 0)
 	tmp = w -> dtft_one_w(w, x; n_shift=n_shift)
 	return pmap(tmp, w)
 end
 
 
 # 1D distributed loop over frequencies
-function dtft_dist_m(w::AbstractVector{<:Real}, x::AbstractVector{<:Number};
-	n_shift::Real = 0)
+function dtft_dist_m(w::AbstractVector{<:Real}, x::AbstractVector{<:Number}
+		; n_shift::Real = 0)
 	M = length(w)
 	N = length(x)
 	out = SharedArray{ComplexF64}(M)
@@ -267,7 +271,7 @@ end
 
 
 # 1D small test data to verify correctness
-function dtft_test1(; N::Int=2^10)
+function dtft_test1( ; N::Int=2^10)
 	seed!(0)
 	x = randn(ComplexF64, N)
 	w = (2*pi) * (0:N-1) / N
@@ -292,7 +296,7 @@ end
 
 
 # 2D small test
-function dtft_test2(; N::Dims = (2^3,2^2))
+function dtft_test2( ; N::Dims = (2^3,2^2))
 	seed!(0)
 	x = randn(ComplexF64, N)
 	w1 = (2*pi) * (0:N[1]-1) / N[1]
@@ -312,7 +316,7 @@ end
 
 
 # 1D verify consistency
-function dtft_test1c(; N::Int=2^10, M::Int=2^11, n_shift::Real=7)
+function dtft_test1c( ; N::Int=2^10, M::Int=2^11, n_shift::Real=7)
 	seed!(0)
 	x = randn(ComplexF64, N)
 	w = randn(M)
@@ -367,7 +371,7 @@ end
 
 
 # 2D verify consistency
-function dtft_test2c(;
+function dtft_test2c( ;
 		M::Int=2^9,
 		N::Dims=(2^6,2^4),
 		n_shift::AbstractVector{<:Real} = zeros(Int, length(N)))
@@ -398,7 +402,7 @@ end
 `dtft_test1_adj()`
 test adjoint
 """
-function dtft_test1_adj(; N::Int=20, M::Int=30, n_shift::Int=5)
+function dtft_test1_adj( ; N::Int=20, M::Int=30, n_shift::Int=5)
 	seed!(0)
 	w = randn(M)
 	A = LinearMap{ComplexF64}(x -> dtft(w, x; n_shift=n_shift),
@@ -411,7 +415,7 @@ end
 `dtft_test2_adj()`
 test adjoint
 """
-function dtft_test2_adj(;
+function dtft_test2_adj( ;
 		M::Int=2^4,
 		N::Dims=(2^3,2^2),
 		n_shift::AbstractVector{<:Real} = [6,1.7])
@@ -428,7 +432,7 @@ end
 self test
 """
 function dtft(test::Symbol)
-	test != :test && throw("bug")
+	test != :test && throw(ArgumentError("test $test"))
 
 	@test dtft_test1()
 	@test dtft_test1c()

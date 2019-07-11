@@ -1,6 +1,12 @@
-# fld-write.jl
-# write AVD .fld to file
-# 2019-05-12, Jeff Fessler, University of Michigan
+#=
+fld-write.jl
+write AVD .fld to file
+2019-05-12, Jeff Fessler, University of Michigan
+=#
+
+export fld_write
+export ir_test_dir, ir_test_dir!
+
 
 """
 `dir = ir_test_dir!(path)`
@@ -35,15 +41,15 @@ write data into AVS format `.fld` file
 See ASPIRE user's guide (or AVS online documentation) for file format.
 
 in
-* `file` name of file typically ending in `.fld`
-* `data` real data array
+- `file` name of file typically ending in `.fld`
+- `data` real data array
 
 option
-* `check::Bool`			report error if file exists; default `true`
-* `dir::String`			directory name to prepend file name; default `""`
-* `endian::`Symbol`		`:le` little endian (default), `:be` big endian
-* `head::Array{String}`	comment information for file header
-* `raw::Bool`			put raw data in `name.raw`, header in `name.fld`
+- `check::Bool`			report error if file exists; default `true`
+- `dir::String`			directory name to prepend file name; default `""`
+- `endian::`Symbol`		`:le` little endian (default), `:be` big endian
+- `head::Array{String}`	comment information for file header
+- `raw::Bool`			put raw data in `name.raw`, header in `name.fld`
 						where `file` = `name.fld`; default `false`
 """
 
@@ -196,7 +202,7 @@ end
 
 
 """
-`fld_write(:test)`
+`fld_write(:test ; chat::Bool)`
 
 tests writing and reading AVS `.fld` files of all key types
 """

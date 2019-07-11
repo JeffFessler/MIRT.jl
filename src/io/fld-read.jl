@@ -1,29 +1,34 @@
-# fld.jl
-# Jeff Fessler and David Hong
+#=
+fld-read.jl
+Jeff Fessler and David Hong
+=#
+
+export fld_header, fld_read
+
 
 """
-`head = fld_header(file)`
+`head = fld_header(file::String, ...)`
 
 `head, is_external_file, fid = fld_header(file, keepopen=true)`
 
 read header data from AVS format `.fld` file
 
 in
-* `file::String`	file name, usually ending in `.fld`
+- `file::String`	file name, usually ending in `.fld`
 
 option
-* `dir::String`		prepend file name with this directory; default ""
-* `chat::Bool`		verbose?
-* `keepopen::Bool`	true to leave file open for more reading; default false to close
+- `dir::String`		prepend file name with this directory; default ""
+- `chat::Bool`		verbose?
+- `keepopen::Bool`	true to leave file open for more reading; default false to close
 
 out
-* `head`		String array of header information
+- `head::String`	array of header information
 
 """
-function fld_header(file::AbstractString;
-	dir::String = "",
-	chat::Bool = false,
-	keepopen::Bool = false,
+function fld_header(file::AbstractString ;
+		dir::String = "",
+		chat::Bool = false,
+		keepopen::Bool = false,
 	)
 
 	file = joinpath(dir, file)
@@ -87,24 +92,24 @@ end
 # + [ ] short datatype
 
 """
-`fld_read(file)`
+`fld_read(file::String)`
 
 read data from AVS format `.fld` file
 
 in
-* `file`	file name, usually ending in `.fld`
+- `file`	file name, usually ending in `.fld`
 
 option
-* `dir`		String	prepend file name with this directory; default ""
-* `chat`	Bool	verbose?
+- `dir`		String	prepend file name with this directory; default ""
+- `chat`	Bool	verbose?
 
 out
-* `data`	Array (1D - 5D) in the data type of the file itself
+- `data`	Array (1D - 5D) in the data type of the file itself
 
 """
-function fld_read(file::AbstractString;
-	dir::String = "",
-	chat::Bool = false,
+function fld_read(file::AbstractString ;
+		dir::String = "",
+		chat::Bool = false,
 	)
 
 	file = joinpath(dir, file)
@@ -222,7 +227,7 @@ end
 """
 `arg_get(head, name, toint)`
 
-parse an argument from header, of the name=value form
+Parse an argument from header, of the name=value form
 """
 function arg_get(head::Array{<:AbstractString}, name::String, toint::Bool=true)
 	for ll = 1:length(head)
@@ -245,7 +250,7 @@ end
 
 determine data format from .fld header datatype
 """
-function datatype_fld_to_mat(datatype)
+function datatype_fld_to_mat(datatype::AbstractString)
 	if datatype == "byte"
 		format = UInt8
 		endian = "ieee-be" # irrelevant
@@ -309,6 +314,7 @@ end
 
 """
 `fld_read(:test)`
+self test
 """
 function fld_read(test::Symbol)
 	# todo: test read slices when that feature is added

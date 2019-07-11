@@ -1,13 +1,17 @@
-# ir_dump.jl
-# 2019-03-05 Jeff Fessler
+#=
+ir_dump.jl
+2019-03-05 Jeff Fessler
+=#
+
+export ir_dump
 
 
 """
-`ir_dump(x::Any; io::IO = stdout)`
+`ir_dump(x::Any ; io::IO = stdout)`
 
 Show all the fields of a structure or `NamedTuple` more nicely than dump() does
 """
-function ir_dump(y::Any; io::IO = stdout)
+function ir_dump(y::Any ; io::IO = stdout)
 	x = typeof(y)
 	print(io, x)
 	fields = fieldnames(x)
@@ -35,7 +39,7 @@ end
 
 self test
 """
-function ir_dump(test::Symbol; io=IOBuffer())
+function ir_dump(test::Symbol ; io=IOBuffer())
 	test != :test && throw(ArgumentError("test $test"))
 	x = (a=1, b=2)
 	ir_dump(x, io=io)
