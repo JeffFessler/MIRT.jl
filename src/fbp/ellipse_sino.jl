@@ -36,10 +36,12 @@ function ellipse_sino(sg::MIRT_sino_geom,
 
 		how = sg.how
         if how == :fan
+
                 (sino, pos, ang) = ellipse_sino_go(ells, [], [],
                                         sg.nb, sg.ds, sg.offset, sg.na, sg.orbit, sg.orbit_start,
                                         sg.dso, sg.dod, sg.dfs, sg.source_offset, xscale, yscale, oversample, 0)
         elseif how == :par
+
                 (sino, pos, ang) = ellipse_sino_go(ells, [], [],
                                         sg.nb, sg.dr, sg.offset, sg.na, sg.orbit, sg.orbit_start,
                                         Inf, 1, 0, sg.source_offset, xscale, yscale, oversample, 0)
@@ -64,6 +66,7 @@ function ellipse_sino_go(ells, pos, ang, nb, ds, offset_s, na, orbit, orbit_star
 	end
 
 	(pos, pos2) = ellipse_sino_pos(pos[:], nb, ds, offset_s, oversample, mojette, ang)
+
 
 	sino = ellipse_sino_do(ells, pos2, ang[:]', xscale, yscale, dso, dod, dfs, source_offset)
 
@@ -137,6 +140,7 @@ function ellipse_sino_pos(pos, nb, ds, offset_s, nover, mojette, ang)
 			pos_fine = pos_coarse
 		end
 	end
+
 	return (pos_coarse, pos_fine)
 end
 
@@ -149,7 +153,6 @@ analytical line-integral projections of ellipse (fan-beam in general)
 function ellipse_sino_do(ells, pos, ang, xscale, yscale, dso, dod, dfs, source_offset)
 	nb = size(pos, 1)
 	na = maximum(size(ang))
-
 	# effective radial and angular sample locations in parallel geometry
 
 	if isinf(dso) # type of dso?
@@ -157,7 +160,8 @@ function ellipse_sino_do(ells, pos, ang, xscale, yscale, dso, dod, dfs, source_o
 			rads = pos
 			angs = repeat(ang', nb, 1)
 		else
-			(rads, angs) = ndgrid(pos, ang)
+
+			(rads, angs) = ndgrid(pos, ang')
 		end
 
 	else # fan
@@ -266,7 +270,7 @@ function ellipse_sino_test()
 	oversample = 8
 
 	sino_mf = ellipse_sino(gf, ell; oversample=oversample) # fan
-	sino_mp = ellipse_sino(gf, ell; oversample=1) # parallel
+	sino_mp = ellipse_sino(gp, ell; oversample=1) # parallel
 end
 
 """
@@ -288,9 +292,9 @@ function ellipse_sino_show()
 			orbit_start = gf.orbit_start, offset = 0.25)
 
 	oversample = 8
-
+	
 	sino_mf = ellipse_sino(gf, ell; oversample=oversample)[1] # fan
-	sino_mp = ellipse_sino(gf, ell; oversample=1)[1] # parallel
+	sino_mp = ellipse_sino(gp, ell; oversample=1)[1] # parallel
 	p1 = jim(sino_mf, title="fan")
 	p2 = jim(sino_mp, title="parallel")
 
@@ -308,6 +312,7 @@ function ellipse_sino(test::Symbol)
 		return ellipse_sino_show()
 	end
 	#ellipse_sino()
+
 	ellipse_sino_test()
 	#ellipse_sino(:show)
 	true
