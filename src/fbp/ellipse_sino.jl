@@ -47,8 +47,8 @@ function ellipse_sino(sg::MIRT_sino_geom,
                                         Inf, 1, 0, sg.source_offset, xscale, yscale, oversample, 0)
         elseif how == :moj
                 (sino, pos, ang) = ellipse_sino_go(ells, [], [],
-					sg.nb, [], sg.offset_r, sg.na, sg.orbit, sg.orbit_start,
-					Inf, 1, 0, sg.source_offset, xscale, yscale, oversample, sg.dx)
+					sg.nb, sg.d, sg.offset, sg.na, sg.orbit, sg.orbit_start,
+					Inf, 1, 0, sg.source_offset, xscale, yscale, oversample, 0)
 	else
 		throw("sino geom $how not done")
 	end
@@ -120,7 +120,7 @@ function ellipse_sino_pos(pos, nb, ds, offset_s, nover, mojette, ang)
 		end
 	else # ordinary non-mojette sampling
 		if isempty(pos)
-			pos_coarse = ((0:(nb - 1)) .- wb) * ds # [nb]
+			pos_coarse = ((0:(nb - 1)) .- wb) .* ds' # [nb]
 		else
 			pos_coarse = pos[:] # [nb 1]
 			ds = pos[2] - pos[1]
@@ -160,7 +160,6 @@ function ellipse_sino_do(ells, pos, ang, xscale, yscale, dso, dod, dfs, source_o
 			rads = pos
 			angs = repeat(ang', nb, 1)
 		else
-
 			(rads, angs) = ndgrid(pos, ang')
 		end
 
@@ -215,7 +214,7 @@ function ellipse_sino_do(ells, pos, ang, xscale, yscale, dso, dod, dfs, source_o
 		rx = ell[:, :, 3]
 		cy = yscale * ell[:, :, 2]
 		ry = ell[:, :, 4]
-		eang = ell[:, :, 5] .* (pi/180)
+		eang = ell[5] * (pi/180)
 		val = ell[:, :, 6]
 
 		if yscale == -1
@@ -266,11 +265,18 @@ function ellipse_sino_test()
 	# dfs = Inf, source_offset = 0.7, flat fan, not working
 	gp = sino_geom(:par, nb = 888, na = 984, down=down, d = 0.5, orbit = gf.orbit,
 			orbit_start = gf.orbit_start, offset = 0.25)
+	gm = sino_geom(:moj, nb = 888, na = 984, down=down, d = 0.5, orbit = gf.orbit,
+			orbit_start = gf.orbit_start, offset = 0.25)
+
 
 	oversample = 8
 
 	sino_mf = ellipse_sino(gf, ell; oversample=oversample) # fan
 	sino_mp = ellipse_sino(gp, ell; oversample=1) # parallel
+	sino_m = ellipse_sino(gm, ell; oversample=1) # mojette
+	e1 = ellipse_sino(gf, ell; oversample=1, xscale=-1, yscale=-1)
+	e1 = ellipse_sino(gp, ell; oversample=1, xscale=-1, yscale=-1)
+	e1 = ellipse_sino(gm, ell; oversample=1, xscale=-1, yscale=-1)
 end
 
 """
