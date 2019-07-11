@@ -292,7 +292,7 @@ function ellipse_sino_show()
 			orbit_start = gf.orbit_start, offset = 0.25)
 
 	oversample = 8
-	
+
 	sino_mf = ellipse_sino(gf, ell; oversample=oversample)[1] # fan
 	sino_mp = ellipse_sino(gp, ell; oversample=1)[1] # parallel
 	p1 = jim(sino_mf, title="fan")
@@ -311,10 +311,10 @@ function ellipse_sino(test::Symbol)
 	if test == :show
 		return ellipse_sino_show()
 	end
-	#ellipse_sino()
+	ellipse_sino()
 
 	ellipse_sino_test()
-	#ellipse_sino(:show)
+	ellipse_sino(:show)
 	true
 end
 
