@@ -1,6 +1,10 @@
-# read_rdb_hdr.jl
-# based on
-# https://gitlab.com/fMRI/toppe/blob/master/+toppe/+utils/read_rdb_hdr.m
+#=
+read_rdb_hdr.jl
+based on
+https://gitlab.com/fMRI/toppe/blob/master/+toppe/+utils/read_rdb_hdr.m
+=#
+
+export read_rdb_hdr
 
 include("rdb-26_002.jl")
 

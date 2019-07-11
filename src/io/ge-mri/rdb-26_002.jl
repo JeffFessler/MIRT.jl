@@ -1,6 +1,8 @@
-# rdb-26_002.jl
-# based on
-# https://gitlab.com/fMRI/toppe/blob/master/+toppe/+utils/read_rdb_hdr.m
+#=
+rdb-26_002.jl
+based on
+https://gitlab.com/fMRI/toppe/blob/master/+toppe/+utils/read_rdb_hdr.m
+=#
 
 """
 `s = read_rdb_hdr_26_002(fid)`
@@ -8,10 +10,10 @@
 Read GE raw (RDB) header for MRI scan file
 
 in
-* `fid::IOStream` from open(file, "r")
+- `fid::IOStream` from open(file, "r")
 
 out
-* `s::NamedTuple` with header values, accessed by s.key
+- `s::NamedTuple` with header values, accessed by s.key
 
 Matlab version is:
 Copyright (c) 2012 by General Electric Company. All rights reserved.
