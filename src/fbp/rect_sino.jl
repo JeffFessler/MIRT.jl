@@ -266,16 +266,19 @@ function rect_sino_test()
 	sgm = sino_geom(:moj, nb = 888, na = 984, down=down, d = 0.5, orbit = sgf.orbit,
 			orbit_start = sgf.orbit_start, offset = 0.25) # mojette
 
-	@test_throws String sino_geom(:bad)
+	sino = sino_geom(:bad)
+	@test_throws String rect_sino(sino, rect)
 
 	sino_f = rect_sino(sgf, rect; oversample=1)
 	sino_p = rect_sino(sgp, rect; oversample=1)
-	sino_m = rect_sino(sgm, rect; oversample=1)
+	sino_m = rect_sino(sgm, rect; oversample=2)
 	r1 = rect_sino(sgf, rect; oversample=1, yscale=-1, xscale=-1)
 	r2 = rect_sino(sgp, rect; oversample=1, yscale=-1, xscale=-1)
 	r3 = rect_sino(sgm, rect; oversample=1, yscale=-1, xscale=-1)
 	t = LinRange(-2, 5, 101)
 	f = trapezoid.(t, 1, 2, 3, 4)
+	div0(4, 2)
+	div0(1, 0)
 end
 
 """

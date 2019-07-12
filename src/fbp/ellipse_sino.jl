@@ -37,17 +37,13 @@ function ellipse_sino(sg::MIRT_sino_geom,
 
 		how = sg.how
         if how == :fan
-                (sino, pos, ang) = ellipse_sino_go(ells, [], [],
-                                        sg.nb, sg.ds, sg.offset, sg.na, sg.orbit, sg.orbit_start,
+                (sino, pos, ang) = ellipse_sino_go(ells, sg.nb, sg.ds, sg.offset, sg.na, sg.orbit, sg.orbit_start,
                                         sg.dso, sg.dod, sg.dfs, sg.source_offset, xscale, yscale, oversample, 0)
         elseif how == :par
-
-                (sino, pos, ang) = ellipse_sino_go(ells, [], [],
-                                        sg.nb, sg.dr, sg.offset, sg.na, sg.orbit, sg.orbit_start,
+                (sino, pos, ang) = ellipse_sino_go(ells, sg.nb, sg.dr, sg.offset, sg.na, sg.orbit, sg.orbit_start,
                                         Inf, 1, 0, sg.source_offset, xscale, yscale, oversample, 0)
         elseif how == :moj
-                (sino, pos, ang) = ellipse_sino_go(ells, [], [],
-					sg.nb, sg.d, sg.offset, sg.na, sg.orbit, sg.orbit_start,
+                (sino, pos, ang) = ellipse_sino_go(ells, sg.nb, sg.d, sg.offset, sg.na, sg.orbit, sg.orbit_start,
 					Inf, 1, 0, sg.source_offset, xscale, yscale, oversample, 0)
 	else
 		throw("sino geom $how not done")
@@ -58,7 +54,7 @@ end
 """
 `ellipse_sino_go()`
 """
-function ellipse_sino_go(ells, pos, ang, nb, ds, offset_s, na, orbit, orbit_start,
+function ellipse_sino_go(ells, nb, ds, offset_s, na, orbit, orbit_start,
 	dso, dod, dfs, source_offset, xscale, yscale, oversample, mojette)
 
 	ang = ((orbit_start .+ (0:(na - 1))' / na * orbit)) * (pi/180)
@@ -228,7 +224,8 @@ function ellipse_sino_test()
 			orbit_start = gf.orbit_start, offset = 0.25)
 	gm = sino_geom(:moj, nb = 888, na = 984, down=down, d = 0.5, orbit = gf.orbit,
 			orbit_start = gf.orbit_start, offset = 0.25)
-	@test_throws String sino_geom(:bad)
+	sino = sino_geom(:bad)
+	@test_throws String ellipse_sino(sino, ell)
 
 	oversample = 8
 
