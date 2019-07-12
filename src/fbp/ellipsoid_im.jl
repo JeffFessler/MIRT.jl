@@ -115,7 +115,7 @@ function ellipsoid_im_slow(nx, ny, nz, params, dx, dy, dz,
     return phantom
 end
 
-
+#=
 """
 `ellipsoid_im_fast()`
 
@@ -275,7 +275,7 @@ function ellipsoid_im_lowmem(nx, ny, nz, params, dx, dy, dz,
     end
     return phantom
 end
-
+=#
 
 """
 `ellipsoid_im_check_fov()`
