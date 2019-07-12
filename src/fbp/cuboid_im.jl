@@ -9,7 +9,7 @@ using Plots
 
 """
 `phantom = cuboid_im(ig, params;
-    oversample=1, hu_scale=1, type=:exact, return_params=false)`
+    oversample=1, hu_scale=1, how=:auto, return_params=false)`
 
 generate cuboid phantom image from parameters:
     `[x_center y_center z_center x_diameter y_diameter z_diameter
@@ -22,7 +22,7 @@ in
 
 options
 * `oversample::Integer`   oversampling factor
-* `type::Symbol`          `:sample` use samples
+* `how::Symbol`          `:sample` use samples
                         	`:lowmem1` one slice per time
                             `:exact` perfect partial volume if angle* = 0
                             default: `:exact` if non rotated, else `:sample`
@@ -35,7 +35,7 @@ out
 function cuboid_im(ig::MIRT_image_geom,
     params::AbstractArray{<:Real,2};
     oversample::Integer=1,
-    type::Symbol=:exact,
+    how::Symbol=:auto,
     return_params::Bool=false)
 
     size(params,2) != 9 && throw("bad cuboid parameter vector size")
@@ -54,20 +54,25 @@ function cuboid_im(ig::MIRT_image_geom,
 
 	rotated = params[:, 7:8] .!= 0
 
-	if any(rotated)
-		type = :sample
+	if how == :auto
+		if any(rotated)
+			how = :sample
+		else
+			how = :exact
+		end
 	end
-    if type == :exact
+
+    if how == :exact
         phantom += cuboid_im_exact(args...)
         if oversample != 1
             throw("ignoring oversample $oversample")
         end
-    elseif type == :lowmem1
+    elseif how == :lowmem1
         phantom += cuboid_im_lowmem1(args...)
-    elseif type == :sample
+    elseif how == :sample
         phantom += cuboid_im_sample(args...)
     else
-        throw("bad type $type")
+        throw("bad how $how")
     end
 
     if return_params
@@ -131,7 +136,7 @@ end
 
 :exact
 
-non-rotated cuboid
+non-rotated cuboid -- rotation not done
 """
 function cuboid_im_exact(nx, ny, nz, params, dx, dy, dz, offset_x, offset_y, offset_z, over)
 	phantom = zeros(Float32, nx, ny, nz)
@@ -198,13 +203,11 @@ this version does one 'one slice at a time' to reduce memory
 """
 function cuboid_im_lowmem1(nx, ny, nz, params, dx, dy, dz, offset_x, offset_y, offset_z, over)
 	phantom = zeros(Float32, nx, ny, nz)
-
 	for iz in 1:nz
 		offset_z_new = (nz - 1)/2 + offset_z - (iz-1)
 		phantom[:,:,iz] = cuboid_im_sample(nx, ny, 1, params,
-	    dx, dy, dz, offset_x, offset_y, offset_z, over)
+	    	dx, dy, dz, offset_x, offset_y, offset_z_new, over)
 	end
-
     return phantom
 end
 
@@ -253,7 +256,7 @@ voxel size `dx=1` and cuboid `params`
 function cuboid_im(nx::Integer, params; args...)
 	return cuboid_im(nx, 1., params; args...)
 end
-=#
+
 
 """
 `phantom = cuboid_im(nx::Integer; ny::Integer=nx,dx::Real=1, args...)`
@@ -274,6 +277,7 @@ end
 function cuboid_im(nx::Integer, ny::Integer; args...)
 	return cuboid_im(nx, ny=ny, dx=1.; args...)
 end
+=#
 
 """
 `phantom = cuboid_im(ig, code, args...)`
@@ -320,16 +324,16 @@ end
 function cuboid_im_show()
 	ig = image_geom(nx=2^3, ny=2^3, nz=2^3, dz=1, fov=240)
 
-	x1 = cuboid_im(ig, :default, type=:exact)
+	x1 = cuboid_im(ig, :default, how=:exact)
 	p1 = jim(x1, title="exact")
 
-	x2 = cuboid_im(ig, :default, type=:sample)
+	x2 = cuboid_im(ig, :default, how=:sample)
 	p2 = jim(x2, title="sample")
 
-	x3 = cuboid_im(ig, :default, type=:lowmem1)
+	x3 = cuboid_im(ig, :default, how=:lowmem1)
 	p3 = jim(x3, title="lowmem")
 
-	x4 = cuboid_im(ig, :rotate, type=:exact)
+	x4 = cuboid_im(ig, :rotate)
 	p4 = jim(x4, title="rotate") # runs sample
 
 	plot(p1, p2, p3, p4)
@@ -344,15 +348,23 @@ function cuboid_im_test()
 	ig = image_geom(nx=2^3, ny=2^3, nz=2^3, dz=1, fov=240)
 	fov = 100
 	cuboid_im_show()
-	phantom_exact = cuboid_im(ig, :default, type=:exact)
-	#dxyz = abs(dx * dy * dz)
-	#vol_true = prod(diam)
-	#vol_phantom = sum(phantom_exact[:]) * dxyz
-	#isapprox(vol_true, vol_phantom)
 
-	phantom_sample = cuboid_im(ig, :default, type=:sample)
-	#vol_phantom2 = sum(phantom2[:]) * dxyz
-	#isapprox(vol_phantom2, vol_true)
+	diam = abs.([2*ig.dx 2.7*ig.dy 3.2*ig.dz])
+	params = [1.4 -0.5 1 diam 0 0 1]
+	phantom_exact = cuboid_im(ig, params, how=:exact)
+	dxyz = abs.(ig.dx * ig.dy * ig.dz)
+	vol_true = prod(diam)
+	vol_phantom = sum(phantom_exact[:]) * dxyz
+	isapprox(vol_true, vol_phantom)
+
+	phantom_sample = cuboid_im(ig, :default, how=:sample)
+	vol_phantom2 = sum(phantom_sample[:]) * dxyz
+	isapprox(vol_phantom2, vol_true)
+
+	# test
+	#x4 = cuboid_im(ig, :rotate, how=:exact) exact does not support rotation
+	x3 = cuboid_im(ig, :default, how=:lowmem1)
+	x5 = cuboid_im(ig)
 	true
 end
 
