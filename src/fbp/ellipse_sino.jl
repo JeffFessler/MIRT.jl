@@ -1,5 +1,4 @@
 using Plots
-using Test: @test_throws
 
 export ellipse_sino
 
@@ -35,18 +34,17 @@ function ellipse_sino(sg::MIRT_sino_geom,
         yscale::Integer=1,
         )
 
-		how = sg.how
-        if how == :fan
+        if sg.how == :fan
                 (sino, pos, ang) = ellipse_sino_go(ells, sg.nb, sg.ds, sg.offset, sg.na, sg.orbit, sg.orbit_start,
                                         sg.dso, sg.dod, sg.dfs, sg.source_offset, xscale, yscale, oversample, 0)
-        elseif how == :par
+        elseif sg.how == :par
                 (sino, pos, ang) = ellipse_sino_go(ells, sg.nb, sg.dr, sg.offset, sg.na, sg.orbit, sg.orbit_start,
                                         Inf, 1, 0, sg.source_offset, xscale, yscale, oversample, 0)
-        elseif how == :moj
+        elseif sg.how == :moj
                 (sino, pos, ang) = ellipse_sino_go(ells, sg.nb, sg.d, sg.offset, sg.na, sg.orbit, sg.orbit_start,
 					Inf, 1, 0, sg.source_offset, xscale, yscale, oversample, 0)
 	else
-		throw("sino geom $how not done")
+		throw("sino geom $(sg.how) not done") # should never happen
 	end
         return (sino, pos, ang)
 end
@@ -224,8 +222,6 @@ function ellipse_sino_test()
 			orbit_start = gf.orbit_start, offset = 0.25)
 	gm = sino_geom(:moj, nb = 888, na = 984, down=down, d = 0.5, orbit = gf.orbit,
 			orbit_start = gf.orbit_start, offset = 0.25)
-	sino = sino_geom(:bad)
-	@test_throws String ellipse_sino(sino, ell)
 
 	oversample = 8
 

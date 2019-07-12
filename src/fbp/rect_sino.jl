@@ -1,5 +1,4 @@
 using Plots
-using Test: @test_throws
 
 export rect_sino
 
@@ -28,29 +27,30 @@ out
 * `ang`                 [na]    angular sample locations (in radians)
 """
 function rect_sino(sg::MIRT_sino_geom,
-    rects::AbstractArray{<:Real,2};
-    oversample::Integer=1,
-    xscale::Integer=1,
-    yscale::Integer=1)
-    how = sg.how
+    	rects::AbstractArray{<:Real,2};
+    	oversample::Integer=1,
+    	xscale::Integer=1,
+    	yscale::Integer=1)
+
 	size(rects, 2) != 6 && throw("6 parameters per rect")
 
-    if how == :fan
+    if sg.how == :fan
         (sino, pos) = rect_sino_go(rects, sg.nb, sg.ds, sg.offset, sg.na,
                         sg.ar, sg.dso, sg.dod, sg.dfs, sg.source_offset,
                         xscale, yscale, oversample, 0)
-    elseif how == :par
+    elseif sg.how == :par
         (sino, pos) = rect_sino_go(rects, sg.nb, sg.dr, sg.offset, sg.na,
                         sg.ar, Inf, 1, 0, sg.source_offset, xscale, yscale, oversample, 0)
-    elseif how == :moj
+    elseif sg.how == :moj
         (sino, pos) = rect_sino_go(rects, sg.nb, [], sg.offset, sg.na,
                         sg.ar, Inf, 1, 0, sg.source_offset, xscale, yscale, oversample, sg.d)
     else
-        throw("sino geom $how not done")
+        throw("sino geom $(sg.how) not done") # never should happen!
     end
 
     return (sino, pos)
 end
+
 
 """
 `rect_sino_go()`
@@ -77,15 +77,12 @@ function rect_sino_pos(pos, nb, ds, offset_s, nover, mojette, ang)
     wb = (nb - 1)/2 + offset_s
     if mojette != 0 # tricky mojette radial sampling
         # trick: ray_spacing aka ds comes from dx which is in mojette
-        if !isempty(ds)
-            throw("ds must be empty for mojette case")
-        end
+        !isempty(ds) && throw("ds must be empty for mojette case")
 
         dt = abs(mojette) * max.(abs.(cos.(ang)), abs.(sin.(ang)))' # [1, na]
 
-        if !isempty(pos)
-            throw("mojette requires empty 'pos'")
-        end
+        !isempty(pos) && throw("mojette requires empty 'pos'")
+
         na = length(ang)
         pos_coarse = ((0:nb - 1) .- wb) * dt[:]' # [nb na]
 
@@ -99,15 +96,7 @@ function rect_sino_pos(pos, nb, ds, offset_s, nover, mojette, ang)
             pos_fine = pos_coarse
         end
     else # ordinary mojette sampling
-        if isempty(pos)
-            pos_coarse = ((0:(nb - 1)) .- wb) .* ds' # [nb]
-        else
-            pos_coarse = pos[:] # [nb 1]
-            ds = pos[2] - pos[1]
-            if any(abs(diff(pos) / ds - 1) > 1e-10)
-				throw("uniform spacing required")
-			end
-        end
+        pos_coarse = ((0:(nb - 1)) .- wb) .* ds' # [nb]
         if nover > 1
             # determine fine sampling positions
             pos_fine = (-(nover - 1):2:(nover-1)) / (2*nover) * ds
@@ -139,9 +128,7 @@ function rect_sino_do(rects, pos, ang, xscale, yscale, dso, dod, dfs, source_off
 			(rads, angs) = ndgrid(pos, ang') # [nb na]
 		end
 	else # fan
-		if size(pos, 2) > 1 # mojette
-			throw("mojette fan not supported")
-		end
+		size(pos, 2) > 1 && throw("mojette fan not supported")
 		dis_src_det = dso + dod
 
 		if isinf(dfs) # flat detector
@@ -175,9 +162,7 @@ function rect_sino_do(rects, pos, ang, xscale, yscale, dso, dod, dfs, source_off
 		cy = yscale * rect[2]
 		wx = rect[3]
 		wy = rect[4]
-		if (wx <= 0) || (wy <= 0)
-			throw("need positive rectangle sizes")
-		end
+		(wx <= 0) || (wy <= 0) && throw("need positive rectangle sizes")
 		eang = rect[5] * (pi/180)
 		if yscale == -1
 			eang = -eang
@@ -265,9 +250,6 @@ function rect_sino_test()
 			orbit_start = sgf.orbit_start, offset = 0.25) # parallel
 	sgm = sino_geom(:moj, nb = 888, na = 984, down=down, d = 0.5, orbit = sgf.orbit,
 			orbit_start = sgf.orbit_start, offset = 0.25) # mojette
-
-	sino = sino_geom(:bad)
-	@test_throws String rect_sino(sino, rect)
 
 	sino_f = rect_sino(sgf, rect; oversample=1)
 	sino_p = rect_sino(sgp, rect; oversample=1)
