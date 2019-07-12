@@ -1,6 +1,6 @@
 # fbp/z-test.jl
 
-using Test
+using Test: @test
 
 @test cuboid_im(:test)
 @test disk_phantom_params(:test)
@@ -11,5 +11,6 @@ using Test
 @test image_geom_add_unitv(:test)
 @test image_geom(:test)
 @test rect_im(:test)
+@test rect_sino(:test)
 @test rotate2d(:test)
 @test sino_geom(:test)

@@ -23,3 +23,4 @@ include("ellipse_sino.jl")
 
 include("rect_im.jl")
 export rect_im
+include("rect_sino.jl")

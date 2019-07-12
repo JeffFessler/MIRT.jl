@@ -1,6 +1,7 @@
 using Plots
+using Test: @test_throws
 
-#export rect_sino
+export rect_sino
 
 """
 `(sino, pos, ang) = rect_sino(sg, rects;
@@ -32,6 +33,8 @@ function rect_sino(sg::MIRT_sino_geom,
     xscale::Integer=1,
     yscale::Integer=1)
     how = sg.how
+	size(rects, 2) != 6 && throw("6 parameters per rect")
+
     if how == :fan
         (sino, pos) = rect_sino_go(rects, sg.nb, sg.ds, sg.offset, sg.na,
                         sg.ar, sg.dso, sg.dod, sg.dfs, sg.source_offset,
@@ -59,7 +62,7 @@ function rect_sino_go(rects, nb, ds, offset_s, na, ang, dso, dod, dfs,
 
     sino = rect_sino_do(rects, pos2, ang[:]', xscale, yscale, dso, dod, dfs, source_offset)
 
-    if oversample != 0
+    if oversample != 1
         sino = downsample2(sino, [oversample 1])
     end
     return (sino, pos)
@@ -71,18 +74,7 @@ end
 determine usual and fine "radial" sample positions
 """
 function rect_sino_pos(pos, nb, ds, offset_s, nover, mojette, ang)
-
-    if isempty(pos)
-        if isempty(nb)
-            throw("nb required when no pos provided")
-        end
-        wb = (nb - 1)/2 + offset_s
-    else
-        if !isempty(nb)
-            throw("nb ignored when pos provided")
-        end
-    end
-
+    wb = (nb - 1)/2 + offset_s
     if mojette != 0 # tricky mojette radial sampling
         # trick: ray_spacing aka ds comes from dx which is in mojette
         if !isempty(ds)
@@ -94,7 +86,7 @@ function rect_sino_pos(pos, nb, ds, offset_s, nover, mojette, ang)
         if !isempty(pos)
             throw("mojette requires empty 'pos'")
         end
-        na = maximum(size(ang))
+        na = length(ang)
         pos_coarse = ((0:nb - 1) .- wb) * dt[:]' # [nb na]
 
         if nover > 1
@@ -166,7 +158,7 @@ function rect_sino_do(rects, pos, ang, xscale, yscale, dso, dod, dfs, source_off
 		angs = gam .+ ang  # [nb na] gamma + beta
 	end
 
-	#clear alf gam rad pos ang
+
 	sino = zeros(nb, na)
 
 	cangs = cos.(angs)
@@ -175,10 +167,6 @@ function rect_sino_do(rects, pos, ang, xscale, yscale, dso, dod, dfs, source_off
 	#loop over rects
 	#ticker reset
 	ne = size(rects, 1)
-
-	if size(rects, 2) != 6
-		throw("6 parameters per rect")
-	end
 	for ie in 1:ne
 		#ticker(mfilename, ie, ne)
 		rect = rects[ie, :] # [1, 6]
@@ -215,19 +203,9 @@ function rect_sino_do(rects, pos, ang, xscale, yscale, dso, dod, dfs, source_off
 		dmax = (abs_cos_ang_pi + abs_sin_ang_pi) / 2
 		dbreak = abs.(abs_cos_ang_pi - abs_sin_ang_pi) / 2
 		dmax_break = dmax - dbreak
-		scale = val * wx * wy ./ rp .* len
+		scale = val * wx * wy ./ rp .* len #lmax
 
-		# line integrals at the left part
-		leftpart = (-dmax .< dis) .& (dis .< -dbreak)
-		tmp = div0(leftpart, dmax_break) # trick to avoid / 0
-		sino += tmp * (scale .* (dmax + dis) )
-		# line integrals at the middle part
-		midpart = abs.(dis) .<= dbreak
-		sino += scale .* midpart
-		# line integrals at the right part
-		rightpart = (dbreak .< dis) .& (dis .< dmax)
-		tmp = div0(rightpart, dmax_break) # trick to avoid / 0
-		sino += tmp * (scale .* (dmax - dis))
+		sino += scale .* trapezoid.(dis, -dmax, -dbreak, dbreak, dmax)
 	end
 	return sino
 end
@@ -242,6 +220,22 @@ function div0(x, y)
 		return x/y
 	end
 end
+
+"""
+"""
+function trapezoid(t::Real, t1, t2, t3, t4)
+	if t1 < t < t2
+		return (t - t1)/(t2 - t1)
+	elseif t2 <= t <= t3
+		return 1
+	elseif t3 < t < t4
+		return (t4 - t)/(t4 - t3)
+	else
+		return 0
+	end
+end
+
+
 
 """
 `rect_sino()`
@@ -271,9 +265,8 @@ function rect_sino_test()
 			orbit_start = sgf.orbit_start, offset = 0.25) # parallel
 	sgm = sino_geom(:moj, nb = 888, na = 984, down=down, d = 0.5, orbit = sgf.orbit,
 			orbit_start = sgf.orbit_start, offset = 0.25) # mojette
-	#sg = sino_geom(ge1, strip_width, d, down=down)
-	#sino = rect_sino(sg, rect; oversample=1)
 
+	@test_throws String sino_geom(:bad)
 
 	sino_f = rect_sino(sgf, rect; oversample=1)
 	sino_p = rect_sino(sgp, rect; oversample=1)
@@ -281,6 +274,8 @@ function rect_sino_test()
 	r1 = rect_sino(sgf, rect; oversample=1, yscale=-1, xscale=-1)
 	r2 = rect_sino(sgp, rect; oversample=1, yscale=-1, xscale=-1)
 	r3 = rect_sino(sgm, rect; oversample=1, yscale=-1, xscale=-1)
+	t = LinRange(-2, 5, 101)
+	f = trapezoid.(t, 1, 2, 3, 4)
 end
 
 """
@@ -291,20 +286,25 @@ function rect_sino_show()
 	ig = image_geom(nx=512, ny=504, fov=500)
 	ig = ig.down(down)
 	rect = [[60 10.5 38 27] .* ig.dx 0 1]
-	# (xtrue, rect) = rect_im(ig, rect; oversample=3)
 
 	sgf = sino_geom(:fan, nb = 888, na = 984, d = 1.0, orbit = 360,
 			orbit_start = 0, offset = 0.75, dsd = 949, dod = 408, down=down) # fan
 	sgp = sino_geom(:par, nb = 888, na = 984, down=down, d = 0.5, orbit = sgf.orbit,
 			orbit_start = sgf.orbit_start, offset = 0.25) # parallel
 
+	#sg = sino_geom(:ge1, nb=888, na=984, down=down)
+	#sino = rect_sino(sg, rect; oversample=10)
+
+	xtrue = rect_im(ig, rect; oversample=3)
 	sino_f = rect_sino(sgf, rect; oversample=1)[1]
 	sino_p = rect_sino(sgp, rect; oversample=1)[1]
 
 	x1 = jim(sino_f, title="fan")
 	x2 = jim(sino_p, title="parallel")
+	x3 = jim(xtrue, title="xtrue")
+	#x4 = jim(sino, title="ya")
 
-	plot(x1, x2)
+	plot(x1, x2, x3)
 end
 
 
@@ -323,4 +323,5 @@ function rect_sino(test::Symbol)
 	true
 end
 
-rect_sino(:test)
+#rect_sino(:test)
+#rect_sino(:show)

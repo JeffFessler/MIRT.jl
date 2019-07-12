@@ -1,4 +1,5 @@
 using Plots
+using Test: @test_throws
 
 export ellipse_sino
 
@@ -36,7 +37,6 @@ function ellipse_sino(sg::MIRT_sino_geom,
 
 		how = sg.how
         if how == :fan
-
                 (sino, pos, ang) = ellipse_sino_go(ells, [], [],
                                         sg.nb, sg.ds, sg.offset, sg.na, sg.orbit, sg.orbit_start,
                                         sg.dso, sg.dod, sg.dfs, sg.source_offset, xscale, yscale, oversample, 0)
@@ -61,16 +61,11 @@ end
 function ellipse_sino_go(ells, pos, ang, nb, ds, offset_s, na, orbit, orbit_start,
 	dso, dod, dfs, source_offset, xscale, yscale, oversample, mojette)
 
-	if isempty(ang)
-		ang = ((orbit_start .+ (0:(na - 1))' / na * orbit)) * (pi/180)
-	end
-
+	ang = ((orbit_start .+ (0:(na - 1))' / na * orbit)) * (pi/180)
 	(pos, pos2) = ellipse_sino_pos(pos[:], nb, ds, offset_s, oversample, mojette, ang)
-
-
 	sino = ellipse_sino_do(ells, pos2, ang[:]', xscale, yscale, dso, dod, dfs, source_offset)
 
-	if oversample != 0
+	if oversample != 1
 		sino = downsample2(sino, [oversample 1])
 	end
 
@@ -83,28 +78,13 @@ end
 determine usual and fine "radial" sample positions
 """
 function ellipse_sino_pos(pos, nb, ds, offset_s, nover, mojette, ang)
-
-	if isempty(pos)
-		if isempty(nb)
-			throw("nb required when no pos provided")
-		end
-		wb = (nb - 1)/2 + offset_s
-	else
-		if !isempty(nb)
-			throw("nb ignored when pos provided")
-		end
-	end
-
+	wb = (nb - 1)/2 + offset_s
 	if mojette != 0 # tricky mojette radial sampling
 		# trick: ray_spacing aka ds comes from dx which is in mojette
-		if !isempty(ds)
-			throw("ds must be empty for mojette case")
-		end
+		!isempty(ds) && throw("ds must be empty for mojette case")
 		dt = (abs(mojette) * max(abs(cos(ang))), abs(sin(ang)))
 
-		if !isempty(pos)
-			throw("mojette requires empty 'pos'")
-		end
+		!isempty(pos) && throw("mojette requires empty 'pos'")
 
 		na = max(size(ang))
 		pos_coarse = ((0:(nb-1)) - wb) * dt[:]' # [nb na]
@@ -119,17 +99,7 @@ function ellipse_sino_pos(pos, nb, ds, offset_s, nover, mojette, ang)
 			pos_fine = pos_coarse
 		end
 	else # ordinary non-mojette sampling
-		if isempty(pos)
-			pos_coarse = ((0:(nb - 1)) .- wb) .* ds' # [nb]
-		else
-			pos_coarse = pos[:] # [nb 1]
-			ds = pos[2] - pos[1]
-
-			if any(abs(diff(pos) / ds - 1) > 1e-10)
-				throw("uniform spacing required")
-			end
-		end
-
+		pos_coarse = ((0:(nb - 1)) .- wb) .* ds' # [nb]
 		if nover > 1
 			# determine fine sampling positions
 			# to do: allow different case for trapezoidal rule
@@ -164,9 +134,8 @@ function ellipse_sino_do(ells, pos, ang, xscale, yscale, dso, dod, dfs, source_o
 		end
 
 	else # fan
-		if size(pos, 2) > 1
-			throw("mojette fan not supported")
-		end
+		size(pos, 2) > 1 && throw("mojette fan not supported")
+
 		dis_src_det = dso + dod
 
 		if isinf(dfs) # type of dfs?
@@ -191,14 +160,9 @@ function ellipse_sino_do(ells, pos, ang, xscale, yscale, dso, dod, dfs, source_o
 
 	#loop over ellipses
 	#ticker reset
-	#if isa(ells, "strum")
-		#ne = ells.ne
-	#else
+
 	ne = size(ells)[1]
-	if size(ells)[2] != 6
-		throw("6 parameters per ellipse")
-	end
-	#end
+	size(ells)[2] != 6 && throw("6 parameters per ellipse")
 	for ie in 1:ne
 		#ticker(mfilename, ie, ne)
 		if isa(ells, Type)
@@ -234,10 +198,6 @@ function ellipse_sino_do(ells, pos, ang, xscale, yscale, dso, dod, dfs, source_o
 	return sino
 end
 
-# ellipse sino old
-
-# ellipse sino orig
-
 """
 `ellipse_sino()`
 
@@ -260,6 +220,7 @@ function ellipse_sino_test()
 	]
 	#(xtrue, ell) = ellipse_im(ig, ell; oversample=4)
 
+
 	gf = sino_geom(:fan, nb = 888, na = 984, d = 1.0, orbit = 360,
 			orbit_start = 0, offset = 0.75, dsd = 949, dod = 408, down=down)
 	# dfs = Inf, source_offset = 0.7, flat fan, not working
@@ -267,7 +228,7 @@ function ellipse_sino_test()
 			orbit_start = gf.orbit_start, offset = 0.25)
 	gm = sino_geom(:moj, nb = 888, na = 984, down=down, d = 0.5, orbit = gf.orbit,
 			orbit_start = gf.orbit_start, offset = 0.25)
-
+	@test_throws String sino_geom(:bad)
 
 	oversample = 8
 
@@ -275,8 +236,8 @@ function ellipse_sino_test()
 	sino_mp = ellipse_sino(gp, ell; oversample=1) # parallel
 	sino_m = ellipse_sino(gm, ell; oversample=1) # mojette
 	e1 = ellipse_sino(gf, ell; oversample=1, xscale=-1, yscale=-1)
-	e1 = ellipse_sino(gp, ell; oversample=1, xscale=-1, yscale=-1)
-	e1 = ellipse_sino(gm, ell; oversample=1, xscale=-1, yscale=-1)
+	e2 = ellipse_sino(gp, ell; oversample=1, xscale=-1, yscale=-1)
+	e3 = ellipse_sino(gm, ell; oversample=1, xscale=-1, yscale=-1)
 end
 
 """
