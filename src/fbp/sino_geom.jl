@@ -43,7 +43,7 @@ function sino_geom_help( ; io::IO = isinteractive() ? stdout : IOBuffer() )
 	Derived values
 
 	sg.dim			dimensions: (nb,na)
-	sg.d			radial sample spacing, aka ds or dr
+	sg.ds|dr		radial sample spacing (NaN for :moj)
 	sg.s			[nb] s sample locations
 	sg.w			(nb-1)/2 + offset ('middle' sample position)
 	sg.ad			source angles [degrees]
@@ -382,8 +382,8 @@ sino_geom_fun0 = Dict([
 	(:ones, sg -> ones(Float32, sg.dim)),
 	(:zeros, sg -> zeros(Float32, sg.dim)),
 
-	(:dr, sg -> sg.d),
-	(:ds, sg -> sg.d),
+	(:dr, sg -> sg.how == :moj ? NaN : sg.d),
+	(:ds, sg -> sg.how == :moj ? NaN : sg.d),
 	(:r, sg -> sg.d * ((0:sg.nb-1) .- sg.w)),
 	(:s, sg -> sg.r), # sample locations ('radial')
 
