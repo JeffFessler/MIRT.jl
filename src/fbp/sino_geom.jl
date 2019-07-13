@@ -167,6 +167,24 @@ end
 
 
 """
+`sg = sino_geom_over(sg, over::Integer)`
+over-sample in "radial" dimension
+Probably not meaningful for mojette sampling because d=dx.
+"""
+function sino_geom_over(sg::MIRT_sino_geom, over::Integer)
+	if over == 1
+		return sg
+	end
+
+	return MIRT_sino_geom(sg.how, sg.units,
+		sg.nb * over, sg.na, sg.d / over,
+		sg.orbit, sg.orbit_start, sg.offset * over,
+		sg.strip_width / over,
+		sg.source_offset, sg.dsd, sg.dod, sg.dfs)
+end
+
+
+"""
 `sg = sino_geom_fan()`
 """
 function sino_geom_fan( ;
@@ -250,6 +268,15 @@ function sino_geom_moj( ;
 end
 
 
+"gamma for general finite dfs (rarely used)"
+function sino_geom_gamma_dfs(sg)
+	dis_foc_det = sg.dfs + sg.dsd
+	alf = sg.s / dis_foc_det
+	atan.(dis_foc_det * sin.(alf), dis_foc_det * cos.(alf) .- sg.dfs)
+	# equivalent to s/dsd when dfs=0
+end
+
+
 """
 `sino_geom_gamma()`
 gamma sample values for :fan
@@ -257,7 +284,7 @@ gamma sample values for :fan
 function sino_geom_gamma(sg)
 	return	sg.dfs == 0 ? sg.s / sg.dsd : # 3rd gen: equiangular
 			isinf(sg.dfs) ? atan.(sg.s / sg.dsd) : # flat
-			throw("bad dfs $(sg.dfs)")
+			sino_geom_gamma_dfs(sg) # general
 end
 
 
@@ -408,7 +435,8 @@ sino_geom_fun0 = Dict([
 
 	# functions that return new geometry:
 
-    (:down, sg -> (down::Int -> downsample(sg, down)))
+    (:down, sg -> (down::Int -> downsample(sg, down))),
+    (:over, sg -> (over::Int -> sino_geom_over(sg, over))),
 
 	])
 
@@ -546,6 +574,7 @@ function sino_geom_test( ; kwarg...)
 		sg.ad[2]
 		sg.rfov
 		sd = sg.down(2)
+		su = sg.over(2)
 		sg.dim
 		sg.w
 		sg.ones
