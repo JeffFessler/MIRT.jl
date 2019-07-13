@@ -1,18 +1,20 @@
 #=
 ellipse_sino.jl
 2019-07-12, Helena H
-2019-07-13, Jeff Fessler, refactor to use sg.geom
+2019-07-13, Jeff Fessler, refactor to use sg.grid
 =#
 
-using Plots
-
 export ellipse_sino
+
+using Plots: plot
+#using MIRT: sino_geom, MIRT_sino_geom, downsample2
+
 
 """
 `sino = ellipse_sino(sg, ells ; oversample=1, xscale=1, yscale=1)`
 
 Create sinogram projection of one or more ellipses.
-Works for both parallel-beam geometry and for fan-beam geometry.
+Works for any sinogram geometry.
 
 in
 - `sg::MIRT_sino_geom,`		sinogram geometry object from `sino_geom()`
@@ -24,7 +26,6 @@ options
 						default 1: just 1 ray per detector element
 - `xscale::Integer`		use -1 to flip in x (not recommended); default 1
 - `yscale::Integer`		use -1 to flip in y (not recommended); default 1
-
 
 out
 - `sino`		`[nb na]` sinogram
@@ -80,16 +81,16 @@ function ellipse_sino(rg::AbstractArray{<:Real}, ϕg::AbstractArray{<:Real},
 
 	#loop over ellipses
 	#ticker reset
-
 	ne = size(ells, 1)
 	for ie in 1:ne
 		#ticker(mfilename, ie, ne)
 		ell = ells[ie, :]
 
 		cx = ell[1] * xscale
-		rx = ell[3]
 		cy = ell[2] * yscale
+		rx = ell[3]
 		ry = ell[4]
+		(rx <= 0) || (ry <= 0) && throw("need positive radii")
 		eang = deg2rad(ell[5])
 		val = ell[6]
 
@@ -116,7 +117,7 @@ end
 """
 `ellipse_sino()`
 
-shows doc strings
+show doc strings
 """
 function ellipse_sino()
 	@doc ellipse_sino
@@ -138,6 +139,7 @@ end
 
 """
 `ellipse_sino_show()`
+show examples
 """
 function ellipse_sino_show()
 	down = 4
@@ -166,8 +168,7 @@ function ellipse_sino_show()
 
 	for ii=1:ngeom
 		sg = geoms[ii]
-		sino = ellipse_sino(sg, ell; oversample=oversample,
-			xscale=-1, yscale=-1)
+		sino = ellipse_sino(sg, ell; oversample=oversample)
 		dfs = sg.how == :fan ? " dfs=$(sg.dfs)" : ""
 		pl[ii] = jim(sino, title="$(sg.how)$dfs")
 	end
@@ -177,8 +178,7 @@ end
 
 """
 `ellipse_sino(:test)`
-
-`ellipse_sino(:show)`
+self test
 """
 function ellipse_sino(test::Symbol)
 	if test == :show
@@ -190,5 +190,3 @@ function ellipse_sino(test::Symbol)
 	ellipse_sino(:show)
 	true
 end
-
-#ellipse_sino(:show)
