@@ -6,7 +6,7 @@ Methods related to an image geometry for image reconstruction
 2019-06-23 Jeff Fessler, overhaul
 =#
 
-export cbct
+export MIRT_image_geom, image_geom, cbct
 
 #using MIRT: jim, downsample2, downsample3
 using Test: @test

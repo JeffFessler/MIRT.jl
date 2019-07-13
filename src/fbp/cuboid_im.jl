@@ -3,8 +3,10 @@ cuboid_im.jl
 2019-07-01 Helena
 =#
 
+export cuboid_im
+
 using Plots
-#using MIRT
+#using MIRT: jim, MIRT_image_geom, downsample3, rotate2d
 
 
 """

@@ -1,6 +1,9 @@
 # rect_im.jl
 
+export rect_im
+
 using Plots
+# using MIRT: jim, MIRT_image_geom, downsample2
 
 
 """
@@ -12,21 +15,21 @@ generate rectangle phantom image from parameters:
  `[x_center y_center x_width y_width angle_degrees amplitude]`
 
 in
-* `ig`				`image_geom()` object
-* `params`			`[Nrect,6]` rect parameters. if empty use default
+- `ig`				`image_geom()` object
+- `params`			`[Nrect,6]` rect parameters. if empty use default
 
 options
-* `oversample::Integer`	oversampling factor, for grayscale boundaries
-* `hu_scale::Real`		use 1000 to scale
-* `fov::Real`			default `maximum(ig.fovs)`
-* `chat::Bool`			verbosity?
-* `how::Symbol`			`:fast` or `:slow`; default `:auto`
-* `replace::Bool`		default `false`
-* `return_params::Bool`	if true, return both phantom and params
+- `oversample::Integer`	oversampling factor, for grayscale boundaries
+- `hu_scale::Real`		use 1000 to scale
+- `fov::Real`			default `maximum(ig.fovs)`
+- `chat::Bool`			verbosity?
+- `how::Symbol`			`:fast` or `:slow`; default `:auto`
+- `replace::Bool`		default `false`
+- `return_params::Bool`	if true, return both phantom and params
 
 out
-* `phantom`		`[nx ny]` image (Float32)
-* `params`		`[Nrect 6]` rect parameters (only return if `return_params=true`)
+- `phantom`		`[nx ny]` image (Float32)
+- `params`		`[Nrect 6]` rect parameters (only return if `return_params=true`)
 """
 function rect_im(ig::MIRT_image_geom,
 		params::AbstractArray{<:Real,2};

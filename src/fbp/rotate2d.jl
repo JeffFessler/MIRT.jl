@@ -1,5 +1,9 @@
-# rotate2d.jl
-# Copyright 2019-03-05, Jeff Fessler, University of Michigan
+#=
+rotate2d.jl
+2019-03-05, Jeff Fessler, University of Michigan
+=#
+
+export rotate2d
 
 using Test: @test
 
@@ -26,4 +30,4 @@ function rotate2d(test::Symbol)
 end
 
 
-rotate2d(:test)
+# rotate2d(:test)

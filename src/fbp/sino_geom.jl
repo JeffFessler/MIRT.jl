@@ -4,6 +4,8 @@ sinogram geometry for 2D tomographic image reconstruction
 2019-07-01, Jeff Fessler, University of Michigan
 =#
 
+export MIRT_sino_geom, sino_geom
+
 # using MIRT: jim, image_geom, MIRT_image_geom
 using Plots: Plot, plot!, plot, scatter!, gui
 using Test: @test, @test_throws
