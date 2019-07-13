@@ -53,6 +53,7 @@ function sino_geom_help( ; io::IO = isinteractive() ? stdout : IOBuffer() )
 	sg.rfov			radial fov
 	sg.xds			[nb] center of detector elements (beta=0)
 	sg.yds			[nb] ''
+	sg.grid			(rg, phigrid) [nb na] parallel-beam coordinates
 
 	For mojette:
 
@@ -394,6 +395,37 @@ function sino_geom_unitv(sg::MIRT_sino_geom;
 end
 
 
+"""
+`(rg, ϕg) = sino_geom_grid(sg::MIRT_sino_geom)`
+
+Return grids `rg` and `ϕg` (in radians) of size `[nb na]`
+of equivalent *parallel-beam* `(r,ϕ)` (radial, angular) sampling positions,
+for any sinogram geometry.
+For parallel beam this is just `ndgrid(sg.r, sg.ar)`
+but for fan beam and mojette this involves more complicated computations.
+"""
+function sino_geom_grid(sg::MIRT_sino_geom)
+
+	if sg.how == :par
+		return ndgrid(sg.r, sg.ar)
+
+	elseif sg.how == :fan
+		gamma = sg.gamma
+		rad = sg.dso * sin.(gamma) + sg.source_offset * cos.(gamma)
+		rg = repeat(rad, 1, sg.na) # [nb na]
+		return (rg, gamma .+ sg.ar') # [nb na] phi = gamma + beta
+	end
+
+	# otherwise :moj (mojette)
+	phi = sg.ar
+	# trick: ray_spacing aka ds comes from dx which is sg.d for mojette
+	wb = (sg.nb - 1)/2 + sg.offset
+	dt = max(abs.(cos.(phi)), abs.(sin.(phi))) # [na]
+	pos = ((0:(sg.nb-1)) .- wb) * dt' # [nb na]
+	return (pos,  repeat(phi', sg.nb, 1))
+end
+
+
 function Base.display(sg::MIRT_sino_geom)
 	ir_dump(sg)
 end
@@ -424,6 +456,7 @@ sino_geom_fun0 = Dict([
 	(:xds, sg -> sino_geom_xds(sg)),
 	(:yds, sg -> sino_geom_yds(sg)),
 	(:dso, sg -> sg.dsd - sg.dod),
+	(:grid, sg -> sino_geom_grid(sg)),
 
 	# angular dependent d for :moj
 	(:d_ang, sg -> sg.d * max.(abs.(cos.(sg.ar)), abs.(sin.(sg.ar)))),
@@ -592,6 +625,7 @@ function sino_geom_test( ; kwarg...)
 		sg.yds
 		sg.dfs
 		sg.dso
+		sg.grid
 
 		sg.d_ang # angular dependent d for :moj
 
