@@ -422,8 +422,9 @@ function sino_geom_grid(sg::MIRT_sino_geom)
 	phi = sg.ar
 	# trick: ray_spacing aka ds comes from dx which is sg.d for mojette
 	wb = (sg.nb - 1)/2 + sg.offset
-	dt = max(abs.(cos.(phi)), abs.(sin.(phi))) # [na]
+	dt = sg.d * max(abs.(cos.(phi)), abs.(sin.(phi))) # [na]
 	pos = ((0:(sg.nb-1)) .- wb) * dt' # [nb na]
+@show extrema(pos)
 	return (pos,  repeat(phi', sg.nb, 1))
 end
 
