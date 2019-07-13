@@ -11,6 +11,6 @@ using Test: @test
 @test image_geom_add_unitv(:test)
 @test image_geom(:test)
 @test rect_im(:test)
-#@test rect_sino(:test) todo
+@test rect_sino(:test)
 @test rotate2d(:test)
 @test sino_geom(:test)
