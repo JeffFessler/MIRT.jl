@@ -1,4 +1,7 @@
-# rect_im.jl
+#=
+rect_im.jl
+2019-07, Helena H
+=#
 
 export rect_im
 
@@ -365,7 +368,7 @@ function rect_im(test::Symbol)
 	rect_im(ig, :smiley, how=:fast, replace=true)
 	rect_im(ig, how=:slow, replace=true)
 	rect_im(32, ny=30, dx=3, params=:default, how=:slow, return_params=true)
-	rect_im(32, ny=30)
+	rect_im(32, 30)
 	@test_throws String rect_im(32, :default, how=:bad)
 	rect_im(:show)
 	@test rect_im_test()
