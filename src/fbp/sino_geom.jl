@@ -135,7 +135,7 @@ function sino_geom(how::Symbol; kwarg...)
 	elseif how == :plot_grids
 		return sino_geom_plot_grids()
 	elseif how == :show
-		return sino_geom_plot(sino_geom(:ge1); kwarg...)
+		return sino_geom_show( ; kwarg...)
 	elseif how == :par
 		sg = sino_geom_par( ; kwarg...)
 	elseif how == :fan
@@ -306,7 +306,7 @@ radial FOV
 function sino_geom_rfov(sg)
 	return	sg.how == :par ? maximum(abs.(sg.r)) :
 			sg.how == :fan ? sg.dso * sin(sg.gamma_max) :
-			sg.how == :moj ? maximum(abs.(sg.r)) : # todo: check
+			sg.how == :moj ? sg.nb/2 * minimum(sg.d_ang) : # todo: check
 				throw("bad how $(sg.how)")
 end
 
@@ -554,19 +554,22 @@ function sino_geom_plot(sg; ig::Union{Nothing,MIRT_image_geom}=nothing)
 	plot!(xtick=round.([xmin, 0, xmax], digits=2))
 	plot!(ytick=round.([ymin, 0, ymax], digits=2))
 
-	t = LinRange(0,2*pi,1001)
-	rmax = maximum(abs.(sg.r))
+	t = LinRange(0, 2*pi, 1001)
+	rfov = sg.rfov
 	scatter!([0], [0], marker=:circle, label="")
-	plot!(rmax * cos.(t), rmax * sin.(t), label="") # fov circle
-	plot!(xlabel="x", ylabel="y", title = "$(sg.how): fov = $(sg.rfov)")
+	plot!(rfov * cos.(t), rfov * sin.(t), color=:magenta, label="") # rfov circle
+	rfov = round(sg.rfov, digits=1)
+	plot!(xlabel="x", ylabel="y", title = "$(sg.how): rfov = $rfov")
 
-#	if sg.how == :par
-#	end
+#=
+	if sg.how == :par
+	end
+=#
 
 	if sg.how == :fan
 		x0 = 0
 		y0 = sg.dso
-		t = LinRange(0,2*pi,100)
+		t = LinRange(0, 2*pi, 100)
 		rot = sg.ar[1]
 		rot = [cos(rot) -sin(rot); sin(rot) cos(rot)]
 		p0 = rot * [x0; y0]
@@ -575,31 +578,21 @@ function sino_geom_plot(sg; ig::Union{Nothing,MIRT_image_geom}=nothing)
 		tmp = sg.ar .+ pi/2 # trick: angle beta defined ccw from y axis
 		scatter!([p0[1]], [p0[2]], color=:yellow, label="") # source
 		plot!(sg.dso * cos.(t), sg.dso * sin.(t), color=:cyan, label="") # source circle
-		plot!(sg.dso * cos.(tmp), sg.dso * sin.(tmp), color=:cyan, label="") # source
+		scatter!(sg.dso * cos.(tmp), sg.dso * sin.(tmp), color=:cyan, label="") # source points
 		scatter!(pd[1,:][:], pd[2,:][:], color=:yellow, label="")
 
 		plot!([pd[1,1], p0[1], pd[1,end]], [pd[2,1], p0[2], pd[2,end]],
 			color=:red, label="")
-		plot!(sg.rfov * cos.(t), sg.rfov * sin.(t), color=:magenta, label="") # fov circle
 		plot!(title="$(sg.how): dfs = $(sg.dfs)")
 	end
 
-#= todo
-case 'moj'
-	if isvar('ig') && ~isempty(ig)
-		im(ig.x, ig.y, ig.mask(:,:,1))
-		hold on
+	if sg.how == :moj && false
+		t = LinRange(0, 2*pi, 100)
+		rmax = maximum(sg.s)
+		rphi = sg.nb/2 * sg.d ./ (max(abs.(cos.(t)), abs.(sin.(t))))
+		plot!(rphi .* cos.(t), rphi .* sin.(t), label="") # fov circle
+	#	axis([-1 1 -1 1] * max([rmax ig.fov/2]) * 1.1)
 	end
-	t = linspace(0,2*pi,1001)
-	rmax = max(sg.s)
-	rphi = sg.nb/2 * sg.d ./ (max(abs(cos(t)), abs(sin(t))))
-	plot(0, 0, '.', rmax * cos(t), rmax * sin(t), '-') # fov circle
-	plot(0, 0, '.', rphi .* cos(t), rphi .* sin(t), '-m') # fov circle
-	if isvar('ig') && ~isempty(ig)
-		hold off
-	end
-	axis([-1 1 -1 1] * max([rmax ig.fov/2]) * 1.1)
-=#
 
 	plot!()
 end
@@ -632,6 +625,36 @@ function sino_geom_ge1( ;
 			dsd = 949.075/scale,
 			dod = 408.075/scale,
 			dfs = 0; kwarg...)
+end
+
+
+"""
+`sino_geom_show()`
+show an example of each of the 4 main geometries
+"""
+function sino_geom_show( ; kwarg...)
+	down = 4
+	ig = image_geom(nx=512, fov=500)
+	ig = ig.down(down)
+
+	arg = (nb = 888, na = down*8)
+	nb_moj = round(Int, ig.nx*down*sqrt(2)) # match rfov
+	sg_list = (
+		sino_geom(:par ; d=ig.fovs[1]/arg.nb, arg..., kwarg...),
+		sino_geom(:moj ; d=1, arg..., nb=nb_moj, kwarg...),
+		sino_geom(:ge1, dfs=0 ; arg..., kwarg...), # arc
+		sino_geom(:ge1, dfs=Inf ; arg..., nb=960, kwarg...), # flat
+		)
+
+	nsg = length(sg_list)
+	pl = Array{Plot}(undef, nsg)
+	for ii = 1:nsg
+		sg = sg_list[ii].down(down)
+		pl[ii] = sino_geom_plot(sg)
+		plot!(pl[ii], xlim=[-1,1]*550, ylim=[-1,1]*550)
+		plot!(pl[ii], xtick=[-1,0,1]*250)
+	end
+	plot(pl...)
 end
 
 
