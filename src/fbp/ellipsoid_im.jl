@@ -46,22 +46,31 @@ function ellipsoid_im(ig::MIRT_image_geom, params::AbstractMatrix{<:Real} ;
 
 	size(params,2) != 9 && throw("bad cuboid parameter vector size")
 	params[:,9] .*= hu_scale
+
+	if oversample > 1
+		ig = ig.over(oversample)
+	end
+
 	args = (ig.nx, ig.ny, ig.nz, params, ig.dx, ig.dy, ig.dz,
-			ig.offset_x, ig.offset_y, ig.offset_z, oversample, showmem)
+			ig.offset_x, ig.offset_y, ig.offset_z)
 	phantom = zeros(Float32, ig.nx, ig.ny, ig.nz)
 
 	checkfov && !ellipsoid_im_check_fov(args...) && throw("ellipsoid exceeds FOV")
 
 	if how == :slow
-		phantom += ellipsoid_im_slow(args...)
+		phantom += ellipsoid_im_slow(args..., showmem)
 #=
 	elseif how == :lowmem
-		phantom += ellipsoid_im_lowmem(args...)
+		phantom += ellipsoid_im_lowmem(args..., showmem)
 	elseif how == :fast
-		phantom += ellipsoid_im_fast(args...)
+		phantom += ellipsoid_im_fast(args..., showmem)
 =#
 	else
 		throw("bad how $how")
+	end
+
+	if oversample > 1
+		phantom = downsample3(phantom, oversample)
 	end
 
 	if return_params
@@ -77,16 +86,16 @@ end
 brute force fine grid - can use lots of memory
 """
 function ellipsoid_im_slow(nx, ny, nz, params, dx, dy, dz,
-		offset_x, offset_y, offset_z, over, showmem)
+		offset_x, offset_y, offset_z, showmem)
 
-	phantom = zeros(Float32, nx*over, ny*over, nz*over)
+	phantom = zeros(Float32, nx, ny, nz)
 
-	wx = (nx*over - 1)/2 + offset_x*over
-	wy = (ny*over - 1)/2 + offset_y*over
-	wz = (nz*over - 1)/2 + offset_z*over
-	x = ((0:(nx * over - 1)) .- wx) * dx / over
-	y = ((0:(ny * over - 1)) .- wy) * dy / over
-	z = ((0:(nz * over - 1)) .- wz) * dz / over
+	wx = (nx - 1)/2 + offset_x
+	wy = (ny - 1)/2 + offset_y
+	wz = (nz - 1)/2 + offset_z
+	x = ((0:(nx-1)) .- wx) * dx
+	y = ((0:(ny-1)) .- wy) * dy
+	z = ((0:(nz-1)) .- wz) * dz
 	xmax = maximum(x)
 	xmin = minimum(x)
 	ymax = maximum(y)
@@ -270,13 +279,13 @@ end
 Do 'one slice at a time' to reduce memory
 """
 function ellipsoid_im_lowmem(nx, ny, nz, params, dx, dy, dz,
-		offset_x, offset_y, offset_z, over, showmem)
+		offset_x, offset_y, offset_z)
 
 	phantom = zeros(Float32, nx, ny, nz)
 	for iz in 1:nz
 		offset_z_new = (nz-1)/2 + offset_z - (iz-1)
 		phantom[:,:,iz] = ellipsoid_im_fast(nx, ny, 1, params, dx, dy, dz,
-		offset_x, offset_y, offset_z_new, over, showmem && iz == 1)
+		offset_x, offset_y, offset_z_new, showmem && iz == 1)
 	end
 	return phantom
 end
@@ -287,7 +296,7 @@ end
 `ellipsoid_im_check_fov()`
 """
 function ellipsoid_im_check_fov(nx, ny, nz, params,
-		dx, dy, dz, offset_x, offset_y, offset_z, over, showmem)
+		dx, dy, dz, offset_x, offset_y, offset_z)
 	wx = (nx - 1)/2 + offset_x
 	wy = (ny - 1)/2 + offset_y
 	wz = (nz - 1)/2 + offset_z
@@ -343,8 +352,10 @@ function ellipsoid_im(ig::MIRT_image_geom, ptype::Symbol ; args...)
 		params = shepp_logan_3d_parameters(xfov, yfov, zfov, :zhu)
 	elseif ptype == :kak
 		params = shepp_logan_3d_parameters(xfov, yfov, zfov, :kak)
+#=
 	elseif ptype == :e3d
 		params = shepp_logan_3d_parameters(xfov, yfov, zfov, :e3d)
+=#
 	elseif ptype == :spheroid
 		params = spheroid_params(xfov, yfov, zfov, ig.dx, ig.dy, ig.dz)
 	else
@@ -485,7 +496,12 @@ function ellipsoid_im_test()
 	ellipsoid_im(ig; checkfov=true)
 	ellipsoid_im(ig; showmem=true)
 	@test_throws String ellipsoid_im(ig, :bad)
+	@test_throws String ellipsoid_im(ig, :spheroid, how=:bad)
 	@test_throws String shepp_logan_3d_parameters(0, 0, 0, :bad)
+	tmp = [1, 1, 1, 0, 0, 0]
+	@test !ellipsoid_im_check_fov(2, 2, 2, [3 0 0 1 1 1 0 0 1], tmp...)
+	@test !ellipsoid_im_check_fov(2, 2, 2, [0 3 0 1 1 1 0 0 1], tmp...)
+	@test !ellipsoid_im_check_fov(2, 2, 2, [0 0 3 1 1 1 0 0 1], tmp...)
 
 	#ell1 = ellipsoid_im(ig, :zhu; how=:fast) # fast doesn't work
 	#ell2 = ellipsoid_im(ig, :zhu; how=:lowmem) # lowmem calls fast - doesn't work
