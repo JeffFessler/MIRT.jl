@@ -24,7 +24,7 @@ in
 							note: "diameter" not "radius"
 
 options
-- `oversample::Integer` 	 oversampling factor
+- `oversample::Integer` 	 oversampling factor (for partial volume)
 - `how::Symbol`				`:sample` use samples
 							`:lowmem1` one slice per time
 							`:exact` perfect partial volume if angle* = 0
@@ -41,14 +41,13 @@ function cuboid_im(ig::MIRT_image_geom, params::AbstractMatrix{<:Real} ;
 		return_params::Bool = false)
 
 	size(params,2) != 9 && throw("bad cuboid parameter vector size")
+	any(params[:,4:6] .< 0) && throw("cuboid `diameters` must be nonnegative")
 
 	if oversample > 1
 		ig = ig.over(oversample)
 	end
 	args = (ig.nx, ig.ny, ig.nz, params,
-		ig.dx, ig.dy, ig.dz, ig.offset_x, ig.offset_y, ig.offset_z, oversample)
-
-	any(params[:,4:6] .< 0) && throw("cuboid `diameters` must be nonnegative")
+		ig.dx, ig.dy, ig.dz, ig.offset_x, ig.offset_y, ig.offset_z)
 
 	phantom = zeros(Float32, ig.nx, ig.ny, ig.nz)
 
@@ -71,9 +70,14 @@ function cuboid_im(ig::MIRT_image_geom, params::AbstractMatrix{<:Real} ;
 		throw("bad how $how")
 	end
 
+	if oversample > 1
+		phantom = downsample3(phantom, oversample)
+	end
+
 	if return_params
 		return (phantom, params)
 	end
+
 	return phantom
 end
 
@@ -84,21 +88,21 @@ end
 :sample
 """
 function cuboid_im_sample(nx, ny, nz, params,
-		dx, dy, dz, offset_x, offset_y, offset_z, over)
-	phantom = zeros(Float32, nx*over, ny*over, nz*over)
+		dx, dy, dz, offset_x, offset_y, offset_z)
+	phantom = zeros(Float32, nx, ny, nz)
 
-	wx = (nx*over-1)/2 + offset_x*over
-	wy = (ny*over-1)/2 + offset_y*over
-	wz = (nz*over-1)/2 + offset_z*over
-	x = ((0:nx*over-1) .- wx) * dx / over
-	y = ((0:ny*over-1) .- wy) * dy / over
-	z = ((0:nz*over-1) .- wz) * dz / over
+	wx = (nx-1)/2 + offset_x
+	wy = (ny-1)/2 + offset_y
+	wz = (nz-1)/2 + offset_z
+	x = ((0:nx-1) .- wx) * dx
+	y = ((0:ny-1) .- wy) * dy
+	z = ((0:nz-1) .- wz) * dz
 	(xx, yy, zz) = ndgrid(x, y ,z)
 
 	# ticker reset
 	ne = size(params)[1]
 	for ie in 1:ne
-		# ticker(mfile, ie, ne)
+		# ticker(ie, ne)
 
 		par = params[ie, :]
 		cx = par[1]
@@ -120,7 +124,6 @@ function cuboid_im_sample(nx, ny, nz, params,
 		value = Float32(par[9])
 		phantom += value * tmp
 	end
-	phantom = downsample3(phantom, over)
 
 	return phantom
 end
@@ -134,8 +137,8 @@ end
 non-rotated cuboid -- rotation not done
 """
 function cuboid_im_exact(nx, ny, nz, params, dx, dy, dz,
-		offset_x, offset_y, offset_z, over)
-	over != 1 && throw("oversample=$over for exact!?")
+		offset_x, offset_y, offset_z)
+#	over != 1 && throw("oversample=$over for exact!?")
 	phantom = zeros(Float32, nx, ny, nz)
 
 	wx = (nx-1)/2 + offset_x
@@ -195,12 +198,12 @@ end
 This version does `:sample` 1 slice at a time to reduce memory
 """
 function cuboid_im_lowmem1(nx, ny, nz, params,
-		dx, dy, dz, offset_x, offset_y, offset_z, over)
+		dx, dy, dz, offset_x, offset_y, offset_z)
 	phantom = zeros(Float32, nx, ny, nz)
 	for iz in 1:nz
 		offset_z_new = (nz - 1)/2 + offset_z - (iz-1)
 		phantom[:,:,iz] = cuboid_im_sample(nx, ny, 1, params,
-			dx, dy, dz, offset_x, offset_y, offset_z_new, over)
+			dx, dy, dz, offset_x, offset_y, offset_z_new)
 	end
 	return phantom
 end
@@ -358,7 +361,7 @@ function cuboid_im_test()
 	vol_phantom = sum(phantom_exact[:]) * dxyz
 	isapprox(vol_true, vol_phantom)
 
-	phantom_sample = cuboid_im(ig, :default, how=:sample)
+	phantom_sample = cuboid_im(ig, :default, how=:sample, oversample=3)
 	vol_phantom2 = sum(phantom_sample[:]) * dxyz
 	isapprox(vol_phantom2, vol_true)
 
