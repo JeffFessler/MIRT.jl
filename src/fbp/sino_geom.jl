@@ -694,8 +694,11 @@ function sino_geom_test( ; kwarg...)
 	gui()
 
 	sg = sino_geom(:ge1, orbit=:short)
+	sino_geom_gamma_dfs(sg)
 	display(sg)
 	sino_geom(:show)
+	sino_geom(:help)
+	sino_geom(:plot_grids)
 
 	@test_throws String sino_geom(:badhow)
 	@test_throws String sino_geom(:ge1, dfs=-1)
