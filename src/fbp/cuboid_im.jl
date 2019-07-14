@@ -6,57 +6,54 @@ cuboid_im.jl
 export cuboid_im
 
 using Plots
+using Test: @test, @test_throws
 #using MIRT: jim, MIRT_image_geom, downsample3, rotate2d
 
 
 """
 `phantom = cuboid_im(ig, params;
-    oversample=1, hu_scale=1, how=:auto, return_params=false)`
+	oversample=1, hu_scale=1, how=:auto, return_params=false)`
 
 generate cuboid phantom image from parameters:
-    `[x_center y_center z_center x_diameter y_diameter z_diameter
-        xy_angle_degrees z_angle_degrees amplitude]`
+	`[x_center y_center z_center x_diameter y_diameter z_diameter
+		xy_angle_degrees z_angle_degrees amplitude]`
 
 in
-* `ig`            `image_geom()` object
-* `params`        `[9 N]`  cuboid parameters. if empty, use defualt
-                           note: "diameter" not "radius"
+- `ig::MIRT_image_geom`		`image_geom()` object
+- `params`					`[N 9]`  cuboid parameters.
+							note: "diameter" not "radius"
 
 options
-* `oversample::Integer`   oversampling factor
-* `how::Symbol`          `:sample` use samples
-                        	`:lowmem1` one slice per time
-                            `:exact` perfect partial volume if angle* = 0
-                            default: `:exact` if non rotated, else `:sample`
-* `return_params::Bool`    if true, return both phantom and params
+- `oversample::Integer` 	 oversampling factor
+- `how::Symbol`				`:sample` use samples
+							`:lowmem1` one slice per time
+							`:exact` perfect partial volume if angle* = 0
+							default: `:exact` if non rotated, else `:sample`
+- `return_params::Bool`	if true, return both phantom and params
 
 out
-* `phantom`         `[nx ny nz]` image
-* `params`          `[9 N]` cuboid parameters (only return if return_params=true)
+- `phantom`		`[nx ny nz]` image
+- `params`		`[N 9]` cuboid parameters (only return if return_params=true)
 """
-function cuboid_im(ig::MIRT_image_geom,
-    params::AbstractArray{<:Real,2};
-    oversample::Integer=1,
-    how::Symbol=:auto,
-    return_params::Bool=false)
+function cuboid_im(ig::MIRT_image_geom, params::AbstractMatrix{<:Real} ;
+		oversample::Integer = 1,
+		how::Symbol = :auto,
+		return_params::Bool = false)
 
-    size(params,2) != 9 && throw("bad cuboid parameter vector size")
+	size(params,2) != 9 && throw("bad cuboid parameter vector size")
 
-    if oversample > 1
-        ig = ig.over(oversample)
-    end
-    args = (ig.nx, ig.ny, ig.nz, params,
-    ig.dx, ig.dy, ig.dz, ig.offset_x, ig.offset_y, ig.offset_z, oversample)
-
-	if any(params[:,4:6] .< 0)
-		throw("cuboid `diameters` must be nonnegative")
+	if oversample > 1
+		ig = ig.over(oversample)
 	end
+	args = (ig.nx, ig.ny, ig.nz, params,
+		ig.dx, ig.dy, ig.dz, ig.offset_x, ig.offset_y, ig.offset_z, oversample)
+
+	any(params[:,4:6] .< 0) && throw("cuboid `diameters` must be nonnegative")
 
 	phantom = zeros(Float32, ig.nx, ig.ny, ig.nz)
 
-	rotated = params[:, 7:8] .!= 0
-
 	if how == :auto
+		rotated = params[:, 7:8] .!= 0
 		if any(rotated)
 			how = :sample
 		else
@@ -64,63 +61,59 @@ function cuboid_im(ig::MIRT_image_geom,
 		end
 	end
 
-    if how == :exact
-        phantom += cuboid_im_exact(args...)
-        if oversample != 1
-            throw("ignoring oversample $oversample")
-        end
-    elseif how == :lowmem1
-        phantom += cuboid_im_lowmem1(args...)
-    elseif how == :sample
-        phantom += cuboid_im_sample(args...)
-    else
-        throw("bad how $how")
-    end
+	if how == :exact
+		phantom += cuboid_im_exact(args...)
+	elseif how == :lowmem1
+		phantom += cuboid_im_lowmem1(args...)
+	elseif how == :sample
+		phantom += cuboid_im_sample(args...)
+	else
+		throw("bad how $how")
+	end
 
-    if return_params
-        return (phantom, params)
-    end
-    return phantom
+	if return_params
+		return (phantom, params)
+	end
+	return phantom
 end
+
 
 """
 `cuboid_im_sample()``
 
 :sample
 """
-function cuboid_im_sample(nx, ny, nz, params, dx, dy, dz, offset_x, offset_y, offset_z, over)
-    phantom = zeros(Float32, nx*over, ny*over, nz*over)
+function cuboid_im_sample(nx, ny, nz, params,
+		dx, dy, dz, offset_x, offset_y, offset_z, over)
+	phantom = zeros(Float32, nx*over, ny*over, nz*over)
 
-    wx = (nx*over-1)/2 + offset_x*over
-    wy = (ny*over-1)/2 + offset_y*over
-    wz = (nz*over-1)/2 + offset_z*over
-    x = ((0:nx*over-1) .- wx) * dx / over
-    y = ((0:ny*over-1) .- wy) * dy / over
-    z = ((0:nz*over-1) .- wz) * dz / over
-    (xx, yy, zz) = ndgrid(x, y ,z)
+	wx = (nx*over-1)/2 + offset_x*over
+	wy = (ny*over-1)/2 + offset_y*over
+	wz = (nz*over-1)/2 + offset_z*over
+	x = ((0:nx*over-1) .- wx) * dx / over
+	y = ((0:ny*over-1) .- wy) * dy / over
+	z = ((0:nz*over-1) .- wz) * dz / over
+	(xx, yy, zz) = ndgrid(x, y ,z)
 
-    # ticker reset
-    ne = size(params)[1]
-    for ie in 1:ne
-        # ticker(mfile, ie, ne)
+	# ticker reset
+	ne = size(params)[1]
+	for ie in 1:ne
+		# ticker(mfile, ie, ne)
 
-        par = params[ie, :]
-        cx = par[1]
-        cy = par[2]
-        cz = par[3]
-        rx = par[4]
-        ry = par[5]
-        rz = par[6]
+		par = params[ie, :]
+		cx = par[1]
+		cy = par[2]
+		cz = par[3]
+		rx = par[4]
+		ry = par[5]
+		rz = par[6]
 
-        theta = par[7] * (pi/180)
-        phi = par[8] * (pi/180)
-        if phi != 0
-            throw("phi rotation not done")
-        end
+		theta = deg2rad(par[7])
+		phi = deg2rad(par[8])
+		phi != 0 && throw("phi rotation not done")
 
-        (x, y) = rotate2d(xx .- cx, yy .- cy, theta)
-        z = zz .- cz
-
+		(x, y) = rotate2d(xx .- cx, yy .- cy, theta)
+		z = zz .- cz
 
 		# rx, ry, rz are 'diameters' not 'radius'
 		tmp = (abs.(x / rx) .<= 1/2) .& (abs.(y / ry) .<= 1/2) .& (abs.(z / rz) .<= 1/2)
@@ -129,7 +122,7 @@ function cuboid_im_sample(nx, ny, nz, params, dx, dy, dz, offset_x, offset_y, of
 	end
 	phantom = downsample3(phantom, over)
 
-    return phantom
+	return phantom
 end
 
 
@@ -140,7 +133,9 @@ end
 
 non-rotated cuboid -- rotation not done
 """
-function cuboid_im_exact(nx, ny, nz, params, dx, dy, dz, offset_x, offset_y, offset_z, over)
+function cuboid_im_exact(nx, ny, nz, params, dx, dy, dz,
+		offset_x, offset_y, offset_z, over)
+	over != 1 && throw("oversample=$over for exact!?")
 	phantom = zeros(Float32, nx, ny, nz)
 
 	wx = (nx-1)/2 + offset_x
@@ -152,10 +147,8 @@ function cuboid_im_exact(nx, ny, nz, params, dx, dy, dz, offset_x, offset_y, off
 	(xx, yy, zz) = ndgrid(x, y, z)
 
 	# length of intersection of [a, b] with [c, d]
-	fun = (a, b, c, d) ->
-		max(min(d,b) - max(a,c), 0)
-	fun2 = (x, h) ->
-		fun(x - 0.5, x + 0.5, -h, h)
+	fun1 = (a, b, c, d) -> max(min(d,b) - max(a,c), 0)
+	fun2 = (x, h) -> fun1(x - 0.5, x + 0.5, -h, h)
 
 	adx = abs(dx)
 	ady = abs(dy)
@@ -164,7 +157,7 @@ function cuboid_im_exact(nx, ny, nz, params, dx, dy, dz, offset_x, offset_y, off
 	#ticker reset
 	ne = size(params)[1]
 	for ie in 1:ne
-		#ticker(mfilename, ie, ne)
+		#ticker(ie, ne)
 
 		par = params[ie, :]
 		cx = par[1]
@@ -174,9 +167,7 @@ function cuboid_im_exact(nx, ny, nz, params, dx, dy, dz, offset_x, offset_y, off
 		ry = par[5]
 		rz = par[6]
 
-		if par[7] != 0 || par[8] != 0
-			throw("rotation not done")
-		end
+		(par[7] != 0 || par[8] != 0) && throw("rotation not done")
 
 		# rx, ry, rz are "diameters" not "radius"
 		x = (xx .- cx) / adx
@@ -194,50 +185,49 @@ function cuboid_im_exact(nx, ny, nz, params, dx, dy, dz, offset_x, offset_y, off
 		phantom += value * tmp
 	end
 
-    return phantom
+	return phantom
 end
 
 
 """
-`cuboid_im_lowmem1`
+`cuboid_im_lowmem1(...)`
 
-this version does one 'one slice at a time' to reduce memory
+This version does `:sample` 1 slice at a time to reduce memory
 """
-function cuboid_im_lowmem1(nx, ny, nz, params, dx, dy, dz, offset_x, offset_y, offset_z, over)
+function cuboid_im_lowmem1(nx, ny, nz, params,
+		dx, dy, dz, offset_x, offset_y, offset_z, over)
 	phantom = zeros(Float32, nx, ny, nz)
 	for iz in 1:nz
 		offset_z_new = (nz - 1)/2 + offset_z - (iz-1)
 		phantom[:,:,iz] = cuboid_im_sample(nx, ny, 1, params,
-	    	dx, dy, dz, offset_x, offset_y, offset_z_new, over)
+			dx, dy, dz, offset_x, offset_y, offset_z_new, over)
 	end
-    return phantom
+	return phantom
 end
 
 
-
-
 """
-`default_parameters()`
+`default_cuboid_parameters()`
 """
-function default_parameters(xfov, yfov, zfov)
-	params = [
+function default_cuboid_parameters(xfov, yfov, zfov)
+	return [
 	0	0		0	60	60	2	0	0	1
 	20	20		3	10	20	2	0	0	1
 	1.4	-0.5	1	2	2.7	3.2	0	0	1
 	]
-	return params
 end
 
+
 """
-`rotated_parameters()`
+`rotated_cuboid_parameters()`
 """
-function rotated_parameters(xfov, yfov, zfov)
-	params = [
+function rotated_cuboid_parameters(xfov, yfov, zfov)
+	return [
 	0	0	0	60	60	2	45	0	1
 	0	0	0	50	50	3	45	0	1
 	]
-	return params
 end
+
 
 #=
 """
@@ -249,6 +239,7 @@ function cuboid_im(nx::Integer, dx::Real, params; args...)
 	ig = image_geom(nx=nx, dx=1)
 	return cuboid_im(ig, params; args...)
 end
+
 
 """
 `phantom = cuboid_im(nx::Integer, params; args...)`
@@ -271,6 +262,7 @@ function cuboid_im(nx::Integer; ny::Integer=nx, dx::Real=1, args...)
 	return cuboid_im(ig, :default; args...)
 end
 
+
 """
 `phantom = cuboid_im(nx::Integer, ny::integer; args...)`
 
@@ -281,6 +273,7 @@ function cuboid_im(nx::Integer, ny::Integer; args...)
 end
 =#
 
+
 """
 `phantom = cuboid_im(ig, code, args...)`
 
@@ -289,9 +282,9 @@ end
 function cuboid_im(ig::MIRT_image_geom, params::Symbol; args...)
 	fov = ig.fovs
 	if params == :default
-		params = default_parameters(fov, fov, fov)
+		params = default_cuboid_parameters(fov, fov, fov)
 	elseif params == :rotate
-		params = rotated_parameters(fov, fov, fov)
+		params = rotated_cuboid_parameters(fov, fov, fov)
 	else
 		throw("bad phantom symbol $params")
 	end
@@ -313,7 +306,7 @@ end
 """
 `cuboid_im()`
 
-shows docstring(s)
+show docstring
 """
 function cuboid_im()
 	@doc cuboid_im
@@ -324,7 +317,7 @@ end
 `cuboid_im_show()`
 """
 function cuboid_im_show()
-	ig = image_geom(nx=2^3, ny=2^3, nz=2^3, dz=1, fov=240)
+	ig = image_geom(nx=2^6, ny=2^6, nz=2^3, dz=1, fov=240)
 
 	x1 = cuboid_im(ig, :default, how=:exact)
 	p1 = jim(x1, title="exact")
@@ -351,6 +344,12 @@ function cuboid_im_test()
 	fov = 100
 	cuboid_im_show()
 
+	@test_throws String cuboid_im(ig, :bad)
+	@test_throws String cuboid_im(ig, :rotate, how=:exact)
+	@test_throws String cuboid_im(ig, :rotate, how=:bad)
+	@test_throws String cuboid_im(ig, [0 0 0 0 0 0 0 1 1])
+	@test cuboid_im(ig, :rotate, return_params=true) isa Tuple
+
 	diam = abs.([2*ig.dx 2.7*ig.dy 3.2*ig.dz])
 	params = [1.4 -0.5 1 diam 0 0 1]
 	phantom_exact = cuboid_im(ig, params, how=:exact)
@@ -363,12 +362,17 @@ function cuboid_im_test()
 	vol_phantom2 = sum(phantom_sample[:]) * dxyz
 	isapprox(vol_phantom2, vol_true)
 
+	xrl = cuboid_im(ig, :rotate, how=:lowmem1)
+	xrs = cuboid_im(ig, :rotate, how=:sample)
+	@test xrl == xrs
+
 	# test
-	#x4 = cuboid_im(ig, :rotate, how=:exact) exact does not support rotation
+#	x4 = cuboid_im(ig, :rotate, how=:exact) exact does not support rotation
 	x3 = cuboid_im(ig, :default, how=:lowmem1)
 	x5 = cuboid_im(ig)
 	true
 end
+
 
 """
 `cuboid_im(:test)`
