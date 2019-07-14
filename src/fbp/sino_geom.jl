@@ -37,11 +37,11 @@ end
 `sino_geom_help()`
 """
 function sino_geom_help( ; io::IO = isinteractive() ? stdout : IOBuffer() )
-    print(io, "propertynames:\n")
-    print(io, propertynames(sino_geom(:par)))
+	print(io, "$(basename(@__FILE__)) propertynames:\n\t")
+	print(io, Tuple(sort([propertynames(sino_geom(:par))...])))
 
-    print(io,
-	"
+	print(io,
+	"\n
 	Derived values
 
 	sg.dim			dimensions: (nb,na)
@@ -56,6 +56,7 @@ function sino_geom_help( ; io::IO = isinteractive() ? stdout : IOBuffer() )
 	sg.xds			[nb] center of detector elements (beta=0)
 	sg.yds			[nb] ''
 	sg.grid			(rg, phigrid) [nb na] parallel-beam coordinates
+	sg.plot_grid	plot sg.grid
 
 	For mojette:
 
@@ -89,36 +90,38 @@ Using this structure facilitates "object oriented" code.
 (Use `ct_geom()` instead for 3D axial or helical cone-beam CT.)
 
 in
-* `how::Symbol`	`:fan` (fan-beam) | `:par` (parallel-beam) | `:moj` (mojette)
+- `how::Symbol`	`:fan` (fan-beam) | `:par` (parallel-beam) | `:moj` (mojette)
 		or `:test` to run a self-test
 
 options for all geometries (including parallel-beam):
-* `units::Symbol`	e.g. `:cm` or `:mm`; default: :none
-* `orbit_start`		default: 0
-* `orbit`			[degrees] default: `180` for parallel / mojette
+- `units::Symbol`	e.g. `:cm` or `:mm`; default: :none
+- `orbit_start`		default: 0
+- `orbit`			[degrees] default: `180` for parallel / mojette
 					and `360` for fan
 					can be `:short` for fan-beam short scan
-* `down::Int`		down-sampling factor, for testing
+- `down::Int`		down-sampling factor, for testing
 
-* `nb`				# radial samples cf `nr` (i.e., `ns` for `:fan`)
-* `na`				# angular samples (cf `nbeta` for `:fan`)
-* `d`				radial sample spacing; cf `dr` or `ds`; default 1
+- `nb`				# radial samples cf `nr` (i.e., `ns` for `:fan`)
+- `na`				# angular samples (cf `nbeta` for `:fan`)
+- `d`				radial sample spacing; cf `dr` or `ds`; default 1
 					for mojette this is actually `dx`
-* `offset`			cf `offset_r` `channel_offset` unitless; default 0
+- `offset`			cf `offset_r` `channel_offset` unitless; default 0
 			(relative to centerline between two central channels).
 			Use 0.25 or 1.25 for "quarter-detector offset"
-* `strip_width`		detector width; default: `d`
+- `strip_width`		detector width; default: `d`
 
 options for fan-beam
-* `source_offset`		same units as d; use with caution! default 0
+- `source_offset`		same units as d; use with caution! default 0
 fan beam distances:
-* `dsd`		cf 'dis_src_det'	default: Inf (parallel beam)
-* `dod`		cf 'dis_iso_det'	default: 0
-* `dfs`		cf 'dis_foc_src'	default: 0 (3rd generation CT arc),
-				use Inf for flat detector
+- `dsd`		cf `dis_src_det`	default: `Inf` (parallel beam)
+- `dod`		cf `dis_iso_det`	default: `0`
+- `dfs`		cf `dis_foc_src`	default: `0` (3rd generation CT arc),
+				use `Inf` for flat detector
 
 out
-* `sg::MIRT_sino_geom`	initialized structure
+- `sg::MIRT_sino_geom`	initialized structure
+
+Other options: `:test` `:help` `:plot_grids` `:show`
 
 Jeff Fessler, University of Michigan
 """
@@ -126,6 +129,11 @@ function sino_geom(how::Symbol; kwarg...)
 	if how == :test
 		@test sino_geom_test( ; kwarg...)
 		return true
+	elseif how == :help
+		sino_geom_help()
+		return nothing
+	elseif how == :plot_grids
+		return sino_geom_plot_grids()
 	elseif how == :show
 		return sino_geom_plot(sino_geom(:ge1); kwarg...)
 	elseif how == :par
@@ -422,10 +430,9 @@ function sino_geom_grid(sg::MIRT_sino_geom)
 	phi = sg.ar
 	# trick: ray_spacing aka ds comes from dx which is sg.d for mojette
 	wb = (sg.nb - 1)/2 + sg.offset
-	dt = sg.d * max(abs.(cos.(phi)), abs.(sin.(phi))) # [na]
+	dt = sg.d_ang # [na]
 	pos = ((0:(sg.nb-1)) .- wb) * dt' # [nb na]
-@show extrema(pos)
-	return (pos,  repeat(phi', sg.nb, 1))
+	return (pos, repeat(phi', sg.nb, 1))
 end
 
 
@@ -437,7 +444,7 @@ end
 # Extended properties
 
 sino_geom_fun0 = Dict([
-    (:help, sg -> sino_geom_help()),
+	(:help, sg -> sino_geom_help()),
 
 	(:dim, sg -> (sg.nb, sg.na)),
 	(:w, sg -> (sg.nb-1)/2 + sg.offset),
@@ -460,6 +467,7 @@ sino_geom_fun0 = Dict([
 	(:yds, sg -> sino_geom_yds(sg)),
 	(:dso, sg -> sg.dsd - sg.dod),
 	(:grid, sg -> sino_geom_grid(sg)),
+	(:plot_grid, sg -> sino_geom_plot_grid(sg)),
 
 	# angular dependent d for :moj
 	(:d_ang, sg -> sg.d * max.(abs.(cos.(sg.ar)), abs.(sin.(sg.ar)))),
@@ -471,8 +479,8 @@ sino_geom_fun0 = Dict([
 
 	# functions that return new geometry:
 
-    (:down, sg -> (down::Int -> downsample(sg, down))),
-    (:over, sg -> (over::Int -> sino_geom_over(sg, over))),
+	(:down, sg -> (down::Int -> downsample(sg, down))),
+	(:over, sg -> (over::Int -> sino_geom_over(sg, over))),
 
 	])
 
@@ -485,6 +493,47 @@ Base.getproperty(sg::MIRT_sino_geom, s::Symbol) =
 
 Base.propertynames(sg::MIRT_sino_geom) =
 	(fieldnames(typeof(sg))..., keys(sino_geom_fun0)...)
+
+
+"""
+`sino_geom_plot_grid()`
+scatter plot of (r,phi) sampling locations from `sg.grid`
+"""
+function sino_geom_plot_grid(sg::MIRT_sino_geom)
+	(r, phi) = sg.grid
+	dfs = sg.how == :fan ? " dfs=$(sg.dfs)" : ""
+	ylim = [min(0, rad2deg(minimum(phi))), max(360, rad2deg(maximum(phi)))]
+	scatter(r, rad2deg.(phi), label="", markersize=1, ylim = ylim,
+		title="$(sg.how)$dfs", ytick=[0,360])
+end
+
+
+"""
+`sino_geom_plot_grids()`
+scatter plot of (r,phi) sampling locations for all geometries
+"""
+function sino_geom_plot_grids( ; orbit::Real = 360, down::Integer = 30)
+	geoms = (
+		sino_geom(:par, nb = 888, na = 984, down=down, d = 0.5, orbit=orbit,
+			offset = 0.25),
+		sino_geom(:fan, nb = 888, na = 984, d = 1.0, orbit = orbit,
+			offset = 0.75, dsd = 949, dod = 408, down=down),
+		sino_geom(:fan, nb = 888, na = 984, d = 1.0, orbit = orbit,
+			offset = 0.75, dsd = 949, dod = 408, down=down,
+			dfs = Inf, source_offset = 0.7), # flat fan
+		sino_geom(:moj, nb = 888, na = 984, down=down, d = 1.0, orbit=orbit,
+			offset = 0.25),
+	)
+
+	ngeom = length(geoms)
+	pl = Array{Plot}(undef, ngeom)
+
+	for ii=1:ngeom
+		sg = geoms[ii]
+		pl[ii] = sg.plot_grid
+	end
+	plot(pl...)
+end
 
 
 """
@@ -629,6 +678,7 @@ function sino_geom_test( ; kwarg...)
 		sg.dfs
 		sg.dso
 		sg.grid
+		sg.plot_grid
 
 		sg.d_ang # angular dependent d for :moj
 
