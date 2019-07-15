@@ -172,27 +172,28 @@ end
 `rect_sino_show()`
 show examples
 """
-function rect_sino_show()
-	down = 4
-	rect = [70 20 50 30 0 1]
-#	ig = image_geom(nx=512, ny=504, fov=500)
-#	ig = ig.down(down)
-#	xtrue = rect_im(ig, rect; oversample=4)
-
-	orbit = 360
-	geoms = (
-		sino_geom(:par, nb = 888, na = 984, down=down, d = 0.5, orbit=orbit,
-			offset = 0.25),
-		sino_geom(:fan, nb = 888, na = 984, d = 1.0, orbit = orbit,
-			offset = 0.75, dsd = 949, dod = 408, down=down),
-		sino_geom(:fan, nb = 888, na = 984, d = 1.0, orbit = orbit,
-			offset = 0.75, dsd = 949, dod = 408, down=down,
-			dfs = Inf, source_offset = 0.7), # flat fan
-		sino_geom(:moj, nb = 888, na = 984, down=down, d = 0.5, orbit=orbit,
-			offset = 0.25),
+function rect_sino_show( ;
+		down::Int = 4,
+		rect::Matrix = [70 20 70 30 0 1],
+		orbit::Real = 360,
+		na::Int = 400,
+		oversample::Int = 2,
 	)
 
-	oversample = 4
+#=
+	ig = image_geom(nx=512, ny=504, fov=500)
+	ig = ig.down(down)
+	xtrue = rect_im(ig, rect; oversample=4)
+=#
+
+	arg = (na=na, down=down, orbit=orbit, offset=0.25)
+	geoms = (
+		sino_geom(:par, nb = 444, d = 1 ; arg...),
+		sino_geom(:fan, nb = 888, d = 1 ; arg..., dsd = 949, dod = 408),
+		sino_geom(:fan, nb = 888, d = 1 ; arg...,
+			dsd = 949, dod = 408, dfs = Inf), # flat fan
+		sino_geom(:moj, nb = 666, d = 1 ; arg...),
+	)
 
 	ngeom = length(geoms)
 	pl = Array{Plot}(undef, ngeom)
@@ -201,7 +202,7 @@ function rect_sino_show()
 		sg = geoms[ii]
 		sino = rect_sino(sg, rect; oversample=oversample)
 		dfs = sg.how == :fan ? " dfs=$(sg.dfs)" : ""
-		pl[ii] = jim(sino, title="$(sg.how)$dfs")
+		pl[ii] = jim(sg.r, sg.ad, sino, title="$(sg.how)$dfs")
 	end
 	plot(pl...)
 end
@@ -212,9 +213,7 @@ end
 self test
 """
 function rect_sino(test::Symbol)
-	if test == :show
-		return rect_sino_show()
-	end
+	test == :show && return rect_sino_show()
 	test != :test && throw(ArgumentError("test $test"))
 	rect_sino() # doc
 	rect_sino_test()

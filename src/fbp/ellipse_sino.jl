@@ -140,39 +140,47 @@ end
 """
 `ellipse_sino_show()`
 show examples
+
+To see more, use `MIRT.ellipse_sino_show(ip=2)`
 """
-function ellipse_sino_show()
-	down = 4
-	ell = [ 40 70 50 150 20 10 ]
+function ellipse_sino_show( ;
+		down::Int = 4,
+		ell::Matrix = [ 40 60 50 150 20 10 ],
+		orbit::Real = 360,
+		na::Int = 400,
+		oversample::Int = 2,
+		ip::Int = 1,
+	)
 
-#	ig = image_geom(nx=512, ny=504, dx=1)
-#	xtrue = ellipse_im(ig, ell; oversample=4)
+	ig = image_geom(nx=512, ny=504, dx=1, dy=1, mask=:circ)
+	ig = ig.down(down)
+	xtrue = ellipse_im(ig, ell ; oversample=2)
+	ig = image_geom(nx=ig.nx, ny=ig.ny, dx=ig.dx, dy=ig.dy, mask = xtrue .> 0)
 
-	orbit = 360
 	geoms = (
-		sino_geom(:par, nb = 888, na = 984, down=down, d = 0.5, orbit=orbit,
+		sino_geom(:par, nb = 444, na=na, down=down, d = 1, orbit=orbit,
 			offset = 0.25),
-		sino_geom(:fan, nb = 888, na = 984, d = 1.0, orbit = orbit,
+		sino_geom(:fan, nb = 888, na=na, d = 1.0, orbit=orbit,
 			offset = 0.75, dsd = 949, dod = 408, down=down),
-		sino_geom(:fan, nb = 888, na = 984, d = 1.0, orbit = orbit,
+		sino_geom(:fan, nb = 888, na=na, d = 1.0, orbit=orbit,
 			offset = 0.75, dsd = 949, dod = 408, down=down,
 			dfs = Inf, source_offset = 0.7), # flat fan
-		sino_geom(:moj, nb = 888, na = 984, down=down, d = 0.5, orbit=orbit,
+		sino_geom(:moj, nb = 630, na=na, down=down, d = 1.0, orbit=orbit,
 			offset = 0.25),
 	)
 
-	oversample = 4
-
 	ngeom = length(geoms)
-	pl = Array{Plot}(undef, ngeom)
+	pl = Array{Plot}(undef, ngeom, 2)
 
 	for ii=1:ngeom
 		sg = geoms[ii]
 		sino = ellipse_sino(sg, ell; oversample=oversample)
 		dfs = sg.how == :fan ? " dfs=$(sg.dfs)" : ""
-		pl[ii] = jim(sino, title="$(sg.how)$dfs")
+		pl[ii,1] = jim(sino, title="$(sg.how)$dfs")
+		pl[ii,2] = sg.plot(ig=ig)
 	end
-	plot(pl...)
+#	plot(pl..., layout=(2,ngeom)) # too small
+	plot(pl[:,ip]...)
 end
 
 
@@ -181,9 +189,7 @@ end
 self test
 """
 function ellipse_sino(test::Symbol)
-	if test == :show
-		return ellipse_sino_show()
-	end
+	test == :show && return ellipse_sino_show()
 	test != :test && throw(ArgumentError("test $test"))
 	ellipse_sino() # doc
 	ellipse_sino_test()
