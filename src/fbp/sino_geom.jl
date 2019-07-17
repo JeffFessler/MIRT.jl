@@ -130,8 +130,7 @@ function sino_geom(how::Symbol; kwarg...)
 		@test sino_geom_test( ; kwarg...)
 		return true
 	elseif how == :help
-		sino_geom_help()
-		return nothing
+		sino_geom_help(); return nothing
 	elseif how == :plot_grids
 		return sino_geom_plot_grids()
 	elseif how == :show
