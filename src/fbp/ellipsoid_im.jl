@@ -491,7 +491,7 @@ function ellipsoid_im_test()
 	#test different ellipses
 	ellipsoid_im(ig)
 	ellipsoid_im(ig, :zhu)
-	ellipsoid_im(ig, :kak)
+	ellipsoid_im(ig, :kak, oversample=2)
 	ellipsoid_im(ig, :spheroid, return_params=true)
 	ellipsoid_im(ig; checkfov=true)
 	ellipsoid_im(ig; showmem=true)
@@ -499,9 +499,9 @@ function ellipsoid_im_test()
 	@test_throws String ellipsoid_im(ig, :spheroid, how=:bad)
 	@test_throws String shepp_logan_3d_parameters(0, 0, 0, :bad)
 	tmp = [1, 1, 1, 0, 0, 0]
-	@test !ellipsoid_im_check_fov(2, 2, 2, [3 0 0 1 1 1 0 0 1], tmp...)
-	@test !ellipsoid_im_check_fov(2, 2, 2, [0 3 0 1 1 1 0 0 1], tmp...)
-	@test !ellipsoid_im_check_fov(2, 2, 2, [0 0 3 1 1 1 0 0 1], tmp...)
+	@test !ellipsoid_im_check_fov(2, 9, 9, [3 0 0 1 1 1 0 0 1], tmp...)
+	@test !ellipsoid_im_check_fov(9, 2, 9, [0 3 0 1 1 1 0 0 1], tmp...)
+	@test !ellipsoid_im_check_fov(9, 9, 2, [0 0 3 1 1 1 0 0 1], tmp...)
 
 	#ell1 = ellipsoid_im(ig, :zhu; how=:fast) # fast doesn't work
 	#ell2 = ellipsoid_im(ig, :zhu; how=:lowmem) # lowmem calls fast - doesn't work
