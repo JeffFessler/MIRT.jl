@@ -551,7 +551,7 @@ function sino_geom_plot(sg; ig::Union{Nothing,MIRT_image_geom}=nothing)
 	end
 	plot!([xmax, xmin, xmin, xmax, xmax],
 		[ymax, ymax, ymin, ymin, ymax], color=:green, label="")
-	plot!(xtick=round.([xmin, 0, xmax], digits=2))
+	plot!(xtick=round.([xmin, 0, xmax], digits=0))
 	plot!(ytick=round.([ymin, 0, ymax], digits=2))
 
 	t = LinRange(0, 2*pi, 1001)
@@ -573,13 +573,15 @@ function sino_geom_plot(sg; ig::Union{Nothing,MIRT_image_geom}=nothing)
 		rot = sg.ar[1]
 		rot = [cos(rot) -sin(rot); sin(rot) cos(rot)]
 		p0 = rot * [x0; y0]
-		pd = rot * [sg.xds'; sg.yds']
+		pd = rot * [sg.xds'; sg.yds'] # detector points
 
 		tmp = sg.ar .+ pi/2 # trick: angle beta defined ccw from y axis
 		scatter!([p0[1]], [p0[2]], color=:yellow, label="") # source
 		plot!(sg.dso * cos.(t), sg.dso * sin.(t), color=:cyan, label="") # source circle
-		scatter!(sg.dso * cos.(tmp), sg.dso * sin.(tmp), color=:cyan, label="") # source points
-		scatter!(pd[1,:][:], pd[2,:][:], color=:yellow, label="")
+		scatter!(sg.dso * cos.(tmp), sg.dso * sin.(tmp),
+			color=:cyan, markersize=1, label="") # source points
+		scatter!(pd[1,:][:], pd[2,:][:],
+			color=:yellow, markersize=1, label="") # detectors
 
 		plot!([pd[1,1], p0[1], pd[1,end]], [pd[2,1], p0[2], pd[2,end]],
 			color=:red, label="")
@@ -662,14 +664,16 @@ end
 `sino_geom_test()`
 """
 function sino_geom_test( ; kwarg...)
-	ig = image_geom(nx=512, fov=500)
+	down = 8
+	ig = image_geom(nx=512, fov=500).down(down)
+	ig = image_geom(nx=ig.nx, dx=ig.dx, mask=ig.circ())
 
 	sg_list = (
-		sino_geom(:par),
-		sino_geom(:moj),
-		sino_geom(:fan, orbit=:short),
-		sino_geom(:ge1, orbit_start=20, dfs=0), # arc
-		sino_geom(:ge1, orbit_start=20, dfs=Inf), # flat
+		sino_geom(:par, down=down, d=4),
+		sino_geom(:moj, down=down, d=4*sqrt(2)),
+		sino_geom(:ge1, down=down, orbit_start=20, dfs=0), # arc
+		sino_geom(:ge1, down=down, orbit_start=20, dfs=Inf), # flat
+		sino_geom(:fan, down=down, orbit=:short),
 		)
 
 	sg_list[1].help
@@ -713,7 +717,7 @@ function sino_geom_test( ; kwarg...)
 		pl[ii] = sg.plot(ig=ig)
 	end
 
-	plot(pl...)
+	plot(pl[1:4]...)
 	gui()
 
 	sg = sino_geom(:ge1, orbit=:short)
@@ -723,7 +727,9 @@ function sino_geom_test( ; kwarg...)
 	sino_geom(:help)
 	sino_geom(:plot_grids)
 
+	sino_geom(:ge1, units=:cm)
 	@test_throws String sino_geom(:badhow)
 	@test_throws String sino_geom(:ge1, dfs=-1)
+	@test_throws String sino_geom(:ge1, units=:bad)
 	true
 end
