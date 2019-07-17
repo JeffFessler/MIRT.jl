@@ -9,7 +9,7 @@ Methods related to an image geometry for image reconstruction
 export MIRT_image_geom, image_geom, cbct
 
 #using MIRT: jim, downsample2, downsample3
-using Test: @test
+using Test: @test, @test_throws
 using ImageTransformations: imresize
 
 
@@ -524,7 +524,8 @@ end
 function image_geom_test2()
 	image_geom(nx=16, dx=2, offsets=:dsp, mask=:all_but_edge)
 	@test_throws String image_geom(nx=16, dx=1, offsets=:bad)
-	@test_throws String image_geom(nx=16, dx=1, mask=:bad)
+	@test_throws String image_geom(nx=16, dx=1, mask=:bad) # mask type
+	@test_throws String image_geom(nx=16, dx=1, mask=trues(2,2)) # mask size
 	ig = image_geom(nx=16, dx=2)
 	display(ig)
 	image_geom_test2(ig)
