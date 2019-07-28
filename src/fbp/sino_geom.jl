@@ -5,6 +5,7 @@ sinogram geometry for 2D tomographic image reconstruction
 =#
 
 export MIRT_sino_geom, sino_geom
+export sino_geom_help, sino_geom_plot_grids, sino_geom_show, sino_geom_test
 
 # using MIRT: jim, image_geom, MIRT_image_geom
 using Plots: Plot, plot!, plot, scatter!, gui
@@ -91,7 +92,6 @@ Using this structure facilitates "object oriented" code.
 
 in
 - `how::Symbol`	`:fan` (fan-beam) | `:par` (parallel-beam) | `:moj` (mojette)
-		or `:test` to run a self-test
 
 options for all geometries (including parallel-beam):
 - `units::Symbol`	e.g. `:cm` or `:mm`; default: :none
@@ -121,21 +121,16 @@ fan beam distances:
 out
 - `sg::MIRT_sino_geom`	initialized structure
 
-Other options: `:test` `:help` `:plot_grids` `:show`
+See also
+- `sino_geom_help()` help on methods
+- `sino_geom_plot_grids()` show sampling
+- `sino_geom_show()` show the geometries
+- `sino_geom_test()` self test
 
 Jeff Fessler, University of Michigan
 """
 function sino_geom(how::Symbol; kwarg...)
-	if how == :test
-		@test sino_geom_test( ; kwarg...)
-		return true
-	elseif how == :help
-		sino_geom_help(); return nothing
-	elseif how == :plot_grids
-		return sino_geom_plot_grids()
-	elseif how == :show
-		return sino_geom_show( ; kwarg...)
-	elseif how == :par
+	if how == :par
 		sg = sino_geom_par( ; kwarg...)
 	elseif how == :fan
 		sg = sino_geom_fan( ; kwarg...)
@@ -661,8 +656,9 @@ end
 
 """
 `sino_geom_test()`
+self test
 """
-function sino_geom_test( ; kwarg...)
+function sino_geom_test()
 	down = 8
 	ig = image_geom(nx=512, fov=500).down(down)
 	ig = image_geom(nx=ig.nx, dx=ig.dx, mask=ig.circ())
@@ -684,8 +680,8 @@ function sino_geom_test( ; kwarg...)
 
 		sg.ad[2]
 		sg.rfov
-		sd = sg.down(2)
-		su = sg.over(2)
+		@inferred sg.down(2)
+		@inferred sg.over(2)
 		sg.dim
 		sg.w
 		sg.ones
@@ -722,11 +718,11 @@ function sino_geom_test( ; kwarg...)
 	sg = sino_geom(:ge1, orbit=:short)
 	sino_geom_gamma_dfs(sg)
 	display(sg)
-	sino_geom(:show)
-	sino_geom(:help)
-	sino_geom(:plot_grids)
+	sino_geom_help()
+	sino_geom_plot_grids()
+	sino_geom_show()
 
-	sino_geom(:ge1, units=:cm)
+	@inferred sino_geom(:ge1, units=:cm)
 	@test_throws String sino_geom(:badhow)
 	@test_throws String sino_geom(:ge1, dfs=-1)
 	@test_throws String sino_geom(:ge1, units=:bad)
