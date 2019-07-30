@@ -8,7 +8,9 @@ to do some other way.
 2019-06-18, Jeff Fessler, University of Michigan
 =#
 
-using Test: @test
+export ndgrid
+
+using Test: @test, @inferred
 
 
 """
@@ -45,6 +47,7 @@ self test
 function ndgrid(test::Symbol)
 	test != :test && throw(ArgumentError("test $test"))
 
+	@inferred ndgrid(1:3, 2:4)
 	@test ndgrid(1:3, 2:4) == ([1 1 1; 2 2 2; 3 3 3], [2 3 4; 2 3 4; 2 3 4])
 	@test size(ndgrid(1:3, 4:5, 6:9)[3]) == (3,2,4)
 	true
