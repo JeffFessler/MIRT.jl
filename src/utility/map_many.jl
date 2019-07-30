@@ -3,6 +3,8 @@ map_many.jl
 2019-06-13, Jeff Fessler, University of Michigan
 =#
 
+export map_many
+
 using Test: @test, @inferred
 
 """
