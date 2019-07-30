@@ -1,7 +1,9 @@
-# map_many.jl
-# 2019-06-13, Jeff Fessler, University of Michigan
+#=
+map_many.jl
+2019-06-13, Jeff Fessler, University of Michigan
+=#
 
-using Test
+using Test: @test, @inferred
 
 """
 `y = map_many(fun::Function, x::AbstractArray{<:Any}, idim::Dims)`
@@ -10,10 +12,11 @@ apply a function `fun` to leading slices of input `x`;
 cousin of `mapslices`
 
 in
-* `fun::Function` maps input of size `idim` to output of some size `odim`
-* `x` [idim ldim]
+- `fun::Function` maps input of size `idim` to output of some size `odim`
+- `x [idim ldim]`
+
 out
-* `y` [odim ldim]
+- `y [odim ldim]`
 
 Example: if `fun` maps array of size (1,2) to array of size (3,4,5)
 and if input `x` has size (1,2,7,8)
@@ -55,6 +58,7 @@ function map_many(test::Symbol)
 	x1 = ones(N)
 	x = cat(dims=3, x1, 2x1)
 
+#	@inferred map_many(fun, x, N) # fails because fun could be anything!
 	@test map_many(fun, x, N) == cat(dims=4, fun(x1), fun(2x1))
 	true
 end
