@@ -1,12 +1,14 @@
-#= mask.jl
+#=
+mask.jl
 Methods related to a image support mask:
 	embed, maskit, mask_or, mask_outline
 2019-06-22 Jeff Fessler, University of Michigan
 =#
 
-using Test
+export embed, mask_or, mask_outline, maskit, mask_test
+
+using Test: @test, @inferred
 using ImageFiltering: imfilter, centered
-#using DSP: conv2
 #using SparseArrays: sparse, findnz, AbstractSparseVector
 
 
@@ -29,8 +31,10 @@ self test
 function mask_or(test::Symbol)
 	test != :test && throw(ArgumentError("test $test"))
 	mask2 = trues(3,4)
+	@inferred mask_or(mask2)
 	@test mask_or(mask2) == mask2
 	mask3 = trues(3,4,5)
+	@inferred mask_or(mask3)
 	@test mask_or(mask3) == trues(3,4)
 	true
 end
@@ -43,7 +47,6 @@ return outer boundary of 2D mask (or mask_or for 3D)
 function mask_outline(mask::AbstractArray{Bool})
 	mask2 = mask_or(mask)
 	tmp = imfilter(mask2, centered(ones(Int32,3,3))) # dilate
-#	tmp = conv2(Float32.(mask2), ones(Float32,3,3))
 #	tmp = tmp[2:end-1,2:end-1] # 'same'
 	return (tmp .> 1) .& (.! mask2)
 end
@@ -56,6 +59,7 @@ self test
 function mask_outline(test::Symbol)
 	test != :test && throw(ArgumentError("test $test"))
 	mask2 = trues(3,4)
+	@inferred mask_outline(mask2)
 	@test mask_outline(mask2) == falses(3,4)
 	true
 end
@@ -95,6 +99,7 @@ end
 function embed(test::Symbol)
 	test != :test && throw(ArgumentError("test $test"))
 	mask = [false true true; true false false]
+	@inferred embed(1:3,mask)
 	@test embed(1:3,mask) == [0 2 3; 1 0 0]
 #	@test embed(sparse(1:3),mask) == sparse([0 2 3; 1 0 0]) # later
 	true
@@ -126,14 +131,16 @@ end
 function maskit(test::Symbol)
 	test != :test && throw(ArgumentError("test $test"))
 	mask = [false true true; true false false]
+	@inferred maskit([7 2 3; 1 7 7], mask)
 	@test maskit([7 2 3; 1 7 7], mask) == [1,2,3]
 	true
 end
 
 
-#=
-@test mask_or(:test)
-@test mask_outline(:test)
-@test embed(:test)
-@test maskit(:test)
-=#
+function mask_test()
+	@test mask_or(:test)
+	@test mask_outline(:test)
+	@test embed(:test)
+	@test maskit(:test)
+	true
+end
