@@ -9,7 +9,8 @@ using Base: show_unquoted
 
 
 function shows_string(file::String, line::String, varname::String, var::Any)
-	return "$file: $line $varname: $(typeof(var)) $(size(var))\n"
+	size_str = typeof(var) <: Tuple ? "($(length(var)),)" : size(var)
+	return "$file: $line $varname: $(typeof(var)) $(size_str)\n"
 end
 
 # print only if the session is interactive
