@@ -1,6 +1,10 @@
-# ogm_ls.jl
-# OGM with a MM line search
-# 2019-03-16, Jeff Fessler, University of Michigan
+#=
+ogm_ls.jl
+OGM with a MM line search
+2019-03-16, Jeff Fessler, University of Michigan
+=#
+
+export ogm_ls
 
 using LinearAlgebra: I, norm
 
@@ -18,31 +22,32 @@ where ``C_j(u)`` is diagonal matrix of curvatures.
 This OGM method uses a majorize-minimize (MM) line search.
 
 in
-* `B`		array of ``J`` blocks ``B_1,...,B_J``
-* `gradf`	array of ``J`` functions return gradients of ``f_1,...,f_J``
-* `curvf`	array of ``J`` functions `z -> curv(z)` that return a scalar
+- `B`		array of ``J`` blocks ``B_1,...,B_J``
+- `gradf`	array of ``J`` functions return gradients of ``f_1,...,f_J``
+- `curvf`	array of ``J`` functions `z -> curv(z)` that return a scalar
 		or a vector of curvature values for each element of ``z``
-* `x0`	initial guess; need `length(x) == size(B[j],2)` for ``j=1...J``
+- `x0`	initial guess; need `length(x) == size(B[j],2)` for ``j=1...J``
 
 option
-* `niter`	# number of outer iterations; default 50
-* `ninner`	# number of inner iterations of MM line search; default 5
-* `fun`		User-defined function to be evaluated with two arguments (x,iter).
+- `niter`	# number of outer iterations; default 50
+- `ninner`	# number of inner iterations of MM line search; default 5
+- `fun`		User-defined function to be evaluated with two arguments (x,iter).
 			It is evaluated at (x0,0) and then after each iteration.
 
 output
-* `x`		final iterate
-* `out`		`[niter+1] (fun(x0,0), fun(x1,1), ..., fun(x_niter,niter))`
+- `x`		final iterate
+- `out`		`[niter+1] (fun(x0,0), fun(x1,1), ..., fun(x_niter,niter))`
 	(all 0 by default). This is an array of length `niter+1`
 """
 function ogm_ls(
-	B::AbstractVector{<:Any},
-	gradf::AbstractVector{<:Function},
-	curvf::AbstractVector{<:Function},
-	x0::AbstractVector{<:Number};
-	niter::Integer=50,
-	ninner::Integer=5,
-	fun::Function = (x,iter) -> 0)
+		B::AbstractVector{<:Any},
+		gradf::AbstractVector{<:Function},
+		curvf::AbstractVector{<:Function},
+		x0::AbstractVector{<:Number} ;
+		niter::Integer = 50,
+		ninner::Integer = 5,
+		fun::Function = (x,iter) -> 0,
+	)
 
 out = Array{Any}(undef, niter+1)
 out[1] = fun(x0, 0)
@@ -135,10 +140,10 @@ and that has a quadratic majorizer with diagonal Hessian given by
 Typically `curv = (x) -> L` where `L` is the Lipschitz constant of `grad`
 """
 function ogm_ls(
-	grad::Function,
-	curv::Function,
-	x0::AbstractVector{<:Number};
-	kwargs...)
+		grad::Function,
+		curv::Function,
+		x0::AbstractVector{<:Number} ;
+		kwargs...)
 
 	return ogm_ls([I], [grad], [curv], x0; kwargs...)
 end
@@ -193,8 +198,7 @@ end
 
 """
 `ogm_ls(:test)`
-
-run test
+self test
 """
 function ogm_ls(test::Symbol)
 	test != :test && throw("test")

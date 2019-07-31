@@ -1,6 +1,6 @@
 # algorithm/z-test.jl
 
-using Test
+using Test: @test
 
 @test ncg(:test)
 @test ogm_ls(:test)
