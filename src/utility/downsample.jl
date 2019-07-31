@@ -104,6 +104,7 @@ function downsample1_test()
 	x = 2:2:48
 	y = @inferred downsample1(x, 2)
 	@test y == 3:4:47
+	@inferred downsample1(1:5, 2, warn=false) # warn
 	true
 end
 
