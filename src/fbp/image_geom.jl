@@ -7,9 +7,11 @@ Methods related to an image geometry for image reconstruction
 =#
 
 export MIRT_image_geom, image_geom, cbct
+export image_geom_circle
+export image_geom_ellipse
 
 #using MIRT: jim, downsample2, downsample3
-using Test: @test, @test_throws
+using Test: @test, @test_throws, @inferred
 using ImageTransformations: imresize
 
 
@@ -338,11 +340,23 @@ function image_geom_over(ig::MIRT_image_geom, over::Integer)
 end
 
 
+# ellipse that just inscribes the rectangle
+# but keeping a 1 pixel border due to ASPIRE regularization restriction
+function image_geom_ellipse(nx::Int, ny::Int, dx::Real, dy::Real ;
+		rx::Real = min(abs((nx/2-1)*dx), abs((ny/2-1)*dy)),
+		ry::Real = min(abs((nx/2-1)*dx), abs((ny/2-1)*dy)),
+		cx::Real = 0, cy::Real = 0, over::Int=2)
+	ig = image_geom(nx=nx, ny=ny, dx=dx, dy=dy)
+	circ = ellipse_im(ig, [cx cy rx ry 0 1], oversample=over) .> 0
+	return circ
+end
+
+
 # default is a circle that just inscribes the square
 # but keeping a 1 pixel border due to ASPIRE regularization restriction
-function image_geom_circle(nx::Int, ny::Int, dx::Real, dy::Real;
-	rx::Real = min(abs((nx/2-1)*dx), abs((ny/2-1)*dy)),
-	ry::Real = rx, cx::Real = 0, cy::Real = 0, nz::Int=0, over::Int=2)
+function image_geom_circle(nx::Int, ny::Int, dx::Real, dy::Real ;
+		rx::Real = min(abs((nx/2-1)*dx), abs((ny/2-1)*dy)),
+		ry::Real = rx, cx::Real = 0, cy::Real = 0, nz::Int=0, over::Int=2)
 	ig = image_geom(nx=nx, ny=ny, dx=dx, dy=dy)
 	circ = ellipse_im(ig, [cx cy rx ry 0 1], oversample=over) .> 0
 	if nz > 0
@@ -353,7 +367,7 @@ end
 
 
 """
-`out = image_geom_add_unitv(z; j=?, i=?, c=?)`
+`out = image_geom_add_unitv(z::AbstractArray ; j=?, i=?, c=?)`
 
 add a unit vector to an initial array `z` (typically of zeros)
 
@@ -364,20 +378,22 @@ add a unit vector to an initial array `z` (typically of zeros)
 
 default with no arguments gives unit vector at center `c=[0,0]`
 """
-function image_geom_add_unitv(z; # starts with zeros()
+function image_geom_add_unitv(
+		z::AbstractArray{T} ; # starts with zeros()
 		j::Integer=0,
-		i::AbstractVector{<:Int} = zeros(Int, ndims(z)),
-		c::AbstractVector{<:Int} = zeros(Int, ndims(z))
-		)
+		i::AbstractVector{<:Integer} = zeros(Int, ndims(z)),
+		c::AbstractVector{<:Integer} = zeros(Int, ndims(z))
+		) where {T <: Number} 
+
 	out = copy(z)
 
 	if j > 0 && all(i .== 0)
-		out[j] += 1
+		out[j] += one(T)
 	elseif j == 0 && any(i .> 0)
-		out[i...] += 1
+		out[i...] += one(T)
 	else
 		tmp = c .+ Int.(floor.(size(out) ./ 2)) .+ 1
-		out[tmp...] += 1
+		out[tmp...] += one(T)
 	end
 
 	return out
@@ -385,10 +401,10 @@ end
 
 
 """
-`image_geom_add_unitv(:test)`
+`image_geom_add_unitv_test()`
 """
-function image_geom_add_unitv(test::Symbol)
-	test != :test && throw(ArgumentError("test $test"))
+function image_geom_add_unitv_test()
+#	test != :test && throw(ArgumentError("test $test"))
 	image_geom_add_unitv(zeros(3,4), j=2)
 	image_geom_add_unitv(zeros(3,4), i=[2,3])
 	image_geom_add_unitv(zeros(3,4))
@@ -467,7 +483,7 @@ image_geom_fun0 = Dict([
 	(:shape, ig -> (x::AbstractArray{<:Number} -> reshape(x, ig.dim))),
 	(:unitv, ig -> ((;kwargs...) -> image_geom_add_unitv(ig.zeros; kwargs...))),
 	(:circ, ig -> ((;kwargs...) ->
-		image_geom_circle(ig.nx,ig.ny,ig.dx,ig.dy,nz=ig.nz; kwargs...))),
+		image_geom_circle(ig.nx, ig.ny, ig.dx, ig.dy, nz=ig.nz; kwargs...))),
 
 	# functions that return new geometry:
 
@@ -513,16 +529,23 @@ function image_geom_test2(ig::MIRT_image_geom)
 	ig.unitv(j=4)
 	ig.unitv(i=ones(Int, length(ig.dim)))
 	ig.unitv(c=zeros(Int, length(ig.dim)))
-	ig.unitv()
+#= todo-i: why do these fail?
+	@inferred image_geom_ellipse(8, 10, 1, 2)
+	@inferred ig.circ()
+	@inferred ig.plot()
+	@inferred ig.unitv()
+=#
 	ig.circ()
 	ig.plot()
-	ig.down(2)
-	ig.over(2)
+	ig.unitv()
+	@inferred ig.down(2)
+	@inferred ig.over(2)
+	image_geom_ellipse(8, 10, 1, 2)
 	true
 end
 
 function image_geom_test2()
-	image_geom(nx=16, dx=2, offsets=:dsp, mask=:all_but_edge)
+	@inferred image_geom(nx=16, dx=2, offsets=:dsp, mask=:all_but_edge)
 	@test_throws String image_geom(nx=16, dx=1, offsets=:bad)
 	@test_throws String image_geom(nx=16, dx=1, mask=:bad) # mask type
 	@test_throws String image_geom(nx=16, dx=1, mask=trues(2,2)) # mask size
@@ -542,13 +565,13 @@ function image_geom_test3(ig::MIRT_image_geom)
 	ig.wz
 	ig.zg
 	ig.mask_or
-	ig.expand_nz(2)
-	cbct(ig)
+	@inferred ig.expand_nz(2)
+	@inferred cbct(ig)
 	true
 end
 
 function image_geom_test3()
-	ig = image_geom(nx=16, nz=4, dx=2, zfov=1)
+	@inferred image_geom(nx=16, nz=4, dx=2, zfov=1)
 	ig = image_geom(nx=16, nz=4, dx=2, dz=3)
 	image_geom_test3(ig)
 	true
@@ -565,6 +588,7 @@ function image_geom(test::Symbol)
 		return true
 	end
 	test != :test && throw(ArgumentError("test $test"))
+	@test image_geom_add_unitv_test()
 	@test _down_round(4, 3, 2)[1] == 2
 	@test image_geom_test2()
 	@test image_geom_test3()
