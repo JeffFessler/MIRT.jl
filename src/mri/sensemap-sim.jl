@@ -1,11 +1,15 @@
-# sensemap-sim.jl
-# Simulate coil sensitivity maps
-# 2019-06-18, Jeff Fessler, University of Michigan
+#=
+sensemap-sim.jl
+Simulate coil sensitivity maps
+2019-06-18, Jeff Fessler, University of Michigan
+=#
+
+export ir_mri_sensemap_sim
 
 #using MIRT: jim, image_geom
 
 using Elliptic: ellipke
-using Test: @test
+using Test: @test, @inferred
 import Plots # Plot
 using Plots: Plot, plot, plot!, gui, contour!, scatter!, quiver, quiver!,
 		clibrary, Arrow
@@ -23,35 +27,35 @@ but does not model coupling between coils,
 so most likely it is an approximation at best.
 
 option
-* `dims::Dims`		image size; default (64, 64)
-* `dx::Real`		pixel/voxel dimension; default: 3
-* `dy::Real`		pixel/voxel dimension; default: `dx`
-* `dz::Real`		""
-* `ncoil::Int`		# of coils total; default 4
-* `nring::Int`		# of rings of coils; default 1
-* `rcoil::Real`		coil radius; default `dx * nx / 2 * 0.50`
-* `dz_coil`			ring spacing in z; default `nz*dz/nring`
+- `dims::Dims`		image size; default (64, 64)
+- `dx::Real`		pixel/voxel dimension; default: 3
+- `dy::Real`		pixel/voxel dimension; default: `dx`
+- `dz::Real`		""
+- `ncoil::Int`		# of coils total; default 4
+- `nring::Int`		# of rings of coils; default 1
+- `rcoil::Real`		coil radius; default `dx * nx / 2 * 0.50`
+- `dz_coil`			ring spacing in z; default `nz*dz/nring`
 			(3D geometry is a cylinder)
-* `coil_distance::Real`		distance of coil center from isocenter
+- `coil_distance::Real`		distance of coil center from isocenter
 	for central ring of coils as a multiple of FOVx,
 	where `FOVx=nx*dx`; default 1.2
-* `orbit::Real`			default 360 [degrees]
-* `orbit_start::Union{Real,AbstractVector{<:Real}} = 0` scalar or `nring` [degrees]
-* `scale::Symbol`
+- `orbit::Real`			default 360 [degrees]
+- `orbit_start::Union{Real,AbstractVector{<:Real}} = 0` scalar or `nring` [degrees]
+- `scale::Symbol`
   + `:none` (default)
   +	`ssos_center` make SSoS of center = 1
 
 out
-* `smap	[dims ncoil]`	simulated sensitivity maps (complex!)
-* `info::NamedTuple`	geometry information for plots
+- `smap	[dims ncoil]`	simulated sensitivity maps (complex!)
+- `info::NamedTuple`	geometry information for plots
 
 All length parameters must have same units (e.g., mm or cm)
 
 Matlab notes:
-* 2005-6-20, Jeff Fessler and Amanda Funai, University of Michigan
-* 2014-08-19 JF more testing, verifying phase is correct
-* 2014-09-09 modified for 3D by Mai Le
-* 2016-05-03 JF fixes 
+- 2005-6-20, Jeff Fessler and Amanda Funai, University of Michigan
+- 2014-08-19 JF more testing, verifying phase is correct
+- 2014-09-09 modified for 3D by Mai Le
+- 2016-05-03 JF fixes
 """
 function ir_mri_sensemap_sim(;
 		dims::Dims = (64,64), # 2D default
@@ -280,8 +284,8 @@ function ir_mri_sensemap_sim_show2(smap, x, y, dx, dy, nlist, plist, rlist)
 		plot!(p, xlim=[-1,1]*1.1*xmax, xtick=(-1:1) * nx/2 * dx)
 		plot!(p, ylim=[-1,1]*1.1*xmax, ytick=(-1:1) * nx/2 * dy)
 
-	 	scatter!(p, [0], [0], marker=:o, label="", color=:green) # center
-	 	scatter!(p, plist[:,:,1][:], plist[:,:,2][:],
+		scatter!(p, [0], [0], marker=:o, label="", color=:green) # center
+		scatter!(p, plist[:,:,1][:], plist[:,:,2][:],
 			marker=:o, label="", color=:blue) # coil location
 		xdir = nlist[ic,1,2]
 		ydir = nlist[ic,1,1]
@@ -411,9 +415,9 @@ end
 show ellipke
 """
 function ir_mri_sensemap_sim_test0()
-	ir_mri_smap_r.(5e-7, 0.4)
+	@inferred ir_mri_smap_r(5e-7, 0.4)
 	m = LinRange(0,1,101)
-	(k,e) = ellipke_(m)
+	(k,e) = @inferred ellipke_(m)
 	plot(m, k, label="k"); plot!(m, e, label="e")
 	plot!(yaxis=[0,3*pi/2])
 	plot!(ytick=((0:3)*pi/2, ["0", "\\pi/2", "\\pi", "3\\pi/2"]))
@@ -478,7 +482,8 @@ function ir_mri_sensemap_sim_test2( ; chat::Bool=true)
 	@test_throws String ir_mri_sensemap_sim(scale=:bug)
 	@test_throws String ir_mri_sensemap_sim(nring=2, orbit_start = [1,2,3])
 
-	(smap,t) = ir_mri_sensemap_sim(dims=(32,32), scale=:ssos_center, chat=chat)
+	(smap,t) = #@inferred # todo-i fails?
+		ir_mri_sensemap_sim(dims=(32,32), scale=:ssos_center, chat=chat)
 
 	if true # check rotational symmetry in 4-coil case
 		for ic=2:4
@@ -491,7 +496,11 @@ function ir_mri_sensemap_sim_test2( ; chat::Bool=true)
 		end
 	end
 
-	ir_mri_sensemap_sim_show2(smap,
+tmp = ir_mri_sensemap_sim_show2(smap,
+	t.x, t.y, t.dx, t.dy, t.nlist, t.plist, t.rlist)
+@show typeof(tmp)
+
+	return ir_mri_sensemap_sim_show2(smap,
 		t.x, t.y, t.dx, t.dy, t.nlist, t.plist, t.rlist)
 end
 
@@ -506,7 +515,8 @@ function ir_mri_sensemap_sim_test3(;chat::Bool=false)
 	ig = image_geom(nx=16, ny=14, nz=10, fov=200, dz=20, mask=:circ) # 20cm fov
 #	ig = image_geom(nx=72, ny=48, nz=12, fov=22, zfov=10) % michelle
 
-	(smap,t) = ir_mri_sensemap_sim(dims=(ig.nx, ig.ny, ig.nz),
+	(smap,t) = #@inferred # todo-i fails
+		ir_mri_sensemap_sim(dims=(ig.nx, ig.ny, ig.nz),
 			dx=ig.dx, dz=ig.dz,
 			orbit_start = 1*[0,45,0],
 			rcoil=70, nring=nring, ncoil=ncoil, chat=chat)
