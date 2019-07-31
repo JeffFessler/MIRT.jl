@@ -13,4 +13,4 @@ using Test: @test
 @test rect_im(:test)
 @test rect_sino(:test)
 @test rotate2d(:test)
-@test sino_geom(:test)
+@test sino_geom_test()
