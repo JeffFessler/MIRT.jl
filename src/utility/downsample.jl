@@ -37,9 +37,7 @@ function downsample_dim1(x::AbstractArray{<:Number}, down::Integer
 	x = reshape(x, dim1, :) # [n1 *Nd]
 	m1 = Int(floor(dim1 / down))
 	if m1 * down < dim1
-		if warn
-			@warn("truncating input size $dim1 to $(m1 * down)")
-		end
+		warn && @warn("truncating input size $dim1 to $(m1 * down)")
 		x = x[1:(m1*down),:]
 	end
 	y = reshape(x, down, :)
@@ -139,9 +137,7 @@ function downsample2(x::AbstractMatrix{<:Number},
 	idim = size(x)
 	odim = floor.(Int, idim ./ down)
 
-	if warn
-		any(odim .* down .!= idim) && @warn("truncating to $odim")
-	end
+	warn && any(odim .* down .!= idim) && @warn("truncating to $odim")
 
 #	y = similar(x, odim) # fails!?
 	y = Array{T}(undef, odim[1], odim[2])
@@ -233,9 +229,7 @@ function downsample3(x::AbstractArray{<:Number,3},
 	idim = size(x)
 	odim = floor.(Int, idim ./ down)
 
-	if warn
-		any(odim .* down .!= idim) && @warn("truncating to $odim")
-	end
+	warn && any(odim .* down .!= idim) && @warn("truncating to $odim")
 
 	return downsample3_perm(x, Tuple(down)) # because it is faster
 end
