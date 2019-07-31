@@ -3,15 +3,18 @@ ellipse_im.jl
 Copyright 2019-03-05, Jeff Fessler, University of Michigan
 =#
 
-export ellipse_im
+export ellipse_im, ellipse_im_params
+#export ellipse_im_aspire
 
 # using MIRT: image_geom, disk_phantom_params, downsample2, rotate2d
 using Plots: plot
+using Printf: @sprintf
+using Test: @test, @test_throws, @inferred
 
 
 """
-`phantom = ellipse_im(ig, params;
-	rot=0, oversample=1, hu_scale=1, replace=false, return_params=false)`
+`phantom = ellipse_im(ig, params ;
+	rot=0, oversample=1, hu_scale=1, replace=false)`
 
 Generate ellipse phantom image from parameters:
 
@@ -27,23 +30,21 @@ in
 - `hu_scale`	use 1000 to scale shepp-logan to HU
 - `replace`		replace ellipse values if true, else add
 - `how`			`:fast` is the only option
-- `return_params` if true return (phantom, params)
 
 out
 - `phantom`		[nx ny]	image (Float32)
-- `params`		[ne 6] parameters (only if return_params=true)
 
 note: `op ellipse` in aspire with `nsub=3` is `oversample=4 = 2^(3-1)` here
 
 """
 function ellipse_im(ig::MIRT_image_geom,
-		params::AbstractArray{<:Real,2};
+		params::AbstractMatrix{<:Real} ;
 		rot::Real = 0,
 		oversample::Integer = 1,
 		hu_scale::Real = 1,
 		replace::Bool = false,
 		how::Symbol = :fast, # todo
-		return_params::Bool = false)
+	)
 
 	if size(params,2) != 6
 		throw("bad ellipse parameter vector size")
@@ -74,11 +75,6 @@ function ellipse_im(ig::MIRT_image_geom,
 
 	if oversample > 1
 		phantom = downsample2(phantom, oversample)
-		phantom = collect(phantom) # avoid adjoint type
-	end
-
-	if return_params
-		return (phantom, params)
 	end
 
 	return phantom
@@ -143,7 +139,7 @@ phantom = downsample2(phantom, over)
 `phantom = ellipse_im_fast()`
 """
 function ellipse_im_fast(nx, ny, params_in, dx, dy,
-	offset_x, offset_y, rot, over, replace)
+		offset_x, offset_y, rot, over, replace)
 
 	params = copy(params_in)
 
@@ -171,8 +167,8 @@ function ellipse_im_fast(nx, ny, params_in, dx, dy,
 	for ie = 1:size(params,1)
 
 		ell = Float32.(params[ie, :])
-		cx = ell[1];	rx = ell[3]
-		cy = ell[2];	ry = ell[4]
+		cx = ell[1]; rx = ell[3]
+		cy = ell[2]; ry = ell[4]
 		theta = ell[5] * Float32(pi/180)
 		value = Float32(ell[6])
 
@@ -195,96 +191,108 @@ function ellipse_im_fast(nx, ny, params_in, dx, dy,
 
 	end # ie loop
 
+#@show typeof(phantom)
 	return phantom
 end # ellipse_im_fast()
 
 
 """
-`phantom = ellipse_im(nx, dx, params; kwarg...)`
+`phantom = ellipse_im(nx, dx, params ; kwarg...)`
 
 square image of size `nx` by `nx`,
 specifying pixel size `dx` and ellipse `params`
 """
-function ellipse_im(nx::Integer, dx::Real, params; kwarg...)
+function ellipse_im(nx::Integer, dx::Real, params ; kwarg...)
 	ig = image_geom(nx=nx, dx=1)
-	return ellipse_im(ig, params; kwarg...)
+	return ellipse_im(ig, params ; kwarg...)
 end
 
 
 """
-`phantom = ellipse_im(nx::Integer, params; kwarg...)`
+`phantom = ellipse_im(nx::Integer, params ; kwarg...)`
 
 square image of size `nx` by `nx` with
 pixel size `dx=1` and ellipse `params`
 """
-function ellipse_im(nx::Integer, params; kwarg...)
-	return ellipse_im(nx, 1., params; kwarg...)
+function ellipse_im(nx::Integer, params ; kwarg...)
+	return ellipse_im(nx, 1., params ; kwarg...)
 end
 
 
 """
-`phantom = ellipse_im(nx::Integer; ny::Integer=nx, dx::Real=1, kwarg...)`
+`phantom = ellipse_im(nx::Integer ; ny::Integer=nx, dx::Real=1, kwarg...)`
 
 image of size `nx` by `ny` (default `nx`) with specified `dx` (default 1),
 defaults to `:shepplogan_emis`
 """
-function ellipse_im(nx::Integer; ny::Integer=nx, dx::Real=1, kwarg...)
+function ellipse_im(nx::Integer ; ny::Integer=nx, dx::Real=1, kwarg...)
 	ig = image_geom(nx=nx, ny=ny, dx=dx)
-	return ellipse_im(ig, :shepplogan_emis; kwarg...)
+	return ellipse_im(ig, :shepplogan_emis ; kwarg...)
 end
 
 
 """
-`phantom = ellipse_im(nx::Integer, ny::Integer; kwarg...)`
+`phantom = ellipse_im(nx::Integer, ny::Integer ; kwarg...)`
 
 `:shepplogan_emis` of size `nx` by `ny`
 """
-function ellipse_im(nx::Integer, ny::Integer; kwarg...)
-	return ellipse_im(nx, ny=ny, dx=1.; kwarg...)
+function ellipse_im(nx::Integer, ny::Integer ; kwarg...)
+	return ellipse_im(nx, ny=ny, dx=1. ; kwarg...)
 end
 
 
 """
-`phantom = ellipse_im(ig, code, kwarg...)`
+`phantom = ellipse_im(ig, code ; kwarg...)`
 
 `code = :shepplogan | :shepplogan_emis | :shepplogan_brainweb | :southpark`
 """
-function ellipse_im(ig::MIRT_image_geom, params::Symbol; kwarg...)
+function ellipse_im(ig::MIRT_image_geom, params::Symbol ; kwarg...)
+	params = ellipse_im_params(ig, params)
+	return ellipse_im(ig, params ; kwarg...)
+end
+
+
+"""
+`phantom = ellipse_im(ig ; kwarg...)`
+
+`:shepplogan` (default) for given image geometry `ig`
+"""
+function ellipse_im(ig::MIRT_image_geom ; kwarg...)
+	return ellipse_im(ig, :shepplogan; kwarg...)
+end
+
+
+"""
+`params = ellipse_im_params(ig::MIRT_image_geom, params::Symbol)`
+
+`code = :shepplogan | :shepplogan_emis | :shepplogan_brainweb | :southpark`
+"""
+function ellipse_im_params(ig::MIRT_image_geom, params::Symbol)
 	if params == :disks
 		params = disk_phantom_params(fov=ig.fovs[1])
-	elseif params == :shepplogan
+	elseif params == :shepplogan || params == :kak
 		params = shepp_logan_parameters(ig.fovs..., case=:kak)
-	elseif params == :shepplogan_emis
+	elseif params == :shepplogan_emis || params == :emis
 		params = shepp_logan_parameters(ig.fovs..., case=:emis)
-	elseif params == :shepplogan_brainweb
+	elseif params == :shepplogan_brainweb || params == :brainweb
 		params = shepp_logan_parameters(ig.fovs..., case=:brainweb)
 	elseif params == :southpark
 		params = south_park_parameters(fov=ig.fovs[1])
 	else
 		throw("bad phantom symbol $params")
 	end
-	return ellipse_im(ig, params; kwarg...)
+	return params
 end
 
 
 """
-`phantom = ellipse_im(ig; kwarg...)`
-
-`:shepplogan` (default) for given image geometry `ig`
-"""
-function ellipse_im(ig::MIRT_image_geom; kwarg...)
-	return ellipse_im(ig, :shepplogan; kwarg...)
-end
-
-
-"""
-`params = shepp_logan_parameters(xfov, yfov)`
+`params = shepp_logan_parameters(xfov, yfov ; case::Symbol)`
 
 parameters from Kak and Slaney text, p. 255
 
 the first four columns are unitless "fractions of field of view"
 """
-function shepp_logan_parameters(xfov::Real, yfov::Real; case::Symbol=:kak)
+function shepp_logan_parameters(xfov::Real, yfov::Real ; case::Symbol=:kak)
 	params = [
 	0		0		0.92	0.69	90	2
 	0		-0.0184	0.874	0.6624	90	-0.98
@@ -308,14 +316,14 @@ function shepp_logan_parameters(xfov::Real, yfov::Real; case::Symbol=:kak)
 		throw("bad phantom case $case")
 	end
 
-	return params
+	return Float32.(params)
 end
 
 
 """
-`param = south_park_parameters(;fov::Real = 100)`
+`param = south_park_parameters( ; fov::Real = 100)`
 """
-function south_park_parameters(;fov::Real = 100)
+function south_park_parameters( ; fov::Real = 100)
 	xell = [
 		0. 0 85 115 0 100
 		0 -60 30 20 0 -80 # mouth
@@ -325,7 +333,7 @@ function south_park_parameters(;fov::Real = 100)
 		-15 25 7 7 0 -100
 		0 75 60 15 0 -50] # hat
 	xell[:,1:4] .*= fov/256
-	return xell
+	return Float32.(xell)
 end
 
 
@@ -341,6 +349,7 @@ end
 
 
 
+#=
 """
 `ellipse_im()`
 
@@ -349,6 +358,7 @@ show docstring(s)
 function ellipse_im()
 	@doc ellipse_im
 end
+=#
 
 
 """
@@ -376,29 +386,44 @@ end
 
 
 #=
+
 # compare to aspire
 function ellipse_im_aspire()
 	nx = 2^6
 	ig = image_geom(nx=nx, ny=nx+2, fov=2^7)
 	ell = [10, 20, 30, 40, 50, 1]
 
-	ir_test_dir = "/tmp/" # todo
-	file = ir_test_dir * "t.fld"
+	file = tempname() * "t.fld"
+	file = "tt.fld"
 	over = 2^2
-	com = sprintf("echo y | op -chat 99 ellipse %s %d %d  %g %g %g %g %g %g %d",
-		file, ig.nx, ig.ny, ell ./ [ig.dx, ig.dx, ig.dx, ig.dx, 1, 1],
-		log2(over)+1)
-	os_run(com) # todo: not done
+#	com = @sprintf "echo y | op -chat 99 ellipse %s %d %d  %g %g %g %g %g %g %d" file ig.nx ig.ny ell ./ [ig.dx, ig.dx, ig.dx, ig.dx, 1, 1] log2(over)+1
+	tmp = ""
+	for i=1:4
+		tmp = tmp * " $(ell[i] / ig.dx)"
+	end
+	for i=5:6
+		tmp = tmp * " $(ell[i])"
+	end
+	op = "/Users/fessler/bin/mi64-gcc/op"
+	com = "$op -chat 99 ellipse $file $(ig.nx) $(ig.ny)$tmp $(log2(over)+1)"
+	com = "/bin/ls /Users/fessler/bin/mi64-gcc" # todo: why fails?
+	@show com
+#	cm = @cmd "$com"
+	cm = `"$com"`
+	@show cm
+
+	run(cm)
+return true
 	asp = fld_read(file)
-	jim(asp, title="aspire")
+	p1 = jim(asp, title="aspire")
 
 	area_asp = sum(asp[:]) * abs(ig.dx * ig.dy)
 
 	jul = ellipse_im(ig, ell, oversample=over) # 'type', types{ii})
 	area_jul = sum(jul[:]) * abs(ig.dx * ig.dy)
 
-	jim(jul, title="jul")
-	jim((jul-asp)*over^2, title="difference: (jul-asp)*over^2")
+	p2 = jim(jul, title="jul")
+	p3 = jim((jul-asp)*over^2, "difference: (jul-asp)*over^2")
 
 	@show maximum(abs.(jul - mat)) / ell[6] * over^2
 	!isapprox(jul, mat) && throw("approximation error")
@@ -414,19 +439,25 @@ end
 
 # ellipse_im_test()
 function ellipse_im_test()
+#@test ellipse_im_aspire() # todo
 	fov = 100
-	shepp_logan_parameters(fov, fov)
+	@inferred shepp_logan_parameters(fov, fov)
 	shepp_logan_parameters(fov, fov, case=:kak)
 	shepp_logan_parameters(fov, fov, case=:emis)
 	shepp_logan_parameters(fov, fov, case=:brainweb)
 
 	# test various ways of calling
 	ellipse_im(20)
+#	@inferred ellipse_im(20,22) # todo-i: why fails?
 	ellipse_im(20,22)
 	ellipse_im(30, :shepplogan_emis, oversample=2)
 
 	ig = image_geom(nx=80, dx=1)
+	ellipse_im_params(ig, :kak)
+
 	params = shepp_logan_parameters(ig.fovs..., case=:brainweb)
+	@inferred ellipse_im_fast(ig.nx, ig.ny, params, ig.dx, ig.dy,
+		ig.offset_x, ig.offset_y, 0, 2, false)
 	ellipse_im(ig, :disks)
 	ellipse_im(ig, params, oversample=2)
 	ellipse_im(ig, params, how=:fast, replace=true, rot=30)
@@ -436,7 +467,7 @@ function ellipse_im_test()
 	@test_throws String ellipse_im(ig, params')
 	@test_throws String shepp_logan_parameters(ig.fovs..., case=:bad)
 
-	ellipse_im(ig, params, return_params=true)
+	ellipse_im(ig, params)
 
 #=
 	x1 = ellipse_im(100, :shepplogan_emis)
@@ -457,18 +488,10 @@ end
 
 """
 `ellipse_im(:test)`
-
-`ellipse_im(:show)`
-
-run tests
+self test
 """
 function ellipse_im(test::Symbol)
-	if test == :show
-		return ellipse_im_show()
-	end
 	test != :test && throw(ArgumentError("test $test"))
-	ellipse_im()
-	ellipse_im(:show)
 	@test ellipse_im_test()
 	true
 end
