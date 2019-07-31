@@ -1,10 +1,20 @@
-# ncg.jl
-# Nonlinear CG optimization
-# 2019-03-16, Jeff Fessler, University of Michigan
+#=
+ncg.jl
+Nonlinear CG optimization
+2019-03-16, Jeff Fessler, University of Michigan
+=#
+
+export ncg
 
 using LinearAlgebra: I, norm
-using Test: @test, @test_throws
+
+# for tests:
+using Test: @test, @test_throws, @inferred
 using Plots: Plot
+using LinearAlgebra: opnorm
+using Random: seed!
+using Plots: plot, plot!, scatter!
+using LaTeXStrings
 
 
 """
@@ -21,48 +31,49 @@ where ``C_j(u)`` is diagonal matrix of curvatures.
 This CG method uses a majorize-minimize (MM) line search.
 
 in
-* `B`		array of ``J`` blocks ``B_1,...,B_J``
-* `gradf`	array of ``J`` functions return gradients of ``f_1,...,f_J``
-* `curvf`	array of ``J`` functions `z -> curv(z)` that return a scalar
+- `B`		array of ``J`` blocks ``B_1,...,B_J``
+- `gradf`	array of ``J`` functions return gradients of ``f_1,...,f_J``
+- `curvf`	array of ``J`` functions `z -> curv(z)` that return a scalar
 		or a vector of curvature values for each element of ``z``
-* `x0`	initial guess; need `length(x) == size(B[j],2)` for ``j=1...J``
+- `x0`	initial guess; need `length(x) == size(B[j],2)` for ``j=1...J``
 
 option
-* `niter`	# number of outer iterations; default 50
-* `ninner`	# number of inner iterations of MM line search; default 5
-* `P`		# preconditioner; default `I`
-* `betahow`	"beta" method for the search direction; default `:dai_yuan`
-* `fun`		User-defined function to be evaluated with two arguments (x,iter).
+- `niter`	# number of outer iterations; default 50
+- `ninner`	# number of inner iterations of MM line search; default 5
+- `P`		# preconditioner; default `I`
+- `betahow`	"beta" method for the search direction; default `:dai_yuan`
+- `fun`		User-defined function to be evaluated with two arguments (x,iter).
 			It is evaluated at (x0,0) and then after each iteration.
 
 output
-* `x`		final iterate
-* `out`		`[niter+1] (fun(x0,0), fun(x1,1), ..., fun(x_niter,niter))`
+- `x`		final iterate
+- `out`		`[niter+1] (fun(x0,0), fun(x1,1), ..., fun(x_niter,niter))`
 	(all 0 by default). This is an array of length `niter+1`
 """
 function ncg(
-	B::AbstractVector{<:Any},
-	gradf::AbstractVector{<:Function},
-	curvf::AbstractVector{<:Function},
-	x0::AbstractVector{<:Number};
-	niter::Integer=50,
-	ninner::Integer=5,
-	P=I,
-	betahow::Symbol=:dai_yuan,
-	fun::Function = (x,iter) -> 0)
+		B::AbstractVector{<:Any},
+		gradf::AbstractVector{<:Function},
+		curvf::AbstractVector{<:Function},
+		x0::AbstractVector{<:Number} ;
+		niter::Integer=50,
+		ninner::Integer=5,
+		P=I,
+		betahow::Symbol=:dai_yuan,
+		fun::Function = (x,iter) -> 0,
+	)
 
-out = Array{Any}(undef, niter+1)
-out[1] = fun(x0, 0)
+	out = Array{Any}(undef, niter+1)
+	out[1] = fun(x0, 0)
 
-J = length(B)
+	J = length(B)
 
-x = x0
-dir = []
-grad_old = []
-grad_new = []
+	x = copy(x0)
+	dir = []
+	grad_old = []
+	grad_new = []
 
-Bx = [B[j] * x for j=1:J] # u_j in course notes
-grad = (Bx) -> sum([B[j]' * gradf[j](Bx[j]) for j=1:J])
+	Bx = [B[j] * x for j=1:J] # u_j in course notes
+	grad = (Bx) -> sum([B[j]' * gradf[j](Bx[j]) for j=1:J])
 
 for iter = 1:niter
 	grad_new = grad(Bx) # gradient
@@ -114,7 +125,8 @@ for iter = 1:niter
 	out[iter+1] = fun(x, iter)
 end
 
-return x, out
+	return x, out
+#	return eltype(x0).(x), out # todo
 end
 
 
@@ -128,19 +140,14 @@ and that has a quadratic majorizer with diagonal Hessian given by
 Typically `curv = (x) -> L` where `L` is the Lipschitz constant of `grad`
 """
 function ncg(
-	grad::Function,
-	curv::Function,
-	x0::AbstractVector{<:Number};
-	kwargs...)
+		grad::Function,
+		curv::Function,
+		x0::AbstractVector{<:Number} ;
+		kwargs...)
 
 	return ncg([I], [grad], [curv], x0; kwargs...)
 end
 
-
-using LinearAlgebra: norm, opnorm, I
-using Random: seed!
-using Plots
-using LaTeXStrings
 
 function ncg_test()
 	seed!(0); M = 40; N = 10; A = randn(M,N); y = randn(M)
@@ -155,6 +162,11 @@ function ncg_test()
 	B = [A, I] # matrix blocks
 	gradf = [u -> u - y, v -> reg * v] # f functions gradients
 	curvf = [v -> 1, v -> reg]
+
+#	todo-i: these next two fail:
+#	@inferred ncg([ones(3,3)], [x -> x], [v -> 1], zeros(Float32, 3), niter=2)
+#	@inferred ncg(x -> x, v -> 1, zeros(Float32, 3), niter=2)
+#	error("todo")
 
 	niter = 40
 	x1, out1 = ncg(   grad1, curv1, zeros(N), niter=niter, fun=fun)
@@ -188,10 +200,33 @@ end
 """
 `ncg(:test)`
 
-run test
+self test
 """
 function ncg(test::Symbol)
 	test != :test && throw("test")
 	@test ncg_test() isa Plots.Plot
 	true
 end
+
+#=
+todo
+f = x -> x + one(eltype(x))
+f = x -> eltype(x).(x)
+
+@inferred f(3)
+@inferred f(3.0f0)
+
+function g(x0::AbstractVector{<:Number} ; f::Function = x -> 2*x)
+	x = copy(x0)
+#	return x .+ ones(eltype(x0), size(x0))
+#	return 2*x
+	return f(x)
+end
+
+g(1:3)
+@inferred g(1:3)
+@code_warntype g(1:3)
+
+#	the following test returns nothing!?
+#	@code_warntype ncg([x -> 2x], [v -> 1], zeros(Float32, 3), niter=2)
+=#
