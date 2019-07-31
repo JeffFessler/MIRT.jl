@@ -383,7 +383,7 @@ function image_geom_add_unitv(
 		j::Integer=0,
 		i::AbstractVector{<:Integer} = zeros(Int, ndims(z)),
 		c::AbstractVector{<:Integer} = zeros(Int, ndims(z))
-		) where {T <: Number} 
+	) where {T <: Number} 
 
 	out = copy(z)
 

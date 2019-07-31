@@ -39,7 +39,7 @@ function rect_sino(sg::MIRT_sino_geom, rects::AbstractMatrix{<:Real} ;
 	(rg, ϕg) = sg.grid
 	sino = rect_sino(rg, ϕg, rects; kwargs...)
 	if oversample > 1
-		sino = downsample2(sino, [oversample 1])
+		sino = downsample2(sino, [oversample, 1])
 	end
 	return sino
 end

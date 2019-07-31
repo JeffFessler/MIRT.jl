@@ -39,7 +39,7 @@ function ellipse_sino(sg::MIRT_sino_geom, ells::AbstractMatrix{<:Real} ;
 	(rg, ϕg) = sg.grid
 	sino = ellipse_sino(rg, ϕg, ells; kwargs...)
 	if oversample > 1
-		sino = downsample2(sino, [oversample 1])
+		sino = downsample2(sino, [oversample, 1])
 	end
 	return sino
 end
