@@ -1,5 +1,9 @@
-# Aodwt.jl
-# 2019-02-23 Jeff Fessler, University of Michigan
+#=
+Aodwt.jl
+2019-02-23 Jeff Fessler, University of Michigan
+=#
+
+export Aodwt
 
 using Plots
 using LinearMaps
@@ -13,21 +17,21 @@ using Wavelets: dwt, idwt, wavelet, WT
 create orthogonal discrete wavelet transform (ODWT) `LinearMap`
 
 in
-* `dims` tuple of dimensions
+- `dims` tuple of dimensions
 
 option
-* `level` # of levels; default 3
-* `wt` wavelet transform type (see `Wavelets` package); default Haar
+- `level` # of levels; default 3
+- `wt` wavelet transform type (see `Wavelets` package); default Haar
 
 out
-* `A` a `LinearMap` object
-* `scales` array of size `dims` showing the scale of each coefficient
+- `A` a `LinearMap` object
+- `scales` array of size `dims` showing the scale of each coefficient
 which is useful when imposing scale-dependent regularization
-* `mfun` convenience function for A*X when X is a Matrix or Array (not vector)
+- `mfun` convenience function for A*X when X is a Matrix or Array (not vector)
 
 2019-02-23 Jeff Fessler, University of Michigan
 """
-function Aodwt(dims; level::Integer=3, wt=wavelet(WT.haar))
+function Aodwt(dims ; level::Integer=3, wt=wavelet(WT.haar))
 
 	Afun = (level) -> LinearMap(
 		x -> dwt(reshape(x, dims), wt, level)[:],
@@ -55,7 +59,7 @@ end
 
 
 """
-`Aodwt_show(;M=32, N=64)`
+`Aodwt_show( ; M=32, N=64)`
 show scales
 """
 function Aodwt_show(; M=32, N=64)
