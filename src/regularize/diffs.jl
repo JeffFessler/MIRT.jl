@@ -1,8 +1,14 @@
-# diffs.jl
-# finite differences
-# 2019-03-96 Jeff Fessler, University of Michigan
+#=
+diffs.jl
+finite differences
+2019-03-96 Jeff Fessler, University of Michigan
+=#
+
+export diff_map
 
 using LinearMaps
+using Test: @test
+
 
 """
 `d = diff2d_forw(X)`
@@ -16,15 +22,14 @@ but does it efficiently
 without using `spdiagm` (or any `SparseArrays` function).
 
 in
-* `X`		`M x N` array (typically a 2D image).
+- `X`		`M x N` array (typically a 2D image).
 It cannot be a Vector!  (But it can be a `Mx1` or `1xN` 2D array.)
 
 out
-* `d`		vector of length `N*(M-1) + (N-1)*M`
+- `d`		vector of length `N*(M-1) + (N-1)*M`
 """
 function diff2d_forw(x::AbstractMatrix{<:Number})
-
-return [diff(x,dims=1)[:]; diff(x,dims=2)[:]]
+	return [diff(x,dims=1)[:]; diff(x,dims=2)[:]]
 end
 
 
@@ -39,17 +44,17 @@ and \\otimes denotes the Kronecker product,
 but does it efficiently without using spdiagm (or any SparseArrays function).
 
 in
-* `d`		vector of length `N*(M-1) + (N-1)*M`
-* `M,N`		desired output size
+- `d`		vector of length `N*(M-1) + (N-1)*M`
+- `M,N`		desired output size
 
 option
-* `out2d`	if true then return `M x N` array, else `M*N` vector
+- `out2d`	if true then return `M x N` array, else `M*N` vector
 
 out
-* `z`		`M*N` vector or `M x N` array (typically a 2D image)
+- `z`		`M*N` vector or `M x N` array (typically a 2D image)
 
 """
-function diff2d_adj(d::AbstractVector{<:Number}, M, N; out2d=false)
+function diff2d_adj(d::AbstractVector{<:Number}, M::Int, N::Int ; out2d=false)
 
 	length(d) != N*(M-1) + (N-1)*M && throw("length(d)")
 
@@ -70,7 +75,7 @@ end
 """
 `T = diff2d_map(M,N)`
 """
-function diff2d_map(M,N)
+function diff2d_map(M::Int, N::Int)
 	return LinearMap(
         x -> diff2d_forw(reshape(x,M,N)),
         d -> diff2d_adj(d, M, N),
@@ -82,18 +87,19 @@ end
 `T = diff_map(M,N)`
 
 in
-* `M,N` image size
+- `M,N` image size
 
 out
-* `T` a `LinearMap` object for regularizing via T*x
+- `T` a `LinearMap` object for regularizing via `T*x`
 """
-function diff_map(M,N)
+function diff_map(M::Int, N::Int)
 	return diff2d_map(M,N)
 end
 
 
 """
-`diff_map(:test)` self test
+`diff_map(:test)`
+self test
 """
 function diff_map(test::Symbol)
 	test != :test && throw(ArgumentError("test $test"))
