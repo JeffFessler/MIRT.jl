@@ -8,4 +8,5 @@ codecov: true
 os:
   - linux
   - osx
-  - windows
+
+# - windows
