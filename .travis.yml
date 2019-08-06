@@ -1,5 +1,11 @@
 language: julia
+
 julia:
   - 1.1
 
 codecov: true
+
+os:
+  - linux
+  - osx
+  - windows
