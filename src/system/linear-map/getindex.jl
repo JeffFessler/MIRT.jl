@@ -1,20 +1,22 @@
-# linear-map/getindex.jl
-#
-# Provides getindex() capabilities like A[:,j] for LinearMap objects.
-#
-# Currently this provides only a partial set of the possible ways
-# one can use indexing for a matrix, because currently
-# LinearMap is not a subtype of an AbstractMatrix.
-#
-# If LinearMap were a subtype of an AbstractMatrix, then all possible
-# indexing will be supported by Base.getindex, albeit very likely
-# by quite inefficient iterators.
-#
-# These capabilities are provided as a user convenience.
-# The user must recognize that LinearMap objects are not designed
-# for efficient element-wise indexing.
-#
-# 2018-01-19, Jeff Fessler, University of Michigan
+#=
+linear-map/getindex.jl
+
+Provides getindex() capabilities like A[:,j] for LinearMap objects.
+
+Currently this provides only a partial set of the possible ways
+one can use indexing for a matrix, because currently
+LinearMap is not a subtype of an AbstractMatrix.
+
+If LinearMap were a subtype of an AbstractMatrix, then all possible
+indexing will be supported by Base.getindex, albeit very likely
+by quite inefficient iterators.
+
+These capabilities are provided as a user convenience.
+The user must recognize that LinearMap objects are not designed
+for efficient element-wise indexing.
+
+2018-01-19, Jeff Fessler, University of Michigan
+=#
 
 using LinearMaps
 using Test
@@ -25,20 +27,20 @@ function Base.lastindex(A::LinearMap)
 end
 
 # A[?,end] and A[end,?]
-function Base.lastindex(A::LinearMap, d::Integer)
+function Base.lastindex(A::LinearMap, d::Int)
     return size(A, d)
 end
 
 
 # A[i,j]
-function Base.getindex(A::LinearMap, i::Integer, j::Integer)
+function Base.getindex(A::LinearMap, i::Int, j::Int)
 	e = zeros(size(A,2)); e[j] = 1
 	tmp = A * e
 	return tmp[i]
 end
 
 # A[k]
-function Base.getindex(A::LinearMap, k::Integer)
+function Base.getindex(A::LinearMap, k::Int)
 	c = CartesianIndices(size(A))[k] # is there a more elegant way?
 	return A[c[1], c[2]]
 #	return A[c[:]] # fails
@@ -49,15 +51,15 @@ end
 
 # A[:,j]
 # it is crucial to provide this function rather than to inherit from
-# Base.getindex(A::AbstractArray, ::Colon, ::Integer)
+# Base.getindex(A::AbstractArray, ::Colon, ::Int)
 # because Base.getindex does this by iterating (I think).
-function Base.getindex(A::LinearMap, ::Colon, j::Integer)
+function Base.getindex(A::LinearMap, ::Colon, j::Int)
 	e = zeros(size(A,2)); e[j] = 1
 	return A * e
 end
 
 # A[i,:]
-function Base.getindex(A::LinearMap, i::Integer, ::Colon)
+function Base.getindex(A::LinearMap, i::Int, ::Colon)
 	# in Julia: A[i,:] = A'[:,i] for real matrix A else need conjugate
 	return eltype(A) <: Complex ? conj.(A'[:,i]) : A'[:,i]
 end
@@ -128,7 +130,7 @@ end
 
 # tests for cumsum()
 # note: the adjoint of cumsum is reverse(cumsum(reverse(y)))
-function ir_lm_test_getindex_cumsum( ; N::Integer=5)
+function ir_lm_test_getindex_cumsum( ; N::Int=5)
 	A = LinearMap(cumsum, y -> reverse(cumsum(reverse(y))), N)
 	ir_LinearMap_test_getindex(A)
 	@test Matrix(A)' == Matrix(A')

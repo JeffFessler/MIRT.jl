@@ -28,7 +28,7 @@ Hence the default level is 4,
 but we increment it by one in case user says `@show caller_name()`
 in which case stack[3] is a macro expansion.
 """
-function caller_name(; level::Integer=4)
+function caller_name( ; level::Int = 4)
 	stack = stacktrace()
 	level += (stack[3].func == Symbol("macro expansion")) # trick
 	(level < 1 || level > length(stack)) && throw("bad level $level")

@@ -12,7 +12,7 @@ using Wavelets: dwt, idwt, wavelet, WT
 
 
 """
-`A, levels, mfun = Aodwt(dims; level::Integer=3, wt=wavelet(WT.haar))`
+`A, levels, mfun = Aodwt(dims; level::Int=3, wt=wavelet(WT.haar))`
 
 create orthogonal discrete wavelet transform (ODWT) `LinearMap`
 
@@ -31,7 +31,7 @@ which is useful when imposing scale-dependent regularization
 
 2019-02-23 Jeff Fessler, University of Michigan
 """
-function Aodwt(dims ; level::Integer=3, wt=wavelet(WT.haar))
+function Aodwt(dims ; level::Int=3, wt=wavelet(WT.haar))
 
 	Afun = (level) -> LinearMap(
 		x -> dwt(reshape(x, dims), wt, level)[:],

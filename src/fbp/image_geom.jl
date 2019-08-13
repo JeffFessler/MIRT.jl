@@ -165,14 +165,14 @@ Constructor for `MIRT_image_geom`
 - `mask::Union{Symbol,AbstractArray{Bool}} = :all` | `:circ` | `:all_but_edge`
 """
 function image_geom( ;
-		nx::Integer = 128,
-		ny::Integer = nx,
+		nx::Int = 128,
+		ny::Int = nx,
 		dx::Real = NaN,
 		dy::Real = NaN,
 		offset_x::Real = 0,
 		offset_y::Real = 0,
 		fov::Real = NaN,
-		nz::Integer = 0,
+		nz::Int = 0,
 		dz::Real = NaN,
 		zfov::Real = NaN,
 		offset_z::Real = 0,
@@ -308,10 +308,10 @@ end
 
 
 """
-`ig_new = image_geom_expand_nz(ig::MIRT_image_geom, nz_pad::Integer)`
+`ig_new = image_geom_expand_nz(ig::MIRT_image_geom, nz_pad::Int)`
 pad both ends
 """
-function image_geom_expand_nz(ig::MIRT_image_geom, nz_pad::Integer)
+function image_geom_expand_nz(ig::MIRT_image_geom, nz_pad::Int)
 	!ig.is3 && throw("expand_nz only valid for 3D")
 	out_nz = ig.nz + 2*nz_pad
 	out_mask = cat(dims=3, repeat(ig.mask[:,:,1], 1, 1, nz_pad), ig.mask,
@@ -323,10 +323,10 @@ end
 
 
 """
-`ig_over = image_geom_over(ig::MIRT_image_geom, over::Integer)`
+`ig_over = image_geom_over(ig::MIRT_image_geom, over::Int)`
 over-sample an image geometry by the factor `over`
 """
-function image_geom_over(ig::MIRT_image_geom, over::Integer)
+function image_geom_over(ig::MIRT_image_geom, over::Int)
 	if all(ig.mask .== true)
 		mask_over = trues(ig.dim)
 	else
@@ -380,9 +380,9 @@ default with no arguments gives unit vector at center `c=[0,0]`
 """
 function image_geom_add_unitv(
 		z::AbstractArray{T} ; # starts with zeros()
-		j::Integer=0,
-		i::AbstractVector{<:Integer} = zeros(Int, ndims(z)),
-		c::AbstractVector{<:Integer} = zeros(Int, ndims(z))
+		j::Int = 0,
+		i::AbstractVector{Int} = zeros(Int, ndims(z)),
+		c::AbstractVector{Int} = zeros(Int, ndims(z))
 	) where {T <: Number} 
 
 	out = copy(z)

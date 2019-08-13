@@ -10,7 +10,7 @@ using Plots
 
 
 """
-`phantom = rect_im(ig, params;
+`phantom = rect_im(ig, params ;
 	oversample=1, hu_scale=1, fov=maximum(ig.fovs), chat=false, how=:auto,
 	replace=false, return_params=false)`
 
@@ -22,7 +22,7 @@ in
 - `params`			`[Nrect,6]` rect parameters. if empty use default
 
 options
-- `oversample::Integer`	oversampling factor, for grayscale boundaries
+- `oversample::Int`	oversampling factor, for grayscale boundaries
 - `hu_scale::Real`		use 1000 to scale
 - `fov::Real`			default `maximum(ig.fovs)`
 - `chat::Bool`			verbosity?
@@ -35,8 +35,8 @@ out
 - `params`		`[Nrect 6]` rect parameters (only return if `return_params=true`)
 """
 function rect_im(ig::MIRT_image_geom,
-		params::AbstractArray{<:Real,2};
-		oversample::Integer = 1,
+		params::AbstractArray{<:Real,2} ;
+		oversample::Int = 1,
 		hu_scale::Real = 1,
 		fov::Real = maximum(ig.fovs),
 		chat::Bool = false,
@@ -170,57 +170,57 @@ end
 
 
 """
-`phantom = rect_im(nx, dx, params; args...)`
+`phantom = rect_im(nx, dx, params ; args...)`
 
 square image of size `nx` by `nx`,
 specifying pixel size `dx` and rect `params`
 """
-function rect_im(nx::Integer, dx::Real, params; args...)
+function rect_im(nx::Int, dx::Real, params ; args...)
 	ig = image_geom(nx=nx, dx=1)
-	return rect_im(ig, params; args...)
+	return rect_im(ig, params ; args...)
 end
 
 
 """
-`phantom = rect_im(nx::Integer, params; args...)`
+`phantom = rect_im(nx::Int, params ; args...)`
 
 square image of size `nx` by `nx` with
 pixel size `dx=1` and rect `params`
 """
-function rect_im(nx::Integer, params; args...)
-	return rect_im(nx, 1., params; args...)
+function rect_im(nx::Int, params ; args...)
+	return rect_im(nx, 1., params ; args...)
 end
 
 
 """
-`phantom = rect_im(nx::Integer; ny::Integer=nx, dx::Real=1)`
+`phantom = rect_im(nx::Int ; ny::Int=nx, dx::Real=1)`
 
 image of size `nx` by `ny` (default `nx`) with specified `dx` (default 1),
 defaults to `:my_rect`
 """
-function rect_im(nx::Integer; ny::Integer=nx, dx::Real=1,
+function rect_im(nx::Int ; ny::Int=nx, dx::Real=1,
 	params::Symbol=:my_rect, args...)
 	ig = image_geom(nx=nx, ny=ny, dx=dx)
-	return rect_im(ig, params; args...)
+	return rect_im(ig, params ; args...)
 end
 
 
 """
-`phantom = rect_im(nx::Integer, ny::Integer; args...)`
+`phantom = rect_im(nx::Int, ny::Int ; args...)`
 
 `:my_rect` of size `nx` by `ny`
 """
-function rect_im(nx::Integer, ny::Integer; args...)
-	return rect_im(nx, ny=ny, dx=1.; args...)
+function rect_im(nx::Int, ny::Int ; args...)
+	return rect_im(nx, ny=ny, dx=1. ; args...)
 end
 
 
 """
-`phantom = rect_im(ig, code; args...)`
+`phantom = rect_im(ig, code ; args...)`
 
 `code = :my_rect | :default | :smiley`
 """
-function rect_im(ig::MIRT_image_geom, params::Symbol; args...)
+function rect_im(ig::MIRT_image_geom, params::Symbol ; args...)
 	fov = ig.fovs
 	if params == :my_rect
 		params = my_rect(fov...)
@@ -231,17 +231,17 @@ function rect_im(ig::MIRT_image_geom, params::Symbol; args...)
 	else
 		throw("bad phantom symbol $params")
 	end
-	return rect_im(ig, params; args...)
+	return rect_im(ig, params ; args...)
 end
 
 
 """
-`phantom = rect_im(ig; args...)`
+`phantom = rect_im(ig ; args...)`
 
 `:default` (default) for given image geometry `ig`
 """
-function rect_im(ig::MIRT_image_geom; args...)
-	return rect_im(ig, :default; args...)
+function rect_im(ig::MIRT_image_geom ; args...)
+	return rect_im(ig, :default ; args...)
 end
 
 
@@ -330,13 +330,13 @@ function rect_im_show()
 	x0 = rect_im(ig, [[[0.5, 0, 3, 20]*ig.dx..., 0, 1]';], oversample=3)
 	p1 = jim(x0)
 
-	x1 = rect_im(ig, :default; oversample=3, chat=true)
+	x1 = rect_im(ig, :default ; oversample=3, chat=true)
 	p2 = jim(x1, title="default rects")
 
-	x2 = rect_im(ig, :my_rect; oversample=3, chat=true)
+	x2 = rect_im(ig, :my_rect ; oversample=3, chat=true)
 	p3 = jim(x2, title="my rect")
 
-	x3 =rect_im(ig, :smiley; oversample=3, chat=true)
+	x3 =rect_im(ig, :smiley ; oversample=3, chat=true)
 	p4 = jim(x3, title="smiley")
 
 	plot(p1, p2, p3, p4)

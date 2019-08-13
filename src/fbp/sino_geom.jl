@@ -157,7 +157,7 @@ end
 `sg = downsample(sg, down)`
 down-sample (for testing with small problems)
 """
-function downsample(sg::MIRT_sino_geom, down::Integer)
+function downsample(sg::MIRT_sino_geom, down::Int)
 	if down == 1
 		return sg
 	end
@@ -172,11 +172,11 @@ end
 
 
 """
-`sg = sino_geom_over(sg, over::Integer)`
+`sg = sino_geom_over(sg, over::Int)`
 over-sample in "radial" dimension
 Probably not meaningful for mojette sampling because d=dx.
 """
-function sino_geom_over(sg::MIRT_sino_geom, over::Integer)
+function sino_geom_over(sg::MIRT_sino_geom, over::Int)
 	if over == 1
 		return sg
 	end
@@ -194,8 +194,8 @@ end
 """
 function sino_geom_fan( ;
 		units::Symbol = :none,
-		nb::Integer = 128,
-		na::Integer = 2 * floor(Int, nb * pi/2 / 2),
+		nb::Int = 128,
+		na::Int = 2 * floor(Int, nb * pi/2 / 2),
 		d::Real = 1,
 		orbit::Union{Symbol,Real} = 360, # [degrees]
 		orbit_start::Real = 0,
@@ -206,7 +206,7 @@ function sino_geom_fan( ;
 	#	dso::Real = [],		# dis_src_iso
 		dod::Real = nb*d,	# dis_iso_det
 		dfs::Real = 0,		# dis_foc_src (3rd gen CT)
-		down::Integer = 1,
+		down::Int = 1,
 	)
 
 	dfs != 0 && !isinf(dfs) && throw("dfs $dfs") # must be 0 or Inf
@@ -232,9 +232,9 @@ end
 """
 function sino_geom_par( ;
 		units::Symbol = :none,
-		nb::Integer = 128,
-		na::Integer = 2 * floor(Int, nb * pi/2 / 2),
-		down::Integer = 1,
+		nb::Int = 128,
+		na::Int = 2 * floor(Int, nb * pi/2 / 2),
+		down::Int = 1,
 		d::Real = 1,
 		orbit::Real = 180, # [degrees]
 		orbit_start::Real = 0,
@@ -255,9 +255,9 @@ end
 """
 function sino_geom_moj( ;
 		units::Symbol = :none,
-		nb::Integer = 128,
-		na::Integer = 2 * floor(Int, nb * pi/2 / 2),
-		down::Integer = 1,
+		nb::Int = 128,
+		na::Int = 2 * floor(Int, nb * pi/2 / 2),
+		down::Int = 1,
 		d::Real = 1, # means dx for :moj
 		orbit::Real = 180, # [degrees]
 		orbit_start::Real = 0,
@@ -506,7 +506,7 @@ end
 `sino_geom_plot_grids()`
 scatter plot of (r,phi) sampling locations for all geometries
 """
-function sino_geom_plot_grids( ; orbit::Real = 360, down::Integer = 30)
+function sino_geom_plot_grids( ; orbit::Real = 360, down::Int = 30)
 	geoms = (
 		sino_geom(:par, nb = 888, na = 984, down=down, d = 0.5, orbit=orbit,
 			offset = 0.25),

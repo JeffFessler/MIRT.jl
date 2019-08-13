@@ -25,11 +25,11 @@ to avoid overlap and to simplify patch-based model fitting.
 - `rmax::Real = 20` max radius for random disks
 - `mumin::Real = 100` range of "mu" values for disks
 - `mumax::Real = 300`
-- `ndisk::Integer = 10` # of random disks
+- `ndisk::Int = 10` # of random disks
 - `minsep::Real = 8` minimum disk separation in mm
-- `maxtry::Integer = 500` give up on adding more disks if this is reached
+- `maxtry::Int = 500` give up on adding more disks if this is reached
 - `warn::Bool = false` warn if maxtry reached?
-- `seed::Integer = 0`if nonzero then use this seed
+- `seed::Int = 0`if nonzero then use this seed
 """
 function disk_phantom_params( ;
 		fov::Real = 240,
@@ -39,17 +39,17 @@ function disk_phantom_params( ;
 		rmax::Real = 20, # max radius for disks
 		mumin::Real = 100, # range of "mu" values for disks
 		mumax::Real = 300,
-		ndisk::Integer = 10,
+		ndisk::Int = 10,
 		minsep::Real = 8, # minimum separation in mm
-		maxtry::Integer = 500, # give up on adding more disks if this is reached
+		maxtry::Int = 500, # give up on adding more disks if this is reached
 		warn::Bool = false, # warn if maxtry reached?
-		seed::Integer = 0,
+		seed::Int = 0,
 	)
 
 	params = zeros(Float32, ndisk+1, 6)
 	params[end,:] = [0, 0, rhead, rhead, 0, muhead]
 
-	randu = (a, b; f = x->x) -> a + f(rand()) * (b - a)
+	randu = (a, b ; f = x->x) -> a + f(rand()) * (b - a)
 	seper = (a,b,r1,x,y,r2) -> sqrt.((x .- a).^2 + (y .- b).^2) .- r1 .- r2
 
 	(seed != 0) && seed!(seed)

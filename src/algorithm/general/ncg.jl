@@ -55,8 +55,8 @@ function ncg(
 		gradf::AbstractVector{<:Function},
 		curvf::AbstractVector{<:Function},
 		x0::AbstractVector{<:Number} ;
-		niter::Integer=50,
-		ninner::Integer=5,
+		niter::Int = 50,
+		ninner::Int = 5,
 		P=I,
 		betahow::Symbol=:dai_yuan,
 		fun::Function = (x,iter) -> 0,

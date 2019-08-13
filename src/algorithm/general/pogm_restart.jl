@@ -107,9 +107,9 @@ function pogm_restart(x0, Fcost::Function, f_grad::Function, f_L::Real ;
 		restart::Symbol = :gr, # :fr :none
 		restart_cutoff::Real = 0.,
 		bsig::Real = 1,
-		niter::Integer = 10,
+		niter::Int = 10,
 		g_prox::Function = (z, c::Real) -> z,
-		fun::Function = (iter::Integer, xk, yk, is_restart::Bool) -> 0,
+		fun::Function = (iter::Int, xk, yk, is_restart::Bool) -> 0,
 	)
 
 	!in(mom, (:pgm, :fpgm, :pogm)) && throw(ArgumentError("mom $mom"))

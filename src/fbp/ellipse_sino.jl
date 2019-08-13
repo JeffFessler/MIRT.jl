@@ -22,10 +22,10 @@ in
 							`[centx centy radx rady angle_degrees amplitude]`
 
 options
-- `oversample::Integer`	oversampling factor for emulating "strips"
+- `oversample::Int`	oversampling factor for emulating "strips"
 						default 1: just 1 ray per detector element
-- `xscale::Integer`		use -1 to flip in x (not recommended); default 1
-- `yscale::Integer`		use -1 to flip in y (not recommended); default 1
+- `xscale::Int`		use -1 to flip in x (not recommended); default 1
+- `yscale::Int`		use -1 to flip in y (not recommended); default 1
 
 out
 - `sino`		`[nb na]` sinogram
@@ -33,7 +33,7 @@ out
 To get the sample locations, use `(pos,ang) = sg.grid`
 """
 function ellipse_sino(sg::MIRT_sino_geom, ells::AbstractMatrix{<:Real} ;
-		oversample::Integer=1, kwargs...)
+		oversample::Int = 1, kwargs...)
 
 	sg = sg.over(oversample)
 	(rg, ϕg) = sg.grid
@@ -59,16 +59,16 @@ in
 							`[centx centy radx rady angle_degrees amplitude]`
 
 options
-- `xscale::Integer`		use -1 to flip in x (not recommended); default 1
-- `yscale::Integer`		use -1 to flip in y (not recommended); default 1
+- `xscale::Int`		use -1 to flip in x (not recommended); default 1
+- `yscale::Int`		use -1 to flip in y (not recommended); default 1
 
 out
 - `sino::AbstractArray{Float32}` same size as `rg` and `ϕg`
 """
 function ellipse_sino(rg::AbstractArray{<:Real}, ϕg::AbstractArray{<:Real},
 		ells::AbstractMatrix{<:Real} ;
-		xscale::Integer=1,
-		yscale::Integer=1,
+		xscale::Int = 1,
+		yscale::Int = 1,
 	)
 
 	size(ells,2) != 6 && throw("6 parameters per ellipse")

@@ -19,7 +19,7 @@ downsample by factor `down` along first dimension by averaging
 
 in
 - `x [n1 (Nd)]`
-- `down` integer downsampling factor
+- `down::Int` downsampling factor
 
 option
 - `warn::Bool` warn if noninteger multiple; default `isinteractive()`
@@ -29,7 +29,7 @@ out
 
 Copyright 2019-03-05, Jeff Fessler, University of Michigan
 """
-function downsample_dim1(x::AbstractArray{<:Number}, down::Integer
+function downsample_dim1(x::AbstractArray{<:Number}, down::Int
 		; warn::Bool = isinteractive())
 
 	dim = size(x)
@@ -69,7 +69,7 @@ downsample 1D vector by factor `down`
 
 in
 - `x [n1]`
-- `down::Integer` downsampling factor
+- `down::Int` downsampling factor
 
 option
 - `warn::Bool` warn if noninteger multiple; default `isinteractive()`
@@ -79,7 +79,7 @@ out
 
 Copyright 2019-03-05, Jeff Fessler, University of Michigan
 """
-function downsample1(x::AbstractVector{<:Number}, down::Integer
+function downsample1(x::AbstractVector{<:Number}, down::Int
 		; warn::Bool = isinteractive())
 
 	dim = size(x)
@@ -125,7 +125,7 @@ out
 - `y [nx/down ny/down]`
 """
 function downsample2(x::AbstractMatrix{<:Number},
-		down::Union{Integer,AbstractVector{<:Integer}},
+		down::Union{Int,AbstractVector{Int}},
 		; warn::Bool = isinteractive(),
 		T::DataType = eltype(x[1] / down[1])
 	)
@@ -206,7 +206,7 @@ out
 - `y [nx/down ny/down nz/down]`
 """
 function downsample3(x::AbstractArray{<:Number,3},
-		down::Union{Integer,AbstractVector{<:Integer}},
+		down::Union{Int,AbstractVector{Int}},
 		; warn::Bool = isinteractive(),
 		T::DataType = eltype(x[1] / down[1])
 	)
@@ -238,7 +238,7 @@ end
 
 # this method is good for @inferred but is slower!
 function downsample3_loop(x::AbstractArray{<:Number,3},
-		down::AbstractVector{<:Integer} ;
+		down::AbstractVector{Int} ;
 		T::DataType = eltype(x[1] / down[1]),
 	)
 

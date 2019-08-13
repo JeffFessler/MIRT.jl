@@ -11,7 +11,7 @@ using Test: @test, @test_throws
 
 
 """
-`phantom = cuboid_im(ig, params;
+`phantom = cuboid_im(ig, params ;
 	oversample=1, hu_scale=1, how=:auto, return_params=false)`
 
 generate cuboid phantom image from parameters:
@@ -24,7 +24,7 @@ in
 							note: "diameter" not "radius"
 
 options
-- `oversample::Integer` 	 oversampling factor (for partial volume)
+- `oversample::Int` 	 oversampling factor (for partial volume)
 - `how::Symbol`				`:sample` use samples
 							`:lowmem1` one slice per time
 							`:exact` perfect partial volume if angle* = 0
@@ -36,7 +36,7 @@ out
 - `params`		`[N 9]` cuboid parameters (only return if return_params=true)
 """
 function cuboid_im(ig::MIRT_image_geom, params::AbstractMatrix{<:Real} ;
-		oversample::Integer = 1,
+		oversample::Int = 1,
 		how::Symbol = :auto,
 		return_params::Bool = false)
 
@@ -234,45 +234,45 @@ end
 
 #=
 """
-`phantom = cuboid_im(nx, dx, params; args...)`
+`phantom = cuboid_im(nx, dx, params ; args...)`
 
 specifying voxel size `dx` and cuboid `params`
 """
-function cuboid_im(nx::Integer, dx::Real, params; args...)
+function cuboid_im(nx::Int, dx::Real, params ; args...)
 	ig = image_geom(nx=nx, dx=1)
-	return cuboid_im(ig, params; args...)
+	return cuboid_im(ig, params ; args...)
 end
 
 
 """
-`phantom = cuboid_im(nx::Integer, params; args...)`
+`phantom = cuboid_im(nx::Int, params ; args...)`
 
 voxel size `dx=1` and cuboid `params`
 """
-function cuboid_im(nx::Integer, params; args...)
-	return cuboid_im(nx, 1., params; args...)
+function cuboid_im(nx::Int, params ; args...)
+	return cuboid_im(nx, 1., params ; args...)
 end
 
 
 """
-`phantom = cuboid_im(nx::Integer; ny::Integer=nx,dx::Real=1, args...)`
+`phantom = cuboid_im(nx::Int ; ny::Int=nx, dx::Real=1, args...)`
 
 image of size 'nx' by 'ny' (default 'nx') with specified 'dx' (default 1),
 defaults to `:default_cuboid`
 """
-function cuboid_im(nx::Integer; ny::Integer=nx, dx::Real=1, args...)
+function cuboid_im(nx::Int ; ny::Int=nx, dx::Real=1, args...)
 	ig = image_geom(nx=nx, ny=ny, dx=dx)
-	return cuboid_im(ig, :default; args...)
+	return cuboid_im(ig, :default ; args...)
 end
 
 
 """
-`phantom = cuboid_im(nx::Integer, ny::integer; args...)`
+`phantom = cuboid_im(nx::Int, ny::Int ; args...)`
 
 `:default` of size `nx` by `ny`
 """
-function cuboid_im(nx::Integer, ny::Integer; args...)
-	return cuboid_im(nx, ny=ny, dx=1.; args...)
+function cuboid_im(nx::Int, ny::Int ; args...)
+	return cuboid_im(nx, ny=ny, dx=1. ; args...)
 end
 =#
 
@@ -282,7 +282,7 @@ end
 
 `code = :default | :rotate` # add more options
 """
-function cuboid_im(ig::MIRT_image_geom, params::Symbol; args...)
+function cuboid_im(ig::MIRT_image_geom, params::Symbol ; args...)
 	fov = ig.fovs
 	if params == :default
 		params = default_cuboid_parameters(fov, fov, fov)
@@ -291,17 +291,17 @@ function cuboid_im(ig::MIRT_image_geom, params::Symbol; args...)
 	else
 		throw("bad phantom symbol $params")
 	end
-	return cuboid_im(ig, params; args...)
+	return cuboid_im(ig, params ; args...)
 end
 
 
 """
-`phantom = cuboid_im(ig; args...)`
+`phantom = cuboid_im(ig ; args...)`
 
 `:default` default parameters
 """
-function cuboid_im(ig::MIRT_image_geom; args...)
-	return cuboid_im(ig, :default; args...)
+function cuboid_im(ig::MIRT_image_geom ; args...)
+	return cuboid_im(ig, :default ; args...)
 end
 
 

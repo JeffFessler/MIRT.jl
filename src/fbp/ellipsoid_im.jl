@@ -23,8 +23,8 @@ in
 - `params`		`[N 9]` ellipsoid parameters.
 
 option
-- `oversample::Integer`		oversampling factor (default:1)
-- `checkfov::Bool`			warn if any ellipsoid is out of fov
+- `oversample::Int`		oversampling factor (default:1)
+- `checkfov::Bool`		warn if any ellipsoid is out of fov
 - `how::Symbol`				`:fast` does it fast -- to do, only works slow
 							`:lowmem` uses less memory than :fast but slower
 							`:slow` default
@@ -37,7 +37,7 @@ out
 - `params`		`[N 9]` ellipsoid parameters (only if `return_params=true`)
 """
 function ellipsoid_im(ig::MIRT_image_geom, params::AbstractMatrix{<:Real} ;
-		oversample::Integer = 1,
+		oversample::Int = 1,
 		checkfov::Bool = false,
 		how::Symbol = :slow,
 		showmem::Bool = false,

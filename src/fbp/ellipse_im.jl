@@ -40,7 +40,7 @@ note: `op ellipse` in aspire with `nsub=3` is `oversample=4 = 2^(3-1)` here
 function ellipse_im(ig::MIRT_image_geom,
 		params::AbstractMatrix{<:Real} ;
 		rot::Real = 0,
-		oversample::Integer = 1,
+		oversample::Int = 1,
 		hu_scale::Real = 1,
 		replace::Bool = false,
 		how::Symbol = :fast, # todo
@@ -202,41 +202,41 @@ end # ellipse_im_fast()
 square image of size `nx` by `nx`,
 specifying pixel size `dx` and ellipse `params`
 """
-function ellipse_im(nx::Integer, dx::Real, params ; kwarg...)
+function ellipse_im(nx::Int, dx::Real, params ; kwarg...)
 	ig = image_geom(nx=nx, dx=1)
 	return ellipse_im(ig, params ; kwarg...)
 end
 
 
 """
-`phantom = ellipse_im(nx::Integer, params ; kwarg...)`
+`phantom = ellipse_im(nx::Int, params ; kwarg...)`
 
 square image of size `nx` by `nx` with
 pixel size `dx=1` and ellipse `params`
 """
-function ellipse_im(nx::Integer, params ; kwarg...)
+function ellipse_im(nx::Int, params ; kwarg...)
 	return ellipse_im(nx, 1., params ; kwarg...)
 end
 
 
 """
-`phantom = ellipse_im(nx::Integer ; ny::Integer=nx, dx::Real=1, kwarg...)`
+`phantom = ellipse_im(nx::Int ; ny::Int=nx, dx::Real=1, kwarg...)`
 
 image of size `nx` by `ny` (default `nx`) with specified `dx` (default 1),
 defaults to `:shepplogan_emis`
 """
-function ellipse_im(nx::Integer ; ny::Integer=nx, dx::Real=1, kwarg...)
+function ellipse_im(nx::Int ; ny::Int=nx, dx::Real=1, kwarg...)
 	ig = image_geom(nx=nx, ny=ny, dx=dx)
 	return ellipse_im(ig, :shepplogan_emis ; kwarg...)
 end
 
 
 """
-`phantom = ellipse_im(nx::Integer, ny::Integer ; kwarg...)`
+`phantom = ellipse_im(nx::Int, ny::Int ; kwarg...)`
 
 `:shepplogan_emis` of size `nx` by `ny`
 """
-function ellipse_im(nx::Integer, ny::Integer ; kwarg...)
+function ellipse_im(nx::Int, ny::Int ; kwarg...)
 	return ellipse_im(nx, ny=ny, dx=1. ; kwarg...)
 end
 
