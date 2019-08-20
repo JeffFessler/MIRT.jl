@@ -6,7 +6,7 @@ finite differences
 
 export diff_map
 
-using LinearMaps
+using LinearMapsAA
 using Test: @test
 
 
@@ -73,24 +73,24 @@ end
 
 
 """
-`T = diff2d_map(M,N)`
+`T = diff2d_map(M::Int, N::Int)`
 """
 function diff2d_map(M::Int, N::Int)
-	return LinearMap(
+	return LinearMapAA(
         x -> diff2d_forw(reshape(x,M,N)),
         d -> diff2d_adj(d, M, N),
-        N*(M-1)+M*(N-1), N*M)
+        (N*(M-1)+M*(N-1), N*M), (name="diff2_map",))
 end
 
 
 """
-`T = diff_map(M,N)`
+`T = diff_map(M::Int, N::Int)`
 
 in
 - `M,N` image size
 
 out
-- `T` a `LinearMap` object for regularizing via `T*x`
+- `T` a `LinearMapAA` object for regularizing via `T*x`
 """
 function diff_map(M::Int, N::Int)
 	return diff2d_map(M,N)
@@ -106,5 +106,6 @@ function diff_map(test::Symbol)
 	M,N = 4,5
 	T = diff_map(M,N)
 	@test Matrix(T)' == Matrix(T') # adjoint test
+	@test T.name == "diff2_map"
 	true
 end
