@@ -6,7 +6,7 @@ Aodwt.jl
 export Aodwt
 
 using Plots
-using LinearMapsAA
+using LinearMapsAA: LinearMapAA
 using Wavelets: dwt, idwt, wavelet, WT
 #using MIRT: jim
 

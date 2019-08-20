@@ -6,7 +6,7 @@ finite differences
 
 export diff_map
 
-using LinearMapsAA
+using LinearMapsAA: LinearMapAA
 using Test: @test
 
 
