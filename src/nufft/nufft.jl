@@ -12,6 +12,7 @@ using NFFT
 using Plots
 using Random: seed!
 using LinearAlgebra: norm
+using LinearMapsAA: LinearMapAA
 
 
 """
@@ -33,10 +34,10 @@ end
 # see https://github.com/tknopp/NFFT.jl/pull/33
 # todo: may be unnecessary with future version of nfft()
 """
-`nufft_typer(T::DataType, x::AbstractArray{<:Real}; warn::Bool=true)`
+`nufft_typer(T::DataType, x::AbstractArray{<:Real} ; warn::Bool=true)`
 type conversion wrapper for `nfft()`
 """
-function nufft_typer(T::DataType, x::AbstractArray{<:Number}; warn::Bool=true)
+function nufft_typer(T::DataType, x::AbstractArray{<:Number} ; warn::Bool=true)
 	if eltype(x) == T
 		return x
 	end
@@ -46,7 +47,7 @@ end
 
 
 """
-`p = nufft_init(w, N; nfft_m=4, nfft_sigma=2.0, pi_error=true, n_shift=0)`
+`p = nufft_init(w, N ; nfft_m=4, nfft_sigma=2.0, pi_error=true, n_shift=0)`
 
 Setup 1D NUFFT,
 for computing fast ``O(N \\log N)`` approximation to
@@ -54,28 +55,28 @@ for computing fast ``O(N \\log N)`` approximation to
 ``X[m] = sum_{n=0}^{N-1} x[n] exp(-i w[m] (n - n_shift)), m=1,…,M``
 
 in
-* `w::AbstractArray{<:Real}` `[M]` frequency locations (units radians/sample)
+- `w::AbstractArray{<:Real}` `[M]` frequency locations (units radians/sample)
 	+ `eltype(w)` determines the NFFTPlan type; so to save memory use Float32!
-* `N::Int` signal length
+- `N::Int` signal length
 
 option
-* `nfft_m::Int` 		see NFFT.jl documentation; default 4
-* `nfft_sigma::Real`	"", default 2.0
-* `n_shift::Real`		often is N/2; default 0
-* `pi_error::Bool`		throw error if ``|w| > π``, default `true`
+- `nfft_m::Int` 		see NFFT.jl documentation; default 4
+- `nfft_sigma::Real`	"", default 2.0
+- `n_shift::Real`		often is N/2; default 0
+- `pi_error::Bool`		throw error if ``|w| > π``, default `true`
    + Set to `false` only if you are very sure of what you are doing!
-* `do_many::Bool`	support extended inputs via `map_many`? default `true`
+- `do_many::Bool`	support extended inputs via `map_many`? default `true`
 
 out
-* `p NamedTuple` with fields
-	`nufft = x -> nufft(x), adjoint = y -> nufft_adj(y), A=LinearMap`
+- `p NamedTuple` with fields
+	`nufft = x -> nufft(x), adjoint = y -> nufft_adj(y), A=LinearMapAA`
 
 The default settings are such that for a 1D signal of length N=512,
 the worst-case error is below 1e-5 which is probably adequate
 for typical medical imaging applications.
 To verify this statement, run `nufft_plot1()` and see plot.
 """
-function nufft_init(w::AbstractArray{<:Real}, N::Int;
+function nufft_init(w::AbstractArray{<:Real}, N::Int ;
 		n_shift::Real = 0,
 		nfft_m::Int = 4,
 		nfft_sigma::Real = 2.0,
@@ -100,7 +101,8 @@ function nufft_init(w::AbstractArray{<:Real}, N::Int;
 #	forw! = x,y -> nfft!(p, nufft_typer(CT, x)) .* phasor # todo
 	back1 = y -> nfft_adjoint(p, nufft_typer(CT, y .* phasor_conj))
 
-	A = LinearMap{CT}(x -> forw1(x), y -> back1(y), M, N) # no "many" here!
+	A = LinearMapAA(forw1, back1, (M, N),
+			(name="nufft1", N=(N,), n_shift=n_shift, ), T=CT) # no "many" here!
 
 	if do_many
 		forw = x -> map_many(forw1, x, (N,))
@@ -115,7 +117,7 @@ end
 
 
 """
-`p = nufft_init(w, N; nfft_m=4, nfft_sigma=2.0, pi_error=true, n_shift=?)`
+`p = nufft_init(w, N ; nfft_m=4, nfft_sigma=2.0, pi_error=true, n_shift=?)`
 
 Setup multi-dimensional NUFFT,
 for computing fast ``O(N \\log N)`` approximation to
@@ -123,17 +125,17 @@ for computing fast ``O(N \\log N)`` approximation to
 ``X[m] = sum_{n=0}^{N-1} x[n] exp(-i w[m,:] (n - n_shift)), m=1,…,M``
 
 in
-* `w::AbstractMatrix{<:Real}` `[M,D]` frequency locations (units radians/sample)
+- `w::AbstractMatrix{<:Real}` `[M,D]` frequency locations (units radians/sample)
 	+ `eltype(w)` determines the NFFTPlan type; so to save memory use Float32!
-* `N::Dims` `[D]` signal dimensions
+- `N::Dims` `[D]` signal dimensions
 
 option
-* `nfft_m::Int` 		see NFFT.jl documentation; default 4
-* `nfft_sigma::Real`	"", default 2.0
-* `n_shift::AbstractVector{<:Real}`	`[D]`	often is N/2; default zeros(D)
-* `pi_error::Bool`		throw error if ``|w| > π``, default `true`
+- `nfft_m::Int` 		see NFFT.jl documentation; default 4
+- `nfft_sigma::Real`	"", default 2.0
+- `n_shift::AbstractVector{<:Real}`	`[D]`	often is N/2; default zeros(D)
+- `pi_error::Bool`		throw error if ``|w| > π``, default `true`
    + Set to `false` only if you are very sure of what you are doing!
-* `do_many::Bool`	support extended inputs via `map_many`? default `true`
+- `do_many::Bool`	support extended inputs via `map_many`? default `true`
 
 The default `do_many` option is designed for parallel MRI where the k-space
 sampling pattern applies to every coil.
@@ -141,12 +143,11 @@ It may also be useful for dynamic MRI with repeated sampling patterns.
 The coil and/or time dimensions must come after the spatial dimensions.
 
 out
-* `p NamedTuple` with fields
-	`nufft = x -> nufft(x), adjoint = y -> nufft_adj(y), A=LinearMap`
-	(The LinearMap does not support `do_many`.)
+- `p NamedTuple` with fields
+	`nufft = x -> nufft(x), adjoint = y -> nufft_adj(y), A=LinearMapAA`
+	(todo: The LinearMap does not support `do_many`.)
 """
-function nufft_init(w::AbstractMatrix{<:Real},
-		N::Dims;
+function nufft_init(w::AbstractMatrix{<:Real}, N::Dims ;
 		n_shift::AbstractVector{<:Real} = zeros(Int, length(N)),
 		nfft_m::Int = 4,
 		nfft_sigma::Real = 2.0,
@@ -175,7 +176,8 @@ function nufft_init(w::AbstractMatrix{<:Real},
 	back1 = y -> nfft_adjoint(p, nufft_typer(CT, y .* phasor_conj))
 
 	# no "many" for LinearMap:
-	A = LinearMap{CT}(x -> forw1(reshape(x,N)), y -> back1(y)[:], M, prod(N))
+	A = LinearMapAA(x -> forw1(reshape(x,N)), y -> back1(y)[:], (M, prod(N)),
+		(name="nufft$(length(N))", N=N, n_shift=n_shift), T=CT)
 
 	if do_many
 		forw = x -> map_many(forw1, x, N)
@@ -191,7 +193,7 @@ end
 
 
 """
-`nufft_test1(; M=30, N=20, n_shift=1.7, T=?, tol=?)`
+`nufft_test1( ; M=30, N=20, n_shift=1.7, T=?, tol=?)`
 simple 1D tests
 """
 function nufft_test1( ;
@@ -216,20 +218,23 @@ function nufft_test1( ;
 	@test isequal(a1, a2)
 	@test isapprox(Matrix(sn.A)', Matrix(sn.A')) # 1D adjoint test
 
+	A = sn.A
+	@test A.name == "nufft1"
+
 	sn = nufft_init(w, N, n_shift=n_shift, do_many=false)
 	o3 = sn.nufft(x)
 	@test norm(o3 - o0, Inf) / norm(o0, Inf) < tol
 
-	sn.nufft(ones(Int,N)) # should produce a warning
+	sn.nufft(ones(Int,N)) # should produce a "conversion" warning
 	true
 end
 
 
 """
-`nufft_test2(; M=?, N=?, n_shift=?, T=?, tol=?)`
+`nufft_test2( ; M=?, N=?, n_shift=?, T=?, tol=?)`
 simple 2D test
 """
-function nufft_test2(;
+function nufft_test2( ;
 		M::Int = 31,
 		N::Dims = (10,8),
 		n_shift::AbstractVector{<:Real} = [4,3],
@@ -252,8 +257,8 @@ function nufft_test2(;
 	w = (rand(M,2) .- 0.5) * 2 * pi
 
 	w = T.(w)
-	sd = dtft_init(w, N; n_shift=n_shift)
-	sn = nufft_init(w, N, n_shift=n_shift, pi_error=false)
+	sd = dtft_init(w, N ; n_shift=n_shift)
+	sn = nufft_init(w, N ; n_shift=n_shift, pi_error=false)
 
 	x = complex.(randn(T, N), randn(T, N))
 	o0 = sd.dtft(x)
@@ -286,6 +291,10 @@ function nufft_test2(;
 	@test isequal(sn.adjoint(cat(dims=3, y, 2y)),
 			cat(dims=4, sn.adjoint(y), sn.adjoint(2y)))
 
+	A = sn.A
+	@test A.name == "nufft2"
+	@test A.N == N
+
 	sn = nufft_init(w, N, n_shift=n_shift, pi_error=false, do_many=false)
 	o3 = sn.nufft(x)
 	@test norm(o3 - o0, Inf) / norm(o0, Inf) < tol
@@ -294,19 +303,19 @@ end
 
 
 """
-`w, errs = nufft_errors(; M=?, w=?, N=?, n_shift=?, ...)`
+`w, errs = nufft_errors( ; M=?, w=?, N=?, n_shift=?, ...)`
 
 Compute worst-case errors for NUFFT (for signal of length N of unit norm)
 """
-function nufft_errors(;
+function nufft_errors( ;
 	M::Int = 401,
 	N::Int = 512,
 	w::AbstractArray{<:Real} = LinRange(0, 2π/N, M),
 	n_shift::Real = 0,
 	kwargs...)
 
-	sd = dtft_init(w, N; n_shift=n_shift)
-	sn = nufft_init(w, N; n_shift=n_shift, kwargs...)
+	sd = dtft_init(w, N ; n_shift=n_shift)
+	sn = nufft_init(w, N ; n_shift=n_shift, kwargs...)
 	E = Matrix(sn.A - sd.A)
 	return w, mapslices(norm, E, dims=2)[:] # [M]
 end
@@ -321,7 +330,7 @@ function nufft_plot1()
 	Nlist = 2 .^ (4:9)
 	elist = zeros(length(Nlist))
 	for ii=1:length(Nlist)
-		w, errs = nufft_errors(; N = Nlist[ii])
+		w, errs = nufft_errors( ; N = Nlist[ii])
 	#	plot(w*N/2/π, tmp)
 		elist[ii] = maximum(errs)
 	end
@@ -330,7 +339,7 @@ end
 
 
 """
-`nufft_plot_error_m(; mlist=?)`
+`nufft_plot_error_m( ; mlist=?)`
 
 plot error vs NFFT sigma
 """
@@ -338,7 +347,7 @@ function nufft_plot_error_m(;
 	mlist::AbstractArray{<:Int} = 3:7)
 	worst = zeros(length(mlist))
 	for jm = 1:length(mlist)
-		_, errs = nufft_errors(; nfft_m=mlist[jm])
+		_, errs = nufft_errors( ; nfft_m=mlist[jm])
 		worst[jm] = maximum(errs)
 	end
 	scatter(mlist, worst, xlabel="m", ylabel="error", label="")
@@ -346,11 +355,11 @@ end
 
 
 """
-`nufft_plot_error_s(; slist=?)`
+`nufft_plot_error_s( ; slist=?)`
 
 plot error vs NFFT sigma
 """
-function nufft_plot_error_s(;
+function nufft_plot_error_s( ;
 	slist::AbstractArray{<:Real} = [1.5; 2:6])
 	worst = zeros(length(slist))
 	for is = 1:length(slist)
