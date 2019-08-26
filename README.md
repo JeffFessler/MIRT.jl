@@ -30,7 +30,7 @@ For detailed installation instructions, see:
 for conventional Julia
 - [doc/start-pro.md](https://github.com/JeffFessler/MIRT.jl/blob/master/doc/start-pro.md)
 for
-[JuliaPro}(https://juliacomputing.com/products/juliapro.html)
+[JuliaPro](https://juliacomputing.com/products/juliapro.html)
 
 This package is registered in the
 [`General`](https://github.com/JuliaRegistries/General) registry,
