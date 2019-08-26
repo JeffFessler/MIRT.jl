@@ -27,16 +27,16 @@ To avoid plotting during tests, first do `default(show=false)`
 function test_all_mirt()
 
 	basedir = dirname(pathof(MIRT))
-	@testset "all MIRT" begin
+#	@testset "all MIRT" begin
 		for root in srclist
 		#	@show root
-			@testset "$root" begin
+			@testset "MIRT:$root" begin
 				tmp = joinpath(basedir, root, "z-test.jl")
 			#	printstyled(tmp * "\n", color=:blue, bold=true)
 				include(tmp)
 			end
 		end
-	end
+#	end
 
 	true
 end
