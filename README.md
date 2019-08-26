@@ -26,7 +26,11 @@ and his
 ## Getting started
 
 For detailed installation instructions, see:
-[doc/start.md](https://github.com/JeffFessler/MIRT.jl/blob/master/doc/start.md)
+- [doc/start.md](https://github.com/JeffFessler/MIRT.jl/blob/master/doc/start.md)
+for conventional Julia
+- [doc/start-pro.md](https://github.com/JeffFessler/MIRT.jl/blob/master/doc/start-pro.md)
+for
+[JuliaPro}(https://juliacomputing.com/products/juliapro.html)
 
 This package is registered in the
 [`General`](https://github.com/JuliaRegistries/General) registry,
