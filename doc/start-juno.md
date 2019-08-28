@@ -26,6 +26,7 @@ On my Mac my path is
   - Then: `add MIRT Plots IJulia Debugger FFTW FFTViews DSP Arpack Debugger`
   - The package `IJulia` is needed for Jupyter notebooks.
   - FYI: `add MIRT` automatically loads from https://github.com/JeffFessler/MIRT.jl because MIRT.jl is a registered package.
+  - There are numerous packages available, see https://pkg.julialang.org/docs/
 * Type `precompile` to have Julia precompile the added packages.
 (This will save time later.)
 * After you are done adding packages, press the backspace key to return to the REPL prompt.
