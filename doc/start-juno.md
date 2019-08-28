@@ -1,0 +1,55 @@
+## Getting started instructions for using MIRT with Julia and Juno/Atom
+
+* Follow the instructions at
+http://docs.junolab.org/latest/man/installation/
+to set up the [Juno IDE](https://junolab.org/) in
+  the [Atom editor](https://atom.io), including:
+
+  - Install [Julia](https://julialang.org) (1.1 or later).
+  - Power users: set a shell alias for "julia" to the julia executable.
+On my Mac my path is
+`~/../freeware/Julia-1.2.app/Contents/Resources/julia/bin/julia -q`
+  - Install the [Atom editor](https://atom.io).
+  - Use Atom to install the `uber-juno` package.
+  - Answer "yes" the question about "Juno-specific panes on startup".
+  - You should see a "REPL" box at the bottom of Atom.  Hit enter to start Julia.
+  - If Julia does not start then follow the [instructions](http://docs.junolab.org/latest/man/installation/#Note-1) to set the Julia path
+
+* Explore the extensive Julia documentation at https://docs.julialang.org/
+* Type ```1+2``` at the Julia REPL prompt to verify it works.
+* Use the `]` key at the Julia REPL to enter its package manager (pkg).
+* Type `?` and press Enter at the Julia `pkg` prompt to peruse the many pkg commands.
+* Add needed packages using the `add` command at the `pkg` prompt.
+* For Julia 1.2.0, start with these two commands:
+  - `add SpecialFunctions`
+  - `build SpecialFunctions`
+  - Then: `add MIRT Plots IJulia Debugger FFTW FFTViews DSP Arpack Debugger`
+  - The package `IJulia` is needed for Jupyter notebooks.
+  - FYI: `add MIRT` automatically loads from https://github.com/JeffFessler/MIRT.jl because MIRT.jl is a registered package.
+* Type `precompile` to have Julia precompile the added packages.
+(This will save time later.)
+* After you are done adding packages, press the backspace key to return to the REPL prompt.
+* Later if you need to add more packages just type the `]` key again at the REPL prompt to enter the package manager.
+  - Julia is under active development so code is updated frequently.  It is wise to type `up` (short for `update`) at the package manager prompt every week or so to get automatic updates of any packages you have installed.
+  - After running `up`, you can type `gc` (for garbage collect) to have Julia remove old versions of packages.
+* For some Julia tutorials see
+http://web.eecs.umich.edu/~fessler/course/551/julia/tutor/
+* For some signal processing demos in Julia see
+http://web.eecs.umich.edu/~fessler/course/551/julia/demo/
+* Test your `MIRT` installation by displaying a test image by entering the following code either in the REPL or in the Atom text editor:
+```
+using MIRT: jim, ellipse_im
+x = ellipse_im(100)
+jim(x, title="test")
+```
+* This test should produce a grayscale image of the famous
+[Shepp-Logan phantom](https://en.wikipedia.org/wiki/Shepp%E2%80%93Logan_phantom) in the Plots tab of Atom.
+* To learn about the jiffy image display function `jim`, type `?jim` at the REPL.
+* Juno and Atom have lots of online documention.
+I use the `vim-mode-plus` key bindings, installed using Atom preferences.
+
+
+* Install [Jupyter Notebook](https://jupyter.readthedocs.io/en/latest/install.html)
+(there are many ways to do it)
+* To start a Jupyter notebook for Julia, type at the REPL:
+`using IJulia; notebook()`
