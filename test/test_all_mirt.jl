@@ -2,7 +2,7 @@
 
 export test_all_mirt
 
-using Test: @testset
+using Test: @testset, detect_ambiguities
 
 srclist = (
 "../data",
@@ -38,5 +38,6 @@ function test_all_mirt()
 		end
 #	end
 
+	@test length(detect_ambiguities(MIRT)) == 0
 	true
 end

@@ -69,7 +69,7 @@ out
 
 2019-02-23 Jeff Fessler, University of Michigan
 """
-function jim(z::AbstractArray{<:Real};
+function jim(z::AbstractArray{<:Real} ;
 		aspect_ratio = jim_def[:aspect_ratio],
 		clim = nothing_else(jim_def[:clim], (minimum(z), maximum(z))),
 		color = jim_def[:color],
@@ -121,40 +121,41 @@ end # jim
 
 
 # handle case of complex image
-function jim(z::AbstractArray{<:Number};
-		abswarn::Bool = jim_def[:abswarn],
-		kwargs...
+function jim(z::AbstractArray{<:Number} ;
+			abswarn::Bool = jim_def[:abswarn],
+			kwargs...
 		)
 
 	if !(eltype(z) <: Real)
 		abswarn && (@warn "magnitude at $(caller_name())")
 		z = abs.(z)
 	end
-	jim(z; kwargs...)
+	jim(z ; kwargs...)
 end
 
 
 """
-`jim(z, title; kwargs...)`
+`jim(z, title ; kwargs...)`
 """
-function jim(z, title::Union{String,LaTeXString}; kwargs...)
-	return jim(z; title=title, kwargs...)
+function jim(z::AbstractArray{<:Number}, title::Union{String,LaTeXString}
+		; kwargs...)
+	return jim(z ; title=title, kwargs...)
 end
 
 
 """
-`jim(x, y, z; kwargs...)`
+`jim(x, y, z ; kwargs...)`
 """
-function jim(x, y, z; kwargs...)
-	return jim(z; x=x, y=y, kwargs...)
+function jim(x, y, z ; kwargs...)
+	return jim(z ; x=x, y=y, kwargs...)
 end
 
 
 """
-`jim(x, y, z, title; kwargs...)`
+`jim(x, y, z, title ; kwargs...)`
 """
-function jim(x, y, z, title::Union{String,LaTeXString}; kwargs...)
-	return jim(z; x=x, y=y, title=title, kwargs...)
+function jim(x, y, z, title::Union{String,LaTeXString} ; kwargs...)
+	return jim(z ; x=x, y=y, title=title, kwargs...)
 end
 
 
@@ -170,7 +171,7 @@ end
 #"""
 #`jim(abswarn=false)`
 #"""
-#function jim(; abswarn::Bool=jim_state_abswarn)
+#function jim( ; abswarn::Bool=jim_state_abswarn)
 #	global jim_state_abswarn = abswarn
 #end
 
