@@ -8,10 +8,10 @@ to set up the [Juno IDE](https://junolab.org/) in
   - Install [Julia](https://julialang.org) (1.1 or later).
   - Power users: set a shell alias for "julia" to the julia executable.
 On my Mac my path is
-`~/../freeware/Julia-1.2.app/Contents/Resources/julia/bin/julia -q`
+`~/../freeware/Julia-1.2.app/Contents/Resources/julia/bin/julia`
   - Install the [Atom editor](https://atom.io).
-  - Use Atom to install the `uber-juno` package.
-  - Answer "yes" the question about "Juno-specific panes on startup".
+  - Use Atom to install the `uber-juno` package. This may take a couple minutes.
+  - Click "Yes" for the question about "Juno-specific panes on startup", unless you are an Atom guru.
   - You should see a "REPL" box at the bottom of Atom.  Hit enter to start Julia.
   - If Julia does not start then follow the [instructions](http://docs.junolab.org/latest/man/installation/#Note-1) to set the Julia path
 
