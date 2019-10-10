@@ -329,8 +329,8 @@ Plot worst-case error over all frequencies w between 0 and 2pi/N for various N.
 function nufft_plot1()
 	Nlist = 2 .^ (4:9)
 	elist = zeros(length(Nlist))
-	for ii=1:length(Nlist)
-		w, errs = nufft_errors( ; N = Nlist[ii])
+	for (ii, N) in enumerate(Nlist)
+		w, errs = nufft_errors( ; N = N)
 	#	plot(w*N/2/π, tmp)
 		elist[ii] = maximum(errs)
 	end
@@ -346,8 +346,8 @@ plot error vs NFFT sigma
 function nufft_plot_error_m(;
 	mlist::AbstractArray{<:Int} = 3:7)
 	worst = zeros(length(mlist))
-	for jm = 1:length(mlist)
-		_, errs = nufft_errors( ; nfft_m=mlist[jm])
+	for (jm,nfft_m) = enumerate(mlist)
+		_, errs = nufft_errors( ; nfft_m=nfft_m)
 		worst[jm] = maximum(errs)
 	end
 	scatter(mlist, worst, xlabel="m", ylabel="error", label="")
@@ -362,8 +362,8 @@ plot error vs NFFT sigma
 function nufft_plot_error_s( ;
 	slist::AbstractArray{<:Real} = [1.5; 2:6])
 	worst = zeros(length(slist))
-	for is = 1:length(slist)
-		_, errs = nufft_errors(; nfft_sigma=slist[is])
+	for (is,σ) in enumerate(slist)
+		_, errs = nufft_errors(; nfft_sigma=σ)
 		worst[is] = maximum(errs)
 	end
 	scatter(slist, worst, xlabel="σ", ylabel="error", label="")

@@ -9,6 +9,8 @@ export ir_mri_sensemap_sim
 #using MIRT: jim, image_geom
 
 using Elliptic: ellipke
+#using SpecialFunctions: ellipk, ellipe # todo
+#	import SpecialFunctions
 using Test: @test, @inferred
 import Plots # Plot
 using Plots: Plot, plot, plot!, gui, contour!, scatter!, quiver, quiver!,
@@ -57,7 +59,7 @@ Matlab notes:
 - 2014-09-09 modified for 3D by Mai Le
 - 2016-05-03 JF fixes
 """
-function ir_mri_sensemap_sim(;
+function ir_mri_sensemap_sim( ;
 		dims::Dims = (64,64), # 2D default
 		dx::Real = 3,
 		dy::Real = dx,
@@ -398,14 +400,16 @@ end
 
 
 """
-`ellipke(x::AbstractArray{<:Real})`
+`ellipke_(x::AbstractArray{<:Real})`
 """
 function ellipke_(x::AbstractArray{<:Real})
 	k = similar(x)
 	e = similar(x)
-	for i=1:length(x)
-		(k[i], e[i]) = ellipke(x[i])
+	for (i,v) in enumerate(x)
+		(k[i], e[i]) = ellipke(v)
 	end
+#	@show isapprox(SpecialFunctions.ellipk.(x), k) # todo
+#	@show isapprox(SpecialFunctions.ellipe.(x), e)
 	return (k,e)
 end
 
@@ -509,7 +513,7 @@ end
 `ir_mri_sensemap_sim_test3(;chat)`
 return plot that illustrates 3D sense maps
 """
-function ir_mri_sensemap_sim_test3(;chat::Bool=false)
+function ir_mri_sensemap_sim_test3( ; chat::Bool=false)
 	nring = 3
 	ncoil = 4 * nring
 	ig = image_geom(nx=16, ny=14, nz=10, fov=200, dz=20, mask=:circ) # 20cm fov
