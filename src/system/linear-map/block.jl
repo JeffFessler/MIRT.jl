@@ -1,6 +1,8 @@
-# lm-block.jl
-# block operations for linear maps
-# 2019-06-15, Jeff Fessler, University of Michigan
+#=
+lm-block.jl
+block operations for linear maps
+2019-06-15, Jeff Fessler, University of Michigan
+=#
 
 export block_lm
 
@@ -118,8 +120,7 @@ function [T, reuse] = block_lm_col_gram(ob, W, reuse, varargin)
 
 blocks = ob.blocks
 T = cell(size(blocks))
-for mm=1:length(blocks)
-	A = blocks[mm]
+for (mm,A) in enumerate(blocks)
 	if isnumeric(A)
 		if isempty(W)
 			T[mm] = A' * A
@@ -230,8 +231,7 @@ function [T, reuse] = block_lm_diag_gram(ob, W, reuse, varargin)
 
 blocks = ob.blocks
 T = cell(size(blocks))
-for mm=1:length(blocks)
-	A = blocks[mm]
+for (mm,A) in enumerate(blocks)
 	if isnumeric(A)
 		if isempty(W)
 			T[mm] = A' * A

@@ -230,8 +230,7 @@ end
 Parse an argument from header, of the name=value form
 """
 function arg_get(head::Array{<:AbstractString}, name::String, toint::Bool=true)
-	for ll = 1:length(head)
-		line = head[ll]
+	for line in head
 		start = findfirst(name * '=',line)
 		if !isnothing(start)
 			!isnothing(findnext(name*'=',line,start[end]+1)) && throw("bug: multiples?")

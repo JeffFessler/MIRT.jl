@@ -100,8 +100,8 @@ function fld_write(file::String, data::AbstractArray{<:Real};
 	ndim = ndims(data)
 
 	println(fid, "# AVS field file ($(basename(@__FILE__)))")
-	for ii=1:length(head)
-		println(fid, "# $(head[ii])")
+	for line in head
+		println(fid, "# $line")
 	end
 
 	println(fid, "ndim=$ndim")

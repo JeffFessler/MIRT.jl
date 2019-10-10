@@ -16,9 +16,8 @@ function ir_dump(y::Any ; io::IO = stdout)
 	print(io, x)
 	fields = fieldnames(x)
 	fieldtypes = x.types
-	for idx in 1:length(fields)
+	for (idx,fd) in enumerate(fields)
 		println(io)
-		fd = fields[idx]
 		print(io, " ", fd, "::")
 		ft = fieldtypes[idx]
 		print(io, ft)
