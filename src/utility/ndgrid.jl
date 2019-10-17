@@ -5,6 +5,9 @@ I know that using ndgrid is not the "julian way" but when porting code
 from matlab sometimes it is easier just to use it instead of refactoring
 to do some other way.
 
+The better way would be to use CartesianIndices
+https://julialang.org/blog/2016/02/iteration
+
 2019-06-18, Jeff Fessler, University of Michigan
 =#
 
