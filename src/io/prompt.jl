@@ -84,9 +84,11 @@ function prompt(key::Symbol)
 	end
 
 	if key == :test
+		tmp = prompt(:state) # save current state
 		prompt(:draw)
 		@test prompt(:state) == :draw
 		prompt()
+		prompt(tmp) # return to original state
 		return true
 	end
 
