@@ -26,7 +26,7 @@ function prompt(; gui::Bool=true)
 
 	gui && !Plots.isplotnull() && Plots.gui()
 
-	prompt_state == :prompt && wait_for_key()
+	prompt_state == :prompt && isinteractive() && wait_for_key()
 	return nothing
 
 #=
