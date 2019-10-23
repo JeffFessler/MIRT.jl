@@ -58,8 +58,10 @@ function wait_for_key(; prompt::String = "press any key: ", io = stdin)
 	setraw!(raw) = ccall(:jl_tty_set_mode, Int32, (Ptr{Cvoid},Int32), io.handle, raw)
 	print(io, prompt)
 	setraw!(true)
-	read(io, 1)
+	char = read(io, 1)
 	setraw!(false)
+	write(io, char)
+	write(io, "\n")
 	nothing
 end
 
