@@ -8,11 +8,8 @@ export ir_mri_sensemap_sim
 
 #using MIRT: jim, image_geom
 
-using Elliptic: ellipke
-#using SpecialFunctions: ellipk, ellipe # todo
-#	import SpecialFunctions
+using SpecialFunctions: ellipk, ellipe
 using Test: @test, @inferred
-import Plots # Plot
 using Plots: Plot, plot, plot!, gui, contour!, scatter!, quiver, quiver!,
 		clibrary, Arrow
 	clibrary(:misc)
@@ -337,7 +334,7 @@ function for testing near 0
 """
 function ir_mri_smap_r(r, z)
 	M = 4 * r / ((1 + r)^2 + z^2) # = k^2, see ellipke
-	(K,E) = ellipke(M)
+	(K,E) = (ellipk.(M), ellipe.(M))
 	return 2 * z / r * ((1 + r)^2 + z^2)^(-0.5) *
 		((1 + r^2 + z^2) / ((1 - r)^2 + z^2) * E - K)
 end
@@ -359,7 +356,7 @@ function ir_mri_smap1(x, y, z, a)
 	z = z / a
 	r = sqrt(x^2 + y^2)
 	M = 4 * r / ((1 + r)^2 + z^2) # = k^2, see ellipke
-	(K,E) = ellipke(M)
+	(K,E) = (ellipk.(M), ellipe.(M))
 
 	# the following is B_z in eqn (18) in grivich:00:tmf
 	# and same as eqn [10] in wang:00:dop to within constant scale factor
@@ -400,30 +397,16 @@ end
 
 
 """
-`ellipke_(x::AbstractArray{<:Real})`
-"""
-function ellipke_(x::AbstractArray{<:Real})
-	k = similar(x)
-	e = similar(x)
-	for (i,v) in enumerate(x)
-		(k[i], e[i]) = ellipke(v)
-	end
-#	@show isapprox(SpecialFunctions.ellipk.(x), k) # todo
-#	@show isapprox(SpecialFunctions.ellipe.(x), e)
-	return (k,e)
-end
-
-
-"""
 `ir_mri_sensemap_sim_test0()`
 show ellipke
 """
 function ir_mri_sensemap_sim_test0()
 	@inferred ir_mri_smap_r(5e-7, 0.4)
 	m = LinRange(0,1,101)
-	(k,e) = @inferred ellipke_(m)
-	plot(m, k, label="k"); plot!(m, e, label="e")
-	plot!(yaxis=[0,3*pi/2])
+	(k,e) = (ellipk.(m), ellipe.(m))
+	plot(yaxis=[0,3*pi/2])
+	plot!(m, k, label="k")
+	plot!(m, e, label="e")
 	plot!(ytick=((0:3)*pi/2, ["0", "\\pi/2", "\\pi", "3\\pi/2"]))
 end
 
@@ -478,7 +461,7 @@ end
 
 
 """
-`ir_mri_sensemap_sim_test2(;chat)`
+`ir_mri_sensemap_sim_test2( ; chat)`
 return plot with 2D example
 """
 function ir_mri_sensemap_sim_test2( ; chat::Bool=true)
@@ -510,7 +493,7 @@ end
 
 
 """
-`ir_mri_sensemap_sim_test3(;chat)`
+`ir_mri_sensemap_sim_test3( ; chat)`
 return plot that illustrates 3D sense maps
 """
 function ir_mri_sensemap_sim_test3( ; chat::Bool=false)
@@ -550,10 +533,21 @@ self test
 function ir_mri_sensemap_sim(test::Symbol)
 	test != :test && throw(ArgumentError("test $test"))
 
+	ir_mri_sensemap_sim_test0() # ellipk
+	prompt()
+	ir_mri_sensemap_sim_test1() # basic test
+	prompt()
+	ir_mri_sensemap_sim_test2() # 2d test
+	prompt()
+	ir_mri_sensemap_sim_test3() # 3d test
+	prompt()
+
+#=
 	@test typeof(ir_mri_sensemap_sim_test0()) <: Plots.Plot # ellipk
 	@test typeof(ir_mri_sensemap_sim_test1()) <: Plots.Plot # basic test
 	@test typeof(ir_mri_sensemap_sim_test2()) <: Plots.Plot # 2d test
 	@test typeof(ir_mri_sensemap_sim_test3()) <: Plots.Plot # 3d test
+=#
 	true
 end
 
