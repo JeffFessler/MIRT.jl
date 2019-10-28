@@ -16,7 +16,7 @@ using Plots: Plot, plot, plot!, gui, contour!, scatter!, quiver, quiver!,
 
 
 """
-`function (smap,info) = ir_mri_sensemap_sim(...)`
+    (smap,info) = ir_mri_sensemap_sim(...)
 
 Simulate 2D or 3D sensitivity maps for sensitivity-encoded MRI based on
 grivich:00:tmf http://doi.org/10.1119/1.19461
@@ -101,7 +101,7 @@ end
 
 
 """
-`(smap, info) = ir_mri_sensemap_sim_do()`
+    (smap, info) = ir_mri_sensemap_sim_do()
 """
 function ir_mri_sensemap_sim_do(nx, ny, nz,
 		dx, dy, dz, ncoil, ncoilpr, rcoil, dz_coil,
@@ -206,7 +206,7 @@ end
 
 
 """
-`ir_mri_sensemap_sim_show3()`
+    ir_mri_sensemap_sim_show3()
 shows coil geometry but not the 3D smap
 """
 function ir_mri_sensemap_sim_show3(smap, x, y, z, dx, dy, dz,
@@ -244,7 +244,7 @@ end
 
 
 """
-`ir_plot3_cube(x,y,z)`
+    ir_plot3_cube(x,y,z)
 """
 function ir_plot3_cube(x,y,z)
 	x1 = x[1]
@@ -261,7 +261,7 @@ end
 
 
 """
-`ir_mri_sensemap_sim_show2()`
+    ir_mri_sensemap_sim_show2()
 returns plot
 """
 function ir_mri_sensemap_sim_show2(smap, x, y, dx, dy, nlist, plist, rlist)
@@ -329,7 +329,7 @@ end
 
 
 """
-`ir_mri_smap_r(r, z)`
+    ir_mri_smap_r(r, z)
 function for testing near 0
 """
 function ir_mri_smap_r(r, z)
@@ -341,7 +341,7 @@ end
 
 
 """
-`ir_mri_smap1()`
+    ir_mri_smap1()
 based on grivich:00:tmf
 
 for a circular coil in "x-y plane" of radius "a"
@@ -397,7 +397,7 @@ end
 
 
 """
-`ir_mri_sensemap_sim_test0()`
+    ir_mri_sensemap_sim_test0()
 show ellipke
 """
 function ir_mri_sensemap_sim_test0()
@@ -412,7 +412,7 @@ end
 
 
 """
-`ir_mri_sensemap_sim_test1()`
+    ir_mri_sensemap_sim_test1()
 test ir_mri_smap1 routine, cf Fig. 4 of grivich:00:tmf
 """
 function ir_mri_sensemap_sim_test1()
@@ -440,7 +440,7 @@ end
 
 
 """
-`ir_mri_sensemap_sim_test1_show()`
+    ir_mri_sensemap_sim_test1_show()
 """
 function ir_mri_sensemap_sim_test1_show(smap, x, y, zlist, title)
 	clim = [-20,20]
@@ -461,7 +461,7 @@ end
 
 
 """
-`ir_mri_sensemap_sim_test2( ; chat)`
+    ir_mri_sensemap_sim_test2( ; chat)
 return plot with 2D example
 """
 function ir_mri_sensemap_sim_test2( ; chat::Bool=true)
@@ -493,7 +493,7 @@ end
 
 
 """
-`ir_mri_sensemap_sim_test3( ; chat)`
+    ir_mri_sensemap_sim_test3( ; chat)
 return plot that illustrates 3D sense maps
 """
 function ir_mri_sensemap_sim_test3( ; chat::Bool=false)
@@ -527,7 +527,7 @@ end
 
 
 """
-`ir_mri_sensemap_sim(:test)`
+    ir_mri_sensemap_sim(:test)
 self test
 """
 function ir_mri_sensemap_sim(test::Symbol)
