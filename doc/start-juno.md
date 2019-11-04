@@ -56,4 +56,4 @@ I use the `vim-mode-plus` key bindings, installed using Atom preferences.
 (there are many ways to do it) and then restart Atom and try again.
 
 * To use the debugger in Atom/Juno, see
-[this dubigging tutorial](http://docs.junolab.org/latest/man/debugging)
+[this debugging tutorial](http://docs.junolab.org/latest/man/debugging)
