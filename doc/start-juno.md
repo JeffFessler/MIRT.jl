@@ -54,3 +54,6 @@ I use the `vim-mode-plus` key bindings, installed using Atom preferences.
 
 * If that fails, then you might need to separately install [Jupyter Notebook](https://jupyter.readthedocs.io/en/latest/install.html)
 (there are many ways to do it) and then restart Atom and try again.
+
+* To use the debugger in Atom/Juno, see
+[this dubigging tutorial](http://docs.junolab.org/latest/man/debugging)
