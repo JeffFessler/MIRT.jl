@@ -45,5 +45,3 @@ function interp1(test::Symbol)
 	gui()
 	true
 end
-
-interp1(:test)
