@@ -6,3 +6,4 @@ using Test
 @test map_many(:test)
 @test mask_test()
 @test ndgrid(:test)
+@test interp1(:test)
