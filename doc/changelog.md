@@ -1,5 +1,7 @@
 In reverse chronological order
 
+0.8.0 2019-11-05
+
 2019-07-12
 add `ellipsoid_im` `ellipse_sino` `rect_sino`
 
