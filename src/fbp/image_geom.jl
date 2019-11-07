@@ -185,7 +185,7 @@ function image_geom( ;
 	is3 = !isnan(dz) || !isnan(zfov) || (nz > 0)
 
 	# offsets
-	if offsets == :dsp
+	if offsets === :dsp
 		# check that no nonzero offset was specified
 		(offset_x != 0 || offset_y != 0) && throw("offsets usage incorrect")
 		offset_x = 0.5
@@ -221,11 +221,11 @@ function image_geom( ;
 	end
 
 	# mask
-	if mask == :all
+	if mask === :all
 		mask = is3 ? trues(nx, ny, nz) : trues(nx, ny)
-	elseif mask == :circ
+	elseif mask === :circ
 		mask = image_geom_circle(nx, ny, dx, dy)
-	elseif mask == :all_but_edge
+	elseif mask === :all_but_edge
 		mask = trues(nx,ny,nz)
 		mask[  1,   :, :] .= false
 		mask[end,   :, :] .= false
@@ -583,7 +583,7 @@ end
 self test
 """
 function image_geom(test::Symbol)
-	if test == :help
+	if test === :help
 		image_geom_help()
 		return true
 	end

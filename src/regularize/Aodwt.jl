@@ -76,7 +76,7 @@ self test
 visualize
 """
 function Aodwt(test::Symbol)
-	if test == :show
+	if test === :show
 		return Aodwt_show()
 	end
 

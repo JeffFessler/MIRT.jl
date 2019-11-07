@@ -81,7 +81,7 @@ for iter = 1:niter
 	if iter == 1
 		dir = npgrad
 	else
-		if betahow == :dai_yuan
+		if betahow === :dai_yuan
 			denom =	(grad_new - grad_old)' * dir
 			if denom == 0
 				betaval = 0

@@ -26,7 +26,7 @@ Iterative proximal algorithms (PGM=ISTA, FPGM=FISTA, POGM) with restart.
 # in
 - `x0` initial guess
 - `Fcost` function for computing the cost function value ``F(x)``
-  - (needed only if `restart == :fr`)
+  - (needed only if `restart === :fr`)
 - `f_grad` function for computing the gradient of ``f(x)``
 - `f_L` Lipschitz constant of the gradient of ``f(x)``
 
@@ -148,7 +148,7 @@ function pogm_restart(x0, Fcost::Function, f_grad::Function, f_L::Real ;
 for iter=1:niter
 
 	# proximal gradient (PGM) update
-	if mom == :pgm && mu != 0
+	if mom === :pgm && mu != 0
 		alpha = 2. / (L+mu)
 	else
 		alpha = 1. / L
@@ -158,7 +158,7 @@ for iter=1:niter
 
 	is_restart = false
 
-	if mom == :pgm || mom == :fpgm
+	if mom === :pgm || mom === :fpgm
 		ynew = g_prox(xold - alpha * fgrad, alpha) # standard PG update
 		Fgrad = -(1. / alpha) * (ynew - xold) # standard composite gradient mapping
 		Fcostnew = Fcost(ynew)
@@ -166,15 +166,15 @@ for iter=1:niter
 		# restart condition
 		if restart != :none
 			# function/gradient restart
-			if ((restart == :fr && Fcostnew > Fcostold)
-			|| (restart == :gr && gr_restart(Fgrad, ynew-yold, restart_cutoff)))
+			if ((restart === :fr && Fcostnew > Fcostold)
+			|| (restart === :gr && gr_restart(Fgrad, ynew-yold, restart_cutoff)))
 				told = 1
 				is_restart = true
 			end
 			Fcostold = Fcostnew
 		end
 
-	elseif mom == :pogm # POGM
+	elseif mom === :pogm # POGM
 		# gradient update for POGM [see KF18]
 		unew = xold - alpha * fgrad
 		# restart + "gamma" decrease conditions checked later for POGM,
@@ -185,13 +185,13 @@ for iter=1:niter
 	end
 
 	# momentum coefficient "beta"
-	if mom == :fpgm && mu != 0 # known μ > 0
+	if mom === :fpgm && mu != 0 # known μ > 0
 		beta = (1 - sqrt(q)) / (1 + sqrt(q))
-	elseif mom == :pogm && mu != 0
+	elseif mom === :pogm && mu != 0
 		beta = (2 + q - sqrt(q^2+8*q))^2 / 4. / (1-q)
 	# for "mu" = 0 or for unknown "mu"
 	elseif mom != :pgm
-		if mom == :pogm && iter == niter # && restart == 0
+		if mom === :pogm && iter == niter # && restart == 0
 			tnew = 0.5 * (1 + sqrt(1 + 8 * told^2))
 		else
 			tnew = 0.5 * (1 + sqrt(1 + 4 * told^2))
@@ -201,11 +201,11 @@ for iter=1:niter
 	end
 
 	# momentum update
-	if mom == :pgm
+	if mom === :pgm
 		xnew = ynew
-	elseif mom == :fpgm
+	elseif mom === :fpgm
 		xnew = ynew + beta * (ynew - yold)
-	elseif mom == :pogm # see [KF18]
+	elseif mom === :pogm # see [KF18]
 		# momentum coefficient "gamma"
 		if mu != 0
 			gamma = (2 + q - sqrt(q^2+8*q)) / 2.
@@ -226,8 +226,8 @@ for iter=1:niter
 		# restart + "gamma" decrease conditions for POGM
 		if restart != :none
 			# function/gradient restart
-			if ((restart == :fr && Fcostnew > Fcostold)
-			|| (restart == :gr && gr_restart(Fgrad, ynew-yold, restart_cutoff)))
+			if ((restart === :fr && Fcostnew > Fcostold)
+			|| (restart === :gr && gr_restart(Fgrad, ynew-yold, restart_cutoff)))
 				tnew = 1
 				sig = 1
 				is_restart = true
@@ -256,7 +256,7 @@ for iter=1:niter
 	end
 end # for iter
 
-	return ((mom == :pogm) ? xnew : ynew), out
+	return ((mom === :pogm) ? xnew : ynew), out
 end # pogm_restart()
 
 

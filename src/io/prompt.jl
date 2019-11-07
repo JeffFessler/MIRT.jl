@@ -22,11 +22,11 @@ prompt user to hit enter to continue, after gui()
 function prompt(; gui::Bool=true)
 	global prompt_state
 
-	prompt_state == :nodraw && return nothing
+	prompt_state === :nodraw && return nothing
 
 	gui && !Plots.isplotnull() && Plots.gui()
 
-	prompt_state == :prompt && isinteractive() && wait_for_key()
+	prompt_state === :prompt && isinteractive() && wait_for_key()
 	return nothing
 
 #=
@@ -79,14 +79,14 @@ self test
 function prompt(key::Symbol)
 	global prompt_state
 
-	if key == :state
+	if key === :state
 		return prompt_state
 	end
 
-	if key == :test
+	if key === :test
 		tmp = prompt(:state) # save current state
 		prompt(:draw)
-		@test prompt(:state) == :draw
+		@test prompt(:state) === :draw
 		prompt()
 		prompt(tmp) # return to original state
 		return true

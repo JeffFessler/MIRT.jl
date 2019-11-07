@@ -175,7 +175,7 @@ function ellipse_sino_show( ;
 	for ii=1:ngeom
 		sg = geoms[ii]
 		sino = ellipse_sino(sg, ell; oversample=oversample)
-		dfs = sg.how == :fan ? " dfs=$(sg.dfs)" : ""
+		dfs = sg.how === :fan ? " dfs=$(sg.dfs)" : ""
 		pl[ii,1] = jim(sino, title="$(sg.how)$dfs")
 		pl[ii,2] = sg.plot(ig=ig)
 	end
@@ -189,7 +189,7 @@ end
 self test
 """
 function ellipse_sino(test::Symbol)
-	test == :show && return ellipse_sino_show()
+	test === :show && return ellipse_sino_show()
 	test != :test && throw(ArgumentError("test $test"))
 	ellipse_sino() # doc
 	ellipse_sino_test()

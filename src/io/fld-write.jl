@@ -69,11 +69,11 @@ function fld_write(file::String, data::AbstractArray{<:Real};
 	endian != :le && endian != :be && throw("endian '$endian' unknown")
 
 	typedict = Dict([
-		(Float32, endian == :le ? "float_le" : "xdr_float"),
-		(Float64, endian == :le ? "double_le" : "xdr_double"),
+		(Float32, endian === :le ? "float_le" : "xdr_float"),
+		(Float64, endian === :le ? "double_le" : "xdr_double"),
 		(UInt8, "byte"),
-		(Int16, endian == :le ? "short_le" : "short_be"),
-		(Int32, endian == :le ? "int_le" : "xdr_int"),
+		(Int16, endian === :le ? "short_le" : "short_be"),
+		(Int32, endian === :le ? "int_le" : "xdr_int"),
 		])
 
 	dtype = eltype(data)
@@ -121,11 +121,11 @@ function fld_write(file::String, data::AbstractArray{<:Real};
 
 	# finally, write the binary data
 	host_is_le = ENDIAN_BOM == 0x04030201
-	if host_is_le == (endian == :le) # host/file same endian
+	if host_is_le == (endian === :le) # host/file same endian
 		write(fraw, data) # finally, write the binary data
-	elseif host_is_le && (endian == :be)
+	elseif host_is_le && (endian === :be)
 		write(fraw, hton.(data))
-	elseif !host_is_le && (endian == :le)
+	elseif !host_is_le && (endian === :le)
 		write(fraw, htol.(data))
 	end
 

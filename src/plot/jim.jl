@@ -102,7 +102,7 @@ function jim(z::AbstractArray{<:Real} ;
 	end
 
 	# attempt an HSV colormap for phase images
-	if color == :hsv
+	if color === :hsv
 		color = ColorGradient([HSV(h,1,1) for h=LinRange(0,350,351)])
 	end
 
@@ -196,10 +196,10 @@ end
 """
 function jim(test::Symbol)
 	global jim_def
-	if test == :keys
+	if test === :keys
 		return keys(jim_def)
 	end
-	if test == :defs
+	if test === :defs
 		return jim_def
 	end
 	if haskey(jim_def, test)

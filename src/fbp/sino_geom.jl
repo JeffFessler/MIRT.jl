@@ -130,18 +130,18 @@ See also
 Jeff Fessler, University of Michigan
 """
 function sino_geom(how::Symbol; kwarg...)
-	if how == :par
+	if how === :par
 		sg = sino_geom_par( ; kwarg...)
-	elseif how == :fan
+	elseif how === :fan
 		sg = sino_geom_fan( ; kwarg...)
-	elseif how == :moj
+	elseif how === :moj
 		sg = sino_geom_moj( ; kwarg...)
-	elseif how == :ge1
+	elseif how === :ge1
 		sg = sino_geom_ge1( ; kwarg...)
 #=
-	elseif how == :hd1
+	elseif how === :hd1
 		sg = sino_geom_hd1( ; kwarg...)
-	elseif how == :revo1fan
+	elseif how === :revo1fan
 		tmp = ir_fan_geom_revo1(type)
 		sg = sino_geom(:fan, tmp{:}, varargin{:})
 =#
@@ -211,7 +211,7 @@ function sino_geom_fan( ;
 
 	dfs != 0 && !isinf(dfs) && throw("dfs $dfs") # must be 0 or Inf
 
-	if orbit == :short # trick
+	if orbit === :short # trick
 		sg_tmp = MIRT_sino_geom(:fan, units,
 			nb, na, d, 0, orbit_start, offset, strip_width,
 			source_offset, dsd, dod, dfs)
@@ -298,9 +298,9 @@ end
 radial FOV
 """
 function sino_geom_rfov(sg)
-	return	sg.how == :par ? maximum(abs.(sg.r)) :
-			sg.how == :fan ? sg.dso * sin(sg.gamma_max) :
-			sg.how == :moj ? sg.nb/2 * minimum(sg.d_ang) : # todo: check
+	return	sg.how === :par ? maximum(abs.(sg.r)) :
+			sg.how === :fan ? sg.dso * sin(sg.gamma_max) :
+			sg.how === :moj ? sg.nb/2 * minimum(sg.d_ang) : # todo: check
 				throw("bad how $(sg.how)")
 end
 
@@ -313,10 +313,10 @@ function sino_geom_taufun(sg, x, y)
 	size(x) != size(y) && throw("bad x,y size")
 	x = x[:]
 	y = y[:]
-	if sg.how == :par || sg.how == :moj # todo: check
+	if sg.how === :par || sg.how === :moj # todo: check
 		ar = sg.ar' # row vector, for outer-product
 		tau = (x * cos.(ar) + y * sin.(ar)) / sg.dr
-	elseif sg.how == :fan
+	elseif sg.how === :fan
 		b = sg.ar' # row vector, for outer-product
 		xb = x * cos.(b) + y * sin.(b)
 		yb = -x * sin.(b) + y * cos.(b)
@@ -340,11 +340,11 @@ end
 center positions of detectors (for beta = 0)
 """
 function sino_geom_xds(sg)
-	if sg.how == :par
+	if sg.how === :par
 		xds = sg.s
-	elseif sg.how == :moj
+	elseif sg.how === :moj
 		xds = sg.s # todo: really should be angle dependent
-	elseif sg.how == :fan
+	elseif sg.how === :fan
 		if sg.dfs == 0 # arc
 			gam = sg.gamma
 			xds = sg.dsd * sin.(gam)
@@ -366,11 +366,11 @@ center positions of detectors (for beta = 0)
 """
 function sino_geom_yds(sg)
 
-	if sg.how == :par
+	if sg.how === :par
 		yds = zeros(Float32, sg.nb)
-	elseif sg.how == :moj
+	elseif sg.how === :moj
 		yds = zeros(Float32, sg.nb)
-	elseif sg.how == :fan
+	elseif sg.how === :fan
 		if sg.dfs == 0 # arc
 			gam = sg.gamma
 			yds = sg.dso .- sg.dsd * cos.(gam)
@@ -410,10 +410,10 @@ but for fan beam and mojette this involves more complicated computations.
 """
 function sino_geom_grid(sg::MIRT_sino_geom)
 
-	if sg.how == :par
+	if sg.how === :par
 		return ndgrid(sg.r, sg.ar)
 
-	elseif sg.how == :fan
+	elseif sg.how === :fan
 		gamma = sg.gamma
 		rad = sg.dso * sin.(gamma) + sg.source_offset * cos.(gamma)
 		rg = repeat(rad, 1, sg.na) # [nb na]
@@ -445,8 +445,8 @@ sino_geom_fun0 = Dict([
 	(:ones, sg -> ones(Float32, sg.dim)),
 	(:zeros, sg -> zeros(Float32, sg.dim)),
 
-	(:dr, sg -> sg.how == :moj ? NaN : sg.d),
-	(:ds, sg -> sg.how == :moj ? NaN : sg.d),
+	(:dr, sg -> sg.how === :moj ? NaN : sg.d),
+	(:ds, sg -> sg.how === :moj ? NaN : sg.d),
 	(:r, sg -> sg.d * ((0:sg.nb-1) .- sg.w)),
 	(:s, sg -> sg.r), # sample locations ('radial')
 
@@ -495,7 +495,7 @@ scatter plot of (r,phi) sampling locations from `sg.grid`
 """
 function sino_geom_plot_grid(sg::MIRT_sino_geom)
 	(r, phi) = sg.grid
-	dfs = sg.how == :fan ? " dfs=$(sg.dfs)" : ""
+	dfs = sg.how === :fan ? " dfs=$(sg.dfs)" : ""
 	ylim = [min(0, rad2deg(minimum(phi))), max(360, rad2deg(maximum(phi)))]
 	scatter(r, rad2deg.(phi), label="", markersize=1, ylim = ylim,
 		title="$(sg.how)$dfs", ytick=[0,360])
@@ -556,11 +556,11 @@ function sino_geom_plot(sg; ig::Union{Nothing,MIRT_image_geom}=nothing)
 	plot!(xlabel="x", ylabel="y", title = "$(sg.how): rfov = $rfov")
 
 #=
-	if sg.how == :par
+	if sg.how === :par
 	end
 =#
 
-	if sg.how == :fan
+	if sg.how === :fan
 		x0 = 0
 		y0 = sg.dso
 		t = LinRange(0, 2*pi, 100)
@@ -582,7 +582,7 @@ function sino_geom_plot(sg; ig::Union{Nothing,MIRT_image_geom}=nothing)
 		plot!(title="$(sg.how): dfs = $(sg.dfs)")
 	end
 
-	if sg.how == :moj && false
+	if sg.how === :moj && false
 		t = LinRange(0, 2*pi, 100)
 		rmax = maximum(sg.s)
 		rphi = sg.nb/2 * sg.d ./ (max(abs.(cos.(t)), abs.(sin.(t))))
@@ -606,13 +606,13 @@ function sino_geom_ge1( ;
 		units::Symbol = :mm, # default units is mm
 		kwarg...)
 
-	if orbit == :short
+	if orbit === :short
 		na = 642 # trick: reduce na for short scans
 		orbit = na/984*360
 	end
 
-	scale = units == :mm ? 1 :
-			units == :cm ? 10 :
+	scale = units === :mm ? 1 :
+			units === :cm ? 10 :
 			throw("units $units")
 
 	return sino_geom(:fan, units=units,

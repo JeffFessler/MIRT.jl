@@ -201,7 +201,7 @@ function rect_sino_show( ;
 	for ii=1:ngeom
 		sg = geoms[ii]
 		sino = rect_sino(sg, rect; oversample=oversample)
-		dfs = sg.how == :fan ? " dfs=$(sg.dfs)" : ""
+		dfs = sg.how === :fan ? " dfs=$(sg.dfs)" : ""
 		pl[ii] = jim(sg.r, sg.ad, sino, title="$(sg.how)$dfs")
 	end
 	plot(pl...)
@@ -213,7 +213,7 @@ end
 self test
 """
 function rect_sino(test::Symbol)
-	test == :show && return rect_sino_show()
+	test === :show && return rect_sino_show()
 	test != :test && throw(ArgumentError("test $test"))
 	rect_sino() # doc
 	rect_sino_test()

@@ -57,12 +57,12 @@ function ellipsoid_im(ig::MIRT_image_geom, params::AbstractMatrix{<:Real} ;
 
 	checkfov && !ellipsoid_im_check_fov(args...) && throw("ellipsoid exceeds FOV")
 
-	if how == :slow
+	if how === :slow
 		phantom += ellipsoid_im_slow(args..., showmem)
 #=
-	elseif how == :lowmem
+	elseif how === :lowmem
 		phantom += ellipsoid_im_lowmem(args..., showmem)
-	elseif how == :fast
+	elseif how === :fast
 		phantom += ellipsoid_im_fast(args..., showmem)
 =#
 	else
@@ -348,15 +348,15 @@ function ellipsoid_im(ig::MIRT_image_geom, ptype::Symbol ; args...)
 	yfov = ig.fovs[2]
 	zfov = ig.fovs[3]
 
-	if ptype == :zhu
+	if ptype === :zhu
 		params = shepp_logan_3d_parameters(xfov, yfov, zfov, :zhu)
-	elseif ptype == :kak
+	elseif ptype === :kak
 		params = shepp_logan_3d_parameters(xfov, yfov, zfov, :kak)
 #=
-	elseif ptype == :e3d
+	elseif ptype === :e3d
 		params = shepp_logan_3d_parameters(xfov, yfov, zfov, :e3d)
 =#
-	elseif ptype == :spheroid
+	elseif ptype === :spheroid
 		params = spheroid_params(xfov, yfov, zfov, ig.dx, ig.dy, ig.dz)
 	else
 		throw("bad phantom symbol $ptype")
@@ -423,12 +423,12 @@ function shepp_logan_3d_parameters(xfov, yfov, zfov, ptype)
 	0		0.1		0.625	0.056	0.056	0.1		0	0	-0.02
 	]
 
-	if ptype == :zhu
+	if ptype === :zhu
 		params = ezhu
-	elseif ptype == :kak
+	elseif ptype === :kak
 		params = ekak
 #=
-	elseif ptype == :shepp_logan_e3d || ptype == :e3d
+	elseif ptype === :shepp_logan_e3d || ptype === :e3d
 		params = e3d[:, [5:7 2:4 8 1]]
 =#
 	else
@@ -518,7 +518,7 @@ end
 run tests
 """
 function ellipsoid_im(test::Symbol)
-	if test == :show
+	if test === :show
 		return ellipsoid_im_show()
 	end
 	test != :test && throw(ArgumentError("test $test"))

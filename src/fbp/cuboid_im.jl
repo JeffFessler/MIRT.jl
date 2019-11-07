@@ -51,7 +51,7 @@ function cuboid_im(ig::MIRT_image_geom, params::AbstractMatrix{<:Real} ;
 
 	phantom = zeros(Float32, ig.nx, ig.ny, ig.nz)
 
-	if how == :auto
+	if how === :auto
 		rotated = params[:, 7:8] .!= 0
 		if any(rotated)
 			how = :sample
@@ -60,11 +60,11 @@ function cuboid_im(ig::MIRT_image_geom, params::AbstractMatrix{<:Real} ;
 		end
 	end
 
-	if how == :exact
+	if how === :exact
 		phantom += cuboid_im_exact(args...)
-	elseif how == :lowmem1
+	elseif how === :lowmem1
 		phantom += cuboid_im_lowmem1(args...)
-	elseif how == :sample
+	elseif how === :sample
 		phantom += cuboid_im_sample(args...)
 	else
 		throw("bad how $how")
@@ -284,9 +284,9 @@ end
 """
 function cuboid_im(ig::MIRT_image_geom, params::Symbol ; args...)
 	fov = ig.fovs
-	if params == :default
+	if params === :default
 		params = default_cuboid_parameters(fov, fov, fov)
-	elseif params == :rotate
+	elseif params === :rotate
 		params = rotated_cuboid_parameters(fov, fov, fov)
 	else
 		throw("bad phantom symbol $params")
@@ -385,7 +385,7 @@ end
 run tests
 """
 function cuboid_im(test::Symbol)
-	if test == :show
+	if test === :show
 		return cuboid_im_show()
 	end
 	test != :test && throw(ArgumentError("test $test"))

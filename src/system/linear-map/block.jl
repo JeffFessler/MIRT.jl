@@ -50,15 +50,15 @@ function block_lm(
 		Mkron::Int = 0,
 	)
 
-	if how == :col
+	if how === :col
 		 return block_lm_col(blocks, T, tomo)
-	elseif how == :diag
+	elseif how === :diag
 		return block_lm_diag(blocks, T)
-	elseif how == :kron
+	elseif how === :kron
 		return block_lm_kron(blocks, T, Mkron)
-	elseif how == :row
+	elseif how === :row
 		return block_lm_row(blocks, T)
-	elseif how == :sum
+	elseif how === :sum
 		return block_lm_sum(blocks, T)
 	else
 		throw(ArgumentError("unknown block type $how"))

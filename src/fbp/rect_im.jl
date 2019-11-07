@@ -54,9 +54,9 @@ function rect_im(ig::MIRT_image_geom,
 	params[:,6] .*= hu_scale
 
 	do_fast = params[:,5] .== 0 # default for :auto
-	if how == :fast
+	if how === :fast
 		do_fast[:] .= true
-	elseif how == :slow
+	elseif how === :slow
 		do_fast[:] .= false
 	elseif how != :auto
 		throw("bad how :how")
@@ -222,11 +222,11 @@ end
 """
 function rect_im(ig::MIRT_image_geom, params::Symbol ; args...)
 	fov = ig.fovs
-	if params == :my_rect
+	if params === :my_rect
 		params = my_rect(fov...)
-	elseif params == :default
+	elseif params === :default
 		params = rect_im_default_parameters(fov...)
-	elseif params == :smiley
+	elseif params === :smiley
 		params = smiley_parameters(fov...)
 	else
 		throw("bad phantom symbol $params")
@@ -359,7 +359,7 @@ end
 run tests
 """
 function rect_im(test::Symbol)
-	if test == :show
+	if test === :show
 		return rect_im_show()
 	end
 	test != :test && throw(ArgumentError("test $test"))

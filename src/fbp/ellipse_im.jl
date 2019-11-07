@@ -53,7 +53,7 @@ function ellipse_im(ig::MIRT_image_geom,
 	params[:,6] .*= hu_scale
 
 #=
-	if how == :fast && oversample == 1
+	if how === :fast && oversample == 1
 		warning("ignoring :fast option for oversample=1")
 		how = :slow
 	end
@@ -65,9 +65,9 @@ function ellipse_im(ig::MIRT_image_geom,
 	args = (ig.nx, ig.ny, params, ig.dx, ig.dy, ig.offset_x, ig.offset_y,
 		rot, oversample, replace)
 
-	if how == :fast
+	if how === :fast
 		phantom = ellipse_im_fast(args...)
-#	elseif how == :slow
+#	elseif how === :slow
 #		phantom = ellipse_im_slow(args...)
 	else
 		throw("bad how $how")
@@ -268,15 +268,15 @@ end
 `code = :shepplogan | :shepplogan_emis | :shepplogan_brainweb | :southpark`
 """
 function ellipse_im_params(ig::MIRT_image_geom, params::Symbol)
-	if params == :disks
+	if params === :disks
 		params = disk_phantom_params(fov=ig.fovs[1])
-	elseif params == :shepplogan || params == :kak
+	elseif params === :shepplogan || params === :kak
 		params = shepp_logan_parameters(ig.fovs..., case=:kak)
-	elseif params == :shepplogan_emis || params == :emis
+	elseif params === :shepplogan_emis || params === :emis
 		params = shepp_logan_parameters(ig.fovs..., case=:emis)
-	elseif params == :shepplogan_brainweb || params == :brainweb
+	elseif params === :shepplogan_brainweb || params === :brainweb
 		params = shepp_logan_parameters(ig.fovs..., case=:brainweb)
-	elseif params == :southpark
+	elseif params === :southpark
 		params = south_park_parameters(fov=ig.fovs[1])
 	else
 		throw("bad phantom symbol $params")
@@ -308,9 +308,9 @@ function shepp_logan_parameters(xfov::Real, yfov::Real ; case::Symbol=:kak)
 	params[:,[1,3]] .*= xfov/2
 	params[:,[2,4]] .*= yfov/2
 
-	if case == :emis
+	if case === :emis
 		params[:,6] = [1, 1, -2, 2, 3, 4, 5, 6, 1, 1]
-	elseif case == :brainweb
+	elseif case === :brainweb
 		params[:,6] = [1, 0, 2, 3, 4, 5, 6, 7, 8, 9] # brainweb uses index 1-10
 	elseif case != :kak
 		throw("bad phantom case $case")

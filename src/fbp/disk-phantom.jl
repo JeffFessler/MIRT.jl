@@ -103,7 +103,7 @@ function disk_phantom_params(test::Symbol)
 	ig = image_geom(nx = 128, fov = 240)
 	params = disk_phantom_params( ; minsep = ig.dx*8)
 
-	if test == :show
+	if test === :show
 		tmp = ellipse_im(ig, params, oversample=3)
 		return jim(ig.x, ig.y, tmp)
 	end

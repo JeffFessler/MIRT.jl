@@ -90,7 +90,7 @@ function ir_mri_sensemap_sim( ;
 		1 / sqrt(sum(abs.(smap[round(Int,nx/2),round(Int,ny/2),:].^2))) :
 		1 / sqrt(sum(abs.(smap[round(Int,nx/2),round(Int,ny/2),round(Int,nz/2),:].^2)))
 
-	if scale == :ssos_center
+	if scale === :ssos_center
 		smap *= Float32(scale_center)
 	elseif scale != :none
 		throw("scale $scale")
