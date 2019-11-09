@@ -2,6 +2,20 @@ In reverse chronological order
 
 0.8.0 2019-11-05
 
+2019-11-07
+to Julia 1.2 due to file dependency issues
+
+2019-11-04
+interp1
+
+2019-08-26
+use LinearMapAA
+
+2019-07-28
+use isolated MIRTio
+
+0.7.0 2019-07-15
+
 2019-07-12
 add `ellipsoid_im` `ellipse_sino` `rect_sino`
 
