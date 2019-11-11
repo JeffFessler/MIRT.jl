@@ -26,7 +26,7 @@ function prompt(; gui::Bool=true)
 
 	gui && !Plots.isplotnull() && Plots.gui()
 
-	prompt_state === :prompt && isinteractive() && wait_for_key()
+	(prompt_state === :prompt) && isinteractive() && wait_for_key()
 	return nothing
 
 #=
@@ -55,6 +55,9 @@ from:
 https://discourse.julialang.org/t/wait-for-a-keypress/20218
 """
 function wait_for_key(; prompt::String = "press any key: ", io = stdin)
+
+	Base.Sys.iswindows() && (readline(); return nothing) # PC
+
 	setraw!(raw) = ccall(:jl_tty_set_mode, Int32, (Ptr{Cvoid},Int32), io.handle, raw)
 	print(io, prompt)
 	setraw!(true)
