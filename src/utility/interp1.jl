@@ -7,24 +7,32 @@ export interp1
 
 using Plots: scatter, plot!, gui
 using Interpolations
-using Test: @test, @inferred
+using Test: @test, @test_throws, @inferred
 
 
 """
-    yi = interp1(x::AbstractVector{<:Real}, y::AbstractVector{<:Number}, xi)
+    yi = interp1(x, y, xi ; how=Gridded(Linear()), extrap=0)
 
 1D interpolation of `y = f(x)` at points `xi`
 
+In:
+- `x::AbstractVector{<:Real}`
+- `y::AbstractVector{<:Number}`
+
 Option:
 - `how::Interpolations.InterpolationType` default `Gridded(Linear())`
-
-todo: should have more options for extrapolation etc.
+- `extrap::Any` how to extrapolate, e.g., `Flat()`; default `0`
 
 Output is same size as input `xi`
 """
 function interp1(x::AbstractVector{<:Real}, y::AbstractVector{<:Number}, xi ;
-		how::Interpolations.InterpolationType = Gridded(Linear()))
+		how::Interpolations.InterpolationType = Gridded(Linear()),
+		extrap::Any = 0,
+	)
 	fun = interpolate((x,), y, how)
+	if !isnothing(extrap)
+		fun = extrapolate(fun, extrap)
+	end
 	fun.(xi)
 end
 
@@ -34,14 +42,17 @@ end
 self test
 """
 function interp1(test::Symbol)
-	x = LinRange(0, 2π, 21)
-	y = cos.(x)
-	xi = LinRange(0, 2π, 101)
-	yi = @inferred interp1(x, y, xi)
 	@test (@inferred interp1(1:4, 2:5, 1.5)) == 2.5
 	@test (@inferred interp1(1:2, [3im,4im], 1.5)) == 3.5im
+	x = LinRange(-1, 1, 21)
+	y = cos.(x*π)
+	xi = LinRange(-1, 1, 101) * 2
+	y0 = @inferred interp1(x, y, xi) # 0 extrapolation
+	ye = @inferred interp1(x, y, xi, extrap=Flat())
+	@test_throws BoundsError interp1(x, y, xi, extrap=nothing)
 	scatter(x, y, label="")
-	plot!(xi, yi, label="")
+	plot!(xi, y0, label="0")
+	plot!(xi, ye, label="Flat")
 	gui()
 	true
 end
