@@ -190,7 +190,10 @@ function image_geom( ;
 		(offset_x != 0 || offset_y != 0) && throw("offsets usage incorrect")
 		offset_x = 0.5
 		offset_y = 0.5
-		is3 && offset_z != 0 && throw("offsets usage incorrect")
+		if is3
+			offset_z != 0 && throw("offset_z usage incorrect")
+			offset_z = 0.5
+		end
 	elseif offsets != :none
 		throw("offsets $offsets")
 	end
