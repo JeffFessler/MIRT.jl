@@ -158,9 +158,8 @@ end
 down-sample (for testing with small problems)
 """
 function downsample(sg::MIRT_sino_geom, down::Int)
-	if down == 1
-		return sg
-	end
+	down == 1 && return sg
+
 	nb = 2 * round(Int, sg.nb / down / 2) # keep it even
 	na = round(Int, sg.na / down)
 
@@ -508,14 +507,14 @@ scatter plot of (r,phi) sampling locations for all geometries
 """
 function sino_geom_plot_grids( ; orbit::Real = 360, down::Int = 30)
 	geoms = (
-		sino_geom(:par, nb = 888, na = 984, down=down, d = 0.5, orbit=orbit,
+		sino_geom(:par ; nb = 888, na = 984, down=down, d = 0.5, orbit=orbit,
 			offset = 0.25),
-		sino_geom(:fan, nb = 888, na = 984, d = 1.0, orbit = orbit,
+		sino_geom(:fan ; nb = 888, na = 984, d = 1.0, orbit = orbit,
 			offset = 0.75, dsd = 949, dod = 408, down=down),
-		sino_geom(:fan, nb = 888, na = 984, d = 1.0, orbit = orbit,
+		sino_geom(:fan ; nb = 888, na = 984, d = 1.0, orbit = orbit,
 			offset = 0.75, dsd = 949, dod = 408, down=down,
 			dfs = Inf, source_offset = 0.7), # flat fan
-		sino_geom(:moj, nb = 888, na = 984, down=down, d = 1.0, orbit=orbit,
+		sino_geom(:moj ; nb = 888, na = 984, down=down, d = 1.0, orbit=orbit,
 			offset = 0.25),
 	)
 
@@ -615,12 +614,12 @@ function sino_geom_ge1( ;
 			units === :cm ? 10 :
 			throw("units $units")
 
-	return sino_geom(:fan, units=units,
+	return sino_geom(:fan ; units=units,
 			nb=nb, na=na,
 			d = 1.0239/scale, offset = 1.25,
 			dsd = 949.075/scale,
 			dod = 408.075/scale,
-			dfs = 0; kwarg...)
+			dfs = 0, kwarg...)
 end
 
 
@@ -638,8 +637,8 @@ function sino_geom_show( ; kwarg...)
 	sg_list = (
 		sino_geom(:par ; d=ig.fovs[1]/arg.nb, arg..., kwarg...),
 		sino_geom(:moj ; d=1, arg..., nb=nb_moj, kwarg...),
-		sino_geom(:ge1, dfs=0 ; arg..., kwarg...), # arc
-		sino_geom(:ge1, dfs=Inf ; arg..., nb=960, kwarg...), # flat
+		sino_geom(:ge1 ; dfs=0, arg..., kwarg...), # arc
+		sino_geom(:ge1 ; dfs=Inf, arg..., nb=960, kwarg...), # flat
 		)
 
 	nsg = length(sg_list)
@@ -664,11 +663,11 @@ function sino_geom_test()
 	ig = image_geom(nx=ig.nx, dx=ig.dx, mask=ig.circ())
 
 	sg_list = (
-		sino_geom(:par, down=down, d=4),
-		sino_geom(:moj, down=down, d=4*sqrt(2)),
-		sino_geom(:ge1, down=down, orbit_start=20, dfs=0), # arc
-		sino_geom(:ge1, down=down, orbit_start=20, dfs=Inf), # flat
-		sino_geom(:fan, down=down, orbit=:short),
+		sino_geom(:par ; down=down, d=4),
+		sino_geom(:moj ; down=down, d=4*sqrt(2)),
+		sino_geom(:ge1 ; down=down, orbit_start=20, dfs=0), # arc
+		sino_geom(:ge1 ; down=down, orbit_start=20, dfs=Inf), # flat
+		sino_geom(:fan ; down=down, orbit=:short),
 		)
 
 	sg_list[1].help
@@ -715,16 +714,16 @@ function sino_geom_test()
 	plot(pl[1:4]...)
 	gui()
 
-	sg = sino_geom(:ge1, orbit=:short)
+	sg = sino_geom(:ge1 ; orbit=:short)
 	sino_geom_gamma_dfs(sg)
 	display(sg)
 	sino_geom_help()
 	sino_geom_plot_grids()
 	sino_geom_show()
 
-	@inferred sino_geom(:ge1, units=:cm)
+	@inferred sino_geom(:ge1 ; units=:cm)
 	@test_throws String sino_geom(:badhow)
-	@test_throws String sino_geom(:ge1, dfs=-1)
-	@test_throws String sino_geom(:ge1, units=:bad)
+	@test_throws String sino_geom(:ge1 ; dfs=-1)
+	@test_throws String sino_geom(:ge1 ; units=:bad)
 	true
 end
