@@ -18,6 +18,8 @@ jim_def = Dict([
 	:aspect_ratio => :equal,
 	:clim => nothing,
 	:color => :grays,
+	:line3plot => true, # lines around sub image for 3d mosaic?
+	:line3type => (:yellow),
 	:ncol => 0,
 	:padval => nothing,
 	:mosaic_npad => 1,
@@ -53,7 +55,9 @@ option
 - `color` colormap; default `:grays`
 - `ncol` for mosaicview for 3D and higher arrays; default `0` does auto select
 - `padval` padding value for mosaic view; default `minimum(z)`
-- `mosaic_npad` # of pixel padding for mosaic view; default 1
+- `line3plot` lines around sub image for 3d mosaic; default `false`
+- `line3type` line type around sub image for 3d mosaic; default `(:yellow)`
+- `mosaic_npad` # of pixel padding for mosaic view; default `1`
 - `fft0` if true use FFTView to display; default `false`
 - `title` for heatmap; default `""`
 - `xlabel` for heatmap; default `""`
@@ -73,6 +77,8 @@ function jim(z::AbstractArray{<:Real} ;
 		aspect_ratio = jim_def[:aspect_ratio],
 		clim = nothing_else(jim_def[:clim], (minimum(z), maximum(z))),
 		color = jim_def[:color],
+		line3plot = jim_def[:line3plot],
+		line3type = jim_def[:line3type],
 		ncol::Int = jim_def[:ncol],
 		padval = nothing_else(jim_def[:padval], minimum(z)),
 		mosaic_npad::Int = jim_def[:mosaic_npad],
@@ -90,8 +96,12 @@ function jim(z::AbstractArray{<:Real} ;
 		abswarn::Bool = jim_def[:abswarn], # ignored here
 	)
 
+	n1,n2,n3 = size(z,1), size(z,2), size(z,3)
 	xy = (x, y)
 	if ndims(z) > 2
+		n1 += mosaic_npad
+		n2 += mosaic_npad
+		n3 = size(z,3)
 		if ncol == 0
 			ncol = Int(floor(sqrt(prod(size(z)[3:end]))))
 		end
@@ -116,6 +126,21 @@ function jim(z::AbstractArray{<:Real} ;
 		ylabel=ylabel,
 		xtick=xtick,
 		ytick=ytick)
+
+	if line3plot # lines around each subimage
+		m1 = (1+size(z,1)) / n1 # add one because of mosaicview non-edge
+		m2 = (1+size(z,2)) / n2
+		plot_box! = (ox, oy) -> plot!(
+			ox .+ [0,1,1,0,0]*n1 .+ 0.0,
+			oy .+ [0,0,1,1,0]*n2 .+ 0.0,
+			line=jim_def[:line3type], label="")
+		for ii=0:n3-1
+			i1 = mod(ii, m1)
+			i2 = floor(ii / m1)
+			plot_box!(i1*n1, i2*n2)
+		end
+	end
+	plot!()
 
 end # jim
 
