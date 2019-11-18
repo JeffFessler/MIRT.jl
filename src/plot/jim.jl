@@ -127,7 +127,7 @@ function jim(z::AbstractArray{<:Real} ;
 		xtick=xtick,
 		ytick=ytick)
 
-	if line3plot # lines around each subimage
+	if n3 > 1 && line3plot # lines around each subimage
 		m1 = (1+size(z,1)) / n1 # add one because of mosaicview non-edge
 		m2 = (1+size(z,2)) / n2
 		plot_box! = (ox, oy) -> plot!(
