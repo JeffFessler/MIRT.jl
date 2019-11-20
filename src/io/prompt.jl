@@ -17,7 +17,9 @@ prompt_state = :prompt
 
 """
 `prompt()`
-prompt user to hit enter to continue, after gui()
+* prompt user to hit any key to continue, after `gui()`
+* some keys have special actions: `[q]uit [d]raw [n]odraw`
+* call `prompt(:prompt)` to revert to default
 """
 function prompt( ; gui::Bool=true)
 	global prompt_state
@@ -26,7 +28,19 @@ function prompt( ; gui::Bool=true)
 
 	gui && !Plots.isplotnull() && display(plot!()) # Plots.gui()
 
-	(prompt_state === :prompt) && isinteractive() && wait_for_key()
+	(prompt_state === :draw) && return nothing
+	!isinteractive() && return nothing
+
+@show prompt_state
+
+	c = wait_for_key()
+
+	(c == 'd') && (prompt_state = :draw)
+	(c == 'n') && (prompt_state = :nodraw)
+	(c == 'q') && throw("quit")
+
+@show prompt_state
+
 	return nothing
 
 #=
@@ -46,6 +60,7 @@ function prompt( ; gui::Bool=true)
 	choice = request(preface * what, menu)
 	nothing
 =#
+
 end
 
 
@@ -54,20 +69,22 @@ end
 from:
 https://discourse.julialang.org/t/wait-for-a-keypress/20218
 """
-function wait_for_key( ; prompt::String = "press any key: ", io = stdin)
+function wait_for_key( ; io_in = stdin, io_out = stdout,
+		prompt::String = "press any key [d]raw [n]odraw [q]uit : ")
 
-	print(io, prompt)
+	print(io_out, prompt)
 
 	Base.Sys.iswindows() && (readline(); return nothing) # PC
 
 	# non-windows version:
-	setraw!(raw) = ccall(:jl_tty_set_mode, Int32, (Ptr{Cvoid},Int32), io.handle, raw)
+	setraw!(raw) = ccall(:jl_tty_set_mode, Int32, (Ptr{Cvoid},Int32), io_in.handle, raw)
 	setraw!(true)
-	char = read(io, 1)
+	char = Char(read(io_in, 1)[1])
 	setraw!(false)
-	write(io, char)
-	write(io, "\n")
-	nothing
+	write(io_out, char)
+	write(io_out, "\n")
+
+	return char
 end
 
 
