@@ -570,6 +570,7 @@ function image_geom_test3(ig::MIRT_image_geom)
 	ig.mask_or
 	@inferred ig.expand_nz(2)
 	@inferred cbct(ig)
+	@test_throws String image_geom(nx=1, dx=1, nz=2, offset_z=-1, offsets=:dsp)
 	true
 end
 
