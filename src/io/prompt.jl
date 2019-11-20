@@ -31,15 +31,11 @@ function prompt( ; gui::Bool=true)
 	(prompt_state === :draw) && return nothing
 	!isinteractive() && return nothing
 
-@show prompt_state
-
-	c = wait_for_key()
+	c = wait_for_key() # can only be tested interactively
 
 	(c == 'd') && (prompt_state = :draw)
 	(c == 'n') && (prompt_state = :nodraw)
 	(c == 'q') && throw("quit")
-
-@show prompt_state
 
 	return nothing
 
@@ -71,6 +67,8 @@ https://discourse.julialang.org/t/wait-for-a-keypress/20218
 """
 function wait_for_key( ; io_in = stdin, io_out = stdout,
 		prompt::String = "press any key [d]raw [n]odraw [q]uit : ")
+
+	# this function is called only in interactive sessions so no code coverage
 
 	print(io_out, prompt)
 
