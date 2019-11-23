@@ -13,6 +13,9 @@ Add files as needed.
 Be sure to comment out "using MIRT"
 and update `z-test.jl` and `z-list.jl`
 
+See https://github.com/JeffFessler/MIRT.jl/pull/15/files
+for an example of an added file and the corresponding changes.
+
 * `git add .`
 * `git commit`
 * `git push --set-upstream origin try`
