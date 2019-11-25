@@ -7,3 +7,6 @@ using Test
 @test mask_test()
 @test ndgrid(:test)
 @test interp1(:test)
+@test jinc(:test)
+@test max_percent_diff(:test)
+@test rect(:test)
