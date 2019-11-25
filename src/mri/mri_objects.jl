@@ -9,7 +9,7 @@ export mri_objects
 
 using Plots
 using FFTW: fft, fftshift, ifftshift
-using MIRT: jim, image_geom, prompt, interp1
+#using MIRT: jim, image_geom, prompt, interp1
 include("max_percent_diff.jl")
 include("jinc.jl") # todo - put in MIRT
 include("rect.jl")
