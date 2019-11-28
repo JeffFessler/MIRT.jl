@@ -31,11 +31,9 @@ self test
 function mask_or(test::Symbol)
 	test != :test && throw(ArgumentError("test $test"))
 	mask2 = trues(3,4)
-	@inferred mask_or(mask2)
-	@test mask_or(mask2) == mask2
+	@test (@inferred mask_or(mask2)) == mask2
 	mask3 = trues(3,4,5)
-	@inferred mask_or(mask3)
-	@test mask_or(mask3) == trues(3,4)
+	@test (@inferred mask_or(mask3)) == trues(3,4)
 	true
 end
 
@@ -59,8 +57,7 @@ self test
 function mask_outline(test::Symbol)
 	test != :test && throw(ArgumentError("test $test"))
 	mask2 = trues(3,4)
-	@inferred mask_outline(mask2)
-	@test mask_outline(mask2) == falses(3,4)
+	@test (@inferred mask_outline(mask2)) == falses(3,4)
 	true
 end
 
@@ -76,6 +73,26 @@ function embed(v::AbstractVector{<:Number}, mask::AbstractArray{Bool})
 	array[mask] .= v
 	return array
 end
+
+
+"""
+`array = embed(matrix::AbstractMatrix{<:Number}, mask::AbstractArray{Bool})`
+Embed each column of `matrix` into `mask` then `cat` along next dimension
+In:
+* `matrix [sum(mask) L]`
+* `mask [(N)]`
+Out:
+* `array [(N) L]`
+"""
+function embed(x::AbstractMatrix{<:Number}, mask::AbstractArray{Bool})
+	L = size(x,2)
+	out = zeros(eltype(x), prod(size(mask)), L)
+	for l=1:L
+		out[:,l] = embed(x[:,l], mask)[:]
+	end
+	reshape(out, size(mask)..., L)
+end
+
 
 
 #=
@@ -99,8 +116,9 @@ end
 function embed(test::Symbol)
 	test != :test && throw(ArgumentError("test $test"))
 	mask = [false true true; true false false]
-	@inferred embed(1:3,mask)
-	@test embed(1:3,mask) == [0 2 3; 1 0 0]
+	a = [0 2 3; 1 0 0]; v = a[mask[:]]
+	@test (@inferred embed(v,mask)) == a
+	@test (@inferred embed([v 2v], mask)) == cat(dims=3, a, 2a)
 #	@test embed(sparse(1:3),mask) == sparse([0 2 3; 1 0 0]) # later
 	true
 end
