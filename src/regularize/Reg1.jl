@@ -25,38 +25,38 @@ and `\\wpot(t) = ψ(t) / t`
 In
 * `kappa [(N)]` `kappa` array, or logical support mask
 
-* Option
-%|	'type_penal'  'def' | '' : try 'mex', otherwise 'mat'
+Option
+* `type_penal`  'def' | '' : try 'mex', otherwise 'mat'
 %|				'mex' : compute penalty gradient with mex call
 %|				'mat' : compute penalty gradient via Cdiff1
 %|				'zxy' : mex penalty for zxy ordered 3D image
 %|					(caution: see zxy conventions below)
-%|	'type_diff'		'def|ind|mex|sparse|...' (see Cdiff1)
-%|	'order', 1|2		1st-order or 2nd-order differences (see Cdiff1)
-%|	'offsets', [M] | char
+* `type_diff`		'def|ind|mex|sparse|...' (see Cdiff1)
+* `order` 1|2		1st-order or 2nd-order differences (see Cdiff1)
+* `offsets` [M] | char
 %|				offsets to neighboring pixels
 %|					(see Cdiff1 for the defaults)
 %|				use '3d:26' to penalize all 13 pairs of nbrs
 %|				use "0" for C = I (identity matrix)
-%|	'beta', [1] | [M]	global regularization parameter(s)
+* `beta`, [1] | [M]	global regularization parameter(s)
 %|				default: 2^0
-%|	'pot_arg', {} 		arguments to potential_fun()
-%|					e.g., {'huber', delta}, or cell{M} array
+* `pot_arg` () 		arguments to potential_fun()
+%|					e.g., `(:huber, delta)`, or cell{M} array
 %|				default: {'quad'} for quadratic regularization.
-%| ?	'pre_denom_sqs1_x0'	precompute denominator for SQS at x=0? (def: 0)
-%|	'type_denom', ''	type of "denominator"
+* `pre_denom_sqs1_x0`	precompute denominator for SQS at x=0? (def: 0)
+* `type_denom` 	type of "denominator"
 %|					(for quadratic surrogates like SPS)
 %|					todo: improve documentation!
 %|		'matlab'	denominator for SPS
 %|					todo: precompute?  or just on the fly?
 %|		'aspire'	denominator for SPS that matches aspire
 %|		'none'		no denominator precomputation (default)
-%|	'distance_power', 0|1|2	See Rweights.m
-%|	'user_wt', [(N) M]	""
-%| ?	wt_use_mex 0|1		""
-%|	'nthread'	(int)	# of threads (for type_penal='mex' only)
-%|	'mask'			Override default: mask = (kappa ~= 0)
-%|				(Only use if you sure know what you're doing!)
+* `distance_power` 0|1|2	See Rweights.m
+* `user_wt` [(N) M]	""
+* `wt_use_mex` 0|1		""
+* `nthread`	(int)	# of threads (for type_penal='mex' only)
+* `mask`			Override default: mask = (kappa ~= 0)
+				(Only use if you sure know what you're doing!)
 
 Out
 * `R` struct with methods:
@@ -87,10 +87,9 @@ Typical use:
 Note: `R.denom() is slightly larger near image borders (but still valid)
 when using the mex version compared to the mat version in the formula above.
 """
-function R = Reg1(kappa::AbstractArray{<:Number} ;
-#=
+function Reg1(kappa::AbstractArray{<:Number} ;
 		type_penal::Symbol = :def,
-	#	edge_type = 'simple', # saves memory
+	#	edge_type = :simple, # saves memory
 		edge_type::Symbol = :tight, # because mex uses this
 		type_diff::Symbol = :def, # defer to Cdiff1 default
 		pot_arg::Any = (:quad),
@@ -109,7 +108,6 @@ function R = Reg1(kappa::AbstractArray{<:Number} ;
 		type_wt::Symbol = numel(kappa) <= 128^2 ?
 				:pre : # small enough to precompute
 				:fly, # saves memory
-=#
 	)
 
 #=
