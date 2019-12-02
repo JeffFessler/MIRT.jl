@@ -279,7 +279,7 @@ function mri_objects_case1( ; unit::Symbol = :mm)
       50 0  8 8  1;
     ]
 
-    unit === :cm
+    if unit === :cm
         rp[:,1:6] ./= 10
         gp[:,1:6] ./= 10
     end
