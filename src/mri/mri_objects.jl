@@ -9,10 +9,11 @@ export mri_objects
 
 using Plots
 using FFTW: fft, fftshift, ifftshift
+using MIRT: max_percent_diff,jinc,rect
 #using MIRT: jim, image_geom, prompt, interp1
-include("max_percent_diff.jl")
-include("jinc.jl") # todo - put in MIRT
-include("rect.jl")
+#include("max_percent_diff.jl")
+#include("jinc.jl") # todo - put in MIRT
+#include("rect.jl")
 
 RealArray = AbstractArray{<:Real}
 PairList = Vector{<:Tuple} # Vector{Tuple{Symbol,<:Any}}
