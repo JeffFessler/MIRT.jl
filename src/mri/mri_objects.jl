@@ -7,9 +7,9 @@ Copyright 2007-6-28, Jeff Fessler, University of Michigan
 
 export mri_objects
 
-using Plots
-using FFTW: fft, fftshift, ifftshift
-using MIRT: max_percent_diff,jinc,rect
+#using Plots
+#using FFTW: fft, fftshift, ifftshift
+#using MIRT: max_percent_diff,jinc,rect
 #using MIRT: jim, image_geom, prompt, interp1
 #include("max_percent_diff.jl")
 #include("jinc.jl") # todo - put in MIRT

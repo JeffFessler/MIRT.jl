@@ -1,9 +1,8 @@
-using SpecialFunctions #necessary to grab Bessel functions
+using SpecialFunctions: besselj1 #grab bessel function
 using Plots
 """
-function jinc(x)
+    jinc(x)
 returns jinc(x), defined as J1(x)/x, where J1 is a Bessel function of the first kind.
-No particular options.
 """
 function jinc(x::Real) #calculates jinc(x)
     if(x == 0) return pi/4 end
