@@ -8,7 +8,7 @@ Copyright 2007-6-28, Jeff Fessler, University of Michigan
 export mri_objects
 
 #using Plots
-#using FFTW: fft, fftshift, ifftshift
+using FFTW: fft, fftshift, ifftshift
 #using MIRT: max_percent_diff,jinc,rect
 #using MIRT: jim, image_geom, prompt, interp1
 #include("max_percent_diff.jl")
@@ -490,8 +490,6 @@ In:
 
 key choices:
 - `:test` run test suite (no other params)
-- `:rect2half` centered rectangle of width fov/2
-- `:rect3half` 3D version
 - `:case1` predefined 2D test case
 - `:case4` predefined 3D test case
 """
@@ -502,10 +500,6 @@ function mri_objects(key::Symbol ; fov::Real=22, unit::Symbol=:mm)
         return mri_objects(mri_objects_case1( ; unit=unit))
     elseif key == :case4
         return mri_objects(mri_objects_case4([fov,fov,fov] ; unit=unit))
-    elseif key == :rect2half
-        return mri_objects((:rect2, [0 0 fov/2 fov/2 1]))
-    elseif key == :rect3half
-        return mri_objects((:rect3, [0 0 0 fov/2 fov/2 fov/2 1]))
     end
     throw("bad key $key")
 end
@@ -521,15 +515,6 @@ function mri_objects_trap_test()
     plot(z, trap, label="trap")
     plot!(z, trap0, label="rect")
     plot!(xtick = [0 -len/2 len/2-dz/2 len/2 len/2+dz/2])
-end
-function mri_objects_testrect()
-    ig = image_geom(nx = 2^7, ny = 2^7 + 2, dx = 4, offsets = :dsp)
-    xt = mri_objects(:rect2half,fov = 32).image(ig.xg, ig.yg)
-    jim(xt, title = "rect2half")
-
-    ig = image_geom(nx = 2^7, ny = 2^7 + 2, dx = 4, offsets = :dsp)
-    xt = mri_objects(:rect3half,fov = 32).image(ig.xg, ig.yg)
-    jim(xt, title = "rect3half")
 end
 function mri_objects_test()
     @test mri_objects_trap_test() isa Plots.Plot
