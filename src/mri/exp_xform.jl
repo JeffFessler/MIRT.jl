@@ -140,4 +140,5 @@ function exp_xform(x::Symbol)
         print("single max % diff between $(modes[i]) and $(modes[j]) = $d\n")
      end
   end
+  return true
 end

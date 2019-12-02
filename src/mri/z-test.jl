@@ -6,3 +6,4 @@ using Test: @test
 @test ir_mri_sensemap_sim(:test)
 @test image_geom_mri(:test)
 @test mri_objects(:test)
+@test exp_xform(:test)
