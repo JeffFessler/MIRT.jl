@@ -11,9 +11,7 @@ function jinc(x::Real) #calculates jinc(x)
     return besselj1(pi*y) / (2*y)
 end
 function jinc(x::Symbol)
-    if(x != :test)
-        throw("non-test, symbolic input to jinc")
-    end
+    x != :test && throw("non-test, symbolic input to jinc")
     r = (-10:.01:10)
     plot(r,jinc.(r))
     true

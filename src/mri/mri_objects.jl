@@ -279,7 +279,7 @@ function mri_objects_case1( ; unit::Symbol = :mm)
       50 0  8 8  1;
     ]
 
-    if unit === :cm
+    unit === :cm
         rp[:,1:6] ./= 10
         gp[:,1:6] ./= 10
     end
@@ -438,14 +438,14 @@ end
 
 function mri_objects_test_case1()
     ig = image_geom(nx = 2^7, ny = 2^7 + 2, dx = 4, offsets = :dsp)
-    xt = mri_objects(:case1).image(ig.xg, ig.yg)
-    jim(xt, title = "case1")
+    xt = mri_objects(:case1,unit = :mm).image(ig.xg, ig.yg)
+    jim(xt, title = "case1mm")
 end
 
 function mri_objects_test_case4()
     ig = image_geom(nx = 2^5, ny = 2^5 + 2,nz = 2^5, dx = 1,dz = .5, offsets = :dsp)
-    xt = mri_objects(:case4).image(ig.xg, ig.yg, ig.zg)
-    jim(xt, title = "case4")
+    xt = mri_objects(:case4,unit = :mm).image(ig.xg, ig.yg, ig.zg)
+    jim(xt, title = "case4mm")
 end
 
 
@@ -522,8 +522,15 @@ function mri_objects_trap_test()
     plot!(z, trap0, label="rect")
     plot!(xtick = [0 -len/2 len/2-dz/2 len/2 len/2+dz/2])
 end
+function mri_objects_testrect()
+    ig = image_geom(nx = 2^7, ny = 2^7 + 2, dx = 4, offsets = :dsp)
+    xt = mri_objects(:rect2half,fov = 32).image(ig.xg, ig.yg)
+    jim(xt, title = "rect2half")
 
-
+    ig = image_geom(nx = 2^7, ny = 2^7 + 2, dx = 4, offsets = :dsp)
+    xt = mri_objects(:rect3half,fov = 32).image(ig.xg, ig.yg)
+    jim(xt, title = "rect3half")
+end
 function mri_objects_test()
     @test mri_objects_trap_test() isa Plots.Plot
     prompt()
@@ -536,7 +543,10 @@ function mri_objects_test()
 
     @test mri_objects_test3() isa Plots.Plot
 
+    @test mri_objects_testrect() isa Plots.Plot
+
     @test mri_objects_test_case4() isa Plots.Plot
     prompt()
+
     true
 end
