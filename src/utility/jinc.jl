@@ -16,4 +16,5 @@ function jinc(x::Symbol)
     end
     r = (-10:.01:10)
     plot(r,jinc.(r))
+    true
 end
