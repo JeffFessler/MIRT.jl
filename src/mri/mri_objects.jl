@@ -528,8 +528,6 @@ function mri_objects_test()
 
     @test mri_objects_test3() isa Plots.Plot
 
-    @test mri_objects_testrect() isa Plots.Plot
-
     @test mri_objects_test_case4() isa Plots.Plot
     prompt()
 
