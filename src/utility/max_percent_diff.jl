@@ -41,7 +41,7 @@ function max_percent_diff(s1, s2 ;
         d = denom == 0 ? 0 : maximum(abs.(s1 - s2)) / denom
     else
         denom = maximum(abs.(s1))
-        denom == 0 && denom = maximum(abs.(s2))
+        denom = denom == 0 ? denom : maximum(abs.(s2))
         d = denom == 0 ? 0 : maximum(abs.(s1 - s2)) / denom
     end
 
