@@ -11,9 +11,9 @@ export mri_objects
 using FFTW: fft, fftshift, ifftshift
 #using MIRT: max_percent_diff,jinc,rect
 #using MIRT: jim, image_geom, prompt, interp1
-#include("max_percent_diff.jl")
-#include("jinc.jl") # todo - put in MIRT
-#include("rect.jl")
+#include("../utility/max_percent_diff.jl")
+#include("../utility/jinc.jl") # todo - put in MIRT
+#include("../utility/rect.jl")
 
 RealArray = AbstractArray{<:Real}
 PairList = Vector{<:Tuple} # Vector{Tuple{Symbol,<:Any}}
@@ -263,13 +263,13 @@ end
 
 function mri_objects_case1( ; unit::Symbol = :mm)
     rp = [ # rect2
-     0 0    200 200  1;
+     0 0.0    200 200  1;
     -50 -50  40  40  1;
      50 -50  20  20  1;
      0 50    50  50  1;
     ]
     gp = [ # gauss2
-     -70 0  1 1  1;
+     -70 0.0  1 1  1;
      -60 0  2 2  1;
      -50 0  3 3  1;
      -40 0  4 4  1;
@@ -278,10 +278,10 @@ function mri_objects_case1( ; unit::Symbol = :mm)
       20 0  7 7  1;
       50 0  8 8  1;
     ]
-
+    rp
     if unit === :cm
-        rp[:,1:6] ./= 10
-        gp[:,1:6] ./= 10
+        rp[:,1:4] ./= 10
+        gp[:,1:4] ./= 10
     end
     return [(:rect2,rp), (:gauss2,gp)] # PairList
 end
