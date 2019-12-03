@@ -494,7 +494,7 @@ key choices:
 - `:case4` predefined 3D test case
 """
 function mri_objects(key::Symbol ; fov::Real=22, unit::Symbol=:mm)
-    key != :test && key != :case1 && key != case4 && throw("bad key $key")
+    key != :test && key != :case1 && key != :case4 && throw("bad key $key")
     if key == :test
         return mri_objects_test()
     elseif key == :case1
