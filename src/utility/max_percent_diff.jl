@@ -50,10 +50,11 @@ end
 
 
 function max_percent_diff_test()
-    @test max_percent_diff([200], [202]) == 1
-    @test max_percent_diff([0 200], [0 202]) == 1
-    @test max_percent_diff([0 200], [0 198], maxboth=true) == 1
-    @test max_percent_diff([0 100], [0 200], normalize=true) == 0
+    @test max_percent_diff([200], [202]) ≈ 100/101
+    @test max_percent_diff([0 200], [0 202]) ≈ 100/101
+    @test max_percent_diff([0 200], [0 198], maxboth=true) ≈ 1
+    #≈ does not work with 0 values (it's proportional to the second arg)
+    @test max_percent_diff([0 100], [0 200], normalize=true) < .01
     true
 end
 
