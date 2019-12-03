@@ -438,14 +438,14 @@ end
 
 function mri_objects_test_case1()
     ig = image_geom(nx = 2^7, ny = 2^7 + 2, dx = 4, offsets = :dsp)
-    xt = mri_objects(:case1,unit = :mm).image(ig.xg, ig.yg)
-    jim(xt, title = "case1mm")
+    xt = mri_objects(:case1,unit = :cm).image(ig.xg, ig.yg)
+    jim(xt, title = "case1cm")
 end
 
 function mri_objects_test_case4()
     ig = image_geom(nx = 2^5, ny = 2^5 + 2,nz = 2^5, dx = 1,dz = .5, offsets = :dsp)
-    xt = mri_objects(:case4,unit = :mm).image(ig.xg, ig.yg, ig.zg)
-    jim(xt, title = "case4mm")
+    xt = mri_objects(:case4,unit = :cm).image(ig.xg, ig.yg, ig.zg)
+    jim(xt, title = "case4cm")
 end
 
 
