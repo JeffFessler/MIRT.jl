@@ -82,7 +82,7 @@ function jim(z::AbstractArray{<:Real} ;
 		ncol::Int = jim_def[:ncol],
 		padval = nothing_else(jim_def[:padval], minimum(z)),
 		mosaic_npad::Int = jim_def[:mosaic_npad],
-		title::String = jim_def[:title],
+		title::Union{String,LaTeXString} = jim_def[:title],
 		xlabel::String = jim_def[:xlabel],
 		ylabel::String = jim_def[:ylabel],
 		fft0::Bool = jim_def[:fft0],
@@ -247,5 +247,6 @@ function jim(test::Symbol)
 	jim(complex(rand(4,3)))
 	jim(complex(rand(4,3)), "complex")
 	jim(:abswarn, true)
+    jim(ones(4,3), title=L"x^2_i")
 	true
 end
