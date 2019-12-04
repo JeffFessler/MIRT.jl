@@ -82,7 +82,7 @@ function jim(z::AbstractArray{<:Real} ;
 		ncol::Int = jim_def[:ncol],
 		padval = nothing_else(jim_def[:padval], minimum(z)),
 		mosaic_npad::Int = jim_def[:mosaic_npad],
-		title::String = jim_def[:title],
+		title::Union{String,LaTeXString} = jim_def[:title],
 		xlabel::String = jim_def[:xlabel],
 		ylabel::String = jim_def[:ylabel],
 		fft0::Bool = jim_def[:fft0],
@@ -237,7 +237,7 @@ function jim(test::Symbol)
 	@test typeof(jim(:defs)) <: Dict
 
 	jim(ones(4,3), title="test2")
-	jim(ones(4,3,5), title="test3")
+	jim(ones(4,3,5), title=L"test3 x^2_i")
 	jim(1:4, 5:9, zeros(4,5), title="test3")
 	jim(zeros(4,5), x=1:4, y=5:9, title="test3")
 	jim(zeros(4,6), fft0=true)
