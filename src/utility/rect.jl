@@ -17,7 +17,8 @@ end
 
 
 """
-    rect(x::Real)
+    rect(:test)
+self test
 """
 function rect(test::Symbol)
 	test != :test && throw("test $test")
@@ -27,5 +28,3 @@ function rect(test::Symbol)
 	@test (@inferred rect(Float16(0.25))) === one(Float32)
 	true
 end
-
-# rect(:test)
