@@ -12,21 +12,32 @@ using Test: @inferred
     jinc(x)
 return `jinc(x) = J1(pi*x)/(2x)`, where `J1` is a Bessel function of the first kind.
 units of `x` are typically cycles/m
+return type is `promote_type(typeof(x), Float32)`
 """
 function jinc(x::Real)
-    if (x == 0) return pi/4 end
+    T = promote_type(typeof(x), Float32)
+    if (x == 0) return convert(T, pi/4) end
     y = abs(x)
-    besselj1(pi*y) / (2*y)
+    convert(T, besselj1(pi*y) / (2*y))
 end
 
 """
-    jinc(:test)
-self test
+    jinc(:test) jinc(:plot)
+self test, plot
 """
-function jinc(x::Symbol)
-    x != :test && throw("non-test, symbolic input to jinc")
+function jinc(test::Symbol)
+    if test === :plot
+        r = LinRange(-10,10,201)
+        return plot(r, jinc.(r))
+    end
+    !(test === :test) && throw("non-test, symbolic input to jinc")
+    jinx = x -> jinc.(x)
     r = LinRange(-10,10,201)
-    y = @inferred jinc.(r)
-    plot(r, y)
+    @inferred jinx(r)
+    for T in (Int, Float16, Float32, Float64)
+        @inferred jinc(T(0))
+        @inferred jinc(T(1))
+    end
+    jinc(:plot)
     true
 end
