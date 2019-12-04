@@ -6,7 +6,7 @@ jiffy image display
 
 export jim
 
-using Plots: heatmap, ColorGradient
+using Plots: heatmap, ColorGradient, plot!
 using LaTeXStrings
 using MosaicViews: mosaicview
 using FFTViews: FFTView
@@ -82,9 +82,9 @@ function jim(z::AbstractArray{<:Real} ;
 		ncol::Int = jim_def[:ncol],
 		padval = nothing_else(jim_def[:padval], minimum(z)),
 		mosaic_npad::Int = jim_def[:mosaic_npad],
-		title::Union{String,LaTeXString} = jim_def[:title],
-		xlabel::String = jim_def[:xlabel],
-		ylabel::String = jim_def[:ylabel],
+		title::AbstractString = jim_def[:title],
+		xlabel::AbstractString = jim_def[:xlabel],
+		ylabel::AbstractString = jim_def[:ylabel],
 		fft0::Bool = jim_def[:fft0],
 		x = fft0 ? Int.(-size(z,1)/2:size(z,1)/2-1) : (1:size(z,1)),
 		y = fft0 ? Int.(-size(z,2)/2:size(z,2)/2-1) : (1:size(z,2)),
@@ -162,26 +162,21 @@ end
 """
 `jim(z, title ; kwargs...)`
 """
-function jim(z::AbstractArray{<:Number}, title::Union{String,LaTeXString}
-		; kwargs...)
-	return jim(z ; title=title, kwargs...)
-end
+jim(z::AbstractArray{<:Number}, title::AbstractString ; kwargs...) =
+	jim(z ; title=title, kwargs...)
 
 
 """
 `jim(x, y, z ; kwargs...)`
 """
-function jim(x, y, z ; kwargs...)
-	return jim(z ; x=x, y=y, kwargs...)
-end
+jim(x, y, z ; kwargs...) = jim(z ; x=x, y=y, kwargs...)
 
 
 """
 `jim(x, y, z, title ; kwargs...)`
 """
-function jim(x, y, z, title::Union{String,LaTeXString} ; kwargs...)
-	return jim(z ; x=x, y=y, title=title, kwargs...)
-end
+jim(x, y, z, title::AbstractString ; kwargs...) =
+	jim(z ; x=x, y=y, title=title, kwargs...)
 
 
 """
@@ -236,11 +231,11 @@ function jim(test::Symbol)
 	jim(:clim)
 	@test typeof(jim(:defs)) <: Dict
 
-	jim(ones(4,3), title="test2")
-	jim(ones(4,3,5), title=L"test3 x^2_i")
-	jim(1:4, 5:9, zeros(4,5), title="test3")
+	jim(ones(4,3), title="test2", xlabel=L"x")
+	jim(rand(4,3,5), title=L"test3 x^2_i")
+	jim(1:4, 5:9, zeros(4,5), title="test3", ylabel=L"y")
 	jim(zeros(4,5), x=1:4, y=5:9, title="test3")
-	jim(zeros(4,6), fft0=true)
+	jim(rand(6,4), fft0=true)
 	jim(x=1:4, y=5:9, rand(4,5), title="test4")
 	jim(rand(4,5), color=:hsv)
 	jim(:abswarn, false)
