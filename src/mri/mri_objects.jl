@@ -7,13 +7,10 @@ Copyright 2007-6-28, Jeff Fessler, University of Michigan
 
 export mri_objects
 
-#using Plots
+using Plots
 using FFTW: fft, fftshift, ifftshift
-#using MIRT: max_percent_diff,jinc,rect
+#using MIRT: max_percent_diff, jinc, rect
 #using MIRT: jim, image_geom, prompt, interp1
-#include("../utility/max_percent_diff.jl")
-#include("../utility/jinc.jl") # todo - put in MIRT
-#include("../utility/rect.jl")
 
 RealArray = AbstractArray{<:Real}
 PairList = Vector{<:Tuple} # Vector{Tuple{Symbol,<:Any}}
@@ -516,6 +513,7 @@ function mri_objects_trap_test()
     plot!(z, trap0, label="rect")
     plot!(xtick = [0 -len/2 len/2-dz/2 len/2 len/2+dz/2])
 end
+
 function mri_objects_test()
     @test mri_objects_trap_test() isa Plots.Plot
     prompt()
