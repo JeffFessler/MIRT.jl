@@ -1,17 +1,32 @@
+#=
+jinc.jl
+=#
+
+export jinc
+
 using SpecialFunctions: besselj1 #grab bessel function
-using Plots
+using Plots: plot
+using Test: @inferred
+
 """
     jinc(x)
-returns jinc(x), defined as J1(x)/x, where J1 is a Bessel function of the first kind.
+return `jinc(x) = J1(pi*x)/(2x)`, where `J1` is a Bessel function of the first kind.
+units of `x` are typically cycles/m
 """
-function jinc(x::Real) #calculates jinc(x)
-    if(x == 0) return pi/4 end
+function jinc(x::Real)
+    if (x == 0) return pi/4 end
     y = abs(x)
-    return besselj1(pi*y) / (2*y)
+    besselj1(pi*y) / (2*y)
 end
+
+"""
+    jinc(:test)
+self test
+"""
 function jinc(x::Symbol)
     x != :test && throw("non-test, symbolic input to jinc")
-    r = (-10:.01:10)
-    plot(r,jinc.(r))
+    r = LinRange(-10,10,201)
+    y = @inferred jinc.(r)
+    plot(r, y)
     true
 end
