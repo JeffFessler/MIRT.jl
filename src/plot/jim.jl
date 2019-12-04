@@ -237,7 +237,7 @@ function jim(test::Symbol)
 	@test typeof(jim(:defs)) <: Dict
 
 	jim(ones(4,3), title="test2")
-	jim(ones(4,3,5), title="test3")
+	jim(ones(4,3,5), title=L"test3 x^2_i")
 	jim(1:4, 5:9, zeros(4,5), title="test3")
 	jim(zeros(4,5), x=1:4, y=5:9, title="test3")
 	jim(zeros(4,6), fft0=true)
@@ -247,6 +247,5 @@ function jim(test::Symbol)
 	jim(complex(rand(4,3)))
 	jim(complex(rand(4,3)), "complex")
 	jim(:abswarn, true)
-    jim(ones(4,3), title=L"x^2_i")
 	true
 end
