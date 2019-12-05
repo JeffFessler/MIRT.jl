@@ -20,17 +20,13 @@ out:
 	All 3 inputs must be the same type (single or double).
 	Output type will be same as input.
 """
-function exp_xform(x::AbstractArray{<:Complex{<:Number}},
-        u::AbstractArray{<:Complex{<:Number}},
-        v::AbstractArray{<:Complex{<:Number}}
+function exp_xform(x::AbstractArray{<:Number}},
+        u::AbstractArray{<:Number},
+        v::AbstractArray{<:Number}
         ; mode::Symbol = :matrix)
-    # todo: use "T"
-   typeof(x) != typeof(u) && throw("Types of first and second arguments do not match.")
-   typeof(x) != typeof(v) && throw("Types of first and third arguments do not match.")
-   typeof(u) != typeof(v) && throw("Types of second and third arguments do not match.")
    mode != :matrix && mode != :element && mode != :row && mode != :column && throw("Invalid mode parameter.")
    out = Array{promote_type(ComplexF32,typeof(x))}(zeros(size(v,2),size(x,2)))
-    
+
    if(mode === :matrix)
         return exp.(-1 .* (transpose(v) * u)) * x
 
@@ -74,7 +70,7 @@ end
     exp_xsform(:test)
 self test
 """
-function exp_xform(x::Symbol)
+function exp_xform(x::Symbol; time = false)
    modes = [:element,:row,:column]
     x != :test && throw("Invalid argument for exp_xform.")
     N = 500
@@ -94,7 +90,7 @@ function exp_xform(x::Symbol)
     y1 = exp_xform(X,U,V,mode = :matrix)
     for i = 1:size(modes,1)
       print("Case $(modes[i])")
-      @time y2 = exp_xform(X,U,V,mode = modes[i])
+      time && @time y2 = exp_xform(X,U,V,mode = modes[i])
       d = max_percent_diff(y1, y2)
       print("double max % diff = $d\n")
       d < 1e-12 && print("double appears to be working\n")
@@ -104,7 +100,7 @@ function exp_xform(x::Symbol)
     	us = Array{Complex{Float32},2}(U)
     	vs = Array{Complex{Float32},2}(V)
         print("Single tests")
-        @time y3 = exp_xform(X,U,V,mode = modes[i])
+        time && @time y3 = exp_xform(X,U,V,mode = modes[i])
         d = max_percent_diff(y1, y3)
         print("single max % diff = $d\n")
         d >= 1e-4 && print("single may have a problem?\n")
@@ -125,14 +121,14 @@ function exp_xform(x::Symbol)
    double = Array{Complex{Float64}}(zeros(M,L,size(modes,1)))
    for i = 1:size(modes,1)
      print("Case $(modes[i])")
-     @time double[:,:,i] = exp_xform(X,U,V,mode = modes[i])
+     time && @time double[:,:,i] = exp_xform(X,U,V,mode = modes[i])
 
      if true
      xs = Array{Complex{Float32},2}(X)
      us = Array{Complex{Float32},2}(U)
      vs = Array{Complex{Float32},2}(V)
       print("Single: ")
-      @time single[:,:,i] = exp_xform(X,U,V,mode = modes[i])
+      time && @time single[:,:,i] = exp_xform(X,U,V,mode = modes[i])
      end
      print("\n\n")
   end
