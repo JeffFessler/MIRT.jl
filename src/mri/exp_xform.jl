@@ -1,27 +1,39 @@
+#=
+exp_xform.jl
+=#
+
+export exp_xform
+
 """
-    exp_xform(x, u, v,mode = :matrix)
+    exp_xform(x, u, v, mode::Symbol = :matrix)
 in:
-	x	[N L]	complex vector(s)
-	u	[D N]	complex vectors
-	v	[D M]	complex vectors
-   mode Symbol
+	`x	[N L]`	complex vector(s)
+	`u	[D N]`	complex vectors
+	`v	[D M]`	complex vectors
+   `mode::Symbol` `:matrix` (default) | `:element` | `:row` | `:column`
 out:
-	y	[M L]	complex vector
-	y(m,l) = sum_n x(n,l) exp(-sum(u(:,n) .* v(:,m)))
-   Iterates through subsets of the ML matrix designated by :mode
+	`y	[M L]`	complex vector
+	`y[m,l] = sum_n x[n,l] exp(-sum(u[:,n] .* v[:,m]))`
+   Iterates through subsets of the ML matrix designated by `:mode`
    (i.e. row, column, element, or just computing the entire matrix)
 	This is the 'slow' 'exact' transform model for MRI.
 	All 3 inputs must be the same type (single or double).
 	Output type will be same as input.
 """
-function exp_xform(x::Array{<:Complex{<:Number}},u::Array{<:Complex{<:Number}},v::Array{<:Complex{<:Number}};mode::Symbol = :matrix)
+function exp_xform(x::AbstractArray{<:Complex{<:Number}},
+        u::AbstractArray{<:Complex{<:Number}},
+        v::AbstractArray{<:Complex{<:Number}}
+        ; mode::Symbol = :matrix)
+    # todo: use "T"
    typeof(x) != typeof(u) && throw("Types of first and second arguments do not match.")
    typeof(x) != typeof(v) && throw("Types of first and third arguments do not match.")
    typeof(u) != typeof(v) && throw("Types of second and third arguments do not match.")
    mode != :matrix && mode != :element && mode != :row && mode != :column && throw("Invalid mode parameter.")
    out = Array{promote_type(ComplexF32,typeof(x))}(zeros(size(v,2),size(x,2)))
+    
    if(mode === :matrix)
         return exp.(-1 .* (transpose(v) * u)) * x
+
    elseif(mode === :element)
       #avoid generating intermediate steps by iterating thru N and M
       #dot the columns
@@ -34,6 +46,7 @@ function exp_xform(x::Array{<:Complex{<:Number}},u::Array{<:Complex{<:Number}},v
         end
      end
       return out
+
    elseif(mode === :row)
       #iterate through the rows of the large matrix
       #@show size(x)
@@ -43,6 +56,7 @@ function exp_xform(x::Array{<:Complex{<:Number}},u::Array{<:Complex{<:Number}},v
            out[j,:] .= p
      end
      return out
+
   elseif(mode === :column)
       for i = 1:size(u,2)
             t = transpose(v) * u[:,i]
@@ -54,6 +68,12 @@ function exp_xform(x::Array{<:Complex{<:Number}},u::Array{<:Complex{<:Number}},v
       return out
    end
 end
+
+
+"""
+    exp_xsform(:test)
+self test
+"""
 function exp_xform(x::Symbol)
    modes = [:element,:row,:column]
     x != :test && throw("Invalid argument for exp_xform.")
@@ -70,6 +90,7 @@ function exp_xform(x::Symbol)
     	V = Array{Complex{Float64},2}(Array{Complex{Float32},2}(V))
     end
 
+    # todo: @inferred
     y1 = exp_xform(X,U,V,mode = :matrix)
     for i = 1:size(modes,1)
       print("Case $(modes[i])")
@@ -123,5 +144,5 @@ function exp_xform(x::Symbol)
         print("single max % diff between $(modes[i]) and $(modes[j]) = $d\n")
      end
   end
-  return true
+  true
 end
