@@ -1,7 +1,6 @@
 #=
 exp_xform.jl
 =#
-
 export exp_xform
 
 """
@@ -20,7 +19,7 @@ out:
 	All 3 inputs must be the same type (single or double).
 	Output type will be same as input.
 """
-function exp_xform(x::AbstractArray{<:Number}},
+function exp_xform(x::AbstractArray{<:Number},
         u::AbstractArray{<:Number},
         v::AbstractArray{<:Number}
         ; mode::Symbol = :matrix)
@@ -91,6 +90,7 @@ function exp_xform(x::Symbol; time = false)
     for i = 1:size(modes,1)
       print("Case $(modes[i])")
       time && @time y2 = exp_xform(X,U,V,mode = modes[i])
+      !time && (y2 = exp_xform(X,U,V,mode = modes[i]))
       d = max_percent_diff(y1, y2)
       print("double max % diff = $d\n")
       d < 1e-12 && print("double appears to be working\n")
@@ -101,6 +101,7 @@ function exp_xform(x::Symbol; time = false)
     	vs = Array{Complex{Float32},2}(V)
         print("Single tests")
         time && @time y3 = exp_xform(X,U,V,mode = modes[i])
+        !time && (y3 = exp_xform(X,U,V,mode = modes[i]))
         d = max_percent_diff(y1, y3)
         print("single max % diff = $d\n")
         d >= 1e-4 && print("single may have a problem?\n")
@@ -120,15 +121,16 @@ function exp_xform(x::Symbol; time = false)
    single = Array{Complex{Float32}}(zeros(M,L,size(modes,1)))
    double = Array{Complex{Float64}}(zeros(M,L,size(modes,1)))
    for i = 1:size(modes,1)
-     print("Case $(modes[i])")
+     time && print("Case $(modes[i]) \n")
      time && @time double[:,:,i] = exp_xform(X,U,V,mode = modes[i])
-
+     !time && (double[:,:,i] = exp_xform(X,U,V,mode = modes[i]))
      if true
      xs = Array{Complex{Float32},2}(X)
      us = Array{Complex{Float32},2}(U)
      vs = Array{Complex{Float32},2}(V)
-      print("Single: ")
+      time && print("Single: ")
       time && @time single[:,:,i] = exp_xform(X,U,V,mode = modes[i])
+      !time && (single[:,:,i] = exp_xform(X,U,V,mode = modes[i]))
      end
      print("\n\n")
   end
