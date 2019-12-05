@@ -76,12 +76,8 @@ function exp_xform(x::Symbol)
       @time y2 = exp_xform(X,U,V,mode = modes[i])
       d = max_percent_diff(y1, y2)
       print("double max % diff = $d\n")
-      if d < 1e-12
-        print("double appears to be working\n")
-      else
-        print("double may have a problem?\n")
-      end
-
+      d < 1e-12 && print("double appears to be working\n")
+      d >= 1e-12 && print("double may have a problem?\n")
     if true
     	xs = Array{Complex{Float32},2}(X)
     	us = Array{Complex{Float32},2}(U)
@@ -90,11 +86,8 @@ function exp_xform(x::Symbol)
         @time y3 = exp_xform(X,U,V,mode = modes[i])
         d = max_percent_diff(y1, y3)
         print("single max % diff = $d\n")
-        if d < 1e-4
-          print("single appears to be working\n")
-        else
-          print("single may have a problem?\n")
-        end
+        d >= 1e-4 && print("single may have a problem?\n")
+        d < 1e-4 && print("single appears to be working\n")
       end
       print("\n\n")
    end
