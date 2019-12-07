@@ -36,7 +36,7 @@ function exp_xform(x::AbstractArray{<:Number},
       for i = 1:size(u,2)
         for j = 1:size(v,2)
            t = transpose(u[:,i]) * v[:,j] #calculate one spot in the array
-           p = out[j,:] .+ (exp.(-1 * t) .* x[i,:])
+           p = out[j,:] .+ (exp.(-t) .* x[i,:])
            out[j,:] .= p
         end
      end
@@ -47,7 +47,7 @@ function exp_xform(x::AbstractArray{<:Number},
       #@show size(x)
      for j = 1:size(v,2)
            t = transpose(v[:,j]) * u
-           p = out[j,:] .+ (exp.(-1 * t) * x)[1,:] #this output is a 2d matrix, but should be a column vector (it's a row)
+           p = out[j,:] .+ (exp.(-t) * x)[1,:] #this output is a 2d matrix, but should be a column vector (it's a row)
            out[j,:] .= p
      end
      return out
@@ -57,7 +57,7 @@ function exp_xform(x::AbstractArray{<:Number},
             t = transpose(v) * u[:,i]
             #@show size(exp.(-1 * t))
             #@show size(x[i,:])
-            p = out .+ (exp.(-1 * t) * transpose(x[i,:]))#outer product
+            p = out .+ (exp.(-t) * transpose(x[i,:]))#outer product
             out = p
       end
       return out
