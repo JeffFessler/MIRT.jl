@@ -64,6 +64,3 @@ function map_many(test::Symbol)
 	@test map_many(fun, x, N) == cat(dims=4, fun(x1), fun(2x1))
 	true
 end
-
-
-# map_many(:test)
