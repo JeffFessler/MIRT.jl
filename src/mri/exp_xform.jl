@@ -12,7 +12,8 @@ using MIRT: max_percent_diff # todo
 using Test: @test, @inferred
 
 """
-    exp_xform(x, u, v, mode::Symbol = :matrix)
+    exp_xform(x, u, v ; mode::Symbol = :matrix)
+
 in:
 * `x [N L]` possibly complex vector(s)
 * `u [D N]` possibly complex vectors
@@ -29,53 +30,62 @@ This is the 'slow' 'exact' transform model for MRI.
 
 Output type will depend on input types.
 """
-function exp_xform(x::AbstractArray{<:Number},
-        u::AbstractArray{<:Number},
-        v::AbstractArray{<:Number}
+function exp_xform(x::AbstractMatrix{<:Number},
+        u::AbstractMatrix{<:Number},
+        v::AbstractMatrix{<:Number}
         ; mode::Symbol = :matrix)
 
     mode ∉ (:matrix, :element, :row, :column) && throw("Invalid mode parameter.")
+
     T = promote_type(eltype(u), eltype(v), eltype(x), ComplexF32)
 @show T
-    out = zeros(T, size(v,2), size(x,2))
+
+    N = size(u,2)
+    M = size(v,2)
+    out = zeros(T, M, size(x,2))
 
     if (mode === :matrix)
-        return exp.(-(transpose(v) * u)) * x
+        return exp.(-(transpose(v) * u)) * x # [M D] * [D N] * [N L]
 
     elseif (mode === :element)
         # avoid generating intermediate steps by iterating thru N and M
         # dot the columns
-        for i = 1:size(u,2)
-            for j = 1:size(v,2)
-                t = transpose(u[:,i]) * v[:,j] #calculate one spot in the array
-                p = out[j,:] .+ (exp.(-t) .* x[i,:])
-                out[j,:] .= p
+        for n = 1:N
+            for m = 1:M
+                t = transpose(u[:,n]) * v[:,m] #calculate one spot in the array
+                p = out[m,:] .+ (exp.(-t) .* x[n,:])
+                out[m,:] .= p
             end
         end
         return out
 
-    elseif (mode === :row)
-        # iterate through the rows of the large matrix
-        # @show size(x)
-        for j = 1:size(v,2)
-            t = transpose(v[:,j]) * u
-@show size(t)
-            p = out[j,:] .+ (exp.(-t) * x)[1,:] #this output is a 2d matrix, but should be a column vector (it's a row)
-            out[j,:] .= p
+    elseif (mode === :row) # iterate through rows of the large matrix
+        for m = 1:M
+            t = transpose(v[:,m]) * u # [1 D] * [D N] -> [1 N]
+m == 1 && @show size(t), size(exp.(-t) * x)
+            p = out[m,:] .+ (exp.(-t) * x)[1,:] #this output is a 2d matrix, but should be a column vector (it's a row)
+            out[m,:] .= p
         end
         return out
 
     elseif (mode === :column)
-        for i = 1:size(u,2)
-            t = transpose(v) * u[:,i]
-            # @show size(exp.(-1 * t))
-            # @show size(x[i,:])
-            p = out .+ (exp.(-t) * transpose(x[i,:])) # outer product
+        for n = 1:N
+            t = transpose(v) * u[:,n]
+            n == 1 && @show size(t), size(x[n,:])
+            p = out .+ (exp.(-t) * transpose(x[n,:])) # outer product
             out = p
-      end
-      return out
+        end
+        return out
+
     end
 end
+
+
+# handle "vector" case where L=1
+exp_xform(x::AbstractVector{<:Number},
+        u::AbstractMatrix{<:Number},
+        v::AbstractMatrix{<:Number}
+        ; kwargs...) = exp_xform(reshape(x, :, 1), u, v ; kwargs...)[:,1]
 
 
 """
