@@ -8,7 +8,7 @@ Copyright 2004-9-23, Jeff Fessler, University of Michigan
 
 export exp_xform
 
-using Test: @test, @inferred
+using Test: @test, @test_throws, @inferred
 using BenchmarkTools: @btime
 
 
@@ -35,8 +35,6 @@ function exp_xform(x::AbstractMatrix{<:Number},
         u::AbstractMatrix{<:Number},
         v::AbstractMatrix{<:Number}
         ; mode::Symbol = :matrix)
-
-    mode ∉ (:matrix, :element, :row, :column) && throw("Invalid mode parameter.")
 
     T = promote_type(eltype(u), eltype(v), eltype(x), ComplexF32)
 
@@ -140,6 +138,7 @@ self test (with optional timing tests)
 """
 function exp_xform(test::Symbol ; time::Bool = false)
     test != :test && throw("Invalid argument for exp_xform.")
+	@test_throws String exp_xform(ones(2,2), ones(2,2), ones(2,2) ; mode=:bad)
 
 #    for T in (ComplexF32, ComplexF64)
         @test exp_xform_test( ; time=time) # T=T
