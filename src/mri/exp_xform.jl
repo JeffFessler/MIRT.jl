@@ -8,8 +8,9 @@ Copyright 2004-9-23, Jeff Fessler, University of Michigan
 
 export exp_xform
 
-using MIRT: max_percent_diff # todo
 using Test: @test, @inferred
+using BenchmarkTools: @btime
+
 
 """
     exp_xform(x, u, v ; mode::Symbol = :matrix)
@@ -38,7 +39,6 @@ function exp_xform(x::AbstractMatrix{<:Number},
     mode ∉ (:matrix, :element, :row, :column) && throw("Invalid mode parameter.")
 
     T = promote_type(eltype(u), eltype(v), eltype(x), ComplexF32)
-@show T
 
     N = size(u,2)
     M = size(v,2)
@@ -75,6 +75,9 @@ function exp_xform(x::AbstractMatrix{<:Number},
         end
         return out
 
+
+    else
+        throw("Invalid mode parameter $mode")
     end
 end
 
@@ -86,86 +89,62 @@ exp_xform(x::AbstractVector{<:Number},
         ; kwargs...) = exp_xform(reshape(x, :, 1), u, v ; kwargs...)[:,1]
 
 
-"""
-    exp_xform(:test)
-self test
-"""
-function exp_xform(x::Symbol ; time::Bool = false)
-    x != :test && throw("Invalid argument for exp_xform.")
+# test for given data type
+function exp_xform_test( ; T::DataType = ComplexF32, time::Bool = false)
 
-    modes = [:element, :row, :column]
+    modes = (:element, :row, :column)
+
+    @info "1D tests with $T"
     N = 500
     M = 6000
     D = 3
-    L = 1
-    X = Complex.(randn(N,L), randn(N,L))
-    U = Complex.(randn(D,N), randn(D,N))
-    V = Complex.(randn(D,M), randn(D,M))
-    # todo: cut this and test F32 and F64 separately in loop
-    if true
-    	X = Array{Complex{Float64},2}(Array{Complex{Float32},2}(X))
-    	U = Array{Complex{Float64},2}(Array{Complex{Float32},2}(U))
-    	V = Array{Complex{Float64},2}(Array{Complex{Float32},2}(V))
+    X = randn(T, N)
+    U = randn(T, D, N)
+    V = randn(T, D, M)
+    y1 = @inferred exp_xform(X, U, V ; mode = :matrix)
+
+    for mode in modes
+        y2 = @inferred exp_xform(X, U, V ; mode=mode)
+        @test y1 ≈ y2
     end
 
-    # todo: @inferred
-    y1 = exp_xform(X,U,V,mode = :matrix)
-    for i = 1:size(modes,1)
-      print("Case $(modes[i])")
-      time && @time y2 = exp_xform(X,U,V,mode = modes[i])
-      !time && (y2 = exp_xform(X,U,V,mode = modes[i]))
-      d = max_percent_diff(y1, y2)
-      print("double max % diff = $d\n")
-      d < 1e-12 && print("double appears to be working\n")
-      d >= 1e-12 && print("double may have a problem?\n")
-    if true
-    	xs = Array{Complex{Float32},2}(X)
-    	us = Array{Complex{Float32},2}(U)
-    	vs = Array{Complex{Float32},2}(V)
-        print("Single tests")
-        time && @time y3 = exp_xform(X,U,V,mode = modes[i])
-        !time && (y3 = exp_xform(X,U,V,mode = modes[i]))
-        d = max_percent_diff(y1, y3)
-        print("single max % diff = $d\n")
-        d >= 1e-4 && print("single may have a problem?\n")
-        d < 1e-4 && print("single appears to be working\n")
-      end
-      print("\n\n")
-   end
+    @info "2D tests with $T"
+    N = 10000
+    M = 100
+    D = 20
+    L = 10
+    X = randn(T, N, L)
+    U = randn(T, D, N)
+    V = randn(T, D, M)
+    y1 = @inferred exp_xform(X, U, V ; mode = :matrix)
 
-   print("stress tests (not really) with medium N/M coeff\n")
-   N = 10000
-   M = 100
-   D = 20
-   L = 10
-   X = Complex.(randn(N,L),randn(N,L))
-   U = Complex.(randn(D,N),randn(D,N))
-   V = Complex.(randn(D,M),randn(D,M))
-   single = Array{Complex{Float32}}(zeros(M,L,size(modes,1)))
-   double = Array{Complex{Float64}}(zeros(M,L,size(modes,1)))
-   for i = 1:size(modes,1)
-     time && print("Case $(modes[i]) \n")
-     time && @time double[:,:,i] = exp_xform(X,U,V,mode = modes[i])
-     !time && (double[:,:,i] = exp_xform(X,U,V,mode = modes[i]))
-     if true
-     xs = Array{Complex{Float32},2}(X)
-     us = Array{Complex{Float32},2}(U)
-     vs = Array{Complex{Float32},2}(V)
-      time && print("Single: ")
-      time && @time single[:,:,i] = exp_xform(X,U,V,mode = modes[i])
-      !time && (single[:,:,i] = exp_xform(X,U,V,mode = modes[i]))
-     end
-     print("\n\n")
-  end
-  for i = 1:size(modes,1)
-     for j = 1:(i-1)
-        d = max_percent_diff(double[:,:,i],double[:,:,j])
-        print("double max % diff between $(modes[i]) and $(modes[j]) = $d\n")
-        d = max_percent_diff(single[:,:,i],single[:,:,j])
-        print("single max % diff between $(modes[i]) and $(modes[j]) = $d\n")
-     end
-  end
-  true
+    for mode in modes
+        y2 = @inferred exp_xform(X, U, V ; mode=mode)
+        @test y1 ≈ y2
+    end
+
+    # timing tests: :matrix is fastest, with :row a close 2nd
+    for mode in (:matrix, modes...)
+        time && @info "Case :$mode"
+        tmp = (x, u, v) -> exp_xform(x, u, v ; mode=mode)
+        time && @btime $tmp($X, $U, $V)
+    end
+
+    true
 end
 
-exp_xform(:test)
+
+"""
+    exp_xform(:test ; time=false)
+self test (with optional timing tests)
+"""
+function exp_xform(test::Symbol ; time::Bool = false)
+    test != :test && throw("Invalid argument for exp_xform.")
+
+#    for T in (ComplexF32, ComplexF64)
+        @test exp_xform_test( ; time=time) # T=T
+#    end
+    true
+end
+
+#exp_xform(:test ; time=true)
