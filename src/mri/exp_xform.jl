@@ -1,25 +1,33 @@
 #=
 exp_xform.jl
+
+2019-12-08 Connor Martin
+Based on exp_xform_mex.c
+Copyright 2004-9-23, Jeff Fessler, University of Michigan
 =#
 
 export exp_xform
 
+using MIRT: max_percent_diff # todo
+using Test: @test, @inferred
+
 """
     exp_xform(x, u, v, mode::Symbol = :matrix)
 in:
-* `x [N L]`	possibly complex vector(s)
-* `u [D N]`	possibly complex vectors
-* `v [D M]`	possibly complex vectors
+* `x [N L]` possibly complex vector(s)
+* `u [D N]` possibly complex vectors
+* `v [D M]` possibly complex vectors
 * `mode::Symbol` `:matrix` (default) | `:element` | `:row` | `:column`
 
 out:
-* `y [M L]`	typically complex vector
-	`y[m,l] = sum_n x[n,l] exp(-sum(u[:,n] .* v[:,m]))`
-   Iterates through subsets of the ML matrix designated by `:mode`
-   (i.e. row, column, element, or just computing the entire matrix)
-	This is the 'slow' 'exact' transform model for MRI.
+* `y [M L]` typically complex vector
+ `y[m,l] = sum_n x[n,l] exp(-sum(u[:,n] .* v[:,m]))`
 
-	Output type will depend on input types.
+Iterates through subsets of the ML matrix designated by `:mode`
+(i.e. row, column, element, or just computing the entire matrix)
+This is the 'slow' 'exact' transform model for MRI.
+
+Output type will depend on input types.
 """
 function exp_xform(x::AbstractArray{<:Number},
         u::AbstractArray{<:Number},
@@ -27,45 +35,46 @@ function exp_xform(x::AbstractArray{<:Number},
         ; mode::Symbol = :matrix)
 
     mode ∉ (:matrix, :element, :row, :column) && throw("Invalid mode parameter.")
-    T = promote_type(typeof(u), typeof(v), typeof(x), ComplexF32)
+    T = promote_type(eltype(u), eltype(v), eltype(x), ComplexF32)
+@show T
     out = zeros(T, size(v,2), size(x,2))
 
     if (mode === :matrix)
-         return exp.(-(transpose(v) * u)) * x
+        return exp.(-(transpose(v) * u)) * x
 
-   elseif (mode === :element)
-      #avoid generating intermediate steps by iterating thru N and M
-      #dot the columns
-      #@show size(x)
-      for i = 1:size(u,2)
-        for j = 1:size(v,2)
-           t = transpose(u[:,i]) * v[:,j] #calculate one spot in the array
-           p = out[j,:] .+ (exp.(-t) .* x[i,:])
-           out[j,:] .= p
+    elseif (mode === :element)
+        # avoid generating intermediate steps by iterating thru N and M
+        # dot the columns
+        for i = 1:size(u,2)
+            for j = 1:size(v,2)
+                t = transpose(u[:,i]) * v[:,j] #calculate one spot in the array
+                p = out[j,:] .+ (exp.(-t) .* x[i,:])
+                out[j,:] .= p
+            end
         end
-     end
-     return out
+        return out
 
-   elseif (mode === :row)
-      #iterate through the rows of the large matrix
-      #@show size(x)
-     for j = 1:size(v,2)
-           t = transpose(v[:,j]) * u
-           p = out[j,:] .+ (exp.(-t) * x)[1,:] #this output is a 2d matrix, but should be a column vector (it's a row)
-           out[j,:] .= p
-     end
-     return out
+    elseif (mode === :row)
+        # iterate through the rows of the large matrix
+        # @show size(x)
+        for j = 1:size(v,2)
+            t = transpose(v[:,j]) * u
+@show size(t)
+            p = out[j,:] .+ (exp.(-t) * x)[1,:] #this output is a 2d matrix, but should be a column vector (it's a row)
+            out[j,:] .= p
+        end
+        return out
 
-  elseif (mode === :column)
-      for i = 1:size(u,2)
+    elseif (mode === :column)
+        for i = 1:size(u,2)
             t = transpose(v) * u[:,i]
-            #@show size(exp.(-1 * t))
-            #@show size(x[i,:])
-            p = out .+ (exp.(-t) * transpose(x[i,:]))#outer product
+            # @show size(exp.(-1 * t))
+            # @show size(x[i,:])
+            p = out .+ (exp.(-t) * transpose(x[i,:])) # outer product
             out = p
       end
       return out
-   end
+    end
 end
 
 
@@ -74,8 +83,9 @@ end
 self test
 """
 function exp_xform(x::Symbol ; time::Bool = false)
-    modes = [:element, :row, :column]
     x != :test && throw("Invalid argument for exp_xform.")
+
+    modes = [:element, :row, :column]
     N = 500
     M = 6000
     D = 3
@@ -149,3 +159,5 @@ function exp_xform(x::Symbol ; time::Bool = false)
   end
   true
 end
+
+exp_xform(:test)
