@@ -1,35 +1,39 @@
 #=
 exp_xform.jl
 =#
+
 export exp_xform
 
 """
     exp_xform(x, u, v, mode::Symbol = :matrix)
 in:
-	`x	[N L]`	complex vector(s)
-	`u	[D N]`	complex vectors
-	`v	[D M]`	complex vectors
-   `mode::Symbol` `:matrix` (default) | `:element` | `:row` | `:column`
+* `x [N L]`	possibly complex vector(s)
+* `u [D N]`	possibly complex vectors
+* `v [D M]`	possibly complex vectors
+* `mode::Symbol` `:matrix` (default) | `:element` | `:row` | `:column`
+
 out:
-	`y	[M L]`	complex vector
+* `y [M L]`	typically complex vector
 	`y[m,l] = sum_n x[n,l] exp(-sum(u[:,n] .* v[:,m]))`
    Iterates through subsets of the ML matrix designated by `:mode`
    (i.e. row, column, element, or just computing the entire matrix)
 	This is the 'slow' 'exact' transform model for MRI.
-	All 3 inputs must be the same type (single or double).
-	Output type will be same as input.
+
+	Output type will depend on input types.
 """
 function exp_xform(x::AbstractArray{<:Number},
         u::AbstractArray{<:Number},
         v::AbstractArray{<:Number}
         ; mode::Symbol = :matrix)
-   mode != :matrix && mode != :element && mode != :row && mode != :column && throw("Invalid mode parameter.")
-   out = Array{promote_type(ComplexF32,typeof(x))}(zeros(size(v,2),size(x,2)))
 
-   if(mode === :matrix)
-        return exp.(-1 .* (transpose(v) * u)) * x
+    mode ∉ (:matrix, :element, :row, :column) && throw("Invalid mode parameter.")
+    T = promote_type(typeof(u), typeof(v), typeof(x), ComplexF32)
+    out = zeros(T, size(v,2), size(x,2))
 
-   elseif(mode === :element)
+    if (mode === :matrix)
+         return exp.(-(transpose(v) * u)) * x
+
+   elseif (mode === :element)
       #avoid generating intermediate steps by iterating thru N and M
       #dot the columns
       #@show size(x)
@@ -40,9 +44,9 @@ function exp_xform(x::AbstractArray{<:Number},
            out[j,:] .= p
         end
      end
-      return out
+     return out
 
-   elseif(mode === :row)
+   elseif (mode === :row)
       #iterate through the rows of the large matrix
       #@show size(x)
      for j = 1:size(v,2)
@@ -52,7 +56,7 @@ function exp_xform(x::AbstractArray{<:Number},
      end
      return out
 
-  elseif(mode === :column)
+  elseif (mode === :column)
       for i = 1:size(u,2)
             t = transpose(v) * u[:,i]
             #@show size(exp.(-1 * t))
@@ -66,11 +70,11 @@ end
 
 
 """
-    exp_xsform(:test)
+    exp_xform(:test)
 self test
 """
-function exp_xform(x::Symbol; time = false)
-   modes = [:element,:row,:column]
+function exp_xform(x::Symbol ; time::Bool = false)
+    modes = [:element, :row, :column]
     x != :test && throw("Invalid argument for exp_xform.")
     N = 500
     M = 6000
@@ -79,6 +83,7 @@ function exp_xform(x::Symbol; time = false)
     X = Complex.(randn(N,L), randn(N,L))
     U = Complex.(randn(D,N), randn(D,N))
     V = Complex.(randn(D,M), randn(D,M))
+    # todo: cut this and test F32 and F64 separately in loop
     if true
     	X = Array{Complex{Float64},2}(Array{Complex{Float32},2}(X))
     	U = Array{Complex{Float64},2}(Array{Complex{Float32},2}(U))
