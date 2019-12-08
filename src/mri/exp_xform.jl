@@ -53,8 +53,7 @@ function exp_xform(x::AbstractMatrix{<:Number},
         for n = 1:N
             for m = 1:M
                 t = transpose(u[:,n]) * v[:,m] #calculate one spot in the array
-                p = out[m,:] .+ (exp.(-t) .* x[n,:])
-                out[m,:] .= p
+                out[m,:] .+= (exp.(-t) .* x[n,:])
             end
         end
         return out
@@ -62,18 +61,17 @@ function exp_xform(x::AbstractMatrix{<:Number},
     elseif (mode === :row) # iterate through rows of the large matrix
         for m = 1:M
             t = transpose(v[:,m]) * u # [1 D] * [D N] -> [1 N]
-m == 1 && @show size(t), size(exp.(-t) * x)
-            p = out[m,:] .+ (exp.(-t) * x)[1,:] #this output is a 2d matrix, but should be a column vector (it's a row)
-            out[m,:] .= p
+            # m == 1 && @show size(t), size(exp.(-t) * x)
+            # product is a 2d matrix (row), but should be a column vector:
+            out[m,:] .+= (exp.(-t) * x)[1,:]
         end
         return out
 
     elseif (mode === :column)
         for n = 1:N
-            t = transpose(v) * u[:,n]
-            n == 1 && @show size(t), size(x[n,:])
-            p = out .+ (exp.(-t) * transpose(x[n,:])) # outer product
-            out = p
+            t = transpose(v) * u[:,n] # [M D] * [D .] -> [M]
+            # n == 1 && @show size(t), size(x[n,:])
+            out .+= (exp.(-t) * transpose(x[n,:])) # outer product [M 1] * [1 L]
         end
         return out
 
