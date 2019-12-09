@@ -1,6 +1,6 @@
 using Random
+using MIRT: max_percent_diff
 
-include("max_percent_diff.jl")
 export exp_mult_mex
 
 """
