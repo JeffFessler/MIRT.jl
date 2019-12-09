@@ -315,4 +315,4 @@ function mri_kspace_spiral(test::Symbol)
 	display(plot(gl[:,1,:]))
 end
 
-mri_kspace_spiral(:test) # temporary
+#mri_kspace_spiral(:test) # temporary
