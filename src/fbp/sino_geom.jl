@@ -37,7 +37,7 @@ end
 """
 `sino_geom_help()`
 """
-function sino_geom_help( ; io::IO = isinteractive() ? stdout : IOBuffer() )
+function sino_geom_help( ; io::IO = isinteractive() ? stdout : devnull )
 	print(io, "$(basename(@__FILE__)) propertynames:\n\t")
 	print(io, Tuple(sort([propertynames(sino_geom(:par))...])))
 
@@ -429,8 +429,14 @@ function sino_geom_grid(sg::MIRT_sino_geom)
 end
 
 
-function Base.display(sg::MIRT_sino_geom)
-	ir_dump(sg)
+"""
+    show(io::IO, sg::MIRT_sino_geom)
+    show(io::IO, ::MIME"text/plain", sg::MIRT_sino_geom)
+"""
+Base.show(io::IO, sg::MIRT_sino_geom) =
+    print(io, "MIRT_sino_geom: $(sg.dim)")
+function Base.show(io::IO, ::MIME"text/plain", sg::MIRT_sino_geom)
+    ir_dump(io, sg)
 end
 
 
@@ -716,7 +722,8 @@ function sino_geom_test()
 
 	sg = sino_geom(:ge1 ; orbit=:short)
 	sino_geom_gamma_dfs(sg)
-	display(sg)
+	show(isinteractive() ? stdout : devnull, sg)
+	show(isinteractive() ? stdout : devnull, MIME("text/plain"), sg)
 	sino_geom_help()
 	sino_geom_plot_grids()
 	sino_geom_show()

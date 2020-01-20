@@ -7,7 +7,8 @@ export ir_dump
 
 
 """
-`ir_dump(x::Any ; io::IO = stdout)`
+    ir_dump(x::Any ; io::IO = stdout)
+    ir_dump(io::IO, x::Any)
 
 Show all the fields of a structure or `NamedTuple` more nicely than dump() does
 """
@@ -31,6 +32,9 @@ function ir_dump(y::Any ; io::IO = stdout)
 	println(io)
 	nothing
 end
+
+
+ir_dump(io::IO, x::Any) = ir_dump(x ; io=io)
 
 
 """
