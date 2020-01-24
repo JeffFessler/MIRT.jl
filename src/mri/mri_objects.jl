@@ -365,8 +365,9 @@ end
 
 """
     mri_objects((type,params)) for a single tuple
+Here the `params` can be a single row or column vector.
 """
-mri_objects(pair::Tuple) = mri_objects([pair,])
+mri_objects(pair::Tuple) = mri_objects([(pair[1],reshape(pair[2],1,:)),])
 
 
 # special cases

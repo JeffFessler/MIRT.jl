@@ -10,7 +10,7 @@ coveralls: true
 
 os:
   - linux
-  - osx
+# - osx
 # - windows
 
 

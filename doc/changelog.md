@@ -1,5 +1,11 @@
 In reverse chronological order
 
+0.9.1 2020-01-20
+
+display to show, updated LinearMapsAA
+
+0.9.0 2019-12-26 for Julia 1.3
+
 2019-11-22
 mri_image_geom
 

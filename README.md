@@ -59,3 +59,8 @@ https://gitlab.eecs.umich.edu/michigan-fast-optimization
 
 For additional reproducible research code, see
 http://web.eecs.umich.edu/~fessler/irt/reproduce/
+
+## Compatibility
+
+Current version is compatible with Julia 1.3.
+Older tagged versions should work with older Julia versions.

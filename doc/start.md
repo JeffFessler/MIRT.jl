@@ -1,4 +1,4 @@
-* Install Julia (1.1 or later) from https://julialang.org/
+* Install Julia (1.3 or later recommended) from https://julialang.org/
 * Explore the extensive documentation at https://docs.julialang.org/
 * Launch Julia and use the `]` key to enter its package manager.
 * Add any packages needed for these notebooks using the `add` command.

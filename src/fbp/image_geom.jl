@@ -41,7 +41,7 @@ end
 """
 `image_geom_help( ; io)`
 """
-function image_geom_help( ; io::IO = isinteractive() ? stdout : IOBuffer())
+function image_geom_help( ; io::IO = isinteractive() ? stdout : devnull)
 	print(io, "propertynames:\n")
 	print(io, propertynames(image_geom(nx=1, dx=1)))
 
@@ -427,8 +427,14 @@ function image_geom_plot(ig::MIRT_image_geom; kwargs...)
 end
 
 
-function Base.display(ig::MIRT_image_geom)
-	ir_dump(ig)
+"""
+    show(io::IO, ig::MIRT_image_geom)
+    show(io::IO, ::MIME"text/plain", ig::MIRT_image_geom)
+"""
+Base.show(io::IO, ig::MIRT_image_geom) =
+	print(io, "MIRT_image_geom: $(ig.dim)")
+function Base.show(io::IO, ::MIME"text/plain", ig::MIRT_image_geom)
+	ir_dump(io, ig)
 end
 
 
@@ -553,7 +559,8 @@ function image_geom_test2()
 	@test_throws String image_geom(nx=16, dx=1, mask=:bad) # mask type
 	@test_throws String image_geom(nx=16, dx=1, mask=trues(2,2)) # mask size
 	ig = image_geom(nx=16, dx=2)
-	display(ig)
+	show(isinteractive() ? stdout : devnull, ig)
+	show(isinteractive() ? stdout : devnull, MIME("text/plain"), ig)
 	image_geom_test2(ig)
 	ig = image_geom(nx=16, dx=2, mask=:circ)
 	ig.over(2)
