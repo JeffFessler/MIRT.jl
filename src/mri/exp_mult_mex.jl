@@ -1,5 +1,6 @@
 using Random
-using MIRT: max_percent_diff
+#using MIRT: max_percent_diff
+#using MIRT: exp_xform
 
 export exp_mult_mex
 
@@ -47,7 +48,6 @@ function exp_mult_mex_helper(A, u::Vector{Complex{Float64}},  v::Vector{Float64}
     return D
 end
 
-# check this one, might not be correct for those
 function exp_mult_mex_helper(A, u::Vector{Float64},  v::Vector{Complex{Float64}})
     n = size(u)
     n = n[1]
@@ -73,7 +73,6 @@ function exp_mult_mex_helper(A, u::Vector{Float64},  v::Vector{Complex{Float64}}
     return D
 end
 
-# check this one, might not be correct for those
 function exp_mult_mex_helper(A, u::Vector{Float64},  v::Vector{Float64})
     n = size(u)
     n = n[1]
@@ -136,7 +135,6 @@ out
     N/A
 """
 function exp_mult_mex(test::Symbol)
-
     L = 10
     N = 30
     M = 20
@@ -148,11 +146,17 @@ function exp_mult_mex(test::Symbol)
     u = ur + im * ui
     v = vr + im * vi
 
-    d1 = A' * exp.(-ur * transpose(v));
+    d1 = A' * exp.(-ur * transpose(v))
     d2 = exp_mult_mex(A, ur, v);
     println(max_percent_diff(d1, d2))
 
-    d1 = A' * exp.(-u * transpose(vr));
+    d1 = A' * exp.(-u * transpose(vr))
     d2 = exp_mult_mex(A, u, vr);
+    println(max_percent_diff(d1, d2))
+    
+    d1 = A' * exp.(-ur * transpose(v))
+    ur = reshape(ur, 1, :)
+    v = reshape(v, 1, :)
+    d2 = exp_xform(transpose(A), v, ur, mode = :matrix)
     println(max_percent_diff(d1, d2))
 end
