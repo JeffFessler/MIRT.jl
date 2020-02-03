@@ -37,6 +37,6 @@ function my_rmse(x::Symbol)
     b[200:250,300:320] .= 3
     #and a blot of threes over here
     ig1 = image_geom(nx = 300,ny = 400,dx = 1,dy = 1)
-    @test my_rmse(a,b,ig1.mask) > 20
+    @test my_rmse(a,b,ig1) > 20
     return true
 end
