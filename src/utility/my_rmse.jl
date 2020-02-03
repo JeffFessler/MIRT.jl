@@ -1,4 +1,5 @@
 using Test: @test, @test_throws, @inferred
+using MIRT: image_geom
 """
     rmse = my_rmse(I,ref,ig)
     Generate 100 * RMSE (root mean squared error) of I compared to ref within domain ig.mask.
