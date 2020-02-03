@@ -1,5 +1,5 @@
 """
-x = eql_root(a,b,c)
+    x = eql_root(a,b,c)
     Numerically stable method for computing the positive root
     of the quadratic polynomial -ax^2 - 2bx + c, a >= 0.
 
