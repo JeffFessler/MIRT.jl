@@ -1,5 +1,4 @@
 using Test: @test, @test_throws, @inferred
-using MIRT: MIRT_image_geom
 """
     rmse = my_rmse(I,ref,ig)
     Generate 100 * RMSE (root mean squared error) of I compared to ref within domain ig.mask.
@@ -12,7 +11,7 @@ in
 out
 - rmse : rmse of I and ref within mask ig.
 """
-function my_rmse(I::Array,ref::Array,ig::MIRT_image_geom)
+function my_rmse(I::Array,ref::Array,ig) #takes any struct with a mask value
     return 100 * norm(I[ig.mask] - ref[ig.mask]) / sqrt(sum(ig.mask[:]))
 end
 function my_rmse(I::Array,ref::Array,ig::Array{Bool})
