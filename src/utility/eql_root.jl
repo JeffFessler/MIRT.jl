@@ -30,7 +30,8 @@ function eql_root(a,b,c)
     return x
 end
 
-function eql_root_test()
+function eql_root(x::Symbol)
+    x != :test && throw("Must use :test as input for testing")
     tests = [1 1 -1;
              0 1 2;
              4 5 0;
