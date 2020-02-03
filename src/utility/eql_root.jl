@@ -41,8 +41,7 @@ function eql_root(x::Symbol)
     predicted = [-1,1,0,3,1/2] #add -3 back in later
     results = eql_root(tests[:,1],tests[:,2],tests[:,3])
     for i in 1:size(predicted,1)
-        if results[i] != predicted[i]
-            print("eql_root_test failed on $(tests[i])\nPredicted: $(predicted[i])\nActual: $(results[i])")
-        end
+        @test results[i] == predicted[i]
     end
+    return true
 end
