@@ -15,7 +15,7 @@ out
 - x : The positive root which satisfies -ax^2 - 2bx + c.
 """
 function eql_root(a,b,c)
-    (any(a .< 0) && throw(DomainError(a,"a must be entirely nonnegative"))
+    (any(a .< 0)) && throw(DomainError(a,"a must be entirely nonnegative"))
     (size(a) != size(b) || size(b) != size(c)) && throw(DimensionMismatch("all arguments must share dimensions"))
     x = zeros(ComplexF64,size(a))
     j = (a .== 0)
