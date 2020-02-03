@@ -1,5 +1,5 @@
 using Test: @test, @test_throws, @inferred
-using MIRT: image_geom
+using MIRT: MIRT_image_geom
 """
     rmse = my_rmse(I,ref,ig)
     Generate 100 * RMSE (root mean squared error) of I compared to ref within domain ig.mask.
@@ -19,7 +19,6 @@ function my_rmse(I::Array,ref::Array,ig::Array{Bool})
     return 100 * norm(I[ig] - ref[ig]) / sqrt(sum(ig))
 end
 
-#TODO: ask fessler about what the hell image_geom is doing.
 function my_rmse(x::Symbol)
     x != :test && throw("Invalid symbol; use :test for testing functions.")
     a = [1 2; 4 5;7 8]
