@@ -1,3 +1,5 @@
+using Test: @test, @test_throws, @inferred
+using BenchmarkTools: @btime
 """
     x = eql_root(a,b,c)
     Numerically stable method for computing the positive root
@@ -13,7 +15,7 @@ out
 - x : The positive root which satisfies -ax^2 - 2bx + c.
 """
 function eql_root(a,b,c)
-    (any(x -> x < 0,a)) && throw(DomainError(a,"a must be entirely nonnegative"))
+    (any(a .< 0) && throw(DomainError(a,"a must be entirely nonnegative"))
     (size(a) != size(b) || size(b) != size(c)) && throw(DimensionMismatch("all arguments must share dimensions"))
     x = zeros(ComplexF64,size(a))
     j = (a .== 0)
@@ -36,9 +38,9 @@ function eql_root(x::Symbol)
              0 1 2;
              4 5 0;
              1 0 9; #3 both times
-             #1 0 -9; #-3 both times. Temporatily omitted.
+             #1 0 -9; #-3 both times. omitted because out of prog scope
              4 4 5] # (2x+5)(2x-1), so 1/2.
-    predicted = [-1,1,0,3,1/2] #add -3 back in later
+    predicted = [-1,1,0,3,1/2]
     results = eql_root(tests[:,1],tests[:,2],tests[:,3])
     for i in 1:size(predicted,1)
         @test results[i] == predicted[i]
