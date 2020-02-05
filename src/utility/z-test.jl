@@ -10,3 +10,5 @@ using Test: @test
 @test max_percent_diff(:test)
 @test ndgrid(:test)
 @test rect(:test)
+@test eql_root(:test)
+@test rmsd100(:test)
