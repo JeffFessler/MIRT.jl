@@ -11,4 +11,4 @@ using Test: @test
 @test ndgrid(:test)
 @test rect(:test)
 @test eql_root(:test)
-@test my_rmse(:test)
+@test rmsd100(:test)
