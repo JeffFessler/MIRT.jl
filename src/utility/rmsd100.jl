@@ -16,7 +16,7 @@ option:
 out
 - rmsd : rmsd of `x` vs `y` within `mask` in %
 """
-function rmsd100(x::AbstractArray, y::AbstractArray ; mask::Array{Bool} = trues(size(x))
+function rmsd100(x::AbstractArray, y::AbstractArray ; mask::Array{Bool} = trues(size(x)))
     return 100 * norm(x[mask] - y[mask]) / sqrt(sum(mask))
 end
 
