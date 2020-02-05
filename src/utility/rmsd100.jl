@@ -1,14 +1,20 @@
+# rmsd100
+# root mean-squared difference between two arrays in %
+
 export rmsd100
 
 using Test: @test, @test_throws, @inferred
+using LinearAlgebra: norm
+
 
 """
     rmsd = rmsd100(x, y ; mask)
-    Generate 100 * RMSD (root mean squared difference) between `x` and `y` within domain mask.
+
+Compute 100 * RMSD (root mean squared difference) between `x` and `y` within domain mask.
 
 in
 - `x` : array
-- `y` : another array
+- `y` : another array of same size
 
 option:
 - `mask::Array{Bool}` : domain over which to compute the RMSE; default `trues(size(x))`
@@ -16,7 +22,8 @@ option:
 out
 - rmsd : rmsd of `x` vs `y` within `mask` in %
 """
-function rmsd100(x::AbstractArray, y::AbstractArray ; mask::Array{Bool} = trues(size(x)))
+function rmsd100(x::AbstractArray{<:Number}, y::AbstractArray{<:Number}
+        ; mask::AbstractArray{Bool} = trues(size(x)))
     return 100 * norm(x[mask] - y[mask]) / sqrt(sum(mask))
 end
 
@@ -31,10 +38,10 @@ function rmsd100(x::Symbol)
     b = [3 2; 4 6; 8 7]
     c = [false true; true false; false false] #avg. 0
     d = [false false; false false; false true] #avg. 1
-    e = [true true; true true; true false] #average here should be 1,0,1,0,4 = sqrt(6/5) = 109...
+    e = [true true; true true; true false] # average 1,0,1,0,4 = sqrt(6/5)
     tests = cat(c, d, e, dims = 3)
     pred = [0, 100, 100*sqrt(6/5)]
-    for i in 1:size(tests)
+    for i in 1:size(tests,1)
         @test rmsd100(a, b ; mask=tests[:,:,i]) == pred[i]
     end
     @test rmsd100([1, 0], [0, 1]) == 100 # no mask test
