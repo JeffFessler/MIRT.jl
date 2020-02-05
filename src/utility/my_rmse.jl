@@ -1,24 +1,31 @@
+export rmsd100
+
 using Test: @test, @test_throws, @inferred
+
 """
-    rmse = my_rmse(I,ref,ig)
-    Generate 100 * RMSE (root mean squared error) of I compared to ref within domain ig.mask.
+    rmsd = rmsd100(x, y ; mask)
+    Generate 100 * RMSD (root mean squared difference) between `x` and `y` within domain mask.
 
 in
-- I : Computed matrix
-- ref : Reference matrix
-- ig : image_geom object representing the domain of the RMSE
+- `x` : array
+- `y` : another array
+
+option:
+- `mask::Array{Bool}` : domain over which to compute the RMSE; default `trues(size(x))`
 
 out
-- rmse : rmse of I and ref within mask ig.
+- rmsd : rmsd of `x` vs `y` within `mask` in %
 """
-function my_rmse(I::Array,ref::Array,ig) #takes any struct with a mask value
-    return 100 * norm(I[ig.mask] - ref[ig.mask]) / sqrt(sum(ig.mask[:]))
-end
-function my_rmse(I::Array,ref::Array,ig::Array{Bool})
-    return 100 * norm(I[ig] - ref[ig]) / sqrt(sum(ig))
+function rmsd100(x::AbstractArray, y::AbstractArray ; mask::Array{Bool} = trues(size(x))
+    return 100 * norm(x[mask] - y[mask]) / sqrt(sum(mask))
 end
 
-function my_rmse(x::Symbol)
+
+"""
+    rmsd100(:test)
+self test
+"""
+function rmsd100(x::Symbol)
     x != :test && throw("Invalid symbol; use :test for testing functions.")
     a = [1 2; 4 5;7 8]
     b = [3 2; 4 6;8 7]
@@ -28,8 +35,10 @@ function my_rmse(x::Symbol)
     tests = cat(c,d,e,dims = 3)
     pred = [0 100 100*sqrt(6/5)]
     for i in 1:size(tests,1)
-        @test my_rmse(a,b,tests[:,:,i]) == pred[i]
+        @test rmsd100(a, b, tests[:,:,i]) == pred[i]
     end
+
+#=  not important to support or test.  user can pass mask=ig.mask if needed
     a = ones(300,400)
     b = ones(300,400)
     b[100:200,100:200] .= 0
@@ -38,5 +47,6 @@ function my_rmse(x::Symbol)
     #and a blot of threes over here
     ig1 = image_geom(nx = 300,ny = 400,dx = 1,dy = 1)
     @test my_rmse(a,b,ig1) > 20
+=#        
     return true
 end
