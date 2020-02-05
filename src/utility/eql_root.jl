@@ -19,10 +19,27 @@ in
 out
 - `x` : The positive root that satisfies `0 = -ax^2 - 2bx + c`.
 """
-function eql_root(a, b, c)
-    any(a .< 0) && throw(DomainError(a,"a must be entirely nonnegative"))
-    (size(a) != size(b) || size(b) != size(c)) && throw(DimensionMismatch("all arguments must share dimensions"))
+function eql_root(a::Real, b::Real, c::Real)
+    (a < 0) && throw(DomainError(a, "a must be enonnegative"))
     
+    if a == 0        
+        return c / b / 2 # trivially solve case where a == 0
+    end
+    
+    det = sqrt(b^2 + a * c) # determinant / 2
+    
+    # handle positive and negative b appropriately:
+    return (b > 0) ? c / (det + b) : (det - b) / a
+end
+
+function eql_root(a, b, c)
+    (size(a) != size(b) || size(b) != size(c)) && throw(DimensionMismatch("all arguments must share dimensions"))
+
+    return eql_root.(a, b, c)
+
+#= old way - save until tests pass
+    any(a .< 0) && throw(DomainError(a,"a must be entirely nonnegative"))
+
     T = promote_type(eltype(a), eltype(b), eltype(c), Float32)
     x = zeros(T,size(a))
     
@@ -37,6 +54,8 @@ function eql_root(a, b, c)
     x[j] .= (det[j] - b[j]) ./ a[j]
 
     return x
+=#
+    
 end
 
 
@@ -56,5 +75,6 @@ function eql_root(x::Symbol)
     results = eql_root(tests[:,1], tests[:,2], tests[:,3])
   
     @test results == predicted
+    @test eql_root(1, 1, -1) == -1
     return true
 end
