@@ -3,13 +3,13 @@ using Test:@test
 """
     D = exp_mult(A, u, v)
 in:
-* `A	[N L]	complex matrix
-* `u	[N]	vector
-* `v	[M]	vector
+* `A	[N L]`	complex matrix
+* `u	[N]`	vector
+* `v	[M]`	vector
         one (and only one) of u and v must be complex!
 out:
-* `D	[L M]	complex vector, D = A' * exp(-u * v.')
- `D_lm = sum_n A_nl^* exp(-u_n v_m)
+* `D	[L M]`	complex vector, D = A' * exp(-u * v.')
+ `D_lm = sum_n A_nl^* exp(-u_n v_m)`
     
     This function is a memory efficient and fast implementation
     of AA matrix computation in int_tim_seg.m function in NUFFT package.
