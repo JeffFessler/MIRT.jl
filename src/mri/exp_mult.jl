@@ -142,6 +142,12 @@ function exp_mult(test::Symbol)
     u = ur + im * ui
     v = vr + im * vi
 
+    d1 = A' * exp.(-ur * transpose(vr))
+    d2 = exp_mult(A, ur, vr);
+    #println(isapprox(d1, d2))
+    @test d1 ≈ d2
+
+
     d1 = A' * exp.(-ur * transpose(v))
     d2 = exp_mult(A, ur, v);
     #println(isapprox(d1, d2))
@@ -149,6 +155,11 @@ function exp_mult(test::Symbol)
 
     d1 = A' * exp.(-u * transpose(vr))
     d2 = exp_mult(A, u, vr);
+    #println(isapprox(d1, d2))
+    @test d1 ≈ d2
+
+    d1 = A' * exp.(-u * transpose(v))
+    d2 = exp_mult(A, u, v);
     #println(isapprox(d1, d2))
     @test d1 ≈ d2
 
