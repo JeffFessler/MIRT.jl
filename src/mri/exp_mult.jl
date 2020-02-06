@@ -16,10 +16,6 @@ out:
 """
 function exp_mult(A, u, v)
     A = A'
-    return exp_mult_helper(A, u, v)
-end
-
-function exp_mult_helper(A, u::Vector{Complex{Float64}},  v::Vector{Float64})
     n = size(u)
     n = n[1]
     M = size(v)
@@ -44,81 +40,6 @@ function exp_mult_helper(A, u::Vector{Complex{Float64}},  v::Vector{Float64})
     return D
 end
 
-function exp_mult_helper(A, u::Vector{Float64},  v::Vector{Complex{Float64}})
-    n = size(u)
-    n = n[1]
-    M = size(v)
-    M = M[1]
-    L, N = size(A)
-
-    D = zeros(ComplexF64, L, M)
-    col = Vector{Complex{Float64}}(undef, N)
-    e = MathConstants.e
-    for i = 1:M
-        # compute ith column of B
-        # B has M columns, N rows
-        for j = 1:N
-            col[j] = e ^ (-u[j] * v[i])
-        end
-        # column of B computed
-        for j = 1:L
-            row = A[j, :]
-            D[j,i] = transpose(row) * col
-        end
-    end
-    return D
-end
-
-function exp_mult_helper(A, u::Vector{Float64},  v::Vector{Float64})
-    n = size(u)
-    n = n[1]
-    M = size(v)
-    M = M[1]
-    L, N = size(A)
-
-    D = zeros(ComplexF64, L, M)
-    col = Vector{Complex{Float64}}(undef, N)
-    e = MathConstants.e
-    for i = 1:M
-        # compute ith column of B
-        # B has M columns, N rows
-        for j = 1:N
-            col[j] = e ^ (-u[j] * v[i])
-        end
-        # column of B computed
-        for j = 1:L
-            row = A[j, :]
-            D[j,i] = transpose(row) * col
-        end
-    end
-    return D
-end
-
-function exp_mult_helper(A, u::Vector{Complex{Float64}},  v::Vector{Complex{Float64}})
-    n = size(u)
-    n = n[1]
-    M = size(v)
-    M = M[1]
-    L, N = size(A)
-    println("result returned, but not supposed have both u and v complex")
-
-    D = zeros(Complex{Float64}, L, M)
-    col = Vector{Complex{Float64}}(undef, N)
-    e = MathConstants.e
-    for i = 1:M
-        # compute ith column of B
-        # B has M columns, N rows
-        for j = 1:N
-            col[j] = e ^ (-u[j] * v[i])
-        end
-        # column of B computed
-        for j = 1:L
-            row = A[j, :]
-            D[j,i] = transpose(row) * col
-        end
-    end
-    return D
-end
 
 """
     exp_mult(test::Symbol)
