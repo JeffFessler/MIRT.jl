@@ -22,6 +22,9 @@ function exp_mult(A, u, v)
     M = M[1]
     L, N = size(A)
 
+    if typeof(u) == Array{Complex{Float64},1} && typeof(v) == Array{Complex{Float64},1}
+        @warn "only one of u and v should be complex"
+    end
     D = zeros(ComplexF64, L, M)
     col = Vector{Complex{Float64}}(undef, N)
     e = MathConstants.e
@@ -67,7 +70,6 @@ function exp_mult(test::Symbol)
     d2 = exp_mult(A, ur, vr);
     #println(isapprox(d1, d2))
     @test d1 ≈ d2
-
 
     d1 = A' * exp.(-ur * transpose(v))
     d2 = exp_mult(A, ur, v);
