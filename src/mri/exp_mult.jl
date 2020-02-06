@@ -1,29 +1,25 @@
-using Random
-#using MIRT: max_percent_diff
-#using MIRT: exp_xform
-
-export exp_mult_mex
-
+export exp_mult
+using Test:@test
 """
-    D = exp_mult_mex(A, u, v)
+    D = exp_mult(A, u, v)
 in:
-    A	[N L]	complex matrix
-    u	[N]	vector
-    v	[M]	vector
+* `A	[N L]	complex matrix
+* `u	[N]	vector
+* `v	[M]	vector
         one (and only one) of u and v must be complex!
 out:
-    D	[L M]	complex vector, D = A' * exp(-u * v.')
-                D_lm = sum_n A_nl^* exp(-u_n v_m)
+* `D	[L M]	complex vector, D = A' * exp(-u * v.')
+ `D_lm = sum_n A_nl^* exp(-u_n v_m)
     
     This function is a memory efficient and fast implementation
     of AA matrix computation in int_tim_seg.m function in NUFFT package.
 """
-function exp_mult_mex(A, u, v)
+function exp_mult(A, u, v)
     A = A'
-    return exp_mult_mex_helper(A, u, v)
+    return exp_mult_helper(A, u, v)
 end
 
-function exp_mult_mex_helper(A, u::Vector{Complex{Float64}},  v::Vector{Float64})
+function exp_mult_helper(A, u::Vector{Complex{Float64}},  v::Vector{Float64})
     n = size(u)
     n = n[1]
     M = size(v)
@@ -48,7 +44,7 @@ function exp_mult_mex_helper(A, u::Vector{Complex{Float64}},  v::Vector{Float64}
     return D
 end
 
-function exp_mult_mex_helper(A, u::Vector{Float64},  v::Vector{Complex{Float64}})
+function exp_mult_helper(A, u::Vector{Float64},  v::Vector{Complex{Float64}})
     n = size(u)
     n = n[1]
     M = size(v)
@@ -73,7 +69,7 @@ function exp_mult_mex_helper(A, u::Vector{Float64},  v::Vector{Complex{Float64}}
     return D
 end
 
-function exp_mult_mex_helper(A, u::Vector{Float64},  v::Vector{Float64})
+function exp_mult_helper(A, u::Vector{Float64},  v::Vector{Float64})
     n = size(u)
     n = n[1]
     M = size(v)
@@ -98,7 +94,7 @@ function exp_mult_mex_helper(A, u::Vector{Float64},  v::Vector{Float64})
     return D
 end
 
-function exp_mult_mex_helper(A, u::Vector{Complex{Float64}},  v::Vector{Complex{Float64}})
+function exp_mult_helper(A, u::Vector{Complex{Float64}},  v::Vector{Complex{Float64}})
     n = size(u)
     n = n[1]
     M = size(v)
@@ -125,16 +121,16 @@ function exp_mult_mex_helper(A, u::Vector{Complex{Float64}},  v::Vector{Complex{
 end
 
 """
-    exp_mult_mex(test::Symbol)
+    exp_mult(test::Symbol)
 
-Test function for exp_mult_mex.
+Test function for exp_mult.
 Finds percent error of memory-efficient routine vs. normal routime
 in
     test        Symbol  symbol to indicate test routine
 out
     N/A
 """
-function exp_mult_mex(test::Symbol)
+function exp_mult(test::Symbol)
     L = 10
     N = 30
     M = 20
@@ -147,16 +143,22 @@ function exp_mult_mex(test::Symbol)
     v = vr + im * vi
 
     d1 = A' * exp.(-ur * transpose(v))
-    d2 = exp_mult_mex(A, ur, v);
-    println(max_percent_diff(d1, d2))
+    d2 = exp_mult(A, ur, v);
+    #println(isapprox(d1, d2))
+    @test d1 ≈ d2
 
     d1 = A' * exp.(-u * transpose(vr))
-    d2 = exp_mult_mex(A, u, vr);
-    println(max_percent_diff(d1, d2))
-    
+    d2 = exp_mult(A, u, vr);
+    #println(isapprox(d1, d2))
+    @test d1 ≈ d2
+
     d1 = A' * exp.(-ur * transpose(v))
     ur = reshape(ur, 1, :)
     v = reshape(v, 1, :)
-    d2 = exp_xform(transpose(A), v, ur, mode = :matrix)
-    println(max_percent_diff(d1, d2))
+    d2 = exp_xform(transpose(A'), ur, v, mode = :matrix)
+    d2 = transpose(d2)
+    #println(isapprox(d1, d2))
+    @test d1 ≈ d2
+
+    true
 end

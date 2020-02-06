@@ -8,4 +8,4 @@ using Test: @test
 @test ir_mri_kspace_ga_radial(:test)
 @test ir_mri_sensemap_sim(:test)
 @test mri_objects(:test)
-@test exp_mult_mex(:test)
+@test exp_mult(:test)
