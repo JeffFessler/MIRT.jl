@@ -9,66 +9,58 @@ based on the 2003 file int_tim_seg.m by Brad Sutton
 
 export exp_mult
 
+#using MIRT: exp_xform
 using Test:@test
 
+
 """
-    D = exp_mult(A, u, v)
+    D = exp_mult(A, u, v ; warnboth)
 
 Memory efficient and fast implementation of `D = A' * exp(-u * v^T)`
 that is useful for B0-field-corrected MRI image reconstruction.
 
 in:
-* `A [N L]`	matrix
-* `u [N]`	vector
-* `v [M]`	vector
-        usually exactly one of `u` and `v` are complex!
+* `A [N L]` matrix
+* `u [N]` vector
+* `v [M]` vector
+* `warnboth` warn if both `u` and `v` are complex; default: true
 
 out:
-* `D [L M]`	complex vector: `D = A' * exp(-u * v^T)`
-`D_lm = sum_n A_nl^* exp(-u_n v_m)` 
+* `D [L M]` complex vector: `D = A' * exp(-u * v^T)`
+`D_lm = sum_n A_nl^* exp(-u_n v_m)`
 """
-function exp_mult(A, u::AbstractVector{<:Number}, v::AbstractVector{<:Number})
-    A = A'
+function exp_mult(A, u::AbstractVector{<:Number}, v::AbstractVector{<:Number}
+        ; warnboth::Bool = true)
+
+    N, L = size(A)
     n = size(u,1)
     M = size(v,1)
-    L, N = size(A)
 
-    ~isreal(u) && ~isreal(v) && @warn "only one of u and v should be complex"
+    ~isreal(u) && ~isreal(v) && warnboth &&
+        @warn "only one of u and v should be complex"
 
     T = promote_type(eltype(u), eltype(v), ComplexF32)
     D = zeros(T, L, M)
-    col = Vector{T}(undef, N)
-    
-    for i = 1:M
-        # compute ith column of N × M matrix B = exp(-u * v^T)
-        for n = 1:N
-            col[n] = exp(-u[n] * v[i])
-        end
-        # column of B computed
-        for j = 1:L
-            row = A[j, :]
-            D[j,i] = transpose(row) * col
-        end
+
+    for m = 1:M
+        col = exp.(-u * v[m]) # [N] mth column of N × M matrix B = exp(-u * v^T)
+        D[:,m] = A' * col
     end
     return D
 end
 
 
 """
-    exp_mult(test::Symbol)
-
-Test function for exp_mult.
-Finds percent error of memory-efficient routine vs. normal routime
-in
-    test        Symbol  symbol to indicate test routine
-out
-    N/A
+    exp_mult(:test)
+self test
 """
 function exp_mult(test::Symbol)
+    test != :test && throw("bad test $test")
+
     L = 10
     N = 30
     M = 20
-    A = randn(N,L) + im * randn(N,L)
+    A = randn(ComplexF32, N, L)
     ur = randn(N)
     ui = randn(N)
     vr = randn(M)
@@ -77,31 +69,22 @@ function exp_mult(test::Symbol)
     v = vr + im * vi
 
     d1 = A' * exp.(-ur * transpose(vr))
-    d2 = exp_mult(A, ur, vr);
-    #println(isapprox(d1, d2))
-    @test d1 ≈ d2
+    @test d1 ≈ exp_mult(A, ur, vr)
 
     d1 = A' * exp.(-ur * transpose(v))
-    d2 = exp_mult(A, ur, v);
-    #println(isapprox(d1, d2))
-    @test d1 ≈ d2
+    @test d1 ≈ exp_mult(A, ur, v)
 
     d1 = A' * exp.(-u * transpose(vr))
-    d2 = exp_mult(A, u, vr);
-    #println(isapprox(d1, d2))
-    @test d1 ≈ d2
+    @test d1 ≈ exp_mult(A, u, vr)
 
     d1 = A' * exp.(-u * transpose(v))
-    d2 = exp_mult(A, u, v);
-    #println(isapprox(d1, d2))
-    @test d1 ≈ d2
+    @test d1 ≈ exp_mult(A, u, v ; warnboth=false)
 
     d1 = A' * exp.(-ur * transpose(v))
     ur = reshape(ur, 1, :)
     v = reshape(v, 1, :)
     d2 = exp_xform(transpose(A'), ur, v, mode = :matrix)
     d2 = transpose(d2)
-    #println(isapprox(d1, d2))
     @test d1 ≈ d2
 
     true
