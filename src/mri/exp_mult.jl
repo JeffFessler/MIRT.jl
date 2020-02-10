@@ -1,38 +1,48 @@
+#=
+exp_mult.jl
+translated from matlab/C file mri_exp_mult_mex.c
+originally by Sangwoo Lee, University of Michigan, Jun, 2004
+based on the 2003 file int_tim_seg.m by Brad Sutton
+2004-6-21 modified by JF
+2020-02 by Daniel Wan
+=#
+
 export exp_mult
+
 using Test:@test
+
 """
     D = exp_mult(A, u, v)
+
+Memory efficient and fast implementation of `D = A' * exp(-u * v^T)`
+that is useful for B0-field-corrected MRI image reconstruction.
+
 in:
-* `A	[N L]`	complex matrix
-* `u	[N]`	vector
-* `v	[M]`	vector
-        one (and only one) of u and v must be complex!
+* `A [N L]`	matrix
+* `u [N]`	vector
+* `v [M]`	vector
+        usually exactly one of `u` and `v` are complex!
+
 out:
-* `D	[L M]`	complex vector, D = A' * exp(-u * v.')
- `D_lm = sum_n A_nl^* exp(-u_n v_m)`
-    
-    This function is a memory efficient and fast implementation
-    of AA matrix computation in int_tim_seg.m function in NUFFT package.
+* `D [L M]`	complex vector: `D = A' * exp(-u * v^T)`
+`D_lm = sum_n A_nl^* exp(-u_n v_m)` 
 """
-function exp_mult(A, u, v)
+function exp_mult(A, u::AbstractVector{<:Number}, v::AbstractVector{<:Number})
     A = A'
-    n = size(u)
-    n = n[1]
-    M = size(v)
-    M = M[1]
+    n = size(u,1)
+    M = size(v,1)
     L, N = size(A)
 
-    if typeof(u) == Array{Complex{Float64},1} && typeof(v) == Array{Complex{Float64},1}
-        @warn "only one of u and v should be complex"
-    end
-    D = zeros(ComplexF64, L, M)
-    col = Vector{Complex{Float64}}(undef, N)
-    e = MathConstants.e
+    ~isreal(u) && ~isreal(v) && @warn "only one of u and v should be complex"
+
+    T = promote_type(eltype(u), eltype(v), ComplexF32)
+    D = zeros(T, L, M)
+    col = Vector{T}(undef, N)
+    
     for i = 1:M
-        # compute ith column of B
-        # B has M columns, N rows
-        for j = 1:N
-            col[j] = e ^ (-u[j] * v[i])
+        # compute ith column of N × M matrix B = exp(-u * v^T)
+        for n = 1:N
+            col[n] = exp(-u[n] * v[i])
         end
         # column of B computed
         for j = 1:L
