@@ -265,7 +265,7 @@ end
 """
 `params = ellipse_im_params(ig::MIRT_image_geom, params::Symbol)`
 
-`code = :shepplogan | :shepplogan_emis | :shepplogan_brainweb | :southpark`
+`code = :shepplogan | :shepplogan_emis | :shepplogan_brainweb | :southpark | :disks`
 """
 function ellipse_im_params(ig::MIRT_image_geom, params::Symbol)
 	if params === :disks

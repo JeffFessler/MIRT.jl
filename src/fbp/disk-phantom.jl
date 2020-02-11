@@ -29,7 +29,7 @@ to avoid overlap and to simplify patch-based model fitting.
 - `minsep::Real = 8` minimum disk separation in mm
 - `maxtry::Int = 500` give up on adding more disks if this is reached
 - `warn::Bool = false` warn if maxtry reached?
-- `seed::Int = 0`if nonzero then use this seed
+- `seed::Int = 0` if nonzero then use this seed
 """
 function disk_phantom_params( ;
 		fov::Real = 240,
