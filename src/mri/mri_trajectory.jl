@@ -27,6 +27,8 @@ trajectory types:
 'gads' % emulate golden-angle data sharing per winkelmann:07:aor
 Copyright 2004-4-21, Jeff Fessler, University of Michigan
 """
+
+
 function mri_trajectory(wi; ktype::Symbol, N, fov,
   arg_wi, samp::Array = [], na_nr::Real = 2*pi, na::Array = [],
   nr::Real = maximum(N)/2, ir::Array = [],
@@ -37,7 +39,10 @@ function mri_trajectory(wi; ktype::Symbol, N, fov,
     nspoke::Array = [],
     under::Array = [1 1 0.6])
 
-
+    if (ktype == :test)
+      mri_trajectory_test(:test)
+      return
+    end
   if Nro == -1
     temp_N = collect(N)
     Nro = maximum(temp_N)
@@ -54,11 +59,6 @@ function mri_trajectory(wi; ktype::Symbol, N, fov,
     @info(prod(fov))
     #fill(arg_wi, 1/prod(fov))
   end
-
-    if (ktype == :test)
-      mri_trajectory_test("test")
-      return
-    end
 
     if (length(N) == 1)
         N = [N N];
@@ -446,13 +446,14 @@ function mri_trajectory_test(test::Symbol)
           title = "cartesian with k-space samples",
           xlabel = "omega1",
           ylabel = "omega2")
-          
+
   kspace, omega, wi = mri_trajectory(arg_tr, ktype = :epi_sin,
   N = N, fov = ig.fovs, arg_wi = arg_wi, na_nr = pi/2)
   plot(omega[:,1], omega[:,2],
           title = "epi_sin with k-space samples",
           xlabel = "omega1",
           ylabel = "omega2")
+  return true
   #@info(""%s" with %d k-space samples", ktype, size(omega,1))
 
 #=
