@@ -432,6 +432,27 @@ function mri_trajectory_test(test::Symbol)
           title = "radial with k-space samples",
           xlabel = "omega1",
           ylabel = "omega2")
+
+  kspace, omega, wi = mri_trajectory(arg_tr, ktype = :gads,
+  N = N, fov = ig.fovs, arg_wi = arg_wi, na_nr = pi/2)
+  plot(omega[:,1], omega[:,2],
+          title = "gads with k-space samples",
+          xlabel = "omega1",
+          ylabel = "omega2")
+
+  kspace, omega, wi = mri_trajectory(arg_tr, ktype = :cartesian,
+  N = N, fov = ig.fovs, arg_wi = arg_wi, na_nr = pi/2)
+  plot(omega[:,1], omega[:,2],
+          title = "cartesian with k-space samples",
+          xlabel = "omega1",
+          ylabel = "omega2")
+          
+  kspace, omega, wi = mri_trajectory(arg_tr, ktype = :epi_sin,
+  N = N, fov = ig.fovs, arg_wi = arg_wi, na_nr = pi/2)
+  plot(omega[:,1], omega[:,2],
+          title = "epi_sin with k-space samples",
+          xlabel = "omega1",
+          ylabel = "omega2")
   #@info(""%s" with %d k-space samples", ktype, size(omega,1))
 
 #=
