@@ -297,28 +297,24 @@ end
 function mri_kspace_spiral(test::Symbol)
 	N = 64
 	test != :test && throw(DomainError(test, "Not valid"))
-    # todo: add @inferred
 	k0, o0, g0 = mri_kspace_spiral()
 	k20,_ = mri_kspace_spiral(fov=20, Nt=0)
 	k22,_ = mri_kspace_spiral(fov=22, Nt=0)
-	p00 = scatter(k0[:,1], k0[:,2], color = :blue)
-	p20 = scatter!(k20[:,1], k20[:,2], color = :red)
-	p22 = scatter!(k22[:,1], k22[:,2], color = :green)
+	k23,_ = mri_kspace_spiral(nl = 2)
+	display(scatter(k0[:,1],k0[:,2], color = :blue))
+	display(scatter!(k20[:,1],k20[:,2], color = :red))
+	display(scatter!(k22[:,1],k22[:,2], color = :green))
+	display(scatter!(k23[:,:,1],k23[:,:,2], color = :yellow))
 
-	pg0 = plot(g0)
-    plot(pg0, p00, p20, p22)
-    prompt()
-    
+	#display(plot(g0))
+
 	kl,_,gl= mri_kspace_spiral(nl = 5) # interleaves
-	ps = scatter(kl[:,1,1],kl[:,2,1], color = :blue)
+	display(scatter(kl[:,1,1],kl[:,2,1], color = :blue))
 	for ii=2:5
-		scatter!(ps, kl[:,1,ii], kl[:,2,ii], color = :green)
+		display(scatter!(kl[:,1,ii], kl[:,2,ii], color = :green))
 	end
 
-	pgl = plot(gl[:,1,:])
-    plot(ps, pgl)
-    prompt()
-    true
+	display(plot(gl[:,1,:]))
 end
 
-#mri_kspace_spiral(:test) # temporary
+mri_kspace_spiral(:test)
