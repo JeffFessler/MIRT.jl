@@ -17,6 +17,11 @@ end
 reverser(x::AbstractArray) = reverser(x, 1:ndims(x)) # all dimensions
 reverser(x::AbstractArray, d::Integer) = reverser(x, [1])
 
+
+"""
+    reverser(:test)
+self test
+"""
 function reverser(test::Symbol)
 	@test reverser(1:3) == 3:-1:1
 	@test reverser(1:3, [1]) == 3:-1:1
