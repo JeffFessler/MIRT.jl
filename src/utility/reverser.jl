@@ -24,6 +24,6 @@ self test
 """
 function reverser(test::Symbol)
 	@test reverser(1:3) == 3:-1:1
-	@test reverser(1:3, [1]) == 3:-1:1
+	@test reverser(1:3, 1) == 3:-1:1
 	true
 end
