@@ -424,9 +424,9 @@ function mri_trajectory_test(test::Symbol)
   for i in arg_type
     kspace, omega, wi = mri_trajectory(arg_tr, ktype = ktype,
     N = N, fov = ig.fovs, arg_wi = i, na_nr = pi/2)
-    display(plot(omega[:,1], omega[:,2],
+    plot(omega[:,1], omega[:,2],
             xlabel = "omega1",
-            ylabel = "omega2"))
+            ylabel = "omega2")
   end
   return true
   #@info(""%s" with %d k-space samples", ktype, size(omega,1))
