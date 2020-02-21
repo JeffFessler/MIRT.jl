@@ -98,7 +98,7 @@ function mri_trajectory(wi; ktype::Symbol, N, fov,
     end
 
     if (ktype == :epi_under)
-      omega, wi = mri_trajectory_epi_under(N[1,2], fov[1,2], samp = samp)
+      omega, wi = mri_trajectory_epi_under(N[1:2], fov[1:2], samp = samp)
     end
 
 
@@ -250,17 +250,17 @@ function mri_trajectory_epi_under(N, fov; samp::Array = [])
   end
   nx = N[1]
   ny = N[2]
-  omx = single(transpose(collect(-nx/2:nx/2-1))) / nx * 2*pi # [-pi,pi) in x
-  omega = [];
-  for iy = 1:ny  # of possible phase encodes
-   if samp(iy)
-     omy = (iy-1-ny/2) / ny * 2 * pi;
-     omega = [omega; [omx omy*ones(nx,1)]];
+  omx = collect(-nx/2:nx/2-1) / nx * 2*pi # [-pi,pi) in x
+  omy = (1-1-ny/2) / ny * 2 * pi
+  omega = [omx omy.*ones(nx,1)]
+  for iy = 2:ny  # of possible phase encodes
+   if samp[iy]
+     omy = (iy-1-ny/2) / ny * 2 * pi
+     omega = [omega; [omx omy.*ones(nx,1)]]
      omx = reverse(omx, dims = 1)
-     #matlab code: omx = flipud(omx); # trick: EPI sweeps back and forth
    end
   end
-  wi = ones(size(omega,1), 1, "single") / prod(fov);
+  wi = ones(size(omega,1)) / prod(fov)
 return omega, wi
 end
 
@@ -380,17 +380,17 @@ function mri_trajectory_rosette3(N, fov; f1::Int = 211,
   nshot::Int = 32, omax::Real = pi, nt::Int = 16385,
   dt::Real = 4e-6, ti::Array = [])
   #arg = vararg_pair(arg, varargin);
-  ti = transpose(collect(0:nt-1)) * dt;
+  ti = collect(0:nt-1) * dt
 
   tmp = 2 * pi * ti;
   p1 = f1 * tmp;
   p2 = f2 * tmp;
   p3 = f3 * tmp;
-  kx = omax * sin(p1) .* cos(p2) .* cos(p3);
-  ky = omax * sin(p1) .* sin(p2) .* cos(p3);
-  kz = omax * sin(a1) .* sin(a3);
-  omega = [kx ky kz];
-  for is=1:(nshot-1) # n-shot, rotate kx,ky by 2 pi / N
+  kx = omax * sin.(p1) .* cos.(p2) .* cos.(p3)
+  ky = omax * sin.(p1) .* sin.(p2) .* cos.(p3)
+  kz = omax * sin.(p1) .* sin.(p3)
+  omega = [kx ky kz]
+  for is= collect(1:nshot-1) # n-shot, rotate kx,ky by 2 pi / N
    ang = is * 2 * pi / nshot;
    c = cos(ang);
    s = sin(ang);
@@ -398,8 +398,7 @@ function mri_trajectory_rosette3(N, fov; f1::Int = 211,
    oy = -s * kx + c * ky;
    omega = [omega; [ox oy kz]];
   end
-
-  wi = omax^3 * abs( sin(p1)^2 .* cos(p1) .* cos(p3) ); #from bucholz:08:miw
+  wi = omax^3 * abs.(sin.(p1).^2 .* cos.(p1) .* cos.(p3)) #from bucholz:08:miw
   return omega, wi
 end
 
@@ -417,42 +416,18 @@ function mri_trajectory_test(test::Symbol)
   arg_tr = []
   arg_wi = []
   ptype = "."
-  #ktype = :gads
-  #ktype = :cartesian
-  #ktype = :spiral3
-  #ktype = :epi_sin
   arg_tr = [2]
   ktype = :radial
   #arg_tr = {:na_nr, pi/2}
-  arg_wi = [:voronoi]
-  wi = []
-  kspace, omega, wi = mri_trajectory(arg_tr, ktype = ktype,
-  N = N, fov = ig.fovs, arg_wi = arg_wi, na_nr = pi/2)
-  plot(omega[:,1], omega[:,2],
-          title = "radial with k-space samples",
-          xlabel = "omega1",
-          ylabel = "omega2")
-
-  kspace, omega, wi = mri_trajectory(arg_tr, ktype = :gads,
-  N = N, fov = ig.fovs, arg_wi = arg_wi, na_nr = pi/2)
-  plot(omega[:,1], omega[:,2],
-          title = "gads with k-space samples",
-          xlabel = "omega1",
-          ylabel = "omega2")
-
-  kspace, omega, wi = mri_trajectory(arg_tr, ktype = :cartesian,
-  N = N, fov = ig.fovs, arg_wi = arg_wi, na_nr = pi/2)
-  plot(omega[:,1], omega[:,2],
-          title = "cartesian with k-space samples",
-          xlabel = "omega1",
-          ylabel = "omega2")
-
-  kspace, omega, wi = mri_trajectory(arg_tr, ktype = :epi_sin,
-  N = N, fov = ig.fovs, arg_wi = arg_wi, na_nr = pi/2)
-  plot(omega[:,1], omega[:,2],
-          title = "epi_sin with k-space samples",
-          xlabel = "omega1",
-          ylabel = "omega2")
+  arg_type = [[:voronoi], [:radial], [:gads], [:epi_under], [:rosette3], [:half_8], [:spi_sin],
+            [:spiral0], [:spiral1], [:spiral3], [:random], [:art_y_2]]
+  for i in arg_type
+    kspace, omega, wi = mri_trajectory(arg_tr, ktype = ktype,
+    N = N, fov = ig.fovs, arg_wi = i, na_nr = pi/2)
+    display(plot(omega[:,1], omega[:,2],
+            xlabel = "omega1",
+            ylabel = "omega2"))
+  end
   return true
   #@info(""%s" with %d k-space samples", ktype, size(omega,1))
 
