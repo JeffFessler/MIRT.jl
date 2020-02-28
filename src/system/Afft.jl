@@ -21,7 +21,7 @@ function Afft(samp::AbstractArray{Bool} ; T::DataType = ComplexF32)
 	dim = size(samp)
 	return LinearMapAA(
 		x -> fft(reshape(x,dim))[samp],
-		y -> prod(dim) * ifft(embed(y,samp)),
+		y -> prod(dim) * ifft(embed(y,samp))[:],
 		(sum(samp), prod(dim)), (name="fft",) ; T=T)
 end
 
