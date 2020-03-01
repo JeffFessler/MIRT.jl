@@ -1,5 +1,7 @@
 In reverse chronological order
 
+0.9.2 2020-02-29
+
 2020-02-17
 reverser
 
