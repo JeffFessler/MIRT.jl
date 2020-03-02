@@ -216,9 +216,9 @@ version = "0.47.0"
 
 [[GeometryTypes]]
 deps = ["ColorTypes", "FixedPointNumbers", "LinearAlgebra", "StaticArrays"]
-git-tree-sha1 = "480f30bd8e67240636e6d64e062c83745ee45b88"
+git-tree-sha1 = "78f0ce9d01993b637a8f28d84537d75dc0ce8eef"
 uuid = "4d00f742-c7ba-57c2-abde-4428a4b178cb"
-version = "0.7.9"
+version = "0.7.10"
 
 [[Graphics]]
 deps = ["Colors", "LinearAlgebra", "NaNMath"]
@@ -350,9 +350,9 @@ uuid = "56ddb016-857b-54e1-b83d-db4d58db5568"
 
 [[MIRTio]]
 deps = ["HDF5", "Test"]
-git-tree-sha1 = "3a55a8b157d23b8a80cb501637bd5340cd604c54"
+git-tree-sha1 = "c53b0317386dc823dc73efb22c0fa7f159aa04da"
 uuid = "274281c4-ae57-11e9-2014-65d3d5d9358c"
-version = "0.2.1"
+version = "0.2.2"
 
 [[MKL_jll]]
 deps = ["IntelOpenMP_jll", "Libdl", "Pkg"]
@@ -455,12 +455,12 @@ version = "0.12.0"
 
 [[Parsers]]
 deps = ["Dates", "Test"]
-git-tree-sha1 = "d112c19ccca00924d5d3a38b11ae2b4b268dda39"
+git-tree-sha1 = "0c16b3179190d3046c073440d94172cfc3bb0553"
 uuid = "69de0a69-1ddd-5017-9359-2bf0b02dc9f0"
-version = "0.3.11"
+version = "0.3.12"
 
 [[Pkg]]
-deps = ["Dates", "LibGit2", "Libdl", "Logging", "Markdown", "Printf", "REPL", "Random", "SHA", "Test", "UUIDs"]
+deps = ["Dates", "LibGit2", "Libdl", "Logging", "Markdown", "Printf", "REPL", "Random", "SHA", "UUIDs"]
 uuid = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 
 [[PlotThemes]]
@@ -477,9 +477,9 @@ version = "0.6.3"
 
 [[Plots]]
 deps = ["Base64", "Contour", "Dates", "FFMPEG", "FixedPointNumbers", "GR", "GeometryTypes", "JSON", "LinearAlgebra", "Measures", "NaNMath", "Pkg", "PlotThemes", "PlotUtils", "Printf", "REPL", "Random", "RecipesBase", "Reexport", "Requires", "Showoff", "SparseArrays", "Statistics", "StatsBase", "UUIDs"]
-git-tree-sha1 = "305a6ceea7c6bf063fce224e4bcc0e0e6ce10ced"
+git-tree-sha1 = "dd22bcc76f3ae4f805c25925be37a0f9c00bed6f"
 uuid = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
-version = "0.29.3"
+version = "0.29.4"
 
 [[Polynomials]]
 deps = ["LinearAlgebra", "RecipesBase"]
