@@ -457,4 +457,3 @@ end
 =#
 end
 
-mri_trajectory_test(:test)
