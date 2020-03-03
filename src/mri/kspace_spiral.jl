@@ -5,7 +5,6 @@ Jing Dong
 
 export mri_kspace_spiral
 using Interpolations
-using MIRT: interp1, prompt
 using Plots
 """
 	kspace, omega = mri_kspace_spiral( [options] )
@@ -317,4 +316,3 @@ function mri_kspace_spiral(test::Symbol)
 	display(plot(gl[:,1,:]))
 end
 
-mri_kspace_spiral(:test)
