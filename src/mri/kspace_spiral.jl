@@ -310,10 +310,10 @@ function mri_kspace_spiral(test::Symbol)
 	kl,_,gl= mri_kspace_spiral(nl = 5) # interleaves
 	scatter(kl[:,1,1],kl[:,2,1], color = :blue)
 	for ii=2:5
-		dscatter!(kl[:,1,ii], kl[:,2,ii], color = :green)
+		scatter!(kl[:,1,ii], kl[:,2,ii], color = :green)
 	end
 
-	dplot(gl[:,1,:])
+	plot(gl[:,1,:])
     return true
 end
 
