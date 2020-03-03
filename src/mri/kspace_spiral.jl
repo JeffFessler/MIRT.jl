@@ -300,19 +300,20 @@ function mri_kspace_spiral(test::Symbol)
 	k20,_ = mri_kspace_spiral(fov=20, Nt=0)
 	k22,_ = mri_kspace_spiral(fov=22, Nt=0)
 	k23,_ = mri_kspace_spiral(nl = 2)
-	display(scatter(k0[:,1],k0[:,2], color = :blue))
-	display(scatter!(k20[:,1],k20[:,2], color = :red))
-	display(scatter!(k22[:,1],k22[:,2], color = :green))
-	display(scatter!(k23[:,:,1],k23[:,:,2], color = :yellow))
+	scatter(k0[:,1],k0[:,2], color = :blue)
+	scatter!(k20[:,1],k20[:,2], color = :red)
+	scatter!(k22[:,1],k22[:,2], color = :green)
+	scatter!(k23[:,:,1],k23[:,:,2], color = :yellow)
 
 	#display(plot(g0))
 
 	kl,_,gl= mri_kspace_spiral(nl = 5) # interleaves
-	display(scatter(kl[:,1,1],kl[:,2,1], color = :blue))
+	scatter(kl[:,1,1],kl[:,2,1], color = :blue)
 	for ii=2:5
-		display(scatter!(kl[:,1,ii], kl[:,2,ii], color = :green))
+		dscatter!(kl[:,1,ii], kl[:,2,ii], color = :green)
 	end
 
-	display(plot(gl[:,1,:]))
+	dplot(gl[:,1,:])
+    return true
 end
 
