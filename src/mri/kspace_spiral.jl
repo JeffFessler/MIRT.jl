@@ -37,13 +37,9 @@ function mri_kspace_spiral( ; fov::Real = 22,
 			Nt = 3770
 		else
 			Nt = 0 # let algorithm choose
-			@warn("warning: unknown FOV: specify Nt?")
 		end
 	end
 
-	if(fov > 100)
-		@warn("warning: fov > 100; use cm not mm!")
-	end
 
 	# generate spiral k-space trajectory
 	kx, ky, gx, gy = genkspace(fov, N, Nt, nl, gamp, gslew, dt)
@@ -75,9 +71,7 @@ Brad Sutton; University of Michigan
 function genkspace(FOV, N, ld, nint, gamp, gslew, tsamp ;
 	rotamount::Int = 0)
 	nk = ld/nint
-	if round(nk) != nk
-		@warn("Input should have num data pts/number of interleaves must be int")
-	end
+	
 	flag = (nk == 0)	# auto determine number of k-space points
 			# just input ld = 0.3
 
@@ -100,8 +94,6 @@ function genkspace(FOV, N, ld, nint, gamp, gslew, tsamp ;
 
 	if flag == 1
 		nk = length(kxt) - 2
-	elseif nk > length(kxt)
-		@warn("nk = %d, length(kxt) = %d", nk, length(kxt))
 	end
 	nk = Int64.(nk)
 
@@ -212,9 +204,6 @@ function genspi(D, N; nl::Int = 1, gamp::Real = 202, gslew::Int = 180)
 	# slew-rate limited approximation
 
 	Ts = .666667 / nl*sqrt(((pi*N)^3)/(gamma*D*S0))
-	if (Ts > Tmax)
-		throw("fail: slew limited readout too long")
-	end
 
 	a2 = N*π/(nl*(Ts^(.666667)))
 	a1 = 1.5*S0/a2
@@ -246,9 +235,6 @@ function genspi(D, N; nl::Int = 1, gamp::Real = 202, gslew::Int = 180)
 	T=ts
 	if Gmax > gamp
 		T=((pi*N/nl)*(pi*N/nl) - thetas*thetas)/(2*gamma*gamp*D/nl)+ts
-		if T > Tmax
-			throw("gmax limited readout too long")
-		end
 		t = (ts+dt):dt:T
 		theta = sqrt.(thetas * thetas .+ (2 * gamma * gamp * D) .* (t .- ts) / nl)
 		c = cos.(theta)
