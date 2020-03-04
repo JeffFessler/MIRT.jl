@@ -73,7 +73,7 @@ nint is the number of interleaves
 Brad Sutton; University of Michigan
 """
 function genkspace(FOV, N, ld, nint, gamp, gslew, tsamp ;
-	rotamount::Int = 0, rev_flag::Int = 0)
+	rotamount::Int = 0)
 	nk = ld/nint
 	if round(nk) != nk
 		@warn("Input should have num data pts/number of interleaves must be int")
@@ -118,12 +118,6 @@ function genkspace(FOV, N, ld, nint, gamp, gslew, tsamp ;
 	gxop = gxt*cos(phir) - gyt*sin(phir)
 	gyop = gyt*cos(phir) + gxt*sin(phir)
 
-
-	if rev_flag == 1
-		kxop = -reverse(kxop)
-		kyop = -reverse(kyop)
-		@warn("may need to flip gx too")
-	end
 
 	if(length(kxop) > length(nk))
 		kx = zeros(length(kxop), nint)
@@ -314,6 +308,4 @@ function mri_kspace_spiral(test::Symbol)
 	end
 
 	plot(gl[:,1,:])
-    return true
 end
-
