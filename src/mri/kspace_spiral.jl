@@ -111,16 +111,16 @@ function genkspace(FOV, N, ld, nint, gamp, gslew, tsamp ;
 	gyop = gyt*cos(phir) + gxt*sin(phir)
 
 
+	kx = zeros(nk, nint)
+	ky = zeros(nk, nint)
+	gx = zeros(nk, nint)
+	gy = zeros(nk, nint)
+
 	if(length(kxop) > length(nk))
 		kx = zeros(length(kxop), nint)
 		ky = zeros(length(kyop), nint)
 		gx = zeros(length(gxop), nint)
 		gy = zeros(length(gyop), nint)
-	else
-		kx = zeros(nk, nint)
-		ky = zeros(nk, nint)
-		gx = zeros(nk, nint)
-		gy = zeros(nk, nint)
 	end
 
 	kx[:,1] = kxop
