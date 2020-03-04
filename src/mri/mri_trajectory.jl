@@ -45,10 +45,6 @@ function mri_trajectory(wi; ktype::Symbol, N, fov,
     end
   end
 
-  if(arg_wi == [])
-    @info(prod(fov))
-    #fill(arg_wi, 1/prod(fov))
-  end
 
     if (length(N) == 1)
         N = [N N];
@@ -179,7 +175,7 @@ function mri_trajectory(wi; ktype::Symbol, N, fov,
        end
        @show(fov)
        @show(N)
-       kspace, omega = mri_kspace_spiral(N = maximum(fov[1:2]), fov = maximum(N[1:2]))
+       kspace, omega = mri_kspace_spiral(N = Int(maximum(fov[1:2])), fov = maximum(N[1:2]))
 
        if length(N) == 3 #stack of these spirals
          omega = mri_trajectory_stack(omega, N[3]);
@@ -226,9 +222,10 @@ end
 
 # mri_trajectory_stack()
 # make 3D "stack of ..." trajectory from a 2D trajectory
-function mri_trajectory_stack(omega2::Array{Any}, N3::Real)
-  o3 = collect(0:[N3-1]/N3 - 0.5)*2*π
-  o3 = repeat(o3, nrow(omega2), 1) # [N12,N3]
+function mri_trajectory_stack(omega2, N3::Real)
+  o3 = (collect(0:(N3-1)/N3) .- 0.5)*2*π
+  o3 = repeat(o3, length(omega2), 1) # [N12,N3]
+  @show(length(omega2))
   omega = repeat(omega2, N3, 1) # [N12*N3,2]
   omega = [omega o3[:]] # [N12*N3,3]
 return omega
@@ -281,7 +278,6 @@ function mri_trajectory_gads(N, fov; Nro::Int = -1,
   delta_ro = 1/Nro
   if (Nro == -1)
     temp_N = collect(N)
-    @show("tempN gads:", temp_N)
     Nro = maximum(temp_N)
   end
   nspoke = nspoke .* under
@@ -419,18 +415,18 @@ function mri_trajectory_test(test::Symbol)
     kspace, omega, wi = mri_trajectory(arg_tr, ktype = ktype[i],
     N = N, fov = ig.fovs, arg_wi = arg_wi, arg_traj = arg_tr, na_nr = pi/2)
     @show(ktype[i])
-    display(plot(omega[:,1], omega[:,2],
+    plot(omega[:,1], omega[:,2],
             xlabel = "omega1",
-            ylabel = "omega2"))
+            ylabel = "omega2")
 
     if(ktype[i] == :epi_sin)
       #plot wi != 0case
       arg_tr = [10]
       kspace, omega, wi = mri_trajectory(arg_tr, ktype = ktype[i],
       N = N, fov = ig.fovs, arg_wi = arg_wi, arg_traj = arg_tr, na_nr = pi/2)
-      display(plot(omega[:,1], omega[:,2],
+      plot(omega[:,1], omega[:,2],
               xlabel = "omega1",
-              ylabel = "omega2"))
+              ylabel = "omega2")
     end
   end
 
@@ -441,11 +437,11 @@ function mri_trajectory_test(test::Symbol)
     @show(ktype2[i])
     omega1 = omega[1]
     omega2 = omega[2]
-    display(plot(omega1[:], omega2[:],
+    plot(omega1[:], omega2[:],
           xlabel = "omega1",
-          ylabel = "omega2"))
+          ylabel = "omega2")
   end
-
+  return true
 
   #@info(""%s" with %d k-space samples", ktype, size(omega,1))
 
@@ -471,5 +467,4 @@ function mri_trajectory_test(test::Symbol)
   plot!(ig.x, imag(xcp[ix,iy]))
 end
 =#
-    return true
 end
