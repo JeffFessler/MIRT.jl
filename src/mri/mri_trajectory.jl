@@ -2,21 +2,17 @@ using Random:seed!
 using Plots
 """
     kspace, omega, wi = mri_trajectory(ktype, arg_traj, N, fov, arg_wi)
-
 generate kspace trajectory samples and density compensation functions.
-
 in
 ktype		symbol	k-space trajectory type.  see choices below.
 arg_traj	cell	arguments for a specific trajectory
 N	[1 2|3]		target image size
 fov	[1 2|3]		field of view in x and y (and z)
 arg_wi		cell	options to pass to ir_mri_density_comp
-
 out
 kspace	[Nk 2|3]	kspace samples in units 1/fov
 omega	[Nk 2|3]	trajectory samples over [-pi,pi]
 wi	[Nk 1]		(optional) density compensation factors
-
 trajectory types:
 'cartesian' 'radial' 'cart:y/2' 'random'
 'half+8' 'epi-sin'
@@ -26,10 +22,8 @@ trajectory types:
 'gads' % emulate golden-angle data sharing per winkelmann:07:aor
 Copyright 2004-4-21, Jeff Fessler, University of Michigan
 """
-
-
 function mri_trajectory(wi; ktype::Symbol, N, fov,
-  arg_wi, samp::Array = [], na_nr::Real = 2*pi, na::Array = [],
+  arg_wi, arg_traj, samp::Array = [], na_nr::Real = 2*pi, na::Array = [],
   nr::Real = maximum(N)/2, ir::Array = [],
   omax::Real = pi, Nro::Int = -1,
     delta_ro::Real = 1/Nro,
@@ -38,10 +32,7 @@ function mri_trajectory(wi; ktype::Symbol, N, fov,
     nspoke::Array = [],
     under::Array = [1 1 0.6])
 
-    if (ktype == :test)
-      mri_trajectory_test(:test)
-      return
-    end
+
   if Nro == -1
     temp_N = collect(N)
     Nro = maximum(temp_N)
@@ -97,7 +88,7 @@ function mri_trajectory(wi; ktype::Symbol, N, fov,
     end
 
     if (ktype == :epi_under)
-      omega, wi = mri_trajectory_epi_under(N[1:2], fov[1:2], samp = samp)
+      omega, wi = mri_trajectory_epi_under(N, fov, samp = samp)
     end
 
 
@@ -132,28 +123,27 @@ function mri_trajectory(wi; ktype::Symbol, N, fov,
 
     #half cartesian + 8 rows
     if(ktype == :half_8)
-       o1 = (collect(0:(N[1]-1))/N[1] - 0.5)*2*pi
-       o2 = [-N[2]/2,8]/N[2] * 2*pi
-       oo1,oo2 = ndgrid(o1, o2)
-       omega = [oo1[:], oo2[:]]
+       o1 = (collect(0:(N[1]-1))/N[1] .- 0.5)*2*pi
+       o2 = collect(-N[2]/2:8)/N[2] * 2*pi
+       omega = ndgrid(o1, o2)
+       @show(typeof(omega))
     end
 
     # echo-planar with sinusoid:
 
     if(ktype == :epi_sin)
-      if (sizeof(wi) == 0)
+      if (length(arg_traj) == 0)
          oversample = 1
-      end
 
-      if (length(wi) == 1) #omit the iscell in matlab code
-         oversample = wi[1]
-
+      elseif (length(arg_traj) == 1) #omit the iscell in matlab code
+         oversample = arg_traj[1]
       else
         @warn("fail:bad trajectory argument")
       end
        Npt = oversample*prod(N)
        t = collect(0:(Npt-1))/Npt
        omega = [pi*sin.(2*pi*t*N[2]/2) t*2*pi.-pi]
+       @show(size(omega))
      end
 
 
@@ -205,25 +195,30 @@ function mri_trajectory(wi; ktype::Symbol, N, fov,
     #random
     if(ktype == :random)
        seed!(0)
-       omega = (rand(N[1]*N[2]*2, 2)-0.5)*2*pi;
+       omega = (rand(N[1]*N[2]*2, 2).-0.5)*2*pi;
     end
 
     #2D FT, undersampled in "y" (phase encode) direction
-    if(ktype == :art_y_2)
-       o1 = (collect(0:(N[1]/1-1))/(N[1]/1) - 0.5)*2*pi;
-       o2 = (collect(0:(N[2]/2-1))/(N[2]/2) - 0.5)*2*pi;
-       oo1,oo2 = ndgrid(o1, o2)
-       omega = [oo1[:], oo2[:]]
+    if(ktype == :cart_y_2)
+       o1 = (collect(0:(N[1]/1-1))/(N[1]/1) .- 0.5)*2*pi
+       o2 = (collect(0:(N[2]/2-1))/(N[2]/2) .- 0.5)*2*pi
+       omega = ndgrid(o1, o2)
     end
 
 
     # convert to physical units
-    kspace = zeros(size(omega))
-    #for id = 1:length(N)
-     id = 1
-     dx = fov[id] / N[id]
-     kspace[:,id] = omega[:,id] / (2*pi) / dx
-    #end
+    if(ktype == :half_8 || ktype == :cart_y_2)
+      dx = fov[1] / N[1]
+      kspace = omega ./ (2*pi) ./ dx
+
+    else
+      kspace = zeros(size(omega))
+      #for id = 1:length(N)
+       id = 1
+       dx = fov[id] / N[id]
+       kspace[:,id] = omega[:,id] / (2*pi) / dx
+    end
+
 
     return kspace, omega, wi
 end
@@ -250,12 +245,14 @@ function mri_trajectory_epi_under(N, fov; samp::Array = [])
   nx = N[1]
   ny = N[2]
   omx = collect(-nx/2:nx/2-1) / nx * 2*pi # [-pi,pi) in x
-  omy = (1-1-ny/2) / ny * 2 * pi
-  omega = [omx omy.*ones(nx,1)]
-  for iy = 2:ny  # of possible phase encodes
+  omy = (ny-1-ny/2) / ny * 2 * pi
+  @show(length(omx))
+  @show(length(omy))
+  omega = [omx omy*ones(nx,1)]
+  for iy = 1:ny  # of possible phase encodes
    if samp[iy]
      omy = (iy-1-ny/2) / ny * 2 * pi
-     omega = [omega; [omx omy.*ones(nx,1)]]
+     omega = [omega; [omx omy*ones(nx,1)]]
      omx = reverse(omx, dims = 1)
    end
   end
@@ -272,7 +269,6 @@ Nro: of samples in each readout/spoke
 shift: shift along read-out due to gradient delays (stress)
 kmax_frac: fractions of maximum krad (0.5) for rings
 under: under-sampling factor for each annulus
-
 Output:
 omega, wi
 """
@@ -410,44 +406,64 @@ function mri_trajectory_test(test::Symbol)
   test != :test && throw(DomainError(test, "Not valid"))
   ig = image_geom_mri(nx = 2^6, ny = 2^6-0, fov = 250) # 250 mm FOV
   N = ig.dim
-  #@show(N)
 
   arg_tr = []
   arg_wi = []
-  ptype = "."
-  arg_tr = [2]
-  ktype = :radial
+  #mri_kspace_spiral is not yet translated, its not in ksapce.jl
+  ktype = [:cartesian, :radial, :gads, :rosette3, :epi_sin,
+            :spiral0, :spiral1, :random, :epi_under]
   #arg_tr = {:na_nr, pi/2}
-  arg_type = [[:voronoi], [:radial], [:gads], [:epi_under], [:rosette3], [:half_8], [:spi_sin],
-            [:spiral0], [:spiral1], [:spiral3], [:random], [:art_y_2]]
-  for i in arg_type
-    kspace, omega, wi = mri_trajectory(arg_tr, ktype = ktype,
-    N = N, fov = ig.fovs, arg_wi = i, na_nr = pi/2)
-    plot(omega[:,1], omega[:,2],
+  arg_wi = [:voronoi]
+  wi = []
+  for i in collect(1:length(ktype))
+    kspace, omega, wi = mri_trajectory(arg_tr, ktype = ktype[i],
+    N = N, fov = ig.fovs, arg_wi = arg_wi, arg_traj = arg_tr, na_nr = pi/2)
+    @show(ktype[i])
+    display(plot(omega[:,1], omega[:,2],
             xlabel = "omega1",
-            ylabel = "omega2")
+            ylabel = "omega2"))
+
+    if(ktype[i] == :epi_sin)
+      #plot wi != 0case
+      arg_tr = [10]
+      kspace, omega, wi = mri_trajectory(arg_tr, ktype = ktype[i],
+      N = N, fov = ig.fovs, arg_wi = arg_wi, arg_traj = arg_tr, na_nr = pi/2)
+      display(plot(omega[:,1], omega[:,2],
+              xlabel = "omega1",
+              ylabel = "omega2"))
+    end
   end
-  return true
+
+  ktype2 = [:half_8, :cart_y_2]
+  for i in collect(1:length(ktype2))
+    kspace, omega, wi = mri_trajectory(arg_tr, ktype = ktype2[i],
+    N = N, fov = ig.fovs, arg_wi = arg_wi, arg_traj = arg_tr, na_nr = pi/2)
+    @show(ktype2[i])
+    omega1 = omega[1]
+    omega2 = omega[2]
+    display(plot(omega1[:], omega2[:],
+          xlabel = "omega1",
+          ylabel = "omega2"))
+  end
+
+
   #@info(""%s" with %d k-space samples", ktype, size(omega,1))
 
 #=
   @info("setup Gnufft object")
   A = Gnufft(ig.mask,
    [omega, N, [6 6], 2*N, [N/2], table =  2^10, :minmax:kb])
-
   @info("setup data")
   obj = mri_objects((:rect2, [0 0 ig.fovs/2... 1]))
   xt = obj.image(ig.xg, ig.yg)
   xt[trunc(Int, end/2), trunc(Int, end/2)] = 0
   yi = obj.kspace(kspace[:,1], kspace[:,2])
-
   @info("conj. phase reconstruction")
   @show(A)
   @show(wi)
   @show(yi)
   xcp = A * (wi .* yi) # apply DCF for CP
   xcp = ig.embed(xcp)
-
   ix = 1:ig.nx
   iy = ig.ny/2+1
   plot(ig.x, xt[ix,iy])
@@ -456,4 +472,3 @@ function mri_trajectory_test(test::Symbol)
 end
 =#
 end
-
