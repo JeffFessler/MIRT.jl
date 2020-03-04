@@ -308,4 +308,5 @@ function mri_kspace_spiral(test::Symbol)
 	end
 
 	plot(gl[:,1,:])
+    return true
 end
