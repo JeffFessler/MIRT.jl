@@ -225,7 +225,6 @@ end
 function mri_trajectory_stack(omega2, N3::Real)
   o3 = (collect(0:(N3-1)/N3) .- 0.5)*2*π
   o3 = repeat(o3, length(omega2), 1) # [N12,N3]
-  @show(length(omega2))
   omega = repeat(omega2, N3, 1) # [N12*N3,2]
   omega = [omega o3[:]] # [N12*N3,3]
 return omega
@@ -442,29 +441,4 @@ function mri_trajectory_test(test::Symbol)
           ylabel = "omega2")
   end
   return true
-
-  #@info(""%s" with %d k-space samples", ktype, size(omega,1))
-
-#=
-  @info("setup Gnufft object")
-  A = Gnufft(ig.mask,
-   [omega, N, [6 6], 2*N, [N/2], table =  2^10, :minmax:kb])
-  @info("setup data")
-  obj = mri_objects((:rect2, [0 0 ig.fovs/2... 1]))
-  xt = obj.image(ig.xg, ig.yg)
-  xt[trunc(Int, end/2), trunc(Int, end/2)] = 0
-  yi = obj.kspace(kspace[:,1], kspace[:,2])
-  @info("conj. phase reconstruction")
-  @show(A)
-  @show(wi)
-  @show(yi)
-  xcp = A * (wi .* yi) # apply DCF for CP
-  xcp = ig.embed(xcp)
-  ix = 1:ig.nx
-  iy = ig.ny/2+1
-  plot(ig.x, xt[ix,iy])
-  plot!(ig.x, real(xcp[ix,iy]))
-  plot!(ig.x, imag(xcp[ix,iy]))
-end
-=#
 end
