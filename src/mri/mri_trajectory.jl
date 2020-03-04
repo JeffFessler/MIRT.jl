@@ -471,4 +471,5 @@ function mri_trajectory_test(test::Symbol)
   plot!(ig.x, imag(xcp[ix,iy]))
 end
 =#
+    return true
 end
