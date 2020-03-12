@@ -51,7 +51,8 @@ Iterative proximal algorithms (PGM=ISTA, FPGM=FISTA, POGM) with restart.
 
 # out
 - `x`	final iterate
-  - for ISTA / FPGM (FISTA): primary iterate ``y_N``
+  - for PGM (ISTA): ``x_N = y_N``
+  - for FPGM (FISTA): primary iterate ``y_N``
   - for POGM: secondary iterate ``x_N``, see [KF18]
 - `out [fun(0, x0, x0, false), fun(1, x1, y1, is_restart), ...]` array of length `[niter+1]`
 
@@ -109,7 +110,7 @@ function pogm_restart(x0, Fcost::Function, f_grad::Function, f_L::Real ;
 		bsig::Real = 1,
 		niter::Int = 10,
 		g_prox::Function = (z, c::Real) -> z,
-		fun::Function = (iter::Int, xk, yk, is_restart::Bool) -> 0,
+		fun::Function = (iter::Int, xk, yk, is_restart::Bool) -> undef,
 	)
 
 	!in(mom, (:pgm, :fpgm, :pogm)) && throw(ArgumentError("mom $mom"))
