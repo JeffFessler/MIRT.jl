@@ -89,9 +89,6 @@ function mri_trajectory(wi; ktype::Symbol, N, fov,
 
 
     if(ktype == :gads)
-       if (length(N) != 2)
-         @warn("fail: only 2d done")
-       end
        omega, wi = mri_trajectory_gads(N, fov, Nro = Nro,
        delta_ro = delta_ro, shift = shift, kmax_frac = kmax_frac,
        nspoke = nspoke, under = under)
@@ -133,8 +130,6 @@ function mri_trajectory(wi; ktype::Symbol, N, fov,
 
       elseif (length(arg_traj) == 1) #omit the iscell in matlab code
          oversample = arg_traj[1]
-      else
-        @warn("fail:bad trajectory argument")
       end
        Npt = oversample*prod(N)
        t = collect(0:(Npt-1))/Npt
@@ -170,9 +165,6 @@ function mri_trajectory(wi; ktype::Symbol, N, fov,
 
     # 3T spiral:
     if(ktype == :spiral3)
-       if fov[1] != fov[2] || N[1] != N[2]
-         throw("fail:only square done")
-       end
        kspace, omega = mri_kspace_spiral(N = Int(maximum(N[1:2])), fov = maximum(fov[1:2]))
 
        if length(N) == 3 #stack of these spirals
@@ -336,9 +328,6 @@ function mri_trajectory_radial(;N, fov,
 
 # density compensation factors based on "analytical" voronoi
 
-  if any(fov[1] != fov[2])
-    throw("fail:only square FOV implemented for radial")
-  end
   du = 1/fov[1] # assume this radial sample spacing
   wi = pi * du^2 / na * 2 * ir[:] # see lauzon:96:eop, joseph:98:sei
   for i in collect(1:length((ir)))
@@ -412,9 +401,9 @@ function mri_trajectory_test(test::Symbol)
     kspace, omega, wi = mri_trajectory(arg_tr, ktype = ktype[i],
     N = N, fov = ig.fovs, arg_wi = arg_wi, arg_traj = arg_tr, na_nr = pi/2)
     @show(ktype[i])
-    display(plot(omega[:,1], omega[:,2],
+    plot(omega[:,1], omega[:,2],
             xlabel = "omega1",
-            ylabel = "omega2"))
+            ylabel = "omega2")
 
     if(ktype[i] == :epi_sin)
       #plot wi != 0case
@@ -438,13 +427,18 @@ function mri_trajectory_test(test::Symbol)
           xlabel = "omega1",
           ylabel = "omega2")
   end
+
   ig = image_geom_mri(nz = 2^5, nx = 2^6, ny = 2^6-0, fov = 250, dz = 2^5) # 250 mm FOV
-  N = ig.dim
-  kspace, omega, wi = mri_trajectory(arg_tr, ktype = :radial,
-  N = N, fov = ig.fovs, arg_wi = arg_wi, arg_traj = arg_tr, na_nr = pi/2)
-  @show("Radial 3D")
-  plot(omega[:,1], omega[:,2],
-          xlabel = "omega1",
-          ylabel = "omega2")
+   N = ig.dim
+  ktype = [:cartesian, :radial, :gads, :spiral3]
+
+  for i in collect(1:length(ktype))
+    kspace, omega, wi = mri_trajectory(arg_tr, ktype = ktype[i],
+    N = N, fov = ig.fovs, arg_wi = arg_wi, arg_traj = arg_tr, na_nr = pi/2)
+    @show(ktype[i])
+    plot(omega[:,1], omega[:,2],
+            xlabel = "omega1",
+            ylabel = "omega2")
+  end
   return true
 end
