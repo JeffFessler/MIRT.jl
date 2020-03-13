@@ -9,3 +9,4 @@ using Test: @test
 @test ir_mri_sensemap_sim(:test)
 @test mri_kspace_spiral(:test)
 @test mri_objects(:test)
+@test mri_trajectory_test(:test)
