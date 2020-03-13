@@ -265,8 +265,7 @@ function mri_trajectory_gads(N, fov; Nro::Int = -1,
   under::Array = [1 1 0.6])
   delta_ro = 1/Nro
   if (Nro == -1)
-    temp_N = collect(N)
-    Nro = maximum(temp_N)
+    Nro = maximum(collect(N))
   end
   nspoke = nspoke .* under
   if true # make fibonacci for more uniform coverage
