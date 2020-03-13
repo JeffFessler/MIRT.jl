@@ -1,13 +1,18 @@
 #=
-mri_kspace_spiral.jl
+kspace_spiral.jl
 Jing Dong
+
+based on mri_kspace_spiral.m that was based on m-files from valur olafsson
+that he got from brad sutton who got them from doug noll...
 =#
 
 export mri_kspace_spiral
+
 using Interpolations
-using Plots
+using Plots; default(markerstrokecolor=:auto, markersize=1)
+
 """
-	kspace, omega = mri_kspace_spiral( [options] )
+    kspace, omega, gradxy = mri_kspace_spiral( [options] )
 
 Make k-space spiral trajectory based on GE 3T scanner constraints
 
@@ -19,11 +24,9 @@ Option:
 todo: document other options, including units!
 
 Out:
-- `kspace` [Nt,2] kspace trajectory [kx ky] in cycles/cm, NO: cycles/FOV
-- `omega` [Nt,2] "" in radians
-- 'gradxy' [Nt 2]	gradient waveforms in (units?)
-
-based on m-files from valur that he got from brad who got them from doug...
+- `kspace [Nt,2]` kspace trajectory [kx ky] in cycles/cm, NO: cycles/FOV
+- `omega [Nt,2]` "" in radians
+- `gradxy [Nt 2]` gradient waveforms in (units?)
 """
 function mri_kspace_spiral( ; fov::Real = 22,
 		N::Int = 64, Nt::Int = -1,
@@ -71,14 +74,13 @@ Brad Sutton; University of Michigan
 function genkspace(FOV, N, ld, nint, gamp, gslew, tsamp ;
 	rotamount::Int = 0)
 	nk = ld/nint
-	
-	flag = (nk == 0)	# auto determine number of k-space points
-			# just input ld = 0.3
+
+	flag = (nk == 0) # auto determine number of k-space points
+	# just input ld = 0.3
 
 	#dts = 4e-6 # 5e-6 [sec]
 
 	Gx, Gy, kxi, kyi, sx, sy, dts = genspi(FOV, N, nl=nint, gamp=gamp, gslew=gslew)
-
 
 	ik = 0:(length(kxi)-1)
  	tk = 0:(dts/tsamp*length(kxi)-1)
@@ -103,7 +105,7 @@ function genkspace(FOV, N, ld, nint, gamp, gslew, tsamp ;
 	gxo = gxt[1:nk]
 	gyo = gyt[1:nk]
 
-	#rotate matrix for proper orientation
+	# rotate matrix for proper orientation
 	phir = -rotamount*pi/2
 	kxop = kxt*cos(phir) - kyt*sin(phir)
 	kyop = kyt*cos(phir) + kxt*sin(phir)
@@ -190,7 +192,6 @@ function genspi(D, N; nl::Int = 1, gamp::Real = 202, gslew::Int = 180)
 	opfov = D
 
 	#################################
-
 	gamma = 2*π*4.257e3
 	gambar = gamma/(2*π)
 
@@ -228,9 +229,7 @@ function genspi(D, N; nl::Int = 1, gamp::Real = 202, gslew::Int = 180)
 	thetas = theta[l1]
 
 
-
 	# gmax limited approximation
-
 	l3 = 0
 	T=ts
 	if Gmax > gamp
@@ -240,10 +239,10 @@ function genspi(D, N; nl::Int = 1, gamp::Real = 202, gslew::Int = 180)
 		c = cos.(theta)
 		s = sin.(theta)
 		ind2 = l1 .+ (1:length(t))
-		if(maximum(ind2) > length(gx))
+		if (maximum(ind2) > length(gx))
 			gx = [gx; zeros(maximum(ind2) - length(gx))]
 		end
-		if(maximum(ind2) > length(gy))
+		if (maximum(ind2) > length(gy))
 			gy = [gy; zeros(maximum(ind2) - length(gy))]
 		end
 		gx[floor.(Int,ind2)] = gamp.*(c./theta - s)
@@ -273,26 +272,39 @@ function genspi(D, N; nl::Int = 1, gamp::Real = 202, gslew::Int = 180)
 	return Gx, Gy, kx, ky, sx, sy,gts
 end
 
+
+"""
+    mri_kspace_spiral(:test)
+self test
+"""
 function mri_kspace_spiral(test::Symbol)
 	N = 64
 	test != :test && throw(DomainError(test, "Not valid"))
+
 	k0, o0, g0 = mri_kspace_spiral()
-	k20,_ = mri_kspace_spiral(fov=20, Nt=0)
-	k22,_ = mri_kspace_spiral(fov=22, Nt=0)
-	k23,_ = mri_kspace_spiral(nl = 2)
-	scatter(k0[:,1],k0[:,2], color = :blue)
-	scatter!(k20[:,1],k20[:,2], color = :red)
-	scatter!(k22[:,1],k22[:,2], color = :green)
-	scatter!(k23[:,:,1],k23[:,:,2], color = :yellow)
-
-	#display(plot(g0))
-
-	kl,_,gl= mri_kspace_spiral(nl = 5) # interleaves
-	scatter(kl[:,1,1],kl[:,2,1], color = :blue)
-	for ii=2:5
-		scatter!(kl[:,1,ii], kl[:,2,ii], color = :green)
+	for fov in (20,21,22)
+		mri_kspace_spiral(fov=fov, Nt=0)
 	end
+	k5l,_,g5l = mri_kspace_spiral(nl = 5) # interleaves
 
-	plot(gl[:,1,:])
+	plot(xlabel="kx", ylabel="ky", aspect_ratio=1)
+	p1 = scatter!(k0[:,1], k0[:,2], label = "1-shot spiral")
+
+	plot()
+	scatter!(g0[:,1], label="gx")
+	scatter!(g0[:,2], label="gy")
+	plot(p1, current())
+	prompt()
+
+	p2 = plot(g5l[:,1,:], label="")
+	plot!(g5l[:,2,:], label="")
+
+	plot(xlabel="kx", ylabel="ky", aspect_ratio=1, title="5-shot spiral")
+	for ii=1:5
+		scatter!(k5l[:,1,ii], k5l[:,2,ii], label="")
+	end
+	plot(current(), p2)
+	prompt()
+
     return true
 end
