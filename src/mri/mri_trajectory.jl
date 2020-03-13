@@ -34,8 +34,7 @@ function mri_trajectory(wi; ktype::Symbol, N, fov,
 
 
   if Nro == -1
-    temp_N = collect(N)
-    Nro = maximum(temp_N)
+    Nro = maximum(collect(N))
   end
 
   if nspoke == []
