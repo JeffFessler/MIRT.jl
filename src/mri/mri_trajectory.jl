@@ -416,11 +416,11 @@ function mri_trajectory_test(test::Symbol)
     end
   end
 
-  ktype2 = [:half_8, :cart_y_2]
-  for i in collect(1:length(ktype2))
-    kspace, omega, wi = mri_trajectory(arg_tr, ktype = ktype2[i],
+  ktype = [:half_8, :cart_y_2]
+  for i in collect(1:length(ktype))
+    kspace, omega, wi = mri_trajectory(arg_tr, ktype = ktype[i],
     N = N, fov = ig.fovs, arg_wi = arg_wi, arg_traj = arg_tr, na_nr = pi/2)
-    @show(ktype2[i])
+    @show(ktype[i])
     omega1 = omega[1]
     omega2 = omega[2]
     plot(omega1[:], omega2[:],
@@ -428,8 +428,19 @@ function mri_trajectory_test(test::Symbol)
           ylabel = "omega2")
   end
 
+  arg_wi = []
+  ktype = [:spiral0, :spiral1]
+  for i in collect(1:length(ktype))
+    kspace, omega, wi = mri_trajectory(arg_tr, ktype = ktype[i],
+    N = N, fov = ig.fovs, arg_wi = arg_wi, arg_traj = arg_tr, na_nr = pi/2)
+    @show(ktype[i])
+    plot(omega[:,1], omega[:,2],
+            xlabel = "omega1",
+            ylabel = "omega2")
+  end
+
   ig = image_geom_mri(nz = 2^5, nx = 2^6, ny = 2^6-0, fov = 250, dz = 2^5) # 250 mm FOV
-   N = ig.dim
+  N = ig.dim
   ktype = [:cartesian, :radial, :gads, :spiral3]
 
   for i in collect(1:length(ktype))
