@@ -2,14 +2,14 @@
 kspace_spiral.jl
 Jing Dong
 
-based on mri_kspace_spiral.m that was based on m-files from valur olafsson
-that he got from brad sutton who got them from doug noll...
+Based on mri_kspace_spiral.m that was based on m-files from Valur Olafsson
+that he got from Brad Sutton who got them from Doug Noll...
 =#
 
 export mri_kspace_spiral
 
 using Interpolations
-using Plots; default(markerstrokecolor=:auto, markersize=1)
+using Plots; default(markerstrokecolor=:auto, markersize=1, markershape=:circle)
 
 """
     kspace, omega, gradxy = mri_kspace_spiral( [options] )
@@ -21,17 +21,19 @@ Option:
 - `Nt` # of time points
 - `fov` field of view in cm
 - `dt` time sampling interval out; default `5e-6` sec
-todo: document other options, including units!
+- `gamp::Real` design gradient amplitude max, G/cm; default 2.2
+- `gslew::Int` design slew rate, mT/m/ms; default 180
 
 Out:
-- `kspace [Nt,2]` kspace trajectory [kx ky] in cycles/cm, NO: cycles/FOV
+- `kspace [Nt,2]` kspace trajectory `[kx ky]` in cycles/cm, NO: cycles/FOV
 - `omega [Nt,2]` "" in radians
 - `gradxy [Nt 2]` gradient waveforms in (units?)
 """
 function mri_kspace_spiral( ; fov::Real = 22,
 		N::Int = 64, Nt::Int = -1,
 		dt::Float64 = 5e-6, nl::Int = 1,
-		gamp::Real = 2.2, gslew::Int = 180)
+		gamp::Real = 2.2, gslew::Int = 180,
+		warn_nk::Bool = true)
 
 	if Nt == -1
 		if fov == 20
@@ -43,10 +45,9 @@ function mri_kspace_spiral( ; fov::Real = 22,
 		end
 	end
 
-
 	# generate spiral k-space trajectory
-	kx, ky, gx, gy = genkspace(fov, N, Nt, nl, gamp, gslew, dt)
-	if(nl == 1)
+	kx, ky, gx, gy = genkspace(fov, N, Nt, nl, gamp, gslew, dt, warn_nk)
+	if (nl == 1)
 		kspace = [kx ky]
 		gradxy = [gx gy]
 	else
@@ -54,9 +55,8 @@ function mri_kspace_spiral( ; fov::Real = 22,
  		gradxy = permutedims(cat(dims = 3, gx, gy), [1,3,2])
 	end
 	omega = 2π * [kx ky] / N
-	#if minimum(maximum(omega) .> Float64.(π)) == 1
-		#throw("bad spiral")
-	#end
+
+	maximum(omega) > π && throw("bad spiral")
 
 	return kspace, omega, gradxy
 end
@@ -71,8 +71,8 @@ ld is the length of the data
 nint is the number of interleaves
 Brad Sutton; University of Michigan
 """
-function genkspace(FOV, N, ld, nint, gamp, gslew, tsamp ;
-	rotamount::Int = 0)
+function genkspace(FOV, N, ld, nint, gamp, gslew, tsamp, warn_nk ;
+		rotamount::Int = 0)
 	nk = ld/nint
 
 	flag = (nk == 0) # auto determine number of k-space points
@@ -80,7 +80,8 @@ function genkspace(FOV, N, ld, nint, gamp, gslew, tsamp ;
 
 	#dts = 4e-6 # 5e-6 [sec]
 
-	Gx, Gy, kxi, kyi, sx, sy, dts = genspi(FOV, N, nl=nint, gamp=gamp, gslew=gslew)
+	Gx, Gy, kxi, kyi, sx, sy, dts =
+		genspi(FOV, N, nl=nint, gamp=gamp, gslew=gslew)
 
 	ik = 0:(length(kxi)-1)
  	tk = 0:(dts/tsamp*length(kxi)-1)
@@ -90,7 +91,7 @@ function genkspace(FOV, N, ld, nint, gamp, gslew, tsamp ;
 
 	ig = 0:(length(Gx)-1)
 	tg = 0:(dts/tsamp*length(Gx)-1)
-	tg = tg * tsamp;
+	tg = tg * tsamp
 	gxt = interp1(ig*dts, Gx, tg)
  	gyt = interp1(ig*dts, Gy, tg)
 
@@ -99,6 +100,10 @@ function genkspace(FOV, N, ld, nint, gamp, gslew, tsamp ;
 	end
 	nk = Int64.(nk)
 
+	if (nk > length(kxt))
+		warn_nk && @warn "reduce nk from $nk to $(length(kxt))"
+		nk = min(nk, length(kxt))
+	end
 	kxo = kxt[1:nk]
 	kyo = kyt[1:nk]
 
@@ -112,13 +117,12 @@ function genkspace(FOV, N, ld, nint, gamp, gslew, tsamp ;
 	gxop = gxt*cos(phir) - gyt*sin(phir)
 	gyop = gyt*cos(phir) + gxt*sin(phir)
 
-
 	kx = zeros(nk, nint)
 	ky = zeros(nk, nint)
 	gx = zeros(nk, nint)
 	gy = zeros(nk, nint)
 
-	if(length(kxop) > length(nk))
+	if (length(kxop) > length(nk))
 		kx = zeros(length(kxop), nint)
 		ky = zeros(length(kyop), nint)
 		gx = zeros(length(gxop), nint)
@@ -144,15 +148,13 @@ function genkspace(FOV, N, ld, nint, gamp, gslew, tsamp ;
 end
 
 
-
-
-
 """
-'genspi
-this is translation of C code from scanner; exactly what is played
-out to gradients at 4us.
+	Gx, Gy, kx, ky, sx, sy, gts = genspi(...)
 
-multi- shot spiral design
+This is translation of C code from scanner: exactly what is played out
+to gradients at 4us.
+
+multi-shot spiral design
 uses Duyn's approximate slewrate limited design
 augmented with archimedian gmax limit
 inputs [args]
@@ -161,11 +163,11 @@ inputs [args]
 	 	Tmax = longest acquisition allowed; s
 	 	dts = output sample spacing; s
         gtype = trajectory type()
-inputs [CVs]
+option [CVs]
 		nl = number of interleaves
 		gamp = design grad max; G/cm
 		gslew = design slew rate; mT/m/ms
-		nramp = number of rampdown points
+		nramp = number of rampdown points; default 0
  out
 		Gx; Gy
 		grev
@@ -176,24 +178,22 @@ inputs [CVs]
  borrowed from Doug Noll; Univ. of Michigan
  modified to take more input cv's
 """
-function genspi(D, N; nl::Int = 1, gamp::Real = 202, gslew::Int = 180)
+function genspi(D, N ;
+		nl::Int = 1, gamp::Real = 202, gslew::Int = 180, nramp::Int = 0)
 
 	########## Predefined variables
-	GRESMAX= 21000
-	nramp=0
+	GRESMAX = 21000
 	# nramp=100
-	MAX_PG_WAMP=32766
-
+	MAX_PG_WAMP = 32766
 	gts = 4e-6 # [sec]
 
-	Tmax = GRESMAX*gts
-
+	Tmax = GRESMAX * gts
 	dts = gts
 	opfov = D
 
 	#################################
 	gamma = 2*π*4.257e3
-	gambar = gamma/(2*π)
+	gambar = gamma / (2*π)
 
 	gx = zeros(2*GRESMAX)
 	gy = zeros(2*GRESMAX)
@@ -204,19 +204,19 @@ function genspi(D, N; nl::Int = 1, gamp::Real = 202, gslew::Int = 180)
 
 	# slew-rate limited approximation
 
-	Ts = .666667 / nl*sqrt(((pi*N)^3)/(gamma*D*S0))
+	Ts = 0.666667 / nl*sqrt(((pi*N)^3)/(gamma*D*S0))
 
-	a2 = N*π/(nl*(Ts^(.666667)))
+	a2 = N*π/(nl*(Ts^(0.666667)))
 	a1 = 1.5*S0/a2
 	beta = S0*gamma*D/nl
-	Gmax = a1*(Ts^.333333)
+	Gmax = a1*(Ts^0.333333)
 	gmax = 0
 
 	t = 0:dt:Ts
 	x = t .^ 1.333333
 	theta = (t.^2) .* (.5 * beta ./ (q .+ .5 * beta ./ a2 .* x))
 	y = q .+ .5 .* beta./a2 .* x
-	dthdt = t .* (beta .* (q .+ .166667 * beta ./ a2 .* x) ./ (y .* y))
+	dthdt = t .* (beta .* (q .+ 0.166667 * beta ./ a2 .* x) ./ (y .* y))
 	c = cos.(theta)
 	s = sin.(theta)
 	gx = (nl/(D * gamma)) .* dthdt .* (c - theta .* s)
@@ -228,12 +228,11 @@ function genspi(D, N; nl::Int = 1, gamp::Real = 202, gslew::Int = 180)
 	ts = t[l1]
 	thetas = theta[l1]
 
-
 	# gmax limited approximation
 	l3 = 0
 	T=ts
 	if Gmax > gamp
-		T=((pi*N/nl)*(pi*N/nl) - thetas*thetas)/(2*gamma*gamp*D/nl)+ts
+		T = ((pi*N/nl)*(pi*N/nl) - thetas*thetas)/(2*gamma*gamp*D/nl) + ts
 		t = (ts+dt):dt:T
 		theta = sqrt.(thetas * thetas .+ (2 * gamma * gamp * D) .* (t .- ts) / nl)
 		c = cos.(theta)
@@ -269,7 +268,7 @@ function genspi(D, N; nl::Int = 1, gamp::Real = 202, gslew::Int = 180)
 	sx = real(s)
 	sy = imag(s)
 
-	return Gx, Gy, kx, ky, sx, sy,gts
+	return Gx, Gy, kx, ky, sx, sy, gts
 end
 
 
@@ -277,34 +276,32 @@ end
     mri_kspace_spiral(:test)
 self test
 """
-function mri_kspace_spiral(test::Symbol)
+function mri_kspace_spiral(test::Symbol ; warn::Bool=false, show::Bool=false)
 	N = 64
 	test != :test && throw(DomainError(test, "Not valid"))
 
-	k0, o0, g0 = mri_kspace_spiral()
-	for fov in (20,21,22)
-		mri_kspace_spiral(fov=fov, Nt=0)
+	k0, o0, g0 = mri_kspace_spiral() # default 22,-1
+	for fov in (20,21)
+		mri_kspace_spiral( ; fov=fov, Nt=-1, warn_nk=warn)
 	end
 	k5l,_,g5l = mri_kspace_spiral(nl = 5) # interleaves
 
 	plot(xlabel="kx", ylabel="ky", aspect_ratio=1)
 	p1 = scatter!(k0[:,1], k0[:,2], label = "1-shot spiral")
 
-	plot()
+	p2 = plot()
 	scatter!(g0[:,1], label="gx")
 	scatter!(g0[:,2], label="gy")
-	plot(p1, current())
-	prompt()
 
-	p2 = plot(g5l[:,1,:], label="")
+	p4 = plot(g5l[:,1,:], label="")
 	plot!(g5l[:,2,:], label="")
 
 	plot(xlabel="kx", ylabel="ky", aspect_ratio=1, title="5-shot spiral")
 	for ii=1:5
 		scatter!(k5l[:,1,ii], k5l[:,2,ii], label="")
 	end
-	plot(current(), p2)
-	prompt()
+	plot(p1, p2, current(), p4)
+	show && prompt()
 
     return true
 end
