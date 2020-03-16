@@ -1,10 +1,12 @@
+export mri_trajectory
+using MIRT
 using Random:seed!
 using Plots
 """
     kspace, omega, wi = mri_trajectory(ktype, arg_traj, N, fov, arg_wi)
 generate kspace trajectory samples and density compensation functions.
 in
-ktype		symbol	k-space trajectory type.  see choices below.
+ktype		symbol	k-space trajectory type.  for proper display with help.
 arg_traj	cell	arguments for a specific trajectory
 N	[1 2|3]		target image size
 fov	[1 2|3]		field of view in x and y (and z)
@@ -265,7 +267,8 @@ function mri_trajectory_gads(N, fov; Nro::Int = -1,
   under::Array = [1 1 0.6])
   delta_ro = 1/Nro
   if (Nro == -1)
-    Nro = maximum(collect(N))
+    temp_N = collect(N)
+    Nro = maximum(temp_N)
   end
   nspoke = nspoke .* under
   if true # make fibonacci for more uniform coverage
@@ -394,60 +397,66 @@ function mri_trajectory_test(test::Symbol)
   #arg_tr = {:na_nr, pi/2}
   arg_wi = [:voronoi]
   wi = []
-
-  for i in collect(1:length(ktype))
+  plots = Any[]
+  for i in 1:length(ktype)
     kspace, omega, wi = mri_trajectory(arg_tr, ktype = ktype[i],
     N = N, fov = ig.fovs, arg_wi = arg_wi, arg_traj = arg_tr, na_nr = pi/2)
     @show(ktype[i])
-    plot(omega[:,1], omega[:,2],
+    push!(plots,plot(omega[:,1], omega[:,2],
             xlabel = "omega1",
-            ylabel = "omega2")
+            ylabel = "omega2", label = string(ktype[i])))
 
     if(ktype[i] == :epi_sin)
       #plot wi != 0case
       arg_tr = [10]
       kspace, omega, wi = mri_trajectory(arg_tr, ktype = ktype[i],
       N = N, fov = ig.fovs, arg_wi = arg_wi, arg_traj = arg_tr, na_nr = pi/2)
-      plot(omega[:,1], omega[:,2],
+      push!(plots, plot(omega[:,1], omega[:,2],
               xlabel = "omega1",
-              ylabel = "omega2")
+              ylabel = "omega2", label = string(ktype[i])))
     end
   end
+  plot(plots...)
 
   ktype = [:half_8, :cart_y_2]
-  for i in collect(1:length(ktype))
+  plots = Any[]
+  for i in 1:length(ktype)
     kspace, omega, wi = mri_trajectory(arg_tr, ktype = ktype[i],
     N = N, fov = ig.fovs, arg_wi = arg_wi, arg_traj = arg_tr, na_nr = pi/2)
     @show(ktype[i])
     omega1 = omega[1]
     omega2 = omega[2]
-    plot(omega1[:], omega2[:],
+    push!(plots, plot(omega1[:], omega2[:],
           xlabel = "omega1",
-          ylabel = "omega2")
+          ylabel = "omega2", label = string(ktype[i])))
   end
+  plot(plots...)
 
   arg_wi = []
   ktype = [:spiral0, :spiral1]
-  for i in collect(1:length(ktype))
+  plots = Any[]
+  for i in 1:length(ktype)
     kspace, omega, wi = mri_trajectory(arg_tr, ktype = ktype[i],
     N = N, fov = ig.fovs, arg_wi = arg_wi, arg_traj = arg_tr, na_nr = pi/2)
     @show(ktype[i])
-    plot(omega[:,1], omega[:,2],
+    push!(plots,plot(omega[:,1], omega[:,2],
             xlabel = "omega1",
-            ylabel = "omega2")
+            ylabel = "omega2", label = string(ktype[i])))
   end
+  plot(plots...)
 
   ig = image_geom_mri(nz = 2^5, nx = 2^6, ny = 2^6-0, fov = 250, dz = 2^5) # 250 mm FOV
   N = ig.dim
   ktype = [:cartesian, :radial, :gads, :spiral3]
-
-  for i in collect(1:length(ktype))
+  plots = Any[]
+  for i in 1:length(ktype)
     kspace, omega, wi = mri_trajectory(arg_tr, ktype = ktype[i],
     N = N, fov = ig.fovs, arg_wi = arg_wi, arg_traj = arg_tr, na_nr = pi/2)
     @show(ktype[i])
-    plot(omega[:,1], omega[:,2],
+    push!(plots, plot(omega[:,1], omega[:,2],
             xlabel = "omega1",
-            ylabel = "omega2")
+            ylabel = "omega2", label = string(ktype[i])))
   end
+  plot(plots...)
   return true
 end
