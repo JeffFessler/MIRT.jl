@@ -1,30 +1,40 @@
+#=
+mri_trajectory.jl
+based on mri_trajectory.m
+Jing Dong
+2020-03
+=#
+
 export mri_trajectory
-using MIRT
-using Random:seed!
+
+#using MIRT: image_geom_mri, todo
+using Random: seed!
 using Plots
+
 """
     kspace, omega, wi = mri_trajectory(ktype, arg_traj, N, fov, arg_wi)
-generate kspace trajectory samples and density compensation functions.
+
+Generate kspace trajectory samples and density compensation functions.
 in
-ktype		symbol	k-space trajectory type.  for proper display with help.
-arg_traj	cell	arguments for a specific trajectory
-N	[1 2|3]		target image size
-fov	[1 2|3]		field of view in x and y (and z)
-arg_wi		cell	options to pass to ir_mri_density_comp
+`ktype		symbol	k-space trajectory type.  for proper display with help.
+`arg_traj	cell	arguments for a specific trajectory
+`N	[1 2|3]		target image size
+`fov	[1 2|3]		field of view in x and y (and z)
+`arg_wi		cell	options to pass to `ir_mri_density_comp`
+
 out
-kspace	[Nk 2|3]	kspace samples in units 1/fov
-omega	[Nk 2|3]	trajectory samples over [-pi,pi]
-wi	[Nk 1]		(optional) density compensation factors
+`kspace	[Nk 2|3]	kspace samples in units 1/fov
+`omega	[Nk 2|3]	trajectory samples over [-pi,pi]
+`wi	[Nk 1]		(optional) density compensation factors
 trajectory types:
-'cartesian' 'radial' 'cart:y/2' 'random'
-'half+8' 'epi-sin'
-'spiral0' 'spiral1' 'spiral3'
-'rosette3'
-'epi-under'
-'gads' % emulate golden-angle data sharing per winkelmann:07:aor
-Copyright 2004-4-21, Jeff Fessler, University of Michigan
+`:cartesian :radial :cart_y_2 :random
+:half_8 :epi_sin
+:spiral0 :spiral1 :spiral3
+:rosette3
+:epi_under
+:gads` (emulate golden-angle data sharing per winkelmann:07:aor)
 """
-function mri_trajectory(wi; ktype::Symbol, N, fov,
+function mri_trajectory(wi ; ktype::Symbol, N::Dims, fov,
   arg_wi, arg_traj, samp::Array = [], na_nr::Real = 2*pi, na::Array = [],
   nr::Real = maximum(N)/2, ir::Array = [],
   omax::Real = pi, Nro::Int = -1,
@@ -33,7 +43,6 @@ function mri_trajectory(wi; ktype::Symbol, N, fov,
     kmax_frac::Array = [0.20 0.35 0.501],
     nspoke::Array = [],
     under::Array = [1 1 0.6])
-
 
   if Nro == -1
     Nro = maximum(collect(N))
@@ -46,9 +55,8 @@ function mri_trajectory(wi; ktype::Symbol, N, fov,
     end
   end
 
-
     if (length(N) == 1)
-        N = [N N];
+        N = [N N]
     end
 
     if (length(fov) == 1)
@@ -88,13 +96,13 @@ function mri_trajectory(wi; ktype::Symbol, N, fov,
       omega, wi = mri_trajectory_epi_under(N, fov, samp = samp)
     end
 
-
-    if(ktype == :gads)
+    if (ktype == :gads)
        omega, wi = mri_trajectory_gads(N, fov, Nro = Nro,
        delta_ro = delta_ro, shift = shift, kmax_frac = kmax_frac,
        nspoke = nspoke, under = under)
      end
-    if(ktype == :radial)
+
+    if (ktype == :radial)
        omega, wi = mri_trajectory_radial(N = N, fov = fov, na_nr = na_nr,
        na = na, nr = nr, ir = ir, omax = omax)
 
@@ -108,7 +116,7 @@ function mri_trajectory(wi; ktype::Symbol, N, fov,
 
      end
 
-    if(ktype == :rosette3)
+    if (ktype == :rosette3)
        if length(N) != 3
          @warn("fail:only 3d done")
        end
@@ -116,7 +124,7 @@ function mri_trajectory(wi; ktype::Symbol, N, fov,
      end
 
     #half cartesian + 8 rows
-    if(ktype == :half_8)
+    if (ktype == :half_8)
        o1 = (collect(0:(N[1]-1))/N[1] .- 0.5)*2*pi
        o2 = collect(-N[2]/2:8)/N[2] * 2*pi
        omega = ndgrid(o1, o2)
@@ -124,8 +132,7 @@ function mri_trajectory(wi; ktype::Symbol, N, fov,
     end
 
     # echo-planar with sinusoid:
-
-    if(ktype == :epi_sin)
+    if (ktype == :epi_sin)
       if (length(arg_traj) == 0)
          oversample = 1
 
@@ -138,9 +145,8 @@ function mri_trajectory(wi; ktype::Symbol, N, fov,
        @show(size(omega))
      end
 
-
     # bad spiral:
-    if(ktype == :spiral0)
+    if (ktype == :spiral0)
        Nspiral = 400
        omega = transpose(range(0, stop = 10*2*pi, length = Nspiral))
        omega = pi*[cos.(omega) sin.(omega)] .* [omega omega]/maximum(omega)
@@ -149,9 +155,8 @@ function mri_trajectory(wi; ktype::Symbol, N, fov,
        end
      end
 
-
     # crude spiral:
-    if(ktype == :spiral1)
+    if (ktype == :spiral1)
        Nspiral = round(prod(N) * pi/4)
        omega = range(0, stop = N[1]*2*pi, length = convert(UInt128,Nspiral))
        #@show(size(omega))
@@ -165,7 +170,7 @@ function mri_trajectory(wi; ktype::Symbol, N, fov,
     end
 
     # 3T spiral:
-    if(ktype == :spiral3)
+    if (ktype == :spiral3)
        kspace, omega = mri_kspace_spiral(N = Int(maximum(N[1:2])), fov = maximum(fov[1:2]))
 
        if length(N) == 3 #stack of these spirals
@@ -180,24 +185,22 @@ function mri_trajectory(wi; ktype::Symbol, N, fov,
      end
 
     #random
-    if(ktype == :random)
+    if (ktype == :random)
        seed!(0)
        omega = (rand(N[1]*N[2]*2, 2).-0.5)*2*pi;
     end
 
     #2D FT, undersampled in "y" (phase encode) direction
-    if(ktype == :cart_y_2)
+    if (ktype == :cart_y_2)
        o1 = (collect(0:(N[1]/1-1))/(N[1]/1) .- 0.5)*2*pi
        o2 = (collect(0:(N[2]/2-1))/(N[2]/2) .- 0.5)*2*pi
        omega = ndgrid(o1, o2)
     end
 
-
     # convert to physical units
-    if(ktype == :half_8 || ktype == :cart_y_2)
+    if (ktype == :half_8 || ktype == :cart_y_2)
       dx = fov[1] / N[1]
       kspace = omega ./ (2*pi) ./ dx
-
     else
       kspace = zeros(size(omega))
       #for id = 1:length(N)
@@ -206,10 +209,9 @@ function mri_trajectory(wi; ktype::Symbol, N, fov,
        kspace[:,id] = omega[:,id] / (2*pi) / dx
     end
 
-
     return kspace, omega, wi
 end
-#end
+
 
 # mri_trajectory_stack()
 # make 3D "stack of ..." trajectory from a 2D trajectory
@@ -248,9 +250,9 @@ return omega, wi
 end
 
 
-#mri_trajectory_gads()
-#emulate 2D golden angle radial sampling with data sharing
 """
+    mri_trajectory_gads()
+emulate 2D golden angle radial sampling with data sharing
 Arguments:
 Nro: of samples in each readout/spoke
 shift: shift along read-out due to gradient delays (stress)
@@ -299,17 +301,17 @@ function mri_trajectory_gads(N, fov; Nro::Int = -1,
   return omega, wi
 end
 
-#mri_trajectory_radial()
+
 """
+    mri_trajectory_radial()
 Arguments:
 # na_nr: default ensures proper sampling at edge of k-space
 # na: angular spokes (default: na_nr * nr)
 # nr: radial samples per spoke
 # ir: default: 0:nr
 # omax: maximum omega
-"""
-
 # todo: generalize to 3D using barger:02:trc
+"""
 function mri_trajectory_radial(;N, fov,
   na_nr::Real = 2*pi, na::Array = [],
   nr::Real = maximum(N)/2, ir::Array = [],
@@ -343,9 +345,9 @@ end
   #wi = wi[:]
 
 
-# mri_trajectory_rosette3()
-# 3d rosette, with default parameters from bucholz:08:miw
 """
+   mri_trajectory_rosette3()
+3d rosette, with default parameters from bucholz:08:miw
 Arguments:
 omax: maximum omega
 nt : time samples (65.536 ms for 4 usec dt)
@@ -380,11 +382,11 @@ function mri_trajectory_rosette3(N, fov; f1::Int = 211,
 end
 
 
-# mri_trajectory_test
-# test routine
-#: redo ploting in julia
-
-function mri_trajectory_test(test::Symbol)
+"""
+   mri_trajectory(:test)
+self test
+"""
+function mri_trajectory(test::Symbol)
   test != :test && throw(DomainError(test, "Not valid"))
   ig = image_geom_mri(nx = 2^6, ny = 2^6-0, fov = 250) # 250 mm FOV
   N = ig.dim
@@ -399,13 +401,13 @@ function mri_trajectory_test(test::Symbol)
   plots = Any[]
   for i in 1:length(ktype)
     kspace, omega, wi = mri_trajectory(arg_tr, ktype = ktype[i],
-    N = N, fov = ig.fovs, arg_wi = arg_wi, arg_traj = arg_tr, na_nr = pi/2)
+       N = N, fov = ig.fovs, arg_wi = arg_wi, arg_traj = arg_tr, na_nr = pi/2)
     @show(ktype[i])
-    push!(plots,plot(omega[:,1], omega[:,2],
+    push!(plots, plot(omega[:,1], omega[:,2],
             xlabel = "omega1",
             ylabel = "omega2", label = string(ktype[i])))
 
-    if(ktype[i] == :epi_sin)
+    if (ktype[i] == :epi_sin)
       #plot wi != 0case
       arg_tr = [10]
       kspace, omega, wi = mri_trajectory(arg_tr, ktype = ktype[i],
@@ -438,7 +440,7 @@ function mri_trajectory_test(test::Symbol)
     kspace, omega, wi = mri_trajectory(arg_tr, ktype = ktype[i],
     N = N, fov = ig.fovs, arg_wi = arg_wi, arg_traj = arg_tr, na_nr = pi/2)
     @show(ktype[i])
-    push!(plots,plot(omega[:,1], omega[:,2],
+    push!(plots, plot(omega[:,1], omega[:,2],
             xlabel = "omega1",
             ylabel = "omega2", label = string(ktype[i])))
   end
