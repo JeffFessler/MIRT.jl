@@ -16,11 +16,11 @@ using Plots
 
 Generate kspace trajectory samples and density compensation functions.
 in
-`ktype		symbol	k-space trajectory type.  for proper display with help.
-`arg_traj	cell	arguments for a specific trajectory
-`N	[1 2|3]		target image size
-`fov	[1 2|3]		field of view in x and y (and z)
-`arg_wi		cell	options to pass to `ir_mri_density_comp`
+* `ktype::Symbol` k-space trajectory type
+* `arg_traj` arguments for a specific trajectory
+* `N` [1 2|3]		target image size
+* `fov` [1 2|3]		field of view in x and y (and z)
+* `arg_wi` options to pass to `ir_mri_density_comp`
 
 out
 `kspace	[Nk 2|3]	kspace samples in units 1/fov
