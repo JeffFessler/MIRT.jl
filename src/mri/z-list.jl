@@ -7,4 +7,6 @@ include("image_geom_mri.jl")
 include("kspace.jl")
 include("kspace-spiral.jl")
 include("mri_objects.jl")
+include("mri_trajectory.jl")
 include("sensemap-sim.jl")
+
