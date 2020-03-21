@@ -345,12 +345,13 @@ function mri_trajectory(test::Symbol)
 	ig = image_geom_mri(nx = 2^5, ny = 2^5-4, fov = 250) # 250 mm FOV
 	N = ig.dim
 
-	ktype3 = [:spiral3, :radial] # 3D
+	ktype3 = [:cartesian, :spiral3, :radial] # 3D
 	for ktype in ktype3 # 3D tests
 		@show ktype
 		kspace, omega, wi = mri_trajectory( ; ktype=ktype, N=(N...,4))
 		@test size(kspace,2) == size(omega,2) == 3
-		@test size(kspace,1) == size(omega,1) == length(wi)
+		@test size(kspace,1) == size(omega,1)
+		@test length(wi) ∈ (1, size(kspace,1))
 		scatter(omega[:,1]/π, omega[:,2]/π, omega[:,3]/π, label="$ktype")
 	end
 	prompt()
