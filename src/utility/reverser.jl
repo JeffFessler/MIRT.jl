@@ -12,7 +12,7 @@ using Test: @test
     y = reverser(x, dims)
 reverse array along specified dimensions (or all if unspecified)
 """
-function reverser(x::AbstractArray, dims::AbstractVector{<:Integer})
+function reverser(x::AbstractArray, dims::AbstractVector{<:Int})
     y = copy(x)
     for d in dims
         y = reverse(y, dims=d)
@@ -21,7 +21,7 @@ function reverser(x::AbstractArray, dims::AbstractVector{<:Integer})
 end
 
 reverser(x::AbstractArray) = reverser(x, 1:ndims(x)) # all dimensions
-reverser(x::AbstractArray, d::Integer) = reverser(x, [d])
+reverser(x::AbstractArray, d::Int) = reverser(x, [d])
 
 
 """
