@@ -1,4 +1,10 @@
-# https://stackoverflow.com/questions/27411401/julia-reverse-n-dimensional-arrays
+#=
+reverser.jl
+based on
+https://stackoverflow.com/questions/27411401/julia-reverse-n-dimensional-arrays
+=#
+
+export reverser
 
 using Test: @test
 
@@ -15,7 +21,7 @@ function reverser(x::AbstractArray, dims::AbstractVector{<:Integer})
 end
 
 reverser(x::AbstractArray) = reverser(x, 1:ndims(x)) # all dimensions
-reverser(x::AbstractArray, d::Integer) = reverser(x, [1])
+reverser(x::AbstractArray, d::Integer) = reverser(x, [d])
 
 
 """
@@ -23,7 +29,10 @@ reverser(x::AbstractArray, d::Integer) = reverser(x, [1])
 self test
 """
 function reverser(test::Symbol)
+	test != :test && throw(ArgumentError("test $test"))
 	@test reverser(1:3) == 3:-1:1
 	@test reverser(1:3, 1) == 3:-1:1
+	@test reverser((1:3)', 1) == (1:3)'
+	@test reverser((1:3)', 2) == (3:-1:1)'
 	true
 end
