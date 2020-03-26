@@ -57,3 +57,13 @@ I use the `vim-mode-plus` key bindings, installed using Atom preferences.
 
 * To use the debugger in Atom/Juno, see
 [this debugging tutorial](http://docs.junolab.org/latest/man/debugging)
+
+* The default setting in Julia seems to be to use just one thread.
+Even your laptop probably has multiple cores and using them all
+will help the code run faster.
+To use all cores,
+set the
+[JULIA_NUM_THREADS environment variable](https://docs.julialang.org/en/latest/manual/environment-variables/#JULIA_NUM_THREADS-1)
+before starting Julia.
+Here are
+[Windows instructions](./thread-pc.md).
