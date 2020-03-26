@@ -1,4 +1,5 @@
-A student followed following steps on a Windows 64-bit machine
+A student used the following steps
+on a Windows 64-bit machine
 to set up multi-thread processing.
 
 1. Click on Windows key on your keyboard.
@@ -32,4 +33,5 @@ This seems to be the effect of using virtual versus physically available cores.
 This value is by default 1,
 and can be changed in Windows terminal while starting Julia:
 `.\julia --banner=no -p 3`
+
 This deploys 3 workers in Julia. 
