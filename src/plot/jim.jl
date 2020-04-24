@@ -105,7 +105,7 @@ function jim(z::AbstractArray{<:Real} ;
 		if ncol == 0
 			ncol = Int(floor(sqrt(prod(size(z)[3:end]))))
 		end
-		z = mosaicview(z, padval, ncol=ncol, npad=mosaic_npad)
+		z = mosaicview(z ; fillvalue=padval, ncol=ncol, npad=mosaic_npad)
 		xy = () # no x,y for mosaic
 	elseif fft0
 		z = FFTView(z)[x,y]
