@@ -1,7 +1,7 @@
 name = "MIRT"
 uuid = "7035ae7a-3787-11e9-139a-5545ed3dc201"
 authors = ["fessler <fessler@umich.edu>"]
-version = "0.9.3"
+version = "0.9.4"
 
 [deps]
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
@@ -33,8 +33,9 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 Wavelets = "29a6e085-ba6d-5f35-a997-948ac2efa89a"
 
 [compat]
+julia = "1.3, 1.4, 1.5"
 BenchmarkTools = "0.5"
-Colors = "0.8, 0.9, 0.10, 0.11"
+Colors = "0.8, 0.9, 0.10, 0.11, 0.12"
 DSP = "0.6"
 FFTViews = "0.3"
 FFTW = "1.2"
@@ -46,10 +47,9 @@ LaTeXStrings = "1.1"
 LinearMaps = "2.6"
 LinearMapsAA = "0.4"
 MIRTio = "0.2"
-MosaicViews = "0.1"
+MosaicViews = "0.1, 0.2"
 NFFT = "0.4"
-Plots = "0.29"
+Plots = "0.29, 1.0"
 Reexport = "0.2"
 SpecialFunctions = "0.8, 0.9, 0.10"
 Wavelets = "0.9"
-julia = "1.3, 1.4"
