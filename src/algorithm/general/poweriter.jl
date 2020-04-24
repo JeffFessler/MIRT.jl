@@ -66,12 +66,12 @@ function poweriter(test::Symbol)
 	s0 = opnorm(A)
 	chat = false
 	_,s1 = poweriter(A; tol=1e-9, chat=chat)
-	@test isequal(round(s0,digits=7), round(s1,digits=7))
+	@test s0 ≈ s1
 
 	A = randn(ComplexF32, M, N) # complex
 	s0 = opnorm(A)
 	_,s1 = poweriter(A; tol=1e-9, chat=chat)
-	@test isequal(round(s0,digits=5), round(s1,digits=5))
+	@test s0 ≈ s1
 
 	true
 end
