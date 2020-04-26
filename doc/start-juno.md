@@ -23,7 +23,7 @@ On my Mac my path is
 * For Julia 1.2.0, start with these two commands:
   - `add SpecialFunctions`
   - `build SpecialFunctions`
-  - Then: `add MIRT Plots IJulia FFTW FFTViews DSP Arpack Debugger`
+  - Then: `add MIRT Plots IJulia FFTW FFTViews Arpack Debugger`
   - The package `IJulia` is needed for Jupyter notebooks.
   - FYI: `add MIRT` automatically loads from https://github.com/JeffFessler/MIRT.jl because MIRT.jl is a registered package.
   - There are numerous packages available, see https://pkg.julialang.org/docs/

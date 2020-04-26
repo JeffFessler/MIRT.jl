@@ -10,7 +10,7 @@
 * Use the `]` key at the Julia REPL to enter its package manager (pkg).
 * Type `?` and press Enter at the Julia `pkg` prompt to peruse the many pkg commands.
 * Add needed packages using the `add` command.
-  - Specifically: `add MIRT Plots IJulia Debugger FFTW FFTViews DSP Arpack`
+  - Specifically: `add MIRT Plots IJulia Debugger FFTW FFTViews Arpack`
   - The package `IJulia` is needed for Jupyter notebooks.
   - FYI: `add MIRT` automatically loads from https://github.com/JeffFessler/MIRT.jl because MIRT.jl is a registered package.
 * Type `precompile` to have Julia precompile the added packages.
