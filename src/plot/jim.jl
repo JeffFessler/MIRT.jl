@@ -6,11 +6,10 @@ jiffy image display
 
 export jim
 
-using Plots: heatmap, ColorGradient, plot!
+using Plots: heatmap, plot!
 using LaTeXStrings
 using MosaicViews: mosaicview
 using FFTViews: FFTView
-using Colors: HSV
 using Test: @test
 
 # global default key/values
@@ -42,34 +41,34 @@ end
 
 
 """
-`jim(z, ...)`
+    jim(z, ...)
 
-jiffy image display of `x` using `heatmap`
+A jiffy image display of `x` using `heatmap`
 
 in
 - `z` image, can be 2D or higher, if higher then it uses `mosaicviews`
 
 option
-- `aspect_ratio` for heatmap; default `:equal`
-- `clim` for heatmap; default `(minimum(z),maximum(z))`
-- `color` colormap; default `:grays`
+- `aspect_ratio`; default `:equal`
+- `clim`; default `(minimum(z),maximum(z))`
+- `color` (colormap, e.g. `:hsv`); default `:grays`
 - `ncol` for mosaicview for 3D and higher arrays; default `0` does auto select
 - `padval` padding value for mosaic view; default `minimum(z)`
 - `line3plot` lines around sub image for 3d mosaic; default `false`
 - `line3type` line type around sub image for 3d mosaic; default `(:yellow)`
 - `mosaic_npad` # of pixel padding for mosaic view; default `1`
 - `fft0` if true use FFTView to display; default `false`
-- `title` for heatmap; default `""`
-- `xlabel` for heatmap; default `""`
-- `ylabel` for heatmap; default `""`
-- `yflip` for heatmap; default `true` if `minimum(y) >= 0`
-- `x` for x axis; default `1:size(z,1)`
-- `y` for y axis; default `1:size(z,2)`
-- `xtick` for heatmap; default `[minimum(x),maximum(x)]`
-- `ytick` for heatmap; default `[minimum(y),maximum(y)]`
+- `title`; default `""`
+- `xlabel`; default `""`
+- `ylabel`; default `""`
+- `yflip`; default `true` if `minimum(y) >= 0`
+- `x` values for x axis; default `1:size(z,1)`
+- `y` values for y axis; default `1:size(z,2)`
+- `xtick`; default `[minimum(x),maximum(x)]`
+- `ytick`; default `[minimum(y),maximum(y)]`
 
 out
-- returns plot handle
+- returns plot handle, type `Plots.Plot`
 
 2019-02-23 Jeff Fessler, University of Michigan
 """
@@ -109,11 +108,6 @@ function jim(z::AbstractArray{<:Real} ;
 		xy = () # no x,y for mosaic
 	elseif fft0
 		z = FFTView(z)[x,y]
-	end
-
-	# attempt an HSV colormap for phase images
-	if color === :hsv
-		color = ColorGradient([HSV(h,1,1) for h=LinRange(0,350,351)])
 	end
 
 	heatmap(xy..., z', transpose=false,
