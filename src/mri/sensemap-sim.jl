@@ -11,7 +11,6 @@ export ir_mri_sensemap_sim
 using SpecialFunctions: ellipk, ellipe
 using Test: @test, @inferred
 using Plots: Plot, plot, plot!, gui, contour!, scatter!, quiver, quiver!, Arrow
-#using Plots: clibrary; clibrary(:misc)
 
 
 """
