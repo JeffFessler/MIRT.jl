@@ -1,7 +1,7 @@
 #=
 diffs.jl
 finite differences
-2019-03-96 Jeff Fessler, University of Michigan
+2019-03-06 Jeff Fessler, University of Michigan
 =#
 
 export diff_map
@@ -30,6 +30,12 @@ out
 """
 function diff2d_forw(x::AbstractMatrix{<:Number})
 	return [diff(x,dims=1)[:]; diff(x,dims=2)[:]]
+end
+
+# TODO: It could be faster to have a preallocated array for storing all the
+# differences; the array would need to be stored with the LinearMapAA
+function diffnd_forw(x::AbstractArray{<:Number,D}) where {D}
+    return reduce(vcat, vec(diff(x, dims = d)) for d = 1:D)
 end
 
 
