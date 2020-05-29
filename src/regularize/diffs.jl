@@ -83,23 +83,6 @@ function diffnd_adj(d::AbstractVector{<:Number}, N::Int... ; outnd=false)
     length(d) != sum(*(N[1:i-1]..., N[i] - 1, N[i+1:end]...) for i = 1:ndims) &&
         throw("length(d)")
 
-#    get_partition = i -> begin
-#        if i == 1
-#            di = d[1:*(N[i] - 1, N[i+1:end]...)]
-#        else
-#            start = 1 + sum(*(N[1:i-n-1]..., N[i-n] - 1, N[i-n+1:end]...) for n = 1:i-1)
-#            len = *(N[1:i-1]..., N[i] - 1, N[i+1:end]...)
-#            di = d[start:start+len-1]
-#        end
-#        di = reshape(di, N[1:i-1]..., N[i] - 1, N[i+1:end]...)
-#        zi = cat(-reshape(selectdim(di, i, 1), N[1:i-1]..., 1, N[i+1:end]...),
-#                 (reshape(selectdim(di, i, n) - selectdim(di, i, n + 1), N[1:i-1]..., 1, N[i+1:end]...)
-#                  for n = 1:N[i]-2)...,
-#                 reshape(selectdim(di, i, N[i] - 1), N[1:i-1]..., 1, N[i+1:end]...),
-#                 dims = i)
-#    end
-#    z = sum(get_partition(i) for i = 1:ndims)
-
     z = Array{eltype(d)}(undef, N...)
     di = @view(d[1:*(N[1] - 1, N[2:end]...)])
     di = reshape(di, N[1] - 1, N[2:end]...)
