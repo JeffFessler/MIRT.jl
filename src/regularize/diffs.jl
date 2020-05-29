@@ -33,6 +33,24 @@ function diff2d_forw(x::AbstractMatrix{<:Number})
 	return [diff(x,dims=1)[:]; diff(x,dims=2)[:]]
 end
 
+
+"""
+`d = diffnd_forw(X)`
+
+N-D finite differences along all dimensions, for anisotropic TV regularization.
+Performs the same operations as
+d = ``[(I_{N_d} \\otimes \\cdots \\otimes D_{N_1}); \\dots (D_{N_d} \\otimes \\cdots \\otimes I_{N_1})] X[:]``
+where ``D_N`` denotes the ``N-1 \\times N`` 1D finite difference matrix
+and ``\\otimes`` denotes the Kronecker product,
+but does it efficiently
+without using `spdiagm` (or any `SparseArrays` function).
+
+in
+- `X`		`N_1 x ... x N_d` array (typically an N-D image).
+
+out
+- `d`		vector of length `N_d*...*(N_1-1) + ... + (N_d-1)*...*N_1`
+"""
 function diffnd_forw(x::AbstractArray{<:Number,D}) where {D}
     return reduce(vcat, vec(diff(x, dims = d)) for d = 1:D)
 end
@@ -76,35 +94,50 @@ function diff2d_adj(d::AbstractVector{<:Number}, M::Int, N::Int ; out2d=false)
 	return out2d ? z : z[:] # array or vector?
 end
 
+
+"""
+`z =  diffnd_adj(d, N...; out2d=false)`
+
+Adjoint of N-D finite differences along both dimensions.
+Performs the same operations as
+``z = [(I_{N_d} \\otimes \\cdots \\otimes D_{N_1}); \\dots (D_{N_d} \\otimes \\cdots \\otimes I_{N_1})]' * d``
+where D_N denotes the N-1 x N 1D finite difference matrix
+and \\otimes denotes the Kronecker product,
+but does it efficiently without using spdiagm (or any SparseArrays function).
+
+in
+- `d`		vector of length `N_d*...*(N_1-1) + ... + (N_d-1)*...*N_1`
+- `N...`	desired output size
+
+option
+- `outnd`	if true then return `N_1 x ... x N_d` array, else `prod(N)` vector
+
+out
+- `z`		`prod(N)` vector or `N_1 x ... x N_d` array (typically an N-D image)
+
+"""
 # Note that N must be strictly greater than 1 for each dimension
+# (This is true of diff2d_adj as well)
 function diffnd_adj(d::AbstractVector{<:Number}, N::Int... ; outnd=false)
 
     ndims = length(N)
     length(d) != sum(*(N[1:i-1]..., N[i] - 1, N[i+1:end]...) for i = 1:ndims) &&
         throw("length(d)")
 
-    z = Array{eltype(d)}(undef, N...)
-    di = @view(d[1:*(N[1] - 1, N[2:end]...)])
-    di = reshape(di, N[1] - 1, N[2:end]...)
-    slice1 = selectdim(z, 1, 1)
-    slice1 .= -selectdim(di, 1, 1)
-    for n = 2:N[1]-1
-        slicen = selectdim(z, 1, n)
-        slicen .= selectdim(di, 1, n - 1) - selectdim(di, 1, n)
-    end
-    sliceN = selectdim(z, 1, N[1])
-    sliceN .= selectdim(di, 1, N[1] - 1)
-    for i = 2:ndims
-        start = 1 + sum(*(N[1:i-n-1]..., N[i-n] - 1, N[i-n+1:end]...) for n = 1:i-1)
-        len = *(N[1:i-1]..., N[i] - 1, N[i+1:end]...)
-        di = @view(d[start:start+len-1])
+    z = zeros(eltype(d), N...)
+    for i = 1:ndims
+        if i == 1
+            di = @view(d[1:*(N[i] - 1, N[i+1:end]...)])
+        else
+            start = 1 + sum(*(N[1:i-n-1]..., N[i-n] - 1, N[i-n+1:end]...) for n = 1:i-1)
+            len = *(N[1:i-1]..., N[i] - 1, N[i+1:end]...)
+            di = @view(d[start:start+len-1])
+        end
         di = reshape(di, N[1:i-1]..., N[i] - 1, N[i+1:end]...)
         slice1 = selectdim(z, i, 1)
         slice1 .-= selectdim(di, i, 1)
-        for n = 2:N[i]-1
-            slicen = selectdim(z, i, n)
-            slicen .+= selectdim(di, i, n - 1) - selectdim(di, i, n)
-        end
+        slicen = selectdim(z, i, 2:N[i]-1)
+        slicen .+= selectdim(di, i, 1:N[i]-2) - selectdim(di, i, 2:N[i]-1)
         sliceN = selectdim(z, i, N[i])
         sliceN .+= selectdim(di, i, N[i] - 1)
     end
@@ -123,6 +156,10 @@ function diff2d_map(M::Int, N::Int)
         (N*(M-1)+M*(N-1), N*M), (name="diff2_map",))
 end
 
+
+"""
+`T = diffnd_map(N::Int...)`
+"""
 function diffnd_map(N::Int...)
     return LinearMapAA(
     x -> diffnd_forw(reshape(x,N...)),
@@ -159,14 +196,20 @@ function diff_map(test::Symbol)
 	true
 end
 
+
+"""
+`diffnd_map(:test)`
+self test
+"""
 function diffnd_map(test::Symbol)
     test != :test && throw(ArgumentError("test $test"))
-    for N in [(2,), (10,), (2,3), (10,11), (2,3,4), (4,4,4,4)]
+    for N in [(2,), (10,), (2,3), (10,11), (1,1,1), (2,3,4), (4,4,4,4)]
         T = diffnd_map(N...)
         @test Matrix(T)' == Matrix(T')
         @test T.name == "diffn_map"
     end
     # adjoint doesn't work if any of the dimensions has size 1
+    # (unless all are size 1)
     N = (1,2)
     T = diffnd_map(N...)
     @test_throws BoundsError Matrix(T)' == Matrix(T')
@@ -175,12 +218,12 @@ function diffnd_map(test::Symbol)
     T2d = diff_map(N...)
     Tnd = diffnd_map(N...)
     x = randn(prod(N))
-    d2d = @btime $T2d * $x
-    dnd = @btime $Tnd * $x
+    d2d = @btime $T2d * $x # 38 μs
+    dnd = @btime $Tnd * $x # 27 μs
     @test d2d == dnd
     d = d2d
-    y2d = @btime $T2d' * $d
-    ynd = @btime $Tnd' * $d
+    y2d = @btime $T2d' * $d # 65 μs
+    ynd = @btime $Tnd' * $d # 60 μs
     @test y2d == ynd
     true
 end
