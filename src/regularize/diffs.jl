@@ -39,7 +39,7 @@ end
 
 N-D finite differences along all dimensions, for anisotropic TV regularization.
 Performs the same operations as
-d = ``[(I_{N_d} \\otimes \\cdots \\otimes D_{N_1}); \\dots (D_{N_d} \\otimes \\cdots \\otimes I_{N_1})] X[:]``
+d = ``[(I_{N_d} \\otimes \\cdots \\otimes D_{N_1}); \\dots; (D_{N_d} \\otimes \\cdots \\otimes I_{N_1})] X[:]``
 where ``D_N`` denotes the ``N-1 \\times N`` 1D finite difference matrix
 and ``\\otimes`` denotes the Kronecker product,
 but does it efficiently
@@ -100,7 +100,7 @@ end
 
 Adjoint of N-D finite differences along both dimensions.
 Performs the same operations as
-``z = [(I_{N_d} \\otimes \\cdots \\otimes D_{N_1}); \\dots (D_{N_d} \\otimes \\cdots \\otimes I_{N_1})]' * d``
+``z = [(I_{N_d} \\otimes \\cdots \\otimes D_{N_1}); \\dots; (D_{N_d} \\otimes \\cdots \\otimes I_{N_1})]' * d``
 where D_N denotes the N-1 x N 1D finite difference matrix
 and \\otimes denotes the Kronecker product,
 but does it efficiently without using spdiagm (or any SparseArrays function).
@@ -116,9 +116,11 @@ out
 - `z`		`prod(N)` vector or `N_1 x ... x N_d` array (typically an N-D image)
 
 """
-# Note that N must be strictly greater than 1 for each dimension
-# (This is true of diff2d_adj as well)
 function diffnd_adj(d::AbstractVector{<:Number}, N::Int... ; outnd=false)
+
+    # Note that N must be strictly greater than 1 for each dimension,
+    # or N must be 1 for all dimensions
+    # (This is true of diff2d_adj as well)
 
     ndims = length(N)
     length(d) != sum(*(N[1:i-1]..., N[i] - 1, N[i+1:end]...) for i = 1:ndims) &&
