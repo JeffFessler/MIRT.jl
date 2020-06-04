@@ -35,7 +35,7 @@ end
 
 
 """
-`d = diffnd_forw(X)`
+`d = diffnd_forw(X; dims=1:ndims(X))`
 
 N-D finite differences along all dimensions, for anisotropic TV regularization.
 Performs the same operations as
@@ -48,11 +48,14 @@ without using `spdiagm` (or any `SparseArrays` function).
 in
 - `X`		`N_1 x ... x N_d` array (typically an N-D image).
 
+option
+- `dims`        dimensions along which to perform finite differences
+
 out
 - `d`		vector of length `N_d*...*(N_1-1) + ... + (N_d-1)*...*N_1`
 """
-function diffnd_forw(x::AbstractArray{<:Number,D}) where {D}
-    return reduce(vcat, vec(diff(x, dims = d)) for d = 1:D)
+function diffnd_forw(x::AbstractArray{<:Number,D} ; dims=1:D) where {D}
+    return reduce(vcat, vec(diff(x, dims = d)) for d in dims)
 end
 
 
@@ -96,7 +99,7 @@ end
 
 
 """
-`z =  diffnd_adj(d, N...; out2d=false)`
+`z =  diffnd_adj(d, N...; dims=1:length(N), out2d=false)`
 
 Adjoint of N-D finite differences along both dimensions.
 Performs the same operations as
@@ -110,38 +113,38 @@ in
 - `N...`	desired output size
 
 option
+- `dims`        dimensions along which to perform adjoint finite differences
 - `outnd`	if true then return `N_1 x ... x N_d` array, else `prod(N)` vector
 
 out
 - `z`		`prod(N)` vector or `N_1 x ... x N_d` array (typically an N-D image)
 
 """
-function diffnd_adj(d::AbstractVector{<:Number}, N::Int... ; outnd=false)
+function diffnd_adj(d::AbstractVector{<:Number}, N::Vararg{Int,D} ; dims=1:D, outnd=false) where {D}
 
     # Note that N must be strictly greater than 1 for each dimension,
     # or N must be 1 for all dimensions
     # (This is true of diff2d_adj as well)
 
-    ndims = length(N)
-    length(d) != sum(*(N[1:i-1]..., N[i] - 1, N[i+1:end]...) for i = 1:ndims) &&
+    length(d) != sum(*(N[1:dim-1]..., N[dim] - 1, N[dim+1:end]...) for dim in dims) &&
         throw("length(d)")
 
     z = zeros(eltype(d), N...)
-    for i = 1:ndims
+    for (i, dim) in enumerate(dims)
         if i == 1
-            di = @view(d[1:*(N[i] - 1, N[i+1:end]...)])
+            di = @view(d[1:*(N[1:dim-1]..., N[dim] - 1, N[dim+1:end]...)])
         else
-            start = 1 + sum(*(N[1:i-n-1]..., N[i-n] - 1, N[i-n+1:end]...) for n = 1:i-1)
-            len = *(N[1:i-1]..., N[i] - 1, N[i+1:end]...)
+            start = 1 + sum(*(N[1:n-1]..., N[n] - 1, N[n+1:end]...) for n in dims[1:i-1])
+            len = *(N[1:dim-1]..., N[dim] - 1, N[dim+1:end]...)
             di = @view(d[start:start+len-1])
         end
-        di = reshape(di, N[1:i-1]..., N[i] - 1, N[i+1:end]...)
-        slice1 = selectdim(z, i, 1)
-        slice1 .-= selectdim(di, i, 1)
-        slicen = selectdim(z, i, 2:N[i]-1)
-        slicen .+= selectdim(di, i, 1:N[i]-2) - selectdim(di, i, 2:N[i]-1)
-        sliceN = selectdim(z, i, N[i])
-        sliceN .+= selectdim(di, i, N[i] - 1)
+        di = reshape(di, N[1:dim-1]..., N[dim] - 1, N[dim+1:end]...)
+        slice1 = selectdim(z, dim, 1)
+        slice1 .-= selectdim(di, dim, 1)
+        slicen = selectdim(z, dim, 2:N[dim]-1)
+        slicen .+= selectdim(di, dim, 1:N[dim]-2) - selectdim(di, dim, 2:N[dim]-1)
+        sliceN = selectdim(z, dim, N[dim])
+        sliceN .+= selectdim(di, dim, N[dim] - 1)
     end
 
     return outnd ? z : vec(z)
@@ -160,13 +163,13 @@ end
 
 
 """
-`T = diffnd_map(N::Int...)`
+`T = diffnd_map(N::Int...; dims=1:length(N))`
 """
-function diffnd_map(N::Int...)
+function diffnd_map(N::Vararg{Int,D} ; dims=1:D) where {D}
     return LinearMapAA(
-    x -> diffnd_forw(reshape(x,N...)),
-    d -> diffnd_adj(d, N...),
-    (sum(*(N[1:i-1]..., N[i] - 1, N[i+1:end]...) for i = 1:length(N)), prod(N)),
+    x -> diffnd_forw(reshape(x,N...), dims=dims),
+    d -> diffnd_adj(d, N..., dims=dims),
+    (sum(*(N[1:dim-1]..., N[dim] - 1, N[dim+1:end]...) for dim in dims), prod(N)),
     (name="diffn_map",))
 end
 
@@ -209,6 +212,23 @@ function diffnd_map(test::Symbol)
         T = diffnd_map(N...)
         @test Matrix(T)' == Matrix(T')
         @test T.name == "diffn_map"
+        T = diffnd_map(N..., dims=1)
+        @test Matrix(T)' == Matrix(T')
+        @test T.name == "diffn_map"
+        if length(N) >= 2
+            for dims in [2, (1,2)]
+                T = diffnd_map(N..., dims=dims)
+                @test Matrix(T)' == Matrix(T')
+                @test T.name == "diffn_map"
+            end
+        end
+        if length(N) >= 3
+            for dims in [3, (1,3), (2,3), (1,2,3)]
+                T = diffnd_map(N..., dims=dims)
+                @test Matrix(T)' == Matrix(T')
+                @test T.name == "diffn_map"
+            end
+        end
     end
     # adjoint doesn't work if any of the dimensions has size 1
     # (unless all are size 1)
