@@ -29,9 +29,8 @@ function prompt( ; gui::Bool=true)
 	gui && !Plots.isplotnull() && display(plot!()) # Plots.gui()
 
 	(prompt_state === :draw) && return nothing
-	!isinteractive() && return nothing
 
-	c = wait_for_key() # can only be tested interactively
+	c = isinteractive() ? wait_for_key() : 'd' # call only if interactive
 
 	(c == 'd') && (prompt_state = :draw)
 	(c == 'n') && (prompt_state = :nodraw)
