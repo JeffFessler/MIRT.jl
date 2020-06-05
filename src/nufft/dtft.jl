@@ -5,6 +5,9 @@ The main purpose of this code is for testing the NUFFT code.
 2019-06-05, Jeff Fessler, University of Michigan
 Note: the multi-dimensional version uses collect(Tuple(idx))
 that might be inefficient, but for efficiency one should just use NUFFT.
+
+see also MIRT/time/dtft.jl
+
 =#
 
 export dtft_init, dtft, dtft_adj
@@ -13,7 +16,6 @@ export dtft_init, dtft, dtft_adj
 using FFTW: fft
 using Random: seed!
 #using LinearAlgebra: norm
-#using BenchmarkTools: @btime
 using Distributed: @sync, @distributed, pmap
 using SharedArrays: SharedArray, sdata
 using Test: @test
@@ -353,27 +355,6 @@ function dtft_test1c( ; N::Int=2^10, M::Int=2^11, n_shift::Real=7)
 	A = d.A
 	@test A.name == "dtft1"
 	@test A.N == (N,)
-
-#=
-	# time DTFT
-	@btime fft($x)
-	@btime dtft_loop_n($w, $x)
-	@btime dtft_loop_m($w, $x)
-	@btime dtft_dist_m($w, $x)
-	@btime dtft_pmap_m($w, $x)
-	@btime dtft_matvec($w, $x)
-
-	# jf28 results:
-	# 12.351 μs (51 allocations: 19.08 KiB)
-	# 38.608 ms (6146 allocations: 80.34 MiB)
-	# 43.119 ms (2051 allocations: 32.30 MiB)
-	# 44.179 ms (11965 allocations: 32.64 MiB)
-	# 51.865 ms (20518 allocations: 32.67 MiB)
-	# 53.091 ms (7 allocations: 48.03 MiB)
-
-	# conclusion: dtft_loop_n is the fastest
-	# (also amenable to parfor=pmap but unhelpful!?)
-=#
 
 	true
 end

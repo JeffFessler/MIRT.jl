@@ -1,5 +1,7 @@
 In reverse chronological order
 
+2020-06-05 isolate @btime in time/
+
 0.9.5 2020-04-26
 
 cleanup :hsv

@@ -3,7 +3,7 @@
 export eql_root
 
 using Test: @test, @test_throws, @inferred
-using BenchmarkTools: @btime
+
 
 """
     x = eql_root(a,b,c)
@@ -32,30 +32,11 @@ function eql_root(a::Real, b::Real, c::Real)
     return (b > 0) ? c / (det + b) : (det - b) / a
 end
 
+
 function eql_root(a, b, c)
     (size(a) != size(b) || size(b) != size(c)) && throw(DimensionMismatch("all arguments must share dimensions"))
 
-    return eql_root.(a, b, c)
-
-#= old way - save until tests pass
-    any(a .< 0) && throw(DomainError(a,"a must be entirely nonnegative"))
-
-    T = promote_type(eltype(a), eltype(b), eltype(c), Float32)
-    x = zeros(T,size(a))
-    
-    j = (a .== 0)
-    x[j] .= c[j] ./ b[j] / 2 # trivially solve equations where a == 0
-    det = sqrt.(b.^2 + a .* c) # determinant / 2
-    # check for equations where a is positive and b is positive
-    j = (a .> 0) .& (b .> 0)
-    x[j] .= c[j] ./ (det[j] + b[j])
-    # check for equations where a is pos and b is nonpos
-    j = (a .> 0) .& (b .<= 0)
-    x[j] .= (det[j] - b[j]) ./ a[j]
-
-    return x
-=#
-    
+    eql_root.(a, b, c)
 end
 
 

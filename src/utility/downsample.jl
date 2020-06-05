@@ -1,6 +1,8 @@
 #=
 downsample.jl
 Copyright 2019-03-05, Jeff Fessler, University of Michigan
+
+see also MIRT/time/downsample.jl
 =#
 
 export downsample_dim1
@@ -275,18 +277,6 @@ function downsample3_perm(x::AbstractArray{<:Number,3}, down::Dims{3})
 end
 
 
-#=
-# timing tests for development
-using BenchmarkTools: @btime
-
-function downsample3_time()
-	x = ones(Float32, 100, 200, 40)
-	@btime downsample3_perm($x, (2, 2, 2)) # fastest
-	@btime downsample3_loop($x, [2, 2, 2], T=Float32) # 2x slower
-end
-=#
-
-
 function downsample3_test()
 	x = [6, 5, 2]
 	x = reshape(2*(1:prod(x)), x...)
@@ -322,7 +312,7 @@ end
 
 
 """
-`downsample(:test)`
+    downsample(:test)
 self test
 """
 function downsample(test::Symbol)
@@ -331,6 +321,5 @@ function downsample(test::Symbol)
 	@test downsample1_test()
 	@test downsample2_test()
 	@test downsample3_test()
-#	downsample3_time()
 	true
 end

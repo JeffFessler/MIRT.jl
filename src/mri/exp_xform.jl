@@ -1,6 +1,8 @@
 #=
 exp_xform.jl
 
+see also MIRT/time/exp_xform.jl
+
 2019-12-08 Connor Martin
 Based on exp_xform_mex.c
 Copyright 2004-9-23, Jeff Fessler, University of Michigan
@@ -9,7 +11,6 @@ Copyright 2004-9-23, Jeff Fessler, University of Michigan
 export exp_xform
 
 using Test: @test, @test_throws, @inferred
-using BenchmarkTools: @btime
 
 
 """
@@ -88,7 +89,7 @@ exp_xform(x::AbstractVector{<:Number},
 
 
 # test for given data type
-function exp_xform_test( ; T::DataType = ComplexF32, time::Bool = false)
+function exp_xform_test( ; T::DataType = ComplexF32)
 
     modes = (:element, :row, :column)
 
@@ -121,29 +122,20 @@ function exp_xform_test( ; T::DataType = ComplexF32, time::Bool = false)
         @test y1 ≈ y2
     end
 
-    # timing tests: :matrix is fastest, with :row a close 2nd
-    for mode in (:matrix, modes...)
-        time && @info "Case :$mode"
-        tmp = (x, u, v) -> exp_xform(x, u, v ; mode=mode)
-        time && @btime $tmp($X, $U, $V)
-    end
-
     true
 end
 
 
 """
-    exp_xform(:test ; time=false)
-self test (with optional timing tests)
+    exp_xform(:test)
+self test
 """
-function exp_xform(test::Symbol ; time::Bool = false)
+function exp_xform(test::Symbol)
     test != :test && throw("Invalid argument for exp_xform.")
 	@test_throws String exp_xform(ones(2,2), ones(2,2), ones(2,2) ; mode=:bad)
 
 #    for T in (ComplexF32, ComplexF64)
-        @test exp_xform_test( ; time=time) # T=T
+        @test exp_xform_test() # T=T
 #    end
     true
 end
-
-#exp_xform(:test ; time=true)
