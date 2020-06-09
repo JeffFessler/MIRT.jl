@@ -17,17 +17,24 @@ diff_size(N::Dims, dim::Int) = (N[1:dim-1]..., N[dim] - 1, N[dim+1:end]...)
 # corresponding length
 diff_length(N::Dims, dim::Int) = prod(diff_size(N, dim))
 
+
 # check argument validity
-function diff_check(N::Dims, dims::AbstractVector{Int})
-    !all(1 .<= dims .<= length(N)) && throw(ArgumentError("dims range $dims"))
-    (length(dims) > 1) && (unique(dims) != dims) &&
+# dims should be Int or AbstractVector{Int} or Dims
+# but using duck typing for simplicity
+function diff_check(N::Dims, dims)
+    (length(unique(dims)) != length(dims)) &&
         throw(ArgumentError("non-unique dims $dims"))
-    any(N[dims] .== 1) && throw(ArgumentError("invalid size $N for dims $dims"))
+	(dim -> diff_check(N, dim)).(dims) # check each dim
+end
+
+function diff_check(N::Dims, dim::Int)
+    !(1 <= dim <= length(N)) && throw(ArgumentError("dim range $dim"))
+    (N[dim] == 1) && throw(ArgumentError("invalid size $N for dim $dim"))
 end
 
 
 """
-    d = diff_forw(X ; dims::AbstractVector{Int} = 1:ndims(X))
+    d = diff_forw(X ; dims = 1:ndims(X))
 
 Finite differences along one or more dimensions of an array,
 e.g., for anisotropic TV regularization.
@@ -35,61 +42,35 @@ e.g., for anisotropic TV regularization.
 By default performs the same operations as
 ``d = [(I_{N_d} \\otimes \\cdots \\otimes D_{N_1}); \\dots; (D_{N_d} \\otimes \\cdots \\otimes I_{N_1})] X[:]``
 where ``D_N`` denotes the `N-1 × N` 1D finite difference matrix
-and ``\\otimes`` denotes the Kronecker product, but does it efficiently
+and `⊗` denotes the Kronecker product, but does it efficiently
 without using `spdiagm` (or any `SparseArrays` function).
 
-Input dimension `N` must exceed 1 for each dimension specified by `dims`.
+Input dimension `N` must exceed `1` for each dimension specified by `dims`.
 
 in
 - `X` `N_1 × ... × N_d` array (typically an N-D image).
 
 option
-- `dims` dimensions along which to perform finite differences; default `1:ndims(X)`
-must have unique elements and be a subset of 1:ndims(X)
+- `dims` dimension(s) for performing finite differences; default `1:ndims(X)`
+must have unique elements and be a nonempty subset of `1:ndims(X)`
 
 out
 - `d` vector of default length `N_d*...*(N_1-1) + ... + (N_d-1)*...*N_1`
 """
-function diff_forw(x::AbstractArray{<:Number,D}
-    ; dims::AbstractVector{Int} = 1:D,
-) where {D}
+function diff_forw(x::AbstractArray{<:Number,D} ; dims = 1:D) where {D}
     diff_check(size(x), dims)
     return reduce(vcat, vec(diff(x, dims = d)) for d in dims)
 end
 
 
-#=
-I wanted to give flexibility for Ints and Tuples
-but I could not get this to work...
-
 """
-    d = diff_forw(X ; dims::AbstractVector{Int} = 1:ndims(X))
-"""
-diff_forw(x::AbstractArray{<:Number} ; dims::AbstractVector{Int} = 1:ndims(X)) =
-    diff_forw(x, dims)
-
-"""
-    d = diff_forw(X ; dims::Dims = (1,))
-"""
-diff_forw(x::AbstractArray{<:Number} ; dims::Dims = (1,)) =
-    diff_forw(x, collect(dims))
-
-"""
-    d = diff_forw(X ; dims::Int = 1)
-"""
-diff_forw(x::AbstractArray{<:Number} ; dims::Int = 1) =
-    diff_forw(x, [dims])
-=#
-
-
-"""
-    Z = diff_adj(dx, N... ; dims=1:length(N))
+    Z = diff_adj(dx, N... ; dims = 1:length(N))
 
 Adjoint of finite differences of arrays along one or more dimensions.
 By default performs the same operations as
 ``vec(Z) = [(I_{N_d} \\otimes \\cdots \\otimes D_{N_1}); \\dots; (D_{N_d} \\otimes \\cdots \\otimes I_{N_1})]' * d``
-where D_N denotes the `N-1 × N` 1D finite difference matrix
-and `\\otimes` denotes the Kronecker product,
+where `D_N` denotes the `N-1 × N` 1D finite difference matrix
+and `⊗` denotes the Kronecker product,
 but does it efficiently without using `spdiagm` (or any `SparseArrays` function).
 
 in
@@ -97,14 +78,13 @@ in
 - `N...` desired output size
 
 option
-- `dims` dimensions along which to perform adjoint finite differences
+- `dims` dimension(s) for performing adjoint finite differences; default `1:ndims(X)`
 
 out
 - `Z` `N_1 × ... × N_d` array by default
 
 """
-function diff_adj(d::AbstractVector{<:Number}, N::Vararg{Int,D}
-    ; dims::AbstractVector{Int} = 1:D,
+function diff_adj(d::AbstractVector{<:Number}, N::Vararg{Int,D} ; dims = 1:D,
 ) where {D}
 
 # todo: N::Dims instead of Vararg?
@@ -151,15 +131,15 @@ end
 
 
 """
-    T = diff_map(N::Int... ; dims=1:length(N))
+    T = diff_map(N::Int... ; dims = 1:length(N))
 
 in
 - `N...` image size
 
 out
-- `T` `LinearMapAA` object for regularizing via `T*x`
+- `T` `LinearMapAA` object for computing finite differences via `T*x`
 """
-function diff_map(N::Vararg{Int,D} ; dims::AbstractVector{Int} = 1:D) where {D}
+function diff_map(N::Vararg{Int,D} ; dims = 1:D) where {D}
     diff_check((N...,), dims)
     return LinearMapAA(
         x -> diff_forw(reshape(x, N...), dims=dims),
@@ -171,7 +151,7 @@ end
 
 
 """
-`diff_map(:test)`
+    diff_map(:test)
 self test
 """
 function diff_map(test::Symbol)
@@ -181,7 +161,7 @@ function diff_map(test::Symbol)
     @test_throws ArgumentError diff_forw(ones(1,2,1), dims=[1,2])
     @test diff_forw(ones(2,4,6) ; dims=[2]) == zeros(2*3*6)
 
-    for N in ([2,], [10,], [2,3], [10,11], [2,3,4], [4,4,4,4]) # [1,1,1],
+    for N in (2, (3,), [4,], (3,4), (2,3,4), [4,3,2,2])
         T = diff_map(N...)
         @test Matrix(T)' == Matrix(T')
         @test T.name == "diff_map"
@@ -221,4 +201,4 @@ function diff_map(test::Symbol)
     true
 end
 
-# diff_map(:test)
+#diff_map(:test)
