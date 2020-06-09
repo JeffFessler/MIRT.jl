@@ -53,18 +53,15 @@ in
 
 option
 - `dims` dimensions along which to perform adjoint finite differences
-- `outnd` if true then return `N_1 × ... × N_d` array, else `prod(N)` vector
 
 out
 - `z` `prod(N)` vector or `N_1 × ... × N_d` array (typically an N-D image)
 
 """
-function diffnd_adj(d::AbstractVector{<:Number}, N::Vararg{Int,D}
-    ; dims=1:D, outnd=false) where {D}
+function diffnd_adj(d::AbstractVector{<:Number}, N::Vararg{Int,D} ; dims=1:D) where {D}
 
 # todo: diff2d_adj etc. 1-liners for backward compat
 # todo: N::Dims instead of Vararg?
-# todo: remove outnd option for type inference?
 # todo: discuss, >1 should be needed only for the "dims" dimensions?
     # Note that N must be strictly greater than 1 for each dimension specified
     # by dims, or N must be 1 for all dimensions specified by dims
@@ -90,7 +87,7 @@ function diffnd_adj(d::AbstractVector{<:Number}, N::Vararg{Int,D}
         sliceN .+= selectdim(di, dim, N[dim] - 1)
     end
 
-    return outnd ? z : vec(z)
+    return z
 end
 
 
