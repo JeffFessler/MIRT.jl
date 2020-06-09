@@ -87,7 +87,7 @@ function diff_map_time( ; M::Int=2^7, N::Int=2^7+1)
     seed!(0)
     x = randn(M * N)
     T2d = diff2d_map_old(M, N)
-    Tnd = MIRT.diff_map(M, N)
+    Tnd = MIRT.diff_map((M, N))
 
     # check consistency
     d2d = T2d * x
