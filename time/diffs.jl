@@ -5,6 +5,9 @@ using LinearMapsAA: LinearMapAA
 using Random: seed!
 using BenchmarkTools: @btime
 
+
+# old 2D versions for comparison with the new N-D versions
+
 """
 `d = diff2d_forw(X)`
 
