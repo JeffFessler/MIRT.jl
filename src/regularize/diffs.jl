@@ -66,8 +66,8 @@ function diffnd_adj(d::AbstractVector{<:Number}, N::Vararg{Int,D}
 # todo: N::Dims instead of Vararg?
 # todo: remove outnd option for type inference?
 # todo: discuss, >1 should be needed only for the "dims" dimensions?
-    # Note that N must be strictly greater than 1 for each dimension,
-    # or N must be 1 for all dimensions
+    # Note that N must be strictly greater than 1 for each dimension specified
+    # by dims, or N must be 1 for all dimensions specified by dims
 
     length(d) != sum(*(N[1:dim-1]..., N[dim] - 1, N[dim+1:end]...) for dim in dims) &&
         throw("length(d)")
@@ -148,10 +148,14 @@ function diff_map(test::Symbol)
             end
         end
     end
-    # adjoint doesn't work if any of the dimensions has size 1
+    # adjoint doesn't work if any of the dimensions specified by dims has size 1
     # (unless all are size 1)
     N = (1,2)
     T = diff_map(N...)
     @test_throws BoundsError Matrix(T)' == Matrix(T')
+    T = diff_map(N..., dims = 1)
+    @test Matrix(T)' == Matrix(T')
+    T = diff_map(N..., dims = 2)
+    @test Matrix(T)' == Matrix(T')
     true
 end
