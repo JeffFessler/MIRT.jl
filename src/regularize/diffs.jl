@@ -23,11 +23,14 @@ and ``\\otimes`` denotes the Kronecker product,
 but does it efficiently
 without using `spdiagm` (or any `SparseArrays` function).
 
+Input dimension `N` must exceed 1 for each dimension specified by `dims`,
+or must be 1 for all dimensions specified by `dims.`
+
 in
 - `X` `N_1 × ... × N_d` array (typically an N-D image).
 
 option
-- `dims` dimensions along which to perform finite differences; default 1:d
+- `dims` dimensions along which to perform finite differences; default `1:d`
 
 out
 - `d` vector of length `N_d*...*(N_1-1) + ... + (N_d-1)*...*N_1`
@@ -62,23 +65,21 @@ function diffnd_adj(d::AbstractVector{<:Number}, N::Vararg{Int,D} ; dims=1:D) wh
 
 # todo: diff2d_adj etc. 1-liners for backward compat
 # todo: N::Dims instead of Vararg?
-# todo: discuss, >1 should be needed only for the "dims" dimensions?
-    # Note that N must be strictly greater than 1 for each dimension specified
-    # by dims, or N must be 1 for all dimensions specified by dims
 
-    length(d) != sum(*(N[1:dim-1]..., N[dim] - 1, N[dim+1:end]...) for dim in dims) &&
-        throw("length(d)")
+    size1 = dim -> (N[1:dim-1]..., N[dim] - 1, N[dim+1:end]...)
+
+    length(d) != sum(prod(size1(dim)) for dim in dims) && throw("length(d)")
 
     z = zeros(eltype(d), N...)
     for (i, dim) in enumerate(dims)
         if i == 1
-            di = @view(d[1:*(N[1:dim-1]..., N[dim] - 1, N[dim+1:end]...)])
+            di = @view(d[1:prod(size1(dim))])
         else
-            start = 1 + sum(*(N[1:n-1]..., N[n] - 1, N[n+1:end]...) for n in dims[1:i-1])
-            len = *(N[1:dim-1]..., N[dim] - 1, N[dim+1:end]...)
+            start = 1 + sum(prod(size1(n)) for n in dims[1:i-1])
+            len = prod(size1(dim))
             di = @view(d[start:start+len-1])
         end
-        di = reshape(di, N[1:dim-1]..., N[dim] - 1, N[dim+1:end]...)
+        di = reshape(di, size1(dim))
         slice1 = selectdim(z, dim, 1)
         slice1 .-= selectdim(di, dim, 1)
         slicen = selectdim(z, dim, 2:N[dim]-1)
@@ -96,10 +97,10 @@ end
 """
 function diffnd_map(N::Vararg{Int,D} ; dims=1:D) where {D}
     return LinearMapAA(
-    x -> diffnd_forw(reshape(x, N...), dims=dims),
-    d -> diffnd_adj(d, N..., dims=dims),
-    (sum(*(N[1:dim-1]..., N[dim] - 1, N[dim+1:end]...) for dim in dims), prod(N)),
-    (name="diffn_map", dims=dims))
+        x -> diffnd_forw(reshape(x, N...), dims=dims),
+        d -> diffnd_adj(d, N..., dims=dims),
+        (sum(*(N[1:dim-1]..., N[dim] - 1, N[dim+1:end]...) for dim in dims), prod(N)),
+        (name="diffn_map", dims=dims))
 end
 
 
