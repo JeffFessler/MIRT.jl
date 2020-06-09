@@ -53,7 +53,7 @@ out
 function diff_forw(x::AbstractArray{<:Number,D}
     ; dims::AbstractVector{Int} = 1:D,
 ) where {D}
-	diff_check(size(x), dims)
+    diff_check(size(x), dims)
     return reduce(vcat, vec(diff(x, dims = d)) for d in dims)
 end
 
@@ -107,7 +107,6 @@ function diff_adj(d::AbstractVector{<:Number}, N::Vararg{Int,D}
     ; dims::AbstractVector{Int} = 1:D,
 ) where {D}
 
-# todo: diff2d_adj etc. 1-liners for backward compat
 # todo: N::Dims instead of Vararg?
 
     length(d) != sum(diff_length(N,dim) for dim in dims) && throw("length(d)")
@@ -133,6 +132,23 @@ function diff_adj(d::AbstractVector{<:Number}, N::Vararg{Int,D}
     return z
 end
 
+# backward compatibility, undocumented because deprecated
+function diff2d_forw(x::AbstractMatrix{<:Number})
+    isinteractive() && @warn("diff2d_forw is deprecated; use diff_forw")
+    return diff_forw(x)
+end
+
+function diff2d_adj(d::AbstractVector{<:Number}, M::Int, N::Int ; out2d=false)
+    isinteractive() && @warn("diff2d_adj is deprecated; use diff_adj")
+    tmp = diff_adj(d, M, N)
+    return out2d ? tmp : tmp[:]
+end
+
+function diff2d_map(M::Int, N::Int)
+    isinteractive() && @warn("diff2d_map is deprecated; use diff_map")
+    return diff_map(M, N)
+end
+
 
 """
     T = diff_map(N::Int... ; dims=1:length(N))
@@ -144,7 +160,7 @@ out
 - `T` `LinearMapAA` object for regularizing via `T*x`
 """
 function diff_map(N::Vararg{Int,D} ; dims::AbstractVector{Int} = 1:D) where {D}
-	diff_check((N...,), dims)
+    diff_check((N...,), dims)
     return LinearMapAA(
         x -> diff_forw(reshape(x, N...), dims=dims),
         d -> diff_adj(d, N..., dims=dims)[:],
@@ -183,6 +199,16 @@ function diff_map(test::Symbol)
                 @test Matrix(T)' == Matrix(T')
             end
         end
+    end
+
+    if true # test old 2D versions
+        N = (3,5)
+        x = rand(N...)
+        @test diff2d_forw(x) == diff_forw(x)
+        d = rand(sum(diff_length(N,dim) for dim=1:2))
+        @test diff2d_adj(d, N... ; out2d=false) == diff_adj(d, N...)[:]
+        @test diff2d_adj(d, N... ; out2d=true) == diff_adj(d, N...)
+        @test Matrix(diff2d_map(N...)) == Matrix(diff_map(N...))
     end
 
     # adjoint doesn't work if any of the dimensions specified by dims has size 1

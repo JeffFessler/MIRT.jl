@@ -9,7 +9,7 @@ using BenchmarkTools: @btime
 # old 2D versions for comparison with the new N-D versions
 
 """
-    d = diff2d_forw(X)
+    d = diff2d_forw_old(X)
 
 2D finite differences along both dimensions, for anisotropic TV regularization.
 Performs the same operations as
@@ -26,13 +26,13 @@ It cannot be a Vector! (But it can be a `M×1` or `1×N` 2D array.)
 out
 - `d` vector of length `N*(M-1) + (N-1)*M`
 """
-function diff2d_forw(x::AbstractMatrix{<:Number})
+function diff2d_forw_old(x::AbstractMatrix{<:Number})
     return [diff(x,dims=1)[:]; diff(x,dims=2)[:]]
 end
 
 
 """
-    z = diff2d_adj(d, M, N; out2d=false)
+    z = diff2d_adj_old(d, M, N; out2d=false)
 
 Adjoint of 2D finite differences along both dimensions.
 Performs the same operations as
@@ -52,7 +52,7 @@ out
 - `z` `M*N` vector or `M × N` array (typically a 2D image)
 
 """
-function diff2d_adj(d::AbstractVector{<:Number}, M::Int, N::Int ; out2d=false)
+function diff2d_adj_old(d::AbstractVector{<:Number}, M::Int, N::Int ; out2d=false)
 
     length(d) != N*(M-1) + (N-1)*M && throw("length(d)")
 
@@ -71,12 +71,12 @@ end
 
 
 """
-    T = diff2d_map(M::Int, N::Int)
+    T = diff2d_map_old(M::Int, N::Int)
 """
-function diff2d_map(M::Int, N::Int)
+function diff2d_map_old(M::Int, N::Int)
     return LinearMapAA(
-        x -> diff2d_forw(reshape(x,M,N)),
-        d -> diff2d_adj(d, M, N),
+        x -> diff2d_forw_old(reshape(x,M,N)),
+        d -> diff2d_adj_old(d, M, N),
         (N*(M-1)+M*(N-1), N*M), (name="diff2_map",),
     )
 end
@@ -86,7 +86,7 @@ end
 function diff_map_time( ; M::Int=2^7, N::Int=2^7+1)
     seed!(0)
     x = randn(M * N)
-    T2d = diff2d_map(M, N)
+    T2d = diff2d_map_old(M, N)
     Tnd = MIRT.diff_map(M, N)
 
     # check consistency
