@@ -27,7 +27,7 @@ end
 
 
 """
-    d = diffnd_forw(X ; dims::AbstractVector{Int} = 1:ndims(X))
+    d = diff_forw(X ; dims::AbstractVector{Int} = 1:ndims(X))
 
 Finite differences along one or more dimensions of an array,
 e.g., for anisotropic TV regularization.
@@ -50,7 +50,7 @@ must have unique elements and be a subset of 1:ndims(X)
 out
 - `d` vector of default length `N_d*...*(N_1-1) + ... + (N_d-1)*...*N_1`
 """
-function diffnd_forw(x::AbstractArray{<:Number,D}
+function diff_forw(x::AbstractArray{<:Number,D}
     ; dims::AbstractVector{Int} = 1:D,
 ) where {D}
 	diff_check(size(x), dims)
@@ -63,27 +63,27 @@ I wanted to give flexibility for Ints and Tuples
 but I could not get this to work...
 
 """
-    d = diffnd_forw(X ; dims::AbstractVector{Int} = 1:ndims(X))
+    d = diff_forw(X ; dims::AbstractVector{Int} = 1:ndims(X))
 """
-diffnd_forw(x::AbstractArray{<:Number} ; dims::AbstractVector{Int} = 1:ndims(X)) =
-    diffnd_forw(x, dims)
+diff_forw(x::AbstractArray{<:Number} ; dims::AbstractVector{Int} = 1:ndims(X)) =
+    diff_forw(x, dims)
 
 """
-    d = diffnd_forw(X ; dims::Dims = (1,))
+    d = diff_forw(X ; dims::Dims = (1,))
 """
-diffnd_forw(x::AbstractArray{<:Number} ; dims::Dims = (1,)) =
-    diffnd_forw(x, collect(dims))
+diff_forw(x::AbstractArray{<:Number} ; dims::Dims = (1,)) =
+    diff_forw(x, collect(dims))
 
 """
-    d = diffnd_forw(X ; dims::Int = 1)
+    d = diff_forw(X ; dims::Int = 1)
 """
-diffnd_forw(x::AbstractArray{<:Number} ; dims::Int = 1) =
-    diffnd_forw(x, [dims])
+diff_forw(x::AbstractArray{<:Number} ; dims::Int = 1) =
+    diff_forw(x, [dims])
 =#
 
 
 """
-    Z = diffnd_adj(dx, N... ; dims=1:length(N))
+    Z = diff_adj(dx, N... ; dims=1:length(N))
 
 Adjoint of finite differences of arrays along one or more dimensions.
 By default performs the same operations as
@@ -103,7 +103,7 @@ out
 - `Z` `N_1 × ... × N_d` array by default
 
 """
-function diffnd_adj(d::AbstractVector{<:Number}, N::Vararg{Int,D}
+function diff_adj(d::AbstractVector{<:Number}, N::Vararg{Int,D}
     ; dims::AbstractVector{Int} = 1:D,
 ) where {D}
 
@@ -146,8 +146,8 @@ out
 function diff_map(N::Vararg{Int,D} ; dims::AbstractVector{Int} = 1:D) where {D}
 	diff_check((N...,), dims)
     return LinearMapAA(
-        x -> diffnd_forw(reshape(x, N...), dims=dims),
-        d -> diffnd_adj(d, N..., dims=dims)[:],
+        x -> diff_forw(reshape(x, N...), dims=dims),
+        d -> diff_adj(d, N..., dims=dims)[:],
         (sum(diff_length(N,dim) for dim in dims), prod(N)),
         (name="diff_map", dims=dims),
     )
@@ -160,10 +160,10 @@ self test
 """
 function diff_map(test::Symbol)
     test != :test && throw(ArgumentError("test $test"))
-    @test_throws ArgumentError diffnd_forw(ones(3), dims=[2])
-    @test_throws ArgumentError diffnd_forw(ones(3), dims=[1,2])
-    @test_throws ArgumentError diffnd_forw(ones(1,2,1), dims=[1,2])
-    @test diffnd_forw(ones(2,4,6) ; dims=[2]) == zeros(2*3*6)
+    @test_throws ArgumentError diff_forw(ones(3), dims=[2])
+    @test_throws ArgumentError diff_forw(ones(3), dims=[1,2])
+    @test_throws ArgumentError diff_forw(ones(1,2,1), dims=[1,2])
+    @test diff_forw(ones(2,4,6) ; dims=[2]) == zeros(2*3*6)
 
     for N in ([2,], [10,], [2,3], [10,11], [2,3,4], [4,4,4,4]) # [1,1,1],
         T = diff_map(N...)
