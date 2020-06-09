@@ -2,34 +2,35 @@
 diffs.jl
 finite differences
 2019-03-06 Jeff Fessler, University of Michigan
+2020-06 N-D version by Steven Whitaker
 =#
 
 export diff_map
 
 using LinearMapsAA: LinearMapAA
 using Test: @test, @test_throws
-using BenchmarkTools: @btime
 
 
 """
-`d = diffnd_forw(X; dims=1:ndims(X))`
+    d = diffnd_forw(X ; dims=1:ndims(X))
 
-N-D finite differences along all dimensions, for anisotropic TV regularization.
+N-D finite differences along one or more dimensions,
+e.g., for anisotropic TV regularization.
 Performs the same operations as
-d = ``[(I_{N_d} \\otimes \\cdots \\otimes D_{N_1}); \\dots; (D_{N_d} \\otimes \\cdots \\otimes I_{N_1})] X[:]``
-where ``D_N`` denotes the ``N-1 \\times N`` 1D finite difference matrix
+``d = [(I_{N_d} \\otimes \\cdots \\otimes D_{N_1}); \\dots; (D_{N_d} \\otimes \\cdots \\otimes I_{N_1})] X[:]``
+where ``D_N`` denotes the `N-1 × N` 1D finite difference matrix
 and ``\\otimes`` denotes the Kronecker product,
 but does it efficiently
 without using `spdiagm` (or any `SparseArrays` function).
 
 in
-- `X`		`N_1 x ... x N_d` array (typically an N-D image).
+- `X` `N_1 × ... × N_d` array (typically an N-D image).
 
 option
-- `dims`        dimensions along which to perform finite differences
+- `dims` dimensions along which to perform finite differences; default 1:d
 
 out
-- `d`		vector of length `N_d*...*(N_1-1) + ... + (N_d-1)*...*N_1`
+- `d` vector of length `N_d*...*(N_1-1) + ... + (N_d-1)*...*N_1`
 """
 function diffnd_forw(x::AbstractArray{<:Number,D} ; dims=1:D) where {D}
     return reduce(vcat, vec(diff(x, dims = d)) for d in dims)
@@ -37,29 +38,34 @@ end
 
 
 """
-`z =  diffnd_adj(d, N...; dims=1:length(N), out2d=false)`
+    z =  diffnd_adj(d, N... ; dims=1:length(N), out2d=false)
 
 Adjoint of N-D finite differences along both dimensions.
 Performs the same operations as
 ``z = [(I_{N_d} \\otimes \\cdots \\otimes D_{N_1}); \\dots; (D_{N_d} \\otimes \\cdots \\otimes I_{N_1})]' * d``
-where D_N denotes the N-1 x N 1D finite difference matrix
-and \\otimes denotes the Kronecker product,
-but does it efficiently without using spdiagm (or any SparseArrays function).
+where D_N denotes the `N-1 × N` 1D finite difference matrix
+and `\\otimes` denotes the Kronecker product,
+but does it efficiently without using `spdiagm` (or any `SparseArrays` function).
 
 in
-- `d`		vector of length `N_d*...*(N_1-1) + ... + (N_d-1)*...*N_1`
-- `N...`	desired output size
+- `d` vector of length `N_d*...*(N_1-1) + ... + (N_d-1)*...*N_1`
+- `N...` desired output size
 
 option
-- `dims`        dimensions along which to perform adjoint finite differences
-- `outnd`	if true then return `N_1 x ... x N_d` array, else `prod(N)` vector
+- `dims` dimensions along which to perform adjoint finite differences
+- `outnd` if true then return `N_1 × ... × N_d` array, else `prod(N)` vector
 
 out
-- `z`		`prod(N)` vector or `N_1 x ... x N_d` array (typically an N-D image)
+- `z` `prod(N)` vector or `N_1 × ... × N_d` array (typically an N-D image)
 
 """
-function diffnd_adj(d::AbstractVector{<:Number}, N::Vararg{Int,D} ; dims=1:D, outnd=false) where {D}
+function diffnd_adj(d::AbstractVector{<:Number}, N::Vararg{Int,D}
+    ; dims=1:D, outnd=false) where {D}
 
+# todo: diff2d_adj etc. 1-liners for backward compat
+# todo: N::Dims instead of Vararg?
+# todo: remove outnd option for type inference?
+# todo: discuss, >1 should be needed only for the "dims" dimensions?
     # Note that N must be strictly greater than 1 for each dimension,
     # or N must be 1 for all dimensions
 
@@ -89,25 +95,25 @@ end
 
 
 """
-`T = diffnd_map(N::Int...; dims=1:length(N))`
+    T = diffnd_map(N::Int... ; dims=1:length(N))
 """
 function diffnd_map(N::Vararg{Int,D} ; dims=1:D) where {D}
     return LinearMapAA(
     x -> diffnd_forw(reshape(x, N...), dims=dims),
     d -> diffnd_adj(d, N..., dims=dims),
     (sum(*(N[1:dim-1]..., N[dim] - 1, N[dim+1:end]...) for dim in dims), prod(N)),
-    (name="diffn_map",))
+    (name="diffn_map", dims=dims))
 end
 
 
 """
-`T = diff_map(N::Int...; dims=1:length(N))`
+    T = diff_map(N::Int... ; dims=1:length(N))
 
 in
 - `N...` image size
 
 out
-- `T` a `LinearMapAA` object for regularizing via `T*x`
+- `T` `LinearMapAA` object for regularizing via `T*x`
 """
 function diff_map(N::Vararg{Int,D} ; dims=1:D) where {D}
     return diffnd_map(N..., dims=dims)
