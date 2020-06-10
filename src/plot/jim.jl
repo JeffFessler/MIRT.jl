@@ -22,6 +22,7 @@ jim_def = Dict([
 	:ncol => 0,
 	:padval => nothing,
 	:mosaic_npad => 1,
+	:tickdigit => 1,
 	:title => "",
 	:xlabel => "",
 	:ylabel => "",
@@ -31,6 +32,8 @@ jim_def = Dict([
 	:abswarn => true, # warn when taking abs of complex images?
 	])
 
+minfloor = x -> floor(minimum(x), digits=jim_def[:tickdigit])
+maxceil = x -> ceil(maximum(x), digits=jim_def[:tickdigit])
 
 """
     nothing_else(x, y)
@@ -90,9 +93,9 @@ function jim(z::AbstractArray{<:Real} ;
 		x = fft0 ? Int.(-size(z,1)/2:size(z,1)/2-1) : (1:size(z,1)),
 		y = fft0 ? Int.(-size(z,2)/2:size(z,2)/2-1) : (1:size(z,2)),
 		xtick = (minimum(x) < 0 && maximum(x) > 0) ?
-			[minimum(x),0,maximum(x)] : [minimum(x),maximum(x)],
+			[minfloor(x),0,maxceil(x)] : [minfloor(x),maxceil(x)],
 		ytick = (minimum(y) < 0 && maximum(y) > 0) ?
-			[minimum(y),0,maximum(y)] : [minimum(y),maximum(y)],
+			[minfloor(y),0,maxceil(y)] : [minfloor(y),maxceil(y)],
 		yflip::Bool = nothing_else(jim_def[:yflip], minimum(y) >= 0),
 		yreverse::Bool = nothing_else(jim_def[:yreverse], y[1] > y[end]),
 		abswarn::Bool = jim_def[:abswarn], # ignored here
