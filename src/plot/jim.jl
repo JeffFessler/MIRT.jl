@@ -27,12 +27,13 @@ jim_def = Dict([
 	:ylabel => "",
 	:fft0 => false,
 	:yflip => nothing, # defer to minimum value of y - see default below
+	:yreverse => nothing, # defer to whether y is non-ascending
 	:abswarn => true, # warn when taking abs of complex images?
 	])
 
 
 """
-`nothing_else(x, y)`
+    nothing_else(x, y)
 return `y` if `x` is nothing, else return `x`
 """
 function nothing_else(x, y)
@@ -62,6 +63,7 @@ option
 - `xlabel`; default `""`
 - `ylabel`; default `""`
 - `yflip`; default `true` if `minimum(y) >= 0`
+- `yreverse`; default `true` if `y[1] > y[end]`
 - `x` values for x axis; default `1:size(z,1)`
 - `y` values for y axis; default `1:size(z,2)`
 - `xtick`; default `[minimum(x),maximum(x)]`
@@ -92,8 +94,15 @@ function jim(z::AbstractArray{<:Real} ;
 		ytick = (minimum(y) < 0 && maximum(y) > 0) ?
 			[minimum(y),0,maximum(y)] : [minimum(y),maximum(y)],
 		yflip::Bool = nothing_else(jim_def[:yflip], minimum(y) >= 0),
+		yreverse::Bool = nothing_else(jim_def[:yreverse], y[1] > y[end]),
 		abswarn::Bool = jim_def[:abswarn], # ignored here
 	)
+
+	# because some backends require y to be in ascending order
+	if yreverse
+		y = reverse(y)
+		z = reverse(z, dims=2)
+	end
 
 	n1,n2,n3 = size(z,1), size(z,2), size(z,3)
 	xy = (x, y)
@@ -154,27 +163,27 @@ end
 
 
 """
-`jim(z, title ; kwargs...)`
+    jim(z, title ; kwargs...)
 """
 jim(z::AbstractArray{<:Number}, title::AbstractString ; kwargs...) =
 	jim(z ; title=title, kwargs...)
 
 
 """
-`jim(x, y, z ; kwargs...)`
+    jim(x, y, z ; kwargs...)
 """
 jim(x, y, z ; kwargs...) = jim(z ; x=x, y=y, kwargs...)
 
 
 """
-`jim(x, y, z, title ; kwargs...)`
+    jim(x, y, z, title ; kwargs...)
 """
 jim(x, y, z, title::AbstractString ; kwargs...) =
 	jim(z ; x=x, y=y, title=title, kwargs...)
 
 
 """
-`jim()`
+    jim()
 return docstring if user calls `jim()` with no arguments
 """
 function jim()
@@ -190,7 +199,8 @@ end
 #end
 
 """
-`jim(key, value)` set default value for one of the keys
+    jim(key, value)
+set default value for one of the keys
 """
 function jim(key::Symbol, value)
 	global jim_def
@@ -200,7 +210,7 @@ end
 
 
 """
-`jim(:test)`
+    jim(:test)
 
 `jim(:keys)` return default keys
 
@@ -231,6 +241,7 @@ function jim(test::Symbol)
 	jim(zeros(4,5), x=1:4, y=5:9, title="test3")
 	jim(rand(6,4), fft0=true)
 	jim(x=1:4, y=5:9, rand(4,5), title="test4")
+	jim(x=-9:9, y=9:-1:-9, (-9:9) * (abs.((9:-1:-9) .- 5) .< 3)', title="rev")
 	jim(rand(4,5), color=:hsv)
 	jim(:abswarn, false)
 	jim(complex(rand(4,3)))
