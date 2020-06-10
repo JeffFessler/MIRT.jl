@@ -184,12 +184,12 @@ function ncg_test()
 	cost2, err2 = allk(out2)
 
 	k = 0:niter
-	plot(xlabel="k", ylabel=L"\log(\Psi(x_k) - \Psi(\hat{x}))")
+	plot(xlabel="k", ylabel=L"\log(\Psi(x_k) - \Psi(x_*))")
 	scatter!(k, cost1, color=:blue, label="cost1")
 	scatter!(k, cost2, color=:red, marker=:x, label="cost2")
 	p1 = plot!()
 
-	plot(xlabel="k", ylabel=L"\log(\|x_k - \hat{x}\|/\|\hat{x}\|)")
+	plot(xlabel="k", ylabel=L"\log(\|x_k - x_*\|/\|x_*\|)")
 	scatter!(k, err1, color=:blue, label="NRMSD1")
 	scatter!(k, err2, color=:red, marker=:x, label="NRMSD2")
 	p2 = plot!()

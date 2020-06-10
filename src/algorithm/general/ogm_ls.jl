@@ -8,8 +8,15 @@ export ogm_ls
 
 using LinearAlgebra: I, norm
 
+# for plots
+using LinearAlgebra: norm, opnorm, I
+using Random: seed!
+using Plots
+using LaTeXStrings
+
+
 """
-`(x,out) = ogm_ls(B, gradf, curvf, x0; niter=?, ninner=?, fun=?)`
+    (x,out) = ogm_ls(B, gradf, curvf, x0; niter=?, ninner=?, fun=?)
 
 OGM with a line search; Drori&Taylor @arxiv 1803.05676;
 to minimize a general "inverse problem" cost function of the form
@@ -131,12 +138,11 @@ end
 
 
 """
-`(x,out) = ogm_ls(grad, curv, x0, ...)`
+    (x,out) = ogm_ls(grad, curv, x0, ...)
 
 special case of `ogm_ls` (OGM with line search) for minimizing a cost function
 whose gradient is `grad(x)`
-and that has a quadratic majorizer with diagonal Hessian given by
-`curv(x)`.
+and that has a quadratic majorizer with diagonal Hessian given by `curv(x)`.
 Typically `curv = (x) -> L` where `L` is the Lipschitz constant of `grad`
 """
 function ogm_ls(
@@ -148,11 +154,6 @@ function ogm_ls(
 	return ogm_ls([I], [grad], [curv], x0; kwargs...)
 end
 
-
-using LinearAlgebra: norm, opnorm, I
-using Random: seed!
-using Plots
-using LaTeXStrings
 
 function ogm_ls_test()
 	seed!(0); M = 30; N = 6; A = randn(M,N); y = randn(M)
@@ -183,12 +184,12 @@ function ogm_ls_test()
 	!isapprox(x2, xh) && throw("bug: x2 vs xh")
 
 	k = 0:niter
-	plot(xlabel="k", ylabel=L"\log(\Psi(x_k) - \Psi(\hat{x}))")
+	plot(xlabel="k", ylabel=L"\log(\Psi(x_k) - \Psi(x_*))")
 	scatter!(k, cost1, color=:blue, label="cost1")
 	scatter!(k, cost2, color=:red, marker=:x, label="cost2")
 	p1 = plot!()
 
-	plot(xlabel="k", ylabel=L"\log(\|x_k - \hat{x}\|/\|\hat{x}\|)")
+	plot(xlabel="k", ylabel=L"\log(\|x_k - x_*\|/\|x_*\|)")
 	scatter!(k, err1, color=:blue, label="NRMSD1")
 	scatter!(k, err2, color=:red, marker=:x, label="NRMSD2")
 	p2 = plot!()
@@ -197,7 +198,7 @@ end
 
 
 """
-`ogm_ls(:test)`
+    ogm_ls(:test)
 self test
 """
 function ogm_ls(test::Symbol)
