@@ -1,35 +1,39 @@
 In reverse chronological order
 
-2020-06-05 isolate @btime in time/
+0.9.6 2020-06-10
+
+n-d version of `diff_map`
+
+2020-06-05 isolate `@btime` in time/
 
 0.9.5 2020-04-26
 
-cleanup :hsv
+cleanup `:hsv`
 
 0.9.4 2020-04-24
 
 2020-03-21
-mri_trajectory
+`mri_trajectory`
 
 0.9.2 2020-02-29
 
 2020-02-17
-reverser
+`reverser`
 
 2020-02-09
-exp_mult
+`exp_mult`
 
 2020-02-05
-eql_root rmsd100
+`eql_root` `rmsd100`
 
 0.9.1 2020-01-20
 
-display to show, updated LinearMapsAA
+`display` to `show`, updated `LinearMapsAA`
 
 0.9.0 2019-12-26 for Julia 1.3
 
 2019-11-22
-mri_image_geom
+`mri_image_geom`
 
 0.8.0 2019-11-05
 
@@ -37,13 +41,13 @@ mri_image_geom
 to Julia 1.2 due to file dependency issues
 
 2019-11-04
-interp1
+`interp1`
 
 2019-08-26
-use LinearMapAA
+use `LinearMapAA`
 
 2019-07-28
-use isolated MIRTio
+use isolated `MIRTio`
 
 0.7.0 2019-07-15
 

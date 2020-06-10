@@ -1,7 +1,7 @@
 name = "MIRT"
 uuid = "7035ae7a-3787-11e9-139a-5545ed3dc201"
 authors = ["fessler <fessler@umich.edu>"]
-version = "0.9.5"
+version = "0.9.6"
 
 [deps]
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
@@ -40,11 +40,11 @@ ImageTransformations = "0.8"
 Interpolations = "0.12"
 LaTeXStrings = "1.1"
 LinearMaps = "2.6"
-LinearMapsAA = "0.4"
+LinearMapsAA = "0.5"
 MIRTio = "0.2"
 MosaicViews = "0.1, 0.2"
 NFFT = "0.4"
-Plots = "1.1"
+Plots = "1.4"
 Reexport = "0.2"
 SpecialFunctions = "0.8, 0.9, 0.10"
 Wavelets = "0.9"
