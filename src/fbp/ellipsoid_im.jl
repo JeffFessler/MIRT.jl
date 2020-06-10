@@ -475,7 +475,7 @@ function ellipsoid_im_show()
 	p1 = jim(spheroid, title="spheroid")
 
 	x = ellipsoid_im(ig, :zhu; hu_scale=1000)
-	p2 = jim(x, title="zhu") #clim=[900,1100]
+	p2 = jim(x, title="zhu", clim=(900,1100))
 
 	plot(p1, p2)
 end
