@@ -10,7 +10,7 @@ export ir_mri_sensemap_sim
 
 using SpecialFunctions: ellipk, ellipe
 using Test: @test, @inferred
-using Plots: Plot, plot, plot!, gui, contour!, scatter!, quiver, quiver!, Arrow
+using Plots: Plot, plot, plot!, contour!, scatter!, quiver, quiver!, Arrow
 
 
 """
@@ -272,7 +272,7 @@ function ir_mri_sensemap_sim_show2(smap, x, y, dx, dy, nlist, plist, rlist)
 	end
 
 	pl = Array{Plot}(undef, ncoil, 3)
-	clim = [0, maximum(abs.(smap))]
+	clim = (0, maximum(abs.(smap)))
 	xmax = maximum(abs.([x[:]; y[:]; plist[:,:,[1,2]][:]]))
 	ymax = xmax
 	for ic=1:ncoil
@@ -292,7 +292,7 @@ function ir_mri_sensemap_sim_show2(smap, x, y, dx, dy, nlist, plist, rlist)
 		pl[ic,1] = p
 
 		ph = angle.(tmp) # show raw phase (understandable with hsv colormap)
-		p = jim(x, y, ph, "Phase", clim=[-pi,pi], color=:hsv)
+		p = jim(x, y, ph, "Phase", clim=(-pi,pi), color=:hsv)
 		plot!(p, xlim=[-1,1]*1.1*xmax, xtick=(-1:1) * nx/2 * dx)
 		plot!(p, ylim=[-1,1]*1.1*xmax, ytick=(-1:1) * nx/2 * dy)
 		pl[ic,2] = p
@@ -402,10 +402,10 @@ function ir_mri_sensemap_sim_test0()
 	@inferred ir_mri_smap_r(5e-7, 0.4)
 	m = LinRange(0,1,101)
 	(k,e) = (ellipk.(m), ellipe.(m))
-	plot(yaxis=[0,3*pi/2])
+	plot(xaxis=[0,1], yaxis=[0,3π/2])
 	plot!(m, k, label="k")
 	plot!(m, e, label="e")
-	plot!(ytick=((0:3)*pi/2, ["0", "\\pi/2", "\\pi", "3\\pi/2"]))
+	plot!(ytick=((0:3)*pi/2, ["0", "π/2", "π", "3π/2"]))
 end
 
 
@@ -428,6 +428,7 @@ function ir_mri_sensemap_sim_test1()
 #	(smap_x, smap_y, smap_z) = ir_mri_smap1.(xx, yy, zz, a)
 	smap_b = @. sqrt(smap_x^2 + smap_y^2)
 #	return plot(ir_mri_sensemap_sim_test1_show(smap_x, x, y, zlist, "x")...)
+
 	return plot(layout=(4,length(zlist)),
 			ir_mri_sensemap_sim_test1_show(smap_x, x, y, zlist, "x")...,
 			ir_mri_sensemap_sim_test1_show(smap_y, x, y, zlist, "y")...,
@@ -441,7 +442,7 @@ end
     ir_mri_sensemap_sim_test1_show()
 """
 function ir_mri_sensemap_sim_test1_show(smap, x, y, zlist, title)
-	clim = [-20,20]
+	clim = (-20,20)
 	nz = length(zlist)
 	pl = Array{Plot}(undef, nz)
 	for iz = 1:nz
@@ -480,10 +481,6 @@ function ir_mri_sensemap_sim_test2( ; chat::Bool=true)
 			@test isapprox(tmp, ones(size(tmp))) # trick: equivs mod 2*pi
 		end
 	end
-
-tmp = ir_mri_sensemap_sim_show2(smap,
-	t.x, t.y, t.dx, t.dy, t.nlist, t.plist, t.rlist)
-@show typeof(tmp)
 
 	return ir_mri_sensemap_sim_show2(smap,
 		t.x, t.y, t.dx, t.dy, t.nlist, t.plist, t.rlist)
@@ -553,4 +550,3 @@ end
 ir_mri_sensemap_sim_test3(chat=true)
 ir_mri_sensemap_sim_test3(chat=true)
 =#
-#@test ir_mri_sensemap_sim(:test)
