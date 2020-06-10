@@ -364,24 +364,23 @@ end
 """
 `ellipse_im_show()`
 """
-function ellipse_im_show()
+function ellipse_im_show( ; over::Int = 2^2)
 	ig = image_geom(nx=2^8, ny=2^8+2, fov=250)
 #	ig.offset_y = 75.6 / ig.dy
 
-	over = 2^2
 	x0 = ellipse_im(ig, oversample=over)
-	p1 = jim(ig.x, ig.y, x0, title="Shepp Logan", clim=[0.9,1.1])
+	p0 = jim(ig.x, ig.y, x0, title="Shepp Logan", clim=(0.9,1.1))
 
 	x1 = ellipse_im(ig, :shepplogan_emis, oversample=over)
-	p4 = jim(x1, title="Shepp Logan Emission")
+	p1 = jim(ig.x, ig.y, x1, title="Shepp Logan Emission")
 
 	x2 = ellipse_im(ig, :southpark)
-	p2 = jim(x2, title="South Park")
+	p2 = jim(ig.x, ig.y, x2, title="South Park")
 
 	x3 = ellipse_im(ig, :shepplogan_brainweb)
-	p5 = jim(x3, title="Shepp Logan Brainweb")
+	p3 = jim(ig.x, ig.y, x3, title="Shepp Logan Brainweb")
 
-	plot(p1,p2,p4,p5)
+	plot(p0,p1,p2,p3)
 end
 
 
@@ -476,6 +475,7 @@ function ellipse_im_test()
 =#
 
 	ellipse_im_show()
+	prompt()
 
 #=
 	if has_aspire
