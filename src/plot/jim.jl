@@ -6,7 +6,7 @@ jiffy image display
 
 export jim
 
-using Plots: heatmap, plot!
+using Plots: heatmap, plot!, annotate!
 using LaTeXStrings
 using MosaicViews: mosaicview
 using FFTViews: FFTView
@@ -122,16 +122,32 @@ function jim(z::AbstractArray{<:Real} ;
 		z = FFTView(z)[x,y]
 	end
 
-	heatmap(xy..., z', transpose=false,
-		aspect_ratio=aspect_ratio,
-		clim=clim,
-		color=color,
-		title=title,
-		yflip=yflip,
-		xlabel=xlabel,
-		ylabel=ylabel,
-		xtick=xtick,
-		ytick=ytick)
+	if minimum(z) == maximum(z) # uniform image
+		x = 1:size(z,1)
+		y = 1:size(z,2)
+		plot(aspect_ratio=aspect_ratio,
+			xlim = [x[1], x[end]],
+			ylim = [y[1], y[end]],
+			title=title,
+			yflip=yflip,
+			xlabel=xlabel,
+			ylabel=ylabel,
+			xtick=xtick,
+			ytick=ytick,
+		)
+		annotate!((sum(x)/length(x), sum(y)/length(y), "Uniform $(z[1])", :red))
+	else
+		heatmap(xy..., z', transpose=false,
+			aspect_ratio=aspect_ratio,
+			clim=clim,
+			color=color,
+			title=title,
+			yflip=yflip,
+			xlabel=xlabel,
+			ylabel=ylabel,
+			xtick=xtick,
+			ytick=ytick)
+	end
 
 	if n3 > 1 && line3plot # lines around each subimage
 		m1 = (1+size(z,1)) / n1 # add one because of mosaicview non-edge
@@ -246,6 +262,7 @@ function jim(test::Symbol)
 	jim(x=1:4, y=5:9, rand(4,5), title="test4")
 	jim(x=-9:9, y=9:-1:-9, (-9:9) * (abs.((9:-1:-9) .- 5) .< 3)', title="rev")
 	jim(rand(4,5), color=:hsv)
+	jim(ones(3,3)) # uniform
 	jim(:abswarn, false)
 	jim(complex(rand(4,3)))
 	jim(complex(rand(4,3)), "complex")
