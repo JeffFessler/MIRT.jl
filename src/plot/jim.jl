@@ -108,6 +108,9 @@ function jim(z::AbstractArray{<:Real} ;
 	end
 
 	n1,n2,n3 = size(z,1), size(z,2), size(z,3)
+	if n3 == 1
+		z = z[:,:,1] # revert to 2D
+	end
 	xy = (x, y)
 	if ndims(z) > 2
 		n1 += mosaic_npad
@@ -146,7 +149,8 @@ function jim(z::AbstractArray{<:Real} ;
 			xlabel=xlabel,
 			ylabel=ylabel,
 			xtick=xtick,
-			ytick=ytick)
+			ytick=ytick,
+		)
 	end
 
 	if n3 > 1 && line3plot # lines around each subimage
