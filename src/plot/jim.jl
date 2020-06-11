@@ -29,7 +29,7 @@ jim_def = Dict([
 	:fft0 => false,
 	:yflip => nothing, # defer to minimum value of y - see default below
 	:yreverse => nothing, # defer to whether y is non-ascending
-	:abswarn => true, # warn when taking abs of complex images?
+	:abswarn => isinteractive(), # warn when taking abs of complex images?
 	])
 
 minfloor = x -> floor(minimum(x), digits=jim_def[:tickdigit])
@@ -125,7 +125,7 @@ function jim(z::AbstractArray{<:Real} ;
 		z = FFTView(z)[x,y]
 	end
 
-	if minimum(z) == maximum(z) # uniform image
+	if minimum(z) ≈ maximum(z) # uniform or nearly uniform image
 		x = 1:size(z,1)
 		y = 1:size(z,2)
 		plot(aspect_ratio=aspect_ratio,
@@ -138,7 +138,9 @@ function jim(z::AbstractArray{<:Real} ;
 			xtick=xtick,
 			ytick=ytick,
 		)
-		annotate!((sum(x)/length(x), sum(y)/length(y), "Uniform $(z[1])", :red))
+		tmp = (minimum(z) == maximum(z)) ? "Uniform $(z[1])" :
+			"Nearly uniform $((minimum(z),maximum(z)))"
+		annotate!((sum(x)/length(x), sum(y)/length(y), tmp, :red))
 	else
 		heatmap(xy..., z', transpose=false,
 			aspect_ratio=aspect_ratio,
