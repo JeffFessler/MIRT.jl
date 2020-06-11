@@ -16,7 +16,7 @@ using Test: @test, @inferred
 
 
 """
-`y = downsample_dim1(x, down ; warn::Bool)`
+    y = downsample_dim1(x, down ; warn::Bool)
 downsample by factor `down` along first dimension by averaging
 
 in
@@ -46,13 +46,13 @@ function downsample_dim1(x::AbstractArray{<:Number}, down::Int
 	y = sum(y, dims=1) / down # mean
 	y = reshape(y, m1, dim[2:end]...)
 #	out = similar(x, (m1, dim[2:end]...))
-#	out[:] .= y[:] # failed attempt to help @inferred for 2D input arrays
+#	vec(out) .= vec(y) # failed attempt to help @inferred for 2D input arrays
 	return y
 end
 
 
 """
-`downsample_dim1_test()`
+    downsample_dim1_test()
 """
 function downsample_dim1_test()
 	@inferred downsample_dim1(1:4, 2)
@@ -66,7 +66,7 @@ end
 
 
 """
-`y = downsample1(x, down ; warn=true)`
+    y = downsample1(x, down ; warn=true)
 downsample 1D vector by factor `down`
 
 in
@@ -95,7 +95,7 @@ function downsample1(x::AbstractVector{<:Number}, down::Int
 	end
 	y = sum(y, dims=1) / down # mean
 	y = reshape(y, m1, dim[2:end]...)
-	return y[:]
+	return vec(y)
 end
 
 
@@ -112,7 +112,7 @@ end
 
 
 """
-`y = downsample2(x, down ; warn=true, T)`
+    y = downsample2(x, down ; warn=true, T)
 
 downsample by averaging by integer factors
 in
@@ -127,15 +127,12 @@ out
 - `y [nx/down ny/down]`
 """
 function downsample2(x::AbstractMatrix{<:Number},
-		down::Union{Int,AbstractVector{Int}},
+		down::AbstractVector{Int},
 		; warn::Bool = isinteractive(),
 		T::DataType = eltype(x[1] / down[1])
 	)
 
-	length(down) > 2 && throw("bad down $down")
-	if length(down) == 1
-		down = [down, down]
-	end
+	length(down) != 2 && throw("bad down $down")
 
 	idim = size(x)
 	odim = floor.(Int, idim ./ down)
@@ -178,22 +175,24 @@ function downsample2(x::AbstractMatrix{<:Number},
 	return y
 end
 
+downsample2(x::AbstractArray{<:Number,2}, down::Int ; args...) =
+	downsample2(x, [down, down] ; args...)
 
 
 """
-`downsample2_test()`
+downsample2_test()
 """
 function downsample2_test()
-	x = reshape(1:24, 4, 6)
+	x = reshape(0:2:46, 4, 6)
 	y = @inferred downsample2(x, 2)
-	@test y == [3.5 11.5 19.5; 5.5 13.5 21.5]
+	@test y == [5 21 37; 9 25 41]
 	true
 end
 
 
 
 """
-`y = downsample3(x, down ; warn=true, T)`
+    y = downsample3(x, down ; warn=true, T)
 
 downsample by averaging by integer factors
 in
@@ -208,25 +207,11 @@ out
 - `y [nx/down ny/down nz/down]`
 """
 function downsample3(x::AbstractArray{<:Number,3},
-		down::Union{Int,AbstractVector{Int}},
+		down::AbstractVector{Int}
 		; warn::Bool = isinteractive(),
 		T::DataType = eltype(x[1] / down[1])
 	)
 
-#=
-	if ndims(x) == 2
-		@warn("2d case")
-		if length(down) == 1; down = [down, down, 1]; end
-		length(down) != 3 & throw(DimensionMismatch("$(length(down)) != 3"))&
-		return downsample2(x, down[1:2])
-	end
-
-	ndims(x) != 3 && throw(DimensionMismatch("ndims(x)=$(ndims(x)) != 3"))
-=#
-
-	if length(down) == 1
-		down = [down, down, down]
-	end
 	length(down) != 3 && throw(DimensionMismatch("down $down"))
 
 	idim = size(x)
@@ -236,6 +221,9 @@ function downsample3(x::AbstractArray{<:Number,3},
 
 	return downsample3_perm(x, Tuple(down)) # because it is faster
 end
+
+downsample3(x::AbstractArray{<:Number,3}, down::Int ; args...) =
+	downsample3(x, [down, down, down] ; args...)
 
 
 # this method is good for @inferred but is slower!
@@ -277,6 +265,9 @@ function downsample3_perm(x::AbstractArray{<:Number,3}, down::Dims{3})
 end
 
 
+"""
+downsample3_test()
+"""
 function downsample3_test()
 	x = [6, 5, 2]
 	x = reshape(2*(1:prod(x)), x...)

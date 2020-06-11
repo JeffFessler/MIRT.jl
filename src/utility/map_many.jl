@@ -8,7 +8,7 @@ export map_many
 using Test: @test, @inferred
 
 """
-`y = map_many(fun::Function, x::AbstractArray{<:Any}, idim::Dims)`
+    y = map_many(fun::Function, x::AbstractArray{<:Any}, idim::Dims)
 
 apply a function `fun` to leading slices of input `x`;
 cousin of `mapslices`
@@ -42,16 +42,16 @@ function map_many(fun::Function, x::AbstractArray{<:Any}, idim::Dims)
 	odim = size(tmp)
 	T = eltype(tmp)
 	out = Array{T}(undef, prod(odim), L) # [*odim L]
-	out[:,1] = tmp[:]
+	out[:,1] = vec(tmp)
 	for l=2:L
-		out[:,l] = fun(reshape((@view x[:,l]), idim))[:]
+		out[:,l] = vec(fun(reshape((@view x[:,l]), idim)))
 	end
 	return reshape(out, odim..., ldim...) # [odim ldim]
 end
 
 
 """
-`map_many(:test)`
+    map_many(:test)
 self test
 """
 function map_many(test::Symbol)

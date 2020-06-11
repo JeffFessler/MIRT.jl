@@ -10,9 +10,9 @@ using Plots
 
 
 """
-`phantom = rect_im(ig, params ;
+    phantom = rect_im(ig, params ;
 	oversample=1, hu_scale=1, fov=maximum(ig.fovs), chat=false, how=:auto,
-	replace=false, return_params=false)`
+	replace=false, return_params=false)
 
 generate rectangle phantom image from parameters:
  `[x_center y_center x_width y_width angle_degrees amplitude]`
@@ -55,9 +55,9 @@ function rect_im(ig::MIRT_image_geom,
 
 	do_fast = params[:,5] .== 0 # default for :auto
 	if how === :fast
-		do_fast[:] .= true
+		vec(do_fast) .= true
 	elseif how === :slow
-		do_fast[:] .= false
+		vec(do_fast) .= false
 	elseif how != :auto
 		throw("bad how :how")
 	end
@@ -86,7 +86,7 @@ end
 
 
 """
-`phantom = rect_im_fast()`
+phantom = rect_im_fast()
 for non-rotated rectangles
 	using exact integration over each pixel so over-sampling is irrelevant
 """
@@ -129,7 +129,7 @@ end
 
 
 """
-`phantom = rect_im_slow()`
+phantom = rect_im_slow()
 for rotated rectangles
 """
 function rect_im_slow(params_in, nx, ny, dx, dy, offset_x, offset_y, replace)
@@ -170,7 +170,7 @@ end
 
 
 """
-`phantom = rect_im(nx, dx, params ; args...)`
+    phantom = rect_im(nx, dx, params ; args...)
 
 square image of size `nx` by `nx`,
 specifying pixel size `dx` and rect `params`
@@ -182,7 +182,7 @@ end
 
 
 """
-`phantom = rect_im(nx::Int, params ; args...)`
+    phantom = rect_im(nx::Int, params ; args...)
 
 square image of size `nx` by `nx` with
 pixel size `dx=1` and rect `params`
@@ -193,7 +193,7 @@ end
 
 
 """
-`phantom = rect_im(nx::Int ; ny::Int=nx, dx::Real=1)`
+    phantom = rect_im(nx::Int ; ny::Int=nx, dx::Real=1)
 
 image of size `nx` by `ny` (default `nx`) with specified `dx` (default 1),
 defaults to `:my_rect`
@@ -206,7 +206,7 @@ end
 
 
 """
-`phantom = rect_im(nx::Int, ny::Int ; args...)`
+    phantom = rect_im(nx::Int, ny::Int ; args...)
 
 `:my_rect` of size `nx` by `ny`
 """
@@ -216,7 +216,7 @@ end
 
 
 """
-`phantom = rect_im(ig, code ; args...)`
+    phantom = rect_im(ig, code ; args...)
 
 `code = :my_rect | :default | :smiley`
 """
@@ -236,7 +236,7 @@ end
 
 
 """
-`phantom = rect_im(ig ; args...)`
+    phantom = rect_im(ig ; args...)
 
 `:default` (default) for given image geometry `ig`
 """
@@ -247,7 +247,7 @@ end
 
 
 """
-`params = rect_im_default_parameters(xfov, yfov)`
+params = rect_im_default_parameters(xfov, yfov)
 
 default parameters
 """
@@ -274,7 +274,7 @@ end
 
 
 """
-`params = my_rect(xfov, yfov)`
+params = my_rect(xfov, yfov)
 """
 function my_rect(xfov, yfov)
 	f = 1/64
@@ -311,7 +311,7 @@ end
 
 
 """
-`rect_im()`
+    rect_im()
 
 show docstring(s)
 """
@@ -321,7 +321,7 @@ end
 
 
 """
-`rect_im_show()`
+rect_im_show()
 """
 function rect_im_show()
 	#plot(1:10, 1:10)
@@ -352,7 +352,7 @@ end
 
 
 """
-`rect_im(:test)`
+    rect_im(:test)
 
 `rect_im(:show)`
 
@@ -371,6 +371,7 @@ function rect_im(test::Symbol)
 	rect_im(32, 30)
 	@test_throws String rect_im(32, :default, how=:bad)
 	rect_im(:show)
+	prompt()
 	@test rect_im_test()
 	rect_im()
 	true

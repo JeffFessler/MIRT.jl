@@ -23,7 +23,8 @@ using LinearMapsAA: LinearMapAA
 
 
 """
-`X = dtft(w, x ; n_shift=?)` 1D DTFT
+    X = dtft(w, x ; n_shift=?)
+1D DTFT
 
 ``X[m] = sum_{n=0}^{N-1} x[n] exp(-i w[m] (n - n_shift)), m=1,…,M``
 
@@ -44,7 +45,8 @@ end
 
 
 """
-`X = dtft(w, x ; n_shift=?)` multi-dimensional DTFT (DSFT)
+    X = dtft(w, x ; n_shift=?)
+multi-dimensional DTFT (DSFT)
 
 ``X[m] = sum_{n=0}^{N-1} x[n] exp(-i w[m,:] (n - n_shift)), m=1,…,M``
 where here `n` is a `CartesianIndex`
@@ -67,7 +69,8 @@ end
 
 
 """
-`d = dtft_init(w, N ; n_shift=?)` for 1D DTFT
+    d = dtft_init(w, N ; n_shift=?)
+for 1D DTFT
 
 in
 - `w::AbstractVector{<:Real}`	`[M]` frequency locations ("units" radians/sample)
@@ -94,7 +97,8 @@ end
 
 
 """
-`d = dtft_init(w, N ; n_shift=?)` for multi-dimensional DTFT (DSFT)
+    d = dtft_init(w, N ; n_shift=?)
+for multi-dimensional DTFT (DSFT)
 
 in
 - `w::AbstractMatrix{<:Real}`	`[M,D]` frequency locations ("units" radians/sample)
@@ -116,14 +120,15 @@ function dtft_init(w::AbstractMatrix{<:Real}, N::Dims
 	M = size(w,1)
 	forw = x -> dtft(w, reshape(x, N) ; n_shift=n_shift)
 	back = y -> dtft_adj(w, y, N ; n_shift=n_shift)
-	A = LinearMapAA(x -> forw(x), y -> back(y)[:], (M, prod(N)),
+	A = LinearMapAA(x -> forw(x), y -> vec(back(y)), (M, prod(N)),
 		(name="dtft$(length(N))", N=N) ; T = ComplexF64)
 	return (dtft=forw, adjoint=back, A=A)
 end
 
 
 """
-`x = dtft_adj(w, X, N ; n_shift=?)` adjoint for 1D DTFT
+    x = dtft_adj(w, X, N ; n_shift=?)
+adjoint for 1D DTFT
 
 ``x[n] = sum_{m=1}^M X[m] exp(i w[m] (n - n_shift)), n=0,…,N-1``
 
@@ -154,7 +159,8 @@ end
 
 
 """
-`x = dtft_adj(w, X, N ; n_shift=?)` adjoint for multi-dimensional DTFT (DSFT)
+    x = dtft_adj(w, X, N ; n_shift=?)
+adjoint for multi-dimensional DTFT (DSFT)
 
 ``x[n] = sum_{m=1}^M X[m] exp(i w[m,:] (n - n_shift)), n=0,…,N-1``
 where here `n` is a `CartesianIndex`
@@ -310,7 +316,7 @@ function dtft_test2( ; N::Dims = (2^3,2^2))
 	w2 = (2*pi) * (0:N[2]-1) / N[2]
 	w1 = repeat(w1, 1, N[2])
 	w2 = repeat(w2', N[1], 1)
-	w = [w1[:] w2[:]]
+	w = [vec(w1) vec(w2)]
 	d = dtft_init(w, N)
 
 	o0 = fft(x)
@@ -374,7 +380,7 @@ function dtft_test2c( ;
 	sd = dtft_init(w, N ; n_shift=n_shift)
 	o2 = sd.dtft(x)
 	@test isequal(o2, o1)
-	o3 = sd.A * x[:]
+	o3 = sd.A * vec(x)
 	@test isequal(o3, o1)
 
 	b1 = dtft_adj(w, o1, N ; n_shift=n_shift)
@@ -393,7 +399,7 @@ end
 
 
 """
-`dtft_test1_adj()`
+dtft_test1_adj()
 test adjoint
 """
 function dtft_test1_adj( ; N::Int=20, M::Int=30, n_shift::Int=5)
@@ -405,7 +411,7 @@ end
 
 
 """
-`dtft_test2_adj()`
+dtft_test2_adj()
 test adjoint
 """
 function dtft_test2_adj( ;
@@ -422,7 +428,7 @@ end
 
 
 """
-`dtft(:test)`
+    dtft(:test)
 self test
 """
 function dtft(test::Symbol)

@@ -13,8 +13,8 @@ using Test: @test, @test_throws, @inferred
 
 
 """
-`phantom = ellipse_im(ig, params ;
-	rot=0, oversample=1, hu_scale=1, replace=false)`
+    phantom = ellipse_im(ig, params ;
+	rot=0, oversample=1, hu_scale=1, replace=false)
 
 Generate ellipse phantom image from parameters:
 
@@ -136,7 +136,7 @@ phantom = downsample2(phantom, over)
 
 
 """
-`phantom = ellipse_im_fast()`
+phantom = ellipse_im_fast()
 """
 function ellipse_im_fast(nx, ny, params_in, dx, dy,
 		offset_x, offset_y, rot, over, replace)
@@ -197,7 +197,7 @@ end # ellipse_im_fast()
 
 
 """
-`phantom = ellipse_im(nx, dx, params ; kwarg...)`
+    phantom = ellipse_im(nx, dx, params ; kwarg...)
 
 square image of size `nx` by `nx`,
 specifying pixel size `dx` and ellipse `params`
@@ -209,7 +209,7 @@ end
 
 
 """
-`phantom = ellipse_im(nx::Int, params ; kwarg...)`
+    phantom = ellipse_im(nx::Int, params ; kwarg...)
 
 square image of size `nx` by `nx` with
 pixel size `dx=1` and ellipse `params`
@@ -220,7 +220,7 @@ end
 
 
 """
-`phantom = ellipse_im(nx::Int ; ny::Int=nx, dx::Real=1, kwarg...)`
+    phantom = ellipse_im(nx::Int ; ny::Int=nx, dx::Real=1, kwarg...)
 
 image of size `nx` by `ny` (default `nx`) with specified `dx` (default 1),
 defaults to `:shepplogan_emis`
@@ -232,7 +232,7 @@ end
 
 
 """
-`phantom = ellipse_im(nx::Int, ny::Int ; kwarg...)`
+    phantom = ellipse_im(nx::Int, ny::Int ; kwarg...)
 
 `:shepplogan_emis` of size `nx` by `ny`
 """
@@ -242,7 +242,7 @@ end
 
 
 """
-`phantom = ellipse_im(ig, code ; kwarg...)`
+    phantom = ellipse_im(ig, code ; kwarg...)
 
 `code = :shepplogan | :shepplogan_emis | :shepplogan_brainweb | :southpark`
 """
@@ -253,7 +253,7 @@ end
 
 
 """
-`phantom = ellipse_im(ig ; kwarg...)`
+    phantom = ellipse_im(ig ; kwarg...)
 
 `:shepplogan` (default) for given image geometry `ig`
 """
@@ -263,7 +263,7 @@ end
 
 
 """
-`params = ellipse_im_params(ig::MIRT_image_geom, params::Symbol)`
+    params = ellipse_im_params(ig::MIRT_image_geom, params::Symbol)
 
 `code = :shepplogan | :shepplogan_emis | :shepplogan_brainweb | :southpark | :disks`
 """
@@ -286,7 +286,7 @@ end
 
 
 """
-`params = shepp_logan_parameters(xfov, yfov ; case::Symbol)`
+params = shepp_logan_parameters(xfov, yfov ; case::Symbol)
 
 parameters from Kak and Slaney text, p. 255
 
@@ -321,7 +321,7 @@ end
 
 
 """
-`param = south_park_parameters( ; fov::Real = 100)`
+param = south_park_parameters( ; fov::Real = 100)
 """
 function south_park_parameters( ; fov::Real = 100)
 	xell = [
@@ -351,7 +351,7 @@ end
 
 #=
 """
-`ellipse_im()`
+    ellipse_im()
 
 show docstring(s)
 """
@@ -362,7 +362,7 @@ end
 
 
 """
-`ellipse_im_show()`
+ellipse_im_show()
 """
 function ellipse_im_show( ; over::Int = 2^2)
 	ig = image_geom(nx=2^8, ny=2^8+2, fov=250)
@@ -416,10 +416,10 @@ return true
 	asp = fld_read(file)
 	p1 = jim(asp, title="aspire")
 
-	area_asp = sum(asp[:]) * abs(ig.dx * ig.dy)
+	area_asp = sum(asp) * abs(ig.dx * ig.dy)
 
 	jul = ellipse_im(ig, ell, oversample=over) # 'type', types{ii})
-	area_jul = sum(jul[:]) * abs(ig.dx * ig.dy)
+	area_jul = sum(jul) * abs(ig.dx * ig.dy)
 
 	p2 = jim(jul, title="jul")
 	p3 = jim((jul-asp)*over^2, "difference: (jul-asp)*over^2")
@@ -487,7 +487,7 @@ end
 
 
 """
-`ellipse_im(:test)`
+    ellipse_im(:test)
 self test
 """
 function ellipse_im(test::Symbol)

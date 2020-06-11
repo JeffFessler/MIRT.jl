@@ -11,7 +11,7 @@ using Test: @test, @test_throws
 
 
 """
-`phantom = ellipsoid_im(ig, params;
+    phantom = ellipsoid_im(ig, params;
 	oversample=1, checkfov=false, how=:slow, showmem=false, hu_scale=1, return_params=false)`
 
 generate ellipsoid phantom image from parameters:
@@ -81,7 +81,7 @@ end
 
 
 """
-`ellipsoid_im_slow()`
+ellipsoid_im_slow()
 
 brute force fine grid - can use lots of memory
 """
@@ -130,7 +130,7 @@ end
 
 #=
 """
-`ellipsoid_im_fast()`
+ellipsoid_im_fast()
 
 currently not working
 only slow option works
@@ -157,9 +157,9 @@ function ellipsoid_im_fast(nx, ny, nz, params, dx, dy, dz,
 	if over > 1
 		tmp = ((1:over) - (over+1)/2) / over
 		(xf, yf, zf) = ndgrid(tmp*dx, tmp*dy, tmp*dz)
-		xf = xf[:]'
-		yf = yf[:]'
-		zf = zf[:]'
+		xf = vec(xf)'
+		yf = vec(yf)'
+		zf = vec(zf)'
 	end
 
 	hx = abs(dx) / 2
@@ -209,7 +209,7 @@ function ellipsoid_im_fast(nx, ny, nz, params, dx, dy, dz,
 		if ip == 1
 			throw("todo:must debug this")
 		end
-		if any(vi[:] & vo[:])
+		if any(vec(vi) & vec(vo))
 			throw("bug")
 		end
 		#=
@@ -240,8 +240,8 @@ function ellipsoid_im_fast(nx, ny, nz, params, dx, dy, dz,
 		edge = !vi & !vo
 		if showmem
 			println("edge fraction ",
-				sum(edge[:]) / prod(size(edge)), "=",
-				sum(edge[:]), "/", prod(size(edge)))
+				sum(vec(edge)) / prod(size(edge)), "=",
+				sum(vec(edge)), "/", prod(size(edge)))
 		end
 
 		x = xx[edge] .- cx
@@ -274,7 +274,7 @@ end
 
 
 """
-`ellipsoid_im_lowmem()`
+ellipsoid_im_lowmem()
 
 Do 'one slice at a time' to reduce memory
 """
@@ -293,7 +293,7 @@ end
 
 
 """
-`ellipsoid_im_check_fov()`
+ellipsoid_im_check_fov()
 """
 function ellipsoid_im_check_fov(nx, ny, nz, params,
 		dx, dy, dz, offset_x, offset_y, offset_z)
@@ -339,7 +339,7 @@ end
 
 
 """
-`phantom = ellipsoid_im(ig, ptype ; args...)`
+    phantom = ellipsoid_im(ig, ptype ; args...)
 
 `ptype = :zhu | :kak | :e3d | :spheroid`
 """
@@ -366,7 +366,7 @@ end
 
 
 """
-`phantom = ellipsoid_im(ig ; args...)`
+    phantom = ellipsoid_im(ig ; args...)
 
 `:zhu` (default) for given image geometry `ig`
 """
@@ -376,7 +376,7 @@ end
 
 
 """
-`rot3`
+    rot3
 """
 function rot3(x, y, z, azim, polar)
 	polar != 0 && throw("z (polar) rotation not done")
@@ -388,7 +388,7 @@ end
 
 
 """
-`shepp_logan_3d_parameters()`
+shepp_logan_3d_parameters()
 
 most of these values are unitless 'fractions of field of view'
 """
@@ -443,7 +443,7 @@ end
 
 
 """
-`spheroid_params()`
+spheroid_params()
 """
 function spheroid_params(xfov, yfov, zfov, dx, dy, dz)
 #	xfov = nx * dx, number * size
@@ -455,7 +455,7 @@ end
 
 
 """
-`ellipsoid_im()`
+    ellipsoid_im()
 
 show docstring
 """
@@ -465,7 +465,7 @@ end
 
 
 """
-`ellipsoid_im_show()`
+ellipsoid_im_show()
 """
 function ellipsoid_im_show()
 	ig = image_geom(nx=512, nz=64, dz=0.625, fov=500)
@@ -482,7 +482,7 @@ end
 
 
 """
-`ellipsoid_im_test()`
+ellipsoid_im_test()
 """
 function ellipsoid_im_test()
 	ig = image_geom(nx=512, nz=64*2, dz=0.625, fov=500)
@@ -511,7 +511,7 @@ end
 
 
 """
-`ellipsoid_im(:test)`
+    ellipsoid_im(:test)
 
 `ellipsoid_im(:show)`
 

@@ -63,13 +63,13 @@ function mri_trajectory( ;
 		o2 = ((0:(N[2]-1))/N[2] .- 0.5)*2π
 		if (length(N) == 2)
 			o1, o2 = ndgrid(o1, o2)
-			omega = [o1[:] o2[:]]
+			omega = [vec(o1) vec(o2)]
 		end
 
 		if (length(N) == 3)
 			o3 = ((0:(N[3]-1))/N[3] .- 0.5)*2π
 			o1, o2, o3 = ndgrid(o1, o2, o3)
-			omega = [o1[:] o2[:] o3[:]]
+			omega = [vec(o1) vec(o2) vec(o3)]
 		end
 
 		wi = 1 / prod(fov)
@@ -91,7 +91,7 @@ function mri_trajectory( ;
 		if (length(N) == 3) # 'stack of radials'
 			omega = mri_trajectory_stack(omega, N[3])
 			wi = repeat(wi, N[3], 1)
-			wi = wi[:] / fov[3]
+			wi = vec(wi) / fov[3]
 		end
 	end
 
@@ -153,7 +153,7 @@ function mri_trajectory( ;
 		o1 = ((0:(N[1]-1))/N[1] .- 0.5)*2π
 		o2 = (-N[2]/2:extra)/N[2] * 2π
 		o1,o2 = ndgrid(o1, o2)
-		omega = [o1[:] o2[:]]
+		omega = [vec(o1) vec(o2)]
 	end
 
 	# 2D FT, undersampled in "y" (phase encode) direction
@@ -162,7 +162,7 @@ function mri_trajectory( ;
 		o1 = ((0:(N[1]/1-1))/(N[1]/1) .- 0.5) * 2π
 		o2 = ((0:(N[2]/2-1))/(N[2]/under) .- 0.5) * 2π
 		o1,o2 = ndgrid(o1, o2)
-		omega = [o1[:] o2[:]]
+		omega = [vec(o1) vec(o2)]
 	end
 
 	# convert to physical units
@@ -183,7 +183,7 @@ end
 function mri_trajectory_stack(omega2, N3::Int)
 	o3 = ((0:(N3-1))/N3 .- 0.5)*2π
 	o3 = repeat(o3, 1, size(omega2,1)) # [N3,N12]
-	o3 = o3'[:] # [N12*N3]
+	o3 = vec(o3') # [N12*N3]
 	omega = repeat(omega2, N3) # [N12*N3,2]
 	omega = [omega o3] # [N12*N3,3]
 	return omega
@@ -246,7 +246,7 @@ function mri_trajectory_gads(N, fov ;
 			Nro = Nro, delta_ro = delta_ro, shift = shift, start = start[ir])
 
 		kspace = reshape(kspace, :, 2)
-		krad = sqrt.(sum(kspace.^2, dims = 2)[:])
+		krad = vec(sqrt.(sum(kspace.^2, dims = 2)))
 		good = (kmax_frac[ir] .<= krad) .& (krad .< kmax_frac[ir+1])
 		kspace = kspace[good, :]
 		omega = [omega; 2π*kspace]
@@ -277,7 +277,7 @@ function mri_trajectory_radial(N::Dims, fov ;
 	om = ir/nr * π
 	ang = (0:na-1)/na * 2π
 	om, ang = ndgrid(om, ang) # [nr+1, na]
-	omega = [(om .* cos.(ang))[:] (om .* sin.(ang))[:]]
+	omega = [vec(om .* cos.(ang)) vec(om .* sin.(ang))]
 
 	# density compensation factors based on "analytical" voronoi
 	fov[2] != fov[1] && @warn("fov not square")
@@ -286,7 +286,7 @@ function mri_trajectory_radial(N::Dims, fov ;
 	wi = collect(wi)
 	wi[ir .== 0] .= π * (du/2)^2 / na
 
-	wi = repeat(wi, na)[:]
+	wi = vec(repeat(wi, na))
 	return omega, wi
 end
 

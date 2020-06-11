@@ -40,7 +40,7 @@ Finite differences along one or more dimensions of an array,
 e.g., for anisotropic TV regularization.
 
 By default performs the same operations as
-``d = [(I_{N_d} \\otimes \\cdots \\otimes D_{N_1}); \\dots; (D_{N_d} \\otimes \\cdots \\otimes I_{N_1})] X[:]``
+``d = [(I_{N_d} \\otimes \\cdots \\otimes D_{N_1}); \\dots; (D_{N_d} \\otimes \\cdots \\otimes I_{N_1})] vec(X)``
 where ``D_N`` denotes the `N-1 × N` 1D finite difference matrix
 and `⊗` denotes the Kronecker product, but does it efficiently
 without using `spdiagm` (or any `SparseArrays` function).
@@ -118,7 +118,7 @@ end
 function diff2d_adj(d::AbstractVector{<:Number}, M::Int, N::Int ; out2d=false)
     isinteractive() && @warn("diff2d_adj is deprecated; use diff_adj")
     tmp = diff_adj(d, (M, N))
-    return out2d ? tmp : tmp[:]
+    return out2d ? tmp : vec(tmp)
 end
 
 function diff2d_map(M::Int, N::Int)

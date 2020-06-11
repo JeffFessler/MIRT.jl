@@ -11,8 +11,8 @@ using Test: @test, @test_throws
 
 
 """
-`phantom = cuboid_im(ig, params ;
-	oversample=1, hu_scale=1, how=:auto, return_params=false)`
+    phantom = cuboid_im(ig, params ;
+	oversample=1, hu_scale=1, how=:auto, return_params=false)
 
 generate cuboid phantom image from parameters:
 	`[x_center y_center z_center x_diameter y_diameter z_diameter
@@ -83,7 +83,7 @@ end
 
 
 """
-`cuboid_im_sample()``
+cuboid_im_sample()
 
 :sample
 """
@@ -130,7 +130,7 @@ end
 
 
 """
-`cuboid_im_exact()``
+cuboid_im_exact()
 
 :exact
 
@@ -193,7 +193,7 @@ end
 
 
 """
-`cuboid_im_lowmem1(...)`
+cuboid_im_lowmem1(...)
 
 This version does `:sample` 1 slice at a time to reduce memory
 """
@@ -210,7 +210,7 @@ end
 
 
 """
-`default_cuboid_parameters()`
+default_cuboid_parameters()
 """
 function default_cuboid_parameters(xfov, yfov, zfov)
 	return [
@@ -222,7 +222,7 @@ end
 
 
 """
-`rotated_cuboid_parameters()`
+rotated_cuboid_parameters()
 """
 function rotated_cuboid_parameters(xfov, yfov, zfov)
 	return [
@@ -234,7 +234,7 @@ end
 
 #=
 """
-`phantom = cuboid_im(nx, dx, params ; args...)`
+    phantom = cuboid_im(nx, dx, params ; args...)
 
 specifying voxel size `dx` and cuboid `params`
 """
@@ -245,7 +245,7 @@ end
 
 
 """
-`phantom = cuboid_im(nx::Int, params ; args...)`
+    phantom = cuboid_im(nx::Int, params ; args...)
 
 voxel size `dx=1` and cuboid `params`
 """
@@ -255,7 +255,7 @@ end
 
 
 """
-`phantom = cuboid_im(nx::Int ; ny::Int=nx, dx::Real=1, args...)`
+    phantom = cuboid_im(nx::Int ; ny::Int=nx, dx::Real=1, args...)
 
 image of size 'nx' by 'ny' (default 'nx') with specified 'dx' (default 1),
 defaults to `:default_cuboid`
@@ -267,7 +267,7 @@ end
 
 
 """
-`phantom = cuboid_im(nx::Int, ny::Int ; args...)`
+    phantom = cuboid_im(nx::Int, ny::Int ; args...)
 
 `:default` of size `nx` by `ny`
 """
@@ -278,7 +278,7 @@ end
 
 
 """
-`phantom = cuboid_im(ig, code, args...)`
+    phantom = cuboid_im(ig, code, args...)
 
 `code = :default | :rotate` # add more options
 """
@@ -296,7 +296,7 @@ end
 
 
 """
-`phantom = cuboid_im(ig ; args...)`
+    phantom = cuboid_im(ig ; args...)
 
 `:default` default parameters
 """
@@ -307,7 +307,7 @@ end
 
 
 """
-`cuboid_im()`
+    cuboid_im()
 
 show docstring
 """
@@ -317,7 +317,7 @@ end
 
 
 """
-`cuboid_im_show()`
+cuboid_im_show()
 """
 function cuboid_im_show()
 	ig = image_geom(nx=2^6, ny=2^6, nz=2^3, dz=1, fov=240)
@@ -340,7 +340,7 @@ end
 
 
 """
-`cuboid_im_test()`
+cuboid_im_test()
 """
 function cuboid_im_test()
 	ig = image_geom(nx=2^3, ny=2^3, nz=2^3, dz=1, fov=240)
@@ -358,11 +358,11 @@ function cuboid_im_test()
 	phantom_exact = cuboid_im(ig, params, how=:exact)
 	dxyz = abs.(ig.dx * ig.dy * ig.dz)
 	vol_true = prod(diam)
-	vol_phantom = sum(phantom_exact[:]) * dxyz
+	vol_phantom = sum(phantom_exact) * dxyz
 	isapprox(vol_true, vol_phantom)
 
 	phantom_sample = cuboid_im(ig, :default, how=:sample, oversample=3)
-	vol_phantom2 = sum(phantom_sample[:]) * dxyz
+	vol_phantom2 = sum(phantom_sample) * dxyz
 	isapprox(vol_phantom2, vol_true)
 
 	xrl = cuboid_im(ig, :rotate, how=:lowmem1)
@@ -378,7 +378,7 @@ end
 
 
 """
-`cuboid_im(:test)`
+    cuboid_im(:test)
 
 `cuboid_im(:show)`
 
@@ -394,6 +394,3 @@ function cuboid_im(test::Symbol)
 	cuboid_im_test()
 	true
 end
-
-#cuboid_im(:show)
-#cuboid_im(:test)

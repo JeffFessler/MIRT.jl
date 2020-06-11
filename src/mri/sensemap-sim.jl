@@ -175,8 +175,8 @@ function ir_mri_sensemap_sim_do(nx, ny, nz,
 				plot(jim(x, y, sx, "sx"),
 					jim(x, y, sy, "sy"),
 					jim(x, y, sz, "sz"),
-					quiver(xx[:], yy[:], title="(sx,sy)",
-						quiver=((sx./tmp)[:], (sz./tmp)[:])),
+					quiver(vec(xx), vec(yy), title="(sx,sy)",
+						quiver=(vec(sx./tmp), vec(sz./tmp))),
 					)
 				prompt()
 			end
@@ -185,8 +185,8 @@ function ir_mri_sensemap_sim_do(nx, ny, nz,
 				(xx,yy) = ndgrid(x,y)
 				bb = sqrt.(bx.^2 + by.^2)
 				jim(x, y, angle.(smap[:,:,1,ic,1]), "phase", color=:hsv)
-				quiver!(xx[:], yy[:], title="(bx,by)",
-						quiver=((bx./bb)[:], (by./bb)[:]))
+				quiver!(vec(xx), vec(yy), title="(bx,by)",
+						quiver=(vec((bx./bb)), vec((by./bb))))
 				prompt()
 			end
 		end
@@ -273,7 +273,7 @@ function ir_mri_sensemap_sim_show2(smap, x, y, dx, dy, nlist, plist, rlist)
 
 	pl = Array{Plot}(undef, ncoil, 3)
 	clim = (0, maximum(abs.(smap)))
-	xmax = maximum(abs.([x[:]; y[:]; plist[:,:,[1,2]][:]]))
+	xmax = maximum(abs.([vec(x); vec(y); vec(plist[:,:,[1,2]])]))
 	ymax = xmax
 	for ic=1:ncoil
 		tmp = smap[:,:,ic]
@@ -282,7 +282,7 @@ function ir_mri_sensemap_sim_show2(smap, x, y, dx, dy, nlist, plist, rlist)
 		plot!(p, ylim=[-1,1]*1.1*xmax, ytick=(-1:1) * nx/2 * dy)
 
 		scatter!(p, [0], [0], marker=:o, label="", color=:green) # center
-		scatter!(p, plist[:,:,1][:], plist[:,:,2][:],
+		scatter!(p, vec(plist[:,:,1]), vec(plist[:,:,2]),
 			marker=:o, label="", color=:blue) # coil location
 		xdir = nlist[ic,1,2]
 		ydir = nlist[ic,1,1]
@@ -311,7 +311,7 @@ function ir_mri_sensemap_sim_show2(smap, x, y, dx, dy, nlist, plist, rlist)
 		bx = real(smap[:,:,1])
 		by = imag(smap[:,:,1])
 		(xx,yy) = ndgrid(x,y)
-		p = quiver(xx[:], yy[:], quiver=(bx[:], by[:]),
+		p = quiver(vec(xx), vec(yy), quiver=(vec(bx), vec(by)),
 				aspect_ratio = 1,
 				arrow = Arrow(:simple,:head, 0.01, 0.01), # no effect!?
 				title = "Field pattern in x-y plane")
@@ -322,7 +322,7 @@ function ir_mri_sensemap_sim_show2(smap, x, y, dx, dy, nlist, plist, rlist)
 		pl[ic,3] = plot(xaxis=:off,yaxis=:off,grid=:off) # kludge
 	end
 
-	return plot(pl[:]...)
+	return plot(pl...)
 end
 
 

@@ -12,7 +12,7 @@ using Test: @test
 
 
 """
-`A = Afft(samp::AbstractArray{Bool} ; T::DataType = ComplexF32)`
+    A = Afft(samp::AbstractArray{Bool} ; T::DataType = ComplexF32)
 Make a LinearMap object for (under-sampled) FFT, of type `T`,
 using given sampling pattern `samp`.
 Especially for compressed sensing MRI with Cartesian sampling.
@@ -21,13 +21,14 @@ function Afft(samp::AbstractArray{Bool} ; T::DataType = ComplexF32)
 	dim = size(samp)
 	return LinearMapAA(
 		x -> fft(reshape(x,dim))[samp],
-		y -> prod(dim) * ifft(embed(y,samp))[:],
-		(sum(samp), prod(dim)), (name="fft",) ; T=T)
+		y -> prod(dim) * vec(ifft(embed(y,samp))),
+		(sum(samp), prod(dim)), (name="fft",) ; T=T,
+	)
 end
 
 
 """
-`A = Afft(:test)`
+    A = Afft(:test)
 self test
 """
 function Afft(test::Symbol)
@@ -35,8 +36,8 @@ function Afft(test::Symbol)
 	samp = trues(3,2); samp[2] = false
 	A = Afft(samp)
 	@test isapprox(Matrix(A)', Matrix(A'))
-	@test A * ones(3,2)[:] == [6, 0, 0, 0, 0]
-	@test A' * [1, 0, 0, 0, 0] == ones(3,2)[:]
+	@test A * vec(ones(3,2)) == [6, 0, 0, 0, 0]
+	@test A' * [1, 0, 0, 0, 0] == vec(ones(3,2))
 	@test A.name == "fft"
 	@test eltype(A) == ComplexF32
 	true

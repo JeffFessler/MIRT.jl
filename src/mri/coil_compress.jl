@@ -85,7 +85,7 @@ end
 convert SNR in dB to noise σ for complex gaussian noise
 """
 function snr2sigma(db, yb::AbstractArray{<:Complex})
-    10^(-db/20) * norm(yb[:]) / sqrt(length(yb)) / sqrt(2)
+    10^(-db/20) * norm(yb) / sqrt(length(yb)) / sqrt(2)
 end
 
 # ir_mri_coil_compress(:test)

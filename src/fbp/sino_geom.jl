@@ -314,8 +314,8 @@ projected `s/ds`, useful for footprint center and support
 """
 function sino_geom_taufun(sg, x, y)
 	size(x) != size(y) && throw("bad x,y size")
-	x = x[:]
-	y = y[:]
+	x = vec(x)
+	y = vec(y)
 	if sg.how === :par || sg.how === :moj # todo: check
 		ar = sg.ar' # row vector, for outer-product
 		tau = (x * cos.(ar) + y * sin.(ar)) / sg.dr
@@ -585,7 +585,7 @@ function sino_geom_plot(sg ; ig::Union{Nothing,MIRT_image_geom}=nothing)
 		plot!(sg.dso * cos.(t), sg.dso * sin.(t), color=:cyan, label="") # source circle
 		scatter!(sg.dso * cos.(tmp), sg.dso * sin.(tmp), markerstrokecolor=:auto,
 			color=:cyan, markersize=1, label="") # source points
-		scatter!(pd[1,:][:], pd[2,:][:], markerstrokecolor=:auto,
+		scatter!(vec(pd[1,:]), vec(pd[2,:]), markerstrokecolor=:auto,
 			color=:yellow, markersize=1, label="") # detectors
 
 		plot!([pd[1,1], p0[1], pd[1,end]], [pd[2,1], p0[2], pd[2,end]],
@@ -715,7 +715,7 @@ function sino_geom_test()
 
 		sg.d_ang # angular dependent d for :moj
 
-		sg.shape(sg.ones[:])
+		sg.shape(vec(sg.ones))
 		sg.taufun(ig.x, 0*ig.x)
 		sg.unitv()
 		sg.unitv(ib=1, ia=2)

@@ -16,7 +16,7 @@ using LinearMapsAA: LinearMapAA
 
 
 """
-`nufft_eltype(w::AbstractArray{<:Real})`
+nufft_eltype(w::AbstractArray{<:Real})
 ensure NFFTPlan is Float32 or Float64
 """
 function nufft_eltype(w::AbstractArray{<:Number})
@@ -34,7 +34,7 @@ end
 # see https://github.com/tknopp/NFFT.jl/pull/33
 # todo: may be unnecessary with future version of nfft()
 """
-`nufft_typer(T::DataType, x::AbstractArray{<:Real} ; warn::Bool=true)`
+nufft_typer(T::DataType, x::AbstractArray{<:Real} ; warn::Bool=true)
 type conversion wrapper for `nfft()`
 """
 function nufft_typer(T::DataType, x::AbstractArray{<:Number} ; warn::Bool=true)
@@ -47,7 +47,7 @@ end
 
 
 """
-`p = nufft_init(w, N ; nfft_m=4, nfft_sigma=2.0, pi_error=true, n_shift=0)`
+    p = nufft_init(w, N ; nfft_m=4, nfft_sigma=2.0, pi_error=true, n_shift=0)
 
 Setup 1D NUFFT,
 for computing fast ``O(N \\log N)`` approximation to
@@ -117,7 +117,7 @@ end
 
 
 """
-`p = nufft_init(w, N ; nfft_m=4, nfft_sigma=2.0, pi_error=true, n_shift=?)`
+    p = nufft_init(w, N ; nfft_m=4, nfft_sigma=2.0, pi_error=true, n_shift=?)
 
 Setup multi-dimensional NUFFT,
 for computing fast ``O(N \\log N)`` approximation to
@@ -176,7 +176,7 @@ function nufft_init(w::AbstractMatrix{<:Real}, N::Dims ;
 	back1 = y -> nfft_adjoint(p, nufft_typer(CT, y .* phasor_conj))
 
 	# no "many" for LinearMap:
-	A = LinearMapAA(x -> forw1(reshape(x,N)), y -> back1(y)[:], (M, prod(N)),
+	A = LinearMapAA(x -> forw1(reshape(x,N)), y -> vec(back1(y)), (M, prod(N)),
 		(name="nufft$(length(N))", N=N, n_shift=n_shift), T=CT)
 
 	if do_many
@@ -193,7 +193,7 @@ end
 
 
 """
-`nufft_test1( ; M=30, N=20, n_shift=1.7, T=?, tol=?)`
+nufft_test1( ; M=30, N=20, n_shift=1.7, T=?, tol=?)
 simple 1D tests
 """
 function nufft_test1( ;
@@ -231,7 +231,7 @@ end
 
 
 """
-`nufft_test2( ; M=?, N=?, n_shift=?, T=?, tol=?)`
+nufft_test2( ; M=?, N=?, n_shift=?, T=?, tol=?)
 simple 2D test
 """
 function nufft_test2( ;
@@ -250,7 +250,7 @@ function nufft_test2( ;
     w2 = (2*pi) * (0:N[2]-1) / N[2]
     w1 = repeat(w1, 1, N[2])
     w2 = repeat(w2', N[1], 1)
-    w = [w1[:] w2[:]]
+    w = [vec(w1) vec(w2)]
 	n_shift = [0,0]
 =#
 
@@ -279,7 +279,7 @@ function nufft_test2( ;
 	a0 = sd.adjoint(y)
 	a1 = sn.adjoint(y)
 	@test norm(a1 - a0, Inf) / norm(a0, Inf) < tol
-	o2 = sn.A * x[:]
+	o2 = sn.A * vec(x)
 	@test isequal(o1, o2)
 	a2 = sn.A' * y
 	a2 = reshape(a2, N)
@@ -303,7 +303,7 @@ end
 
 
 """
-`w, errs = nufft_errors( ; M=?, w=?, N=?, n_shift=?, ...)`
+w, errs = nufft_errors( ; M=?, w=?, N=?, n_shift=?, ...)
 
 Compute worst-case errors for NUFFT (for signal of length N of unit norm)
 """
@@ -317,12 +317,12 @@ function nufft_errors( ;
 	sd = dtft_init(w, N ; n_shift=n_shift)
 	sn = nufft_init(w, N ; n_shift=n_shift, kwargs...)
 	E = Matrix(sn.A - sd.A)
-	return w, mapslices(norm, E, dims=2)[:] # [M]
+	return w, vec(mapslices(norm, E, dims=2)) # [M]
 end
 
 
 """
-`nufft_plot1()`
+nufft_plot1()
 
 Plot worst-case error over all frequencies w between 0 and 2pi/N for various N.
 """
@@ -339,7 +339,7 @@ end
 
 
 """
-`nufft_plot_error_m( ; mlist=?)`
+nufft_plot_error_m( ; mlist=?)
 
 plot error vs NFFT sigma
 """
@@ -355,7 +355,7 @@ end
 
 
 """
-`nufft_plot_error_s( ; slist=?)`
+nufft_plot_error_s( ; slist=?)
 
 plot error vs NFFT sigma
 """
@@ -371,7 +371,7 @@ end
 
 
 """
-`nufft_plots()`
+    nufft_plots()
 various NUFFT error plots
 """
 function nufft_plots()
@@ -383,7 +383,7 @@ end
 
 
 """
-`nufft(:test)`
+    nufft(:test)
 self tests
 """
 function nufft(test::Symbol)

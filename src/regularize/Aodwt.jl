@@ -12,9 +12,9 @@ using Wavelets: dwt, idwt, wavelet, WT
 
 
 """
-`A, levels, mfun = Aodwt(dims ; level::Int=3, wt=wavelet(WT.haar))`
+    A, levels, mfun = Aodwt(dims ; level::Int=3, wt=wavelet(WT.haar))
 
-create orthogonal discrete wavelet transform (ODWT) `LinearMapAA`
+Create orthogonal discrete wavelet transform (ODWT) `LinearMapAA`
 
 in
 - `dims::Dims` tuple of dimensions
@@ -34,13 +34,13 @@ which is useful when imposing scale-dependent regularization
 function Aodwt(dims::Dims ; level::Int=3, wt=wavelet(WT.haar))
 
 	Afun = (level) -> LinearMapAA(
-		x -> dwt(reshape(x, dims), wt, level)[:],
-		y -> idwt(reshape(y, dims), wt, level)[:],
+		x -> vec(dwt(reshape(x, dims), wt, level)),
+		y -> vec(idwt(reshape(y, dims), wt, level)),
 		(prod(dims), prod(dims)), (wt=wt, level=level))
 
 	A = Afun(level)
 
-	mfun = (A, x) -> reshape(A * x[:], dims)
+	mfun = (A, x) -> reshape(A * vec(x), dims)
 
 	scales = zeros(dims)
 	for il=1:level
@@ -59,17 +59,17 @@ end
 
 
 """
-`Aodwt_show( ; M::Int=32, N::Int=64)`
+    Aodwt_show( ; M::Int=32, N::Int=64)
 show scales
 """
-function Aodwt_show(; dims::Dims = (32, 64))
+function Aodwt_show( ; dims::Dims = (32, 64))
 	W, scales, mfun = Aodwt(dims)
 	jim(scales)
 end
 
 
 """
-`Aodwt(:test)`
+    Aodwt(:test)
 self test
 
 `Aodwt(:show)`
@@ -85,8 +85,8 @@ function Aodwt(test::Symbol)
 
 	W,_,_ = Aodwt((8,16), level=2)
 	@test Matrix(W)' == Matrix(W') # check adjoint
-#	@show W.wt
-#	@show propertynames(W.wt)
+	isinteractive() && (@show W.wt)
+	isinteractive() && (@show propertynames(W.wt))
 	@test W.level == 2
 	@test W.wt.name == "haar"
 

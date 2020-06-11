@@ -16,7 +16,7 @@ using ImageTransformations: imresize
 
 
 """
-`MIRT_image_geom`
+    MIRT_image_geom
 
 Image geometry "struct" with essential parameters
 """
@@ -39,7 +39,7 @@ end
 
 
 """
-`image_geom_help( ; io)`
+image_geom_help( ; io)
 """
 function image_geom_help( ; io::IO = isinteractive() ? stdout : devnull)
 	print(io, "propertynames:\n")
@@ -105,7 +105,7 @@ end
 
 
 """
-`MIRT_cbct_ig`
+    MIRT_cbct_ig
 
 Structure suitable for passing to C routines `cbct_*`
 based on the struct `cbct_ig` found in `cbct,def.h`
@@ -126,7 +126,7 @@ struct MIRT_cbct_ig
 end
 
 """
-`cbct(ig::MIRT_image_geom; nthread=1)`
+cbct(ig::MIRT_image_geom; nthread=1)
 constructor for `MIRT_cbct_ig`
 """
 function cbct(ig::MIRT_image_geom; nthread::Int=1)
@@ -145,7 +145,7 @@ end
 
 # see https://docs.julialang.org/en/stable/manual/constructors/
 """
-`ig = image_geom(...)`
+    ig = image_geom(...)
 
 Constructor for `MIRT_image_geom`
 
@@ -247,7 +247,7 @@ end
 
 
 """
-`image_geom_down_round()`
+image_geom_down_round()
 helper function needed to downsample `image_geom`
 """
 function _down_round(val::Real=1, dd::Real=1, down::Real=1)
@@ -261,7 +261,7 @@ end
 
 
 """
-`ig_down = downsample(ig, down::Union{Int,Vector{Int}})`
+    ig_down = downsample(ig, down::Union{Int,Vector{Int}})
 down sample an image geometry by the factor `down`
 cf `image_geom_downsample`
 """
@@ -311,7 +311,7 @@ end
 
 
 """
-`ig_new = image_geom_expand_nz(ig::MIRT_image_geom, nz_pad::Int)`
+ig_new = image_geom_expand_nz(ig::MIRT_image_geom, nz_pad::Int)
 pad both ends
 """
 function image_geom_expand_nz(ig::MIRT_image_geom, nz_pad::Int)
@@ -326,7 +326,7 @@ end
 
 
 """
-`ig_over = image_geom_over(ig::MIRT_image_geom, over::Int)`
+ig_over = image_geom_over(ig::MIRT_image_geom, over::Int)
 over-sample an image geometry by the factor `over`
 """
 function image_geom_over(ig::MIRT_image_geom, over::Int)
@@ -370,7 +370,7 @@ end
 
 
 """
-`out = image_geom_add_unitv(z::AbstractArray ; j=?, i=?, c=?)`
+out = image_geom_add_unitv(z::AbstractArray ; j=?, i=?, c=?)
 
 add a unit vector to an initial array `z` (typically of zeros)
 
@@ -404,7 +404,7 @@ end
 
 
 """
-`image_geom_add_unitv_test()`
+image_geom_add_unitv_test()
 """
 function image_geom_add_unitv_test()
 #	test != :test && throw(ArgumentError("test $test"))
@@ -417,7 +417,7 @@ end
 
 
 """
-`image_geom_plot(ig)`
+image_geom_plot(ig)
 """
 function image_geom_plot(ig::MIRT_image_geom; kwargs...)
 	return ig.is3 ?
@@ -532,7 +532,7 @@ function image_geom_test2(ig::MIRT_image_geom)
 	ig.ug
 	ig.vg
 	ig.fg
-	@test ig.shape(ig.ones[:]) == ig.ones
+	@test ig.shape(vec(ig.ones)) == ig.ones
 	@test ig.embed(ig.ones[ig.mask]) == Float32.(ig.mask)
 	@test ig.maskit(ig.ones) == Float32.(ones(ig.np))
 	ig.unitv(j=4)
@@ -590,7 +590,7 @@ end
 
 
 """
-`image_geom(:test)`
+    image_geom(:test)
 self test
 """
 function image_geom(test::Symbol)
