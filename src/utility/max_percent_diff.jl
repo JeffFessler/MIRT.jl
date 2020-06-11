@@ -31,7 +31,7 @@ function max_percent_diff(s1, s2 ;
 
     if normalize
         normFactor = sum(abs.(s2)) / sum(abs.(s1))
-        print("Normalization factor (matrix 2 / matrix 1): $normFactor \n")
+        isinteractive() && (@info "Normalization factor (matrix 2 / matrix 1): $normFactor \n")
         s1 /= sum(abs.(s1))
         s2 /= sum(abs.(s2))
     end

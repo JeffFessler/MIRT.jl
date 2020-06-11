@@ -321,16 +321,16 @@ function ellipsoid_im_check_fov(nx, ny, nz, params,
 		rz = par[6]
 
 		if (cx + rx > xmax) || (cx - rx < xmin)
-			@warn("fov: x range $xmin $xmax, cx=$cx, rx=$rx")
+			isinteractive() && @warn("fov: x range $xmin $xmax, cx=$cx, rx=$rx")
 			return false
 		end
 		if (cy + ry > ymax) || (cy - ry < ymin)
-			@warn("fov: y range $ymin $ymax, cy=$cy, ry=$ry")
+			isinteractive() && @warn("fov: y range $ymin $ymax, cy=$cy, ry=$ry")
 			return false
 		end
 
 		if (cz + rz > zmax) || (cz - rz < zmin)
-			@warn("fov: z range $zmin $zmax, cz=$cz, rz=$rz")
+			isinteractive() && @warn("fov: z range $zmin $zmax, cz=$cz, rz=$rz")
 			return false
 		end
 	end

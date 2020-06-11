@@ -84,8 +84,6 @@ function mri_trajectory( ;
 	end
 
 	if (ktype == :radial)
-@show N, fov
-@show N[1:2], fov[1:2]
 		omega, wi = mri_trajectory_radial(N[1:2], fov[1:2] ; kwargs...)
 
 		if (length(N) == 3) # 'stack of radials'
@@ -347,7 +345,7 @@ function mri_trajectory(test::Symbol)
 
 	ktype3 = [:cartesian, :spiral3, :radial] # 3D
 	for ktype in ktype3 # 3D tests
-		@show ktype
+		isinteractive() && (@show ktype)
 		kspace, omega, wi = mri_trajectory( ; ktype=ktype, N=(N...,4))
 		@test size(kspace,2) == size(omega,2) == 3
 		@test size(kspace,1) == size(omega,1)
@@ -361,7 +359,7 @@ function mri_trajectory(test::Symbol)
 	# arg_wi = [:voronoi]
 	plots = Any[]
 	for ktype in ktypes
-		@show ktype
+		isinteractive() && (@show ktype)
 		args =
 			(ktype == :epi_sin) ? Dict(:oversample => 1/1,) :
 			(ktype == :radial) ? Dict(:nr => 10, :na_nr => π/2) :

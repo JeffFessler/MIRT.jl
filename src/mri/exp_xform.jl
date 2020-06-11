@@ -93,7 +93,7 @@ function exp_xform_test( ; T::DataType = ComplexF32)
 
     modes = (:element, :row, :column)
 
-    @info "1D tests with $T"
+    isinteractive() && (@info "1D tests with $T")
     N = 500
     M = 6000
     D = 3
@@ -107,7 +107,7 @@ function exp_xform_test( ; T::DataType = ComplexF32)
         @test y1 ≈ y2
     end
 
-    @info "2D tests with $T"
+    isinteractive() && (@info "2D tests with $T")
     N = 10000
     M = 100
     D = 20

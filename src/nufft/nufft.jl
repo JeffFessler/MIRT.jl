@@ -41,7 +41,7 @@ function nufft_typer(T::DataType, x::AbstractArray{<:Number} ; warn::Bool=true)
 	if eltype(x) == T
 		return x
 	end
-	@warn("converting $(eltype(x)) to $T")
+	isinteractive() && @warn("converting $(eltype(x)) to $T")
 	return T.(x)
 end
 
