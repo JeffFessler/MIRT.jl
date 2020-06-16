@@ -5,10 +5,10 @@ http://docs.junolab.org/latest/man/installation/
 to set up the [Juno IDE](https://junolab.org/) in
   the [Atom editor](https://atom.io), including:
 
-  - Install [Julia](https://julialang.org) (1.3 or later recommended).
+  - Install [Julia](https://julialang.org) (1.4 or later recommended).
   - Power users: set a shell alias for "julia" to the julia executable.
 On my Mac my path is
-`~/../freeware/Julia-1.3.app/Contents/Resources/julia/bin/julia`
+`~/../freeware/Julia-1.4.app/Contents/Resources/julia/bin/julia`
   - Install the [Atom editor](https://atom.io).
   - Use Atom to install the `uber-juno` package. This may take a couple minutes.
   - Click "Yes" for the question about "Juno-specific panes on startup", unless you are an Atom guru.
@@ -19,11 +19,8 @@ On my Mac my path is
 * Type ```1+2``` at the Julia REPL prompt to verify it works.
 * Use the `]` key at the Julia REPL to enter its package manager (pkg).
 * Type `?` and press Enter at the Julia `pkg` prompt to peruse the many pkg commands.
-* Add needed packages using the `add` command at the `pkg` prompt.
-* For Julia 1.2.0, start with these two commands:
-  - `add SpecialFunctions`
-  - `build SpecialFunctions`
-  - Then: `add MIRT Plots IJulia FFTW FFTViews Arpack Debugger`
+* Add needed packages using the `add` command at the `pkg` prompt:
+* `add MIRT Plots IJulia FFTW FFTViews Arpack Debugger`
   - The package `IJulia` is needed for Jupyter notebooks.
   - FYI: `add MIRT` automatically loads from https://github.com/JeffFessler/MIRT.jl because MIRT.jl is a registered package.
   - There are numerous packages available, see https://pkg.julialang.org/docs/
