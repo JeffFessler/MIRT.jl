@@ -24,7 +24,7 @@ diff_length(N::Dims, dim::Int) = prod(diff_size(N, dim))
 function diff_check(N::Dims, dims)
     (length(unique(dims)) != length(dims)) &&
         throw(ArgumentError("non-unique dims $dims"))
-	map(dim -> diff_check(N, dim), dims) # check each dim
+    map(dim -> diff_check(N, dim), dims) # check each dim
 end
 
 function diff_check(N::Dims, dim::Int)
