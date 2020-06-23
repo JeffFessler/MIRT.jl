@@ -1,5 +1,8 @@
 In reverse chronological order
 
+2020-06-22
+In place left finite differences: `diffl!` `diffl_adj!` `diffl_map`
+
 0.9.6 2020-06-10
 
 n-d version of `diff_map`
