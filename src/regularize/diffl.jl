@@ -151,6 +151,15 @@ function diffl(test::Symbol)
 		@test g[:,:,2:end,1] == diff(x, dims=3)
 		@test g[2:end,:,:,2] == diff(x, dims=1)
 	end
+
+	@testset "adj" begin
+		x = rand(3)
+		@inferred diffl_adj(rand(3))
+		@test_throws ArgumentError diffl_adj(rand(3) ; edge=:test)
+	#	@inferred diffl_adj(rand(3,4,2), 1:2) # fails
+		@test size(diffl_adj(rand(3,4,2), 1:2)) == (3,4)
+	end
+
 	true
 end
 
@@ -233,16 +242,18 @@ diffl_adj(g::AbstractArray ; kwargs...) = diffl_adj(g, 1 ; kwargs...)
     z = diffl(g::AbstractArray, dim::Int ; ...)
 Allocating version of `diffl!` along `dim`
 """
-diffl_adj(g::AbstractArray, dim::Int ; kwargs...) = diffl_adj!(similar(g), g, dim ; kwargs...)
+diffl_adj(g::AbstractArray, dim::Int ; kwargs...) =
+	diffl_adj!(similar(g), g, dim ; reset0=true, kwargs...)
 
 """
     z = diffl_adj(g::AbstractArray, dims::AbstractVector{Int} ; ...)
 Allocating version of `diffl!` for `dims`
 """
-function diffl_adj(g::AbstractArray, dims::AbstractVector{Int} ; kwargs...)
+function diffl_adj(g::AbstractArray{T,N}, dims::AbstractVector{Int}
+	; kwargs...) where {T,N}
 	size(g)[end] != length(dims) &&
 		throw(DimensionMismatch("sizes g=>$(size(g)) vs dims=$dims"))
-	diffl_adj!(similar(g, size(g)[1:end-1]...), g, dims ; kwargs...)
+	diffl_adj!(similar(g, size(g)[1:(N-1)]...), g, dims ; kwargs...)
 end
 
 
@@ -320,7 +331,7 @@ function diffl_map(test::Symbol)
     @test Matrix(T)' == Matrix(T')
     @test T.name == "diffl_map"
 
-    @test_throws String diffl_map(N, d ; edge=:none) # unsupported
+    @test_throws String diffl_map(N ; edge=:none) # unsupported
 
     for N in [(3,), (3,4), (2,3,4)]
 		dlist = [1, [1,]]
