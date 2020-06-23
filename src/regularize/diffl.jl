@@ -141,6 +141,12 @@ function diffl(test::Symbol)
 
 		g = @inferred diffl(x, 1 ; add=true)
 		@test g[2:end,:][:] == x[1,:] + x[2,:]
+
+		x = rand(3,4)
+		g1 = diffl(x)
+		g2 = similar(g1)
+		@inferred diffl!(g2, x) # test default 1
+		@test g2[2:end,:] == g1[2:end,:]
 	end
 
 	@testset "stack" begin
@@ -302,8 +308,6 @@ function diffl_map(N::Dims{D},
 ) where {D}
 
 	(1 .<= dim .<= D) || throw(ArgumentError("dim $dim"))
-#	check_edge = ( ; edge::Symbol=:zero, args...) -> (edge == :none)
-#	check_edge( ; kwargs...) && throw("edge=$edge unsupported")
 	(edge == :none) && throw("edge=$edge unsupported")
 	
     return LinearMapAA(
@@ -315,7 +319,7 @@ function diffl_map(N::Dims{D},
     )
 end
 
-# unspecific dim reverts to 1
+# default dim=1
 diffl_map(N::Dims ; kwargs...) = diffl_map(N, 1, ; kwargs...)
 
 
