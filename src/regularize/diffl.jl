@@ -1,6 +1,6 @@
 #=
 diffl.jl
-left finite differences, in-place!
+left finite differences "in-place" (pre-allocated outpus)
 
 Inspired by:
 https://docs.julialang.org/en/latest/manual/performance-tips/#Pre-allocating-outputs-1
@@ -17,9 +17,10 @@ using Test: @test, @testset, @test_throws, @inferred
 """
     diffl!(g::AbstractArray, x::AbstractArray, dim::Int ; ...)
 
-Left finite difference operator on an input array `x`,
-storing the result "in-place" in output array `g`.
-Arrays `g` and `x` must have the same size.
+Apply left finite difference operator to input array `x`,
+storing the result "in-place" in pre-allocated output array `g`.
+
+Arrays `g` and `x` must have the same size, and cannot alias.
 The "first" elements of `g` are zero for dimension `dim`.
 The default is `dim=1`.
 
@@ -30,9 +31,7 @@ Option:
 Choose `edge=:circ` to use circulant (aka periodic) boundary conditions.
 Choose `edge=:none` to leave the first elements untouched.
 
-The arrays `g` and `x` must be the same size.
-
-In 1D, if `x = [2, 6, 7]` then `g = [0, 4, 1]`.
+In 1D, if `x = [2, 6, 7]` then `g = [0, 4, 1]` with default options.
 """
 function diffl!(g::AbstractArray{Tg,N}, x::AbstractArray{Tx,N}, dim::Int
 	; edge::Symbol=:zero, add::Bool=false) where {Tg,Tx,N}
@@ -343,7 +342,6 @@ function diffl_map(test::Symbol)
 		length(N) > 2 && push!(dlist, [length(N), 1])
 		isinteractive() && @show dlist
 		for d in dlist
-		#	@show d
 			for edge in (:zero, :circ)
 				for add in (false, true)
         			T = diffl_map(N, d ; T=Int32, edge=edge, add=add)
