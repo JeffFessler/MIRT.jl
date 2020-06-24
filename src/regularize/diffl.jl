@@ -1,6 +1,8 @@
 #=
 diffl.jl
-left finite differences "in-place" (pre-allocated outpus)
+Left finite differences "in-place" (pre-allocated outpus)
+
+Could use StaticKernels.jl for this; see timing test in ../../time.
 
 Inspired by:
 https://docs.julialang.org/en/latest/manual/performance-tips/#Pre-allocating-outputs-1
