@@ -5,9 +5,9 @@ Methods related to a image support mask:
 2019-06-22 Jeff Fessler, University of Michigan
 =#
 
-export embed, mask_or, mask_outline, maskit, mask_test
+export embed, embed!, mask_or, mask_outline, maskit, mask_test
 
-using Test: @test, @inferred
+using Test: @test, @testset, @inferred
 using ImageFiltering: imfilter, centered
 #using SparseArrays: sparse, findnz, AbstractSparseVector
 
@@ -63,16 +63,26 @@ end
 
 
 """
-    array = embed(v, mask)
+    embed!(array, v, mask ; filler=0)
+embed vector `v` of length `sum(mask)`
+into elements of `array` where `mask` is `true`,
+setting the remaining elements to `filler` (default 0).
+"""
+embed!(array::AbstractArray{T,D}, v::AbstractVector{<:Number},
+    mask::AbstractArray{Bool,D} ; filler::T = zero(T)
+) where {T, D} =
+	setindex!(fill!(array, filler), v, mask)
+
+
+"""
+    array = embed(v, mask ; filler=0)
 
 embed vector `v` of length `sum(mask)`
-into elements of an array where `mask` is `true`
+into elements of an array where `mask` is `true`; see `embed!`.
 """
-function embed(v::AbstractVector{<:Number}, mask::AbstractArray{Bool})
-	array = zeros(eltype(v), size(mask))
-	array[mask] .= v
-	return array
-end
+embed(v::AbstractVector{T}, mask::AbstractArray{Bool} ;
+	filler::Number = zero(T)) where {T <: Number} =
+	embed!(fill(filler, size(mask)), v, mask)
 
 
 """
@@ -118,9 +128,11 @@ end
 function embed(test::Symbol)
 	test != :test && throw(ArgumentError("test $test"))
 	mask = [false true true; true false false]
-	a = [0 2 3; 1 0 0]; v = a[vec(mask)]
+	a = [0 2 3; 1 0 0]; v = a[mask]
+	b = similar(a)
 	@test (@inferred embed(v,mask)) == a
 	@test (@inferred embed([v 2v], mask)) == cat(dims=3, a, 2a)
+	@test embed!(b, v, mask ; filler=-1) == a + (-1) * .!mask
 #	@test embed(sparse(1:3),mask) == sparse([0 2 3; 1 0 0]) # later
 	true
 end
@@ -162,9 +174,17 @@ end
 self tests
 """
 function mask_test()
-	@test mask_or(:test)
-	@test mask_outline(:test)
-	@test embed(:test)
-	@test maskit(:test)
+	@testset "mask_or" begin
+		@test mask_or(:test)
+	end
+	@testset "mask_outline" begin
+		@test mask_outline(:test)
+	end
+	@testset "embed" begin
+		@test embed(:test)
+	end
+	@testset "maskit" begin
+		@test maskit(:test)
+	end
 	true
 end
