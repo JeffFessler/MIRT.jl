@@ -23,7 +23,7 @@ Equivalent to the in-place `y .= x[mask]` but is non-allocating.
     sum(mask) == length(y) || throw("wrong length")
     size(mask) == size(x) || throw(DimensionMismatch("x vs mask"))
     count = 1
-    @inbounds for i in 1:LinearIndices(mask)[findlast(mask)]
+    @inbounds for i in eachindex(mask, x)
         y[count] = x[i]
         count += mask[i]
     end
