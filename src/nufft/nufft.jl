@@ -10,39 +10,32 @@ export nufft_init, nufft_plots, nufft
 #using MIRT: dtft_init, map_many
 using NFFT
 using Plots
-using Random: seed!
 using LinearAlgebra: norm
-using LinearMapsAA: LinearMapAA
+using LinearMapsAA: LinearMapAA, LinearMapAX, LinearMapAO
 
 
 """
-nufft_eltype(w::AbstractArray{<:Real})
+    nufft_eltype(::DataType)
 ensure NFFTPlan is Float32 or Float64
 """
-function nufft_eltype(w::AbstractArray{<:Number})
-	T = eltype(w)
-	if T <: Integer || T == Float16
-		return Float32 # require at least Float32
-	elseif T ∉ (Float32,Float64)
-		throw("unknown type $T")
-	end
-	return T
-end
+nufft_eltype(::Type{<:Integer}) = Float32
+nufft_eltype(::Type{<: Union{Float16,Float32}}) = Float32
+nufft_eltype(::Type{Float64}) = Float64
+nufft_eltype(T::DataType) = throw("unknown type $T")
 
 
 # the following convenience routine ensures correct type passed to nfft()
 # see https://github.com/tknopp/NFFT.jl/pull/33
 # todo: may be unnecessary with future version of nfft()
 """
-nufft_typer(T::DataType, x::AbstractArray{<:Real} ; warn::Bool=true)
+    nufft_typer(T::DataType, x::AbstractArray{<:Real} ; warn::Bool=true)
 type conversion wrapper for `nfft()`
 """
-function nufft_typer(T::DataType, x::AbstractArray{<:Number} ; warn::Bool=true)
-	if eltype(x) == T
-		return x
-	end
-	isinteractive() && @warn("converting $(eltype(x)) to $T")
-	return T.(x)
+nufft_typer(::Type{T}, x::T ; warn::Bool=true) where {T} = x # cf convert()
+
+function nufft_typer(T::Type{TT}, x ; warn::Bool=true) where {TT}
+    isinteractive() && @warn("converting $(eltype(x)) to $(eltype(T))")
+    convert(T, x)
 end
 
 
@@ -66,10 +59,11 @@ option
 - `pi_error::Bool`		throw error if ``|w| > π``, default `true`
    + Set to `false` only if you are very sure of what you are doing!
 - `do_many::Bool`	support extended inputs via `map_many`? default `true`
+- `operator::Bool` set to `true` to make `A` an `LinearMapAO`
 
 out
 - `p NamedTuple` with fields
-	`nufft = x -> nufft(x), adjoint = y -> nufft_adj(y), A=LinearMapAA`
+	`nufft = x -> nufft(x), adjoint = y -> nufft_adj(y), A=LinearMapAX`
 
 The default settings are such that for a 1D signal of length N=512,
 the worst-case error is below 1e-5 which is probably adequate
@@ -77,32 +71,36 @@ for typical medical imaging applications.
 To verify this statement, run `nufft_plot1()` and see plot.
 """
 function nufft_init(w::AbstractArray{<:Real}, N::Int ;
-		n_shift::Real = 0,
-		nfft_m::Int = 4,
-		nfft_sigma::Real = 2.0,
-		pi_error::Bool = true,
-		do_many::Bool = true,
-	)
+	n_shift::Real = 0,
+	nfft_m::Int = 4,
+	nfft_sigma::Real = 2.0,
+	pi_error::Bool = true,
+	do_many::Bool = true,
+	operator::Bool = false, # backward compatibility
+)
 
 	N < 6 && throw("NFFT may be erroneous for small N")
 	isodd(N) && throw("NFFT erroneous for odd N")
 	pi_error && any(abs.(w) .> π) &&
 		throw(ArgumentError("|w| > π is likely an error"))
 
-	T = nufft_eltype(w)
+	T = nufft_eltype(eltype(w))
 	CT = Complex{T}
-	f = convert.(T, w/(2π)) # note: NFFTPlan must have correct type
+	CTa = AbstractArray{Complex{T}}
+	f = convert(Array{T}, w/(2π)) # note: NFFTPlan must have correct type
 	p = NFFTPlan(f, N, nfft_m, nfft_sigma) # create plan
 	M = length(w)
 	# extra phase here because NFFT always starts from -N/2
-	phasor = CT.(cis.(-w * (N/2 - n_shift)))
+	phasor = convert(CTa, cis.(-w * (N/2 - n_shift)))
 	phasor_conj = conj.(phasor)
-	forw1 = x -> nfft(p, nufft_typer(CT, x)) .* phasor
-#	forw! = x,y -> nfft!(p, nufft_typer(CT, x)) .* phasor # todo
-	back1 = y -> nfft_adjoint(p, nufft_typer(CT, y .* phasor_conj))
+	forw1 = x -> nfft(p, nufft_typer(CTa, x)) .* phasor
+#	forw! = x,y -> nfft!(p, nufft_typer(CTa, x)) .* phasor # todo
+	back1 = y -> nfft_adjoint(p, nufft_typer(CTa, y .* phasor_conj))
 
-	A = LinearMapAA(forw1, back1, (M, N),
-			(name="nufft1", N=(N,), n_shift=n_shift, ), T=CT) # no "many" here!
+	A = LinearMapAA(forw1, back1, (M, N), # no "many" here!
+		(name="nufft1", N=(N,), n_shift=n_shift, ) ; T=CT,
+		operator = operator, # effectively "many" if true
+	)
 
 	if do_many
 		forw = x -> map_many(forw1, x, (N,))
@@ -136,6 +134,7 @@ option
 - `pi_error::Bool`		throw error if ``|w| > π``, default `true`
    + Set to `false` only if you are very sure of what you are doing!
 - `do_many::Bool`	support extended inputs via `map_many`? default `true`
+- `operator::Bool` set to `true` to make `A` an `LinearMapAO`
 
 The default `do_many` option is designed for parallel MRI where the k-space
 sampling pattern applies to every coil.
@@ -144,16 +143,17 @@ The coil and/or time dimensions must come after the spatial dimensions.
 
 out
 - `p NamedTuple` with fields
-	`nufft = x -> nufft(x), adjoint = y -> nufft_adj(y), A=LinearMapAA`
-	(todo: The LinearMap does not support `do_many`.)
+	`nufft = x -> nufft(x), adjoint = y -> nufft_adj(y), A=LinearMapAX`
+	(Using `operator=true` allows the `LinearMapAO` to support `do_many`.)
 """
 function nufft_init(w::AbstractMatrix{<:Real}, N::Dims ;
-		n_shift::AbstractVector{<:Real} = zeros(Int, length(N)),
-		nfft_m::Int = 4,
-		nfft_sigma::Real = 2.0,
-		pi_error::Bool = true,
-		do_many::Bool = true,
-	)
+	n_shift::AbstractVector{<:Real} = zeros(Int, length(N)),
+	nfft_m::Int = 4,
+	nfft_sigma::Real = 2.0,
+	pi_error::Bool = true,
+	do_many::Bool = true,
+	operator::Bool = false, # backward compatibility
+)
 
 	any(N .< 6) && throw("NFFT may be erroneous for small N")
 	any(isodd.(N)) && throw("NFFT erroneous for odd N")
@@ -164,20 +164,30 @@ function nufft_init(w::AbstractMatrix{<:Real}, N::Dims ;
 	length(N) != D && throw(DimensionMismatch("length(N) vs D=$D"))
 	length(n_shift) != D && throw(DimensionMismatch("length(n_shift) vs D=$D"))
 
-	T = nufft_eltype(w)
+	T = nufft_eltype(eltype(w))
 	CT = Complex{T}
-	f = convert.(T, w/(2π)) # note: NFFTPlan must have correct type
+	CTa = AbstractArray{Complex{T}}
+	f = convert(Array{T}, w/(2π)) # note: NFFTPlan must have correct type
 	p = NFFTPlan(f', N, nfft_m, nfft_sigma) # create plan
 
 	# extra phase here because NFFT always starts from -N/2
-	phasor = CT.(cis.(-w * (collect(N)/2. - n_shift)))
+	phasor = convert(CTa, cis.(-w * (collect(N)/2. - n_shift)))
 	phasor_conj = conj.(phasor)
-	forw1 = x -> nfft(p, nufft_typer(CT, x)) .* phasor
-	back1 = y -> nfft_adjoint(p, nufft_typer(CT, y .* phasor_conj))
+	forw1 = x -> nfft(p, nufft_typer(CTa, x)) .* phasor
+	back1 = y -> nfft_adjoint(p, nufft_typer(CTa, y .* phasor_conj))
 
-	# no "many" for LinearMap:
-	A = LinearMapAA(x -> forw1(reshape(x,N)), y -> vec(back1(y)), (M, prod(N)),
-		(name="nufft$(length(N))", N=N, n_shift=n_shift), T=CT)
+	if operator
+		A = LinearMapAA(forw1, back1, (M, prod(N)),
+			(name="nufft$(length(N))", N=N, n_shift=n_shift) ; T=CT,
+			operator = true,
+			idim = N,
+		)
+	else
+		# no "many" for LinearMapAM:
+		A = LinearMapAA(x -> forw1(reshape(x,N)), y -> vec(back1(y)), (M, prod(N)),
+			(name="nufft$(length(N))", N=N, n_shift=n_shift) ; T=CT,
+		)
+	end
 
 	if do_many
 		forw = x -> map_many(forw1, x, N)
@@ -197,12 +207,13 @@ nufft_test1( ; M=30, N=20, n_shift=1.7, T=?, tol=?)
 simple 1D tests
 """
 function nufft_test1( ;
-		M::Int = 30, N::Int = 20, n_shift::Real = 1.7,
-		T::DataType = Float64, tol::Real = 1e-6)
-	seed!(0)
+	M::Int = 30, N::Int = 20, n_shift::Real = 1.7,
+	T::DataType = Float64, tol::Real = 2e-6,
+)
+
 	w = (rand(M) .- 0.5) * 2 * pi
 	w = T.(w)
-	x = complex.(randn(T, N), randn(T, N))
+	x = randn(complex(T), N)
 	sd = dtft_init(w, N; n_shift=n_shift)
 	sn = nufft_init(w, N, n_shift=n_shift)
 	o0 = sd.dtft(x)
@@ -216,16 +227,20 @@ function nufft_test1( ;
 	@test isequal(o1, o2)
 	@test norm(a1 - a0, Inf) / norm(a0, Inf) < tol
 	@test isequal(a1, a2)
-	@test isapprox(Matrix(sn.A)', Matrix(sn.A')) # 1D adjoint test
+	@test Matrix(sn.A)' ≈ Matrix(sn.A') # 1D adjoint test
 
 	A = sn.A
 	@test A.name == "nufft1"
+	@test A isa LinearMapAM
 
-	sn = nufft_init(w, N, n_shift=n_shift, do_many=false)
+	sn = nufft_init(w, N, n_shift=n_shift, do_many=false, operator=true)
 	o3 = sn.nufft(x)
 	@test norm(o3 - o0, Inf) / norm(o0, Inf) < tol
 
-	sn.nufft(ones(Int,N)) # should produce a "conversion" warning
+	B = sn.A
+	@test B isa LinearMapAO
+
+	sn.nufft(ones(Int,N)) # produce a "conversion" warning
 	true
 end
 
@@ -235,12 +250,12 @@ nufft_test2( ; M=?, N=?, n_shift=?, T=?, tol=?)
 simple 2D test
 """
 function nufft_test2( ;
-		M::Int = 31,
-		N::Dims = (10,8),
-		n_shift::AbstractVector{<:Real} = [4,3],
-		T::DataType = Float64, tol::Real = 2e-6)
+	M::Int = 31,
+	N::Dims = (10,8),
+	n_shift::AbstractVector{<:Real} = [4,3],
+	T::DataType = Float64, tol::Real = 2e-6,
+)
 
-	seed!(0)
 	w = []
 
 #=
@@ -260,7 +275,7 @@ function nufft_test2( ;
 	sd = dtft_init(w, N ; n_shift=n_shift)
 	sn = nufft_init(w, N ; n_shift=n_shift, pi_error=false)
 
-	x = complex.(randn(T, N), randn(T, N))
+	x = randn(Complex{T}, N)
 	o0 = sd.dtft(x)
 	o1 = sn.nufft(x)
 	@test norm(o1 - o0, Inf) / norm(o0, Inf) < tol
@@ -275,7 +290,7 @@ function nufft_test2( ;
 	@show norm(o2 - o1, Inf) / norm(o0, Inf)
 =#
 
-	y = Complex{T}.(o0 / norm(o0))
+	y = convert(Array{Complex{T}}, o0 / norm(o0))
 	a0 = sd.adjoint(y)
 	a1 = sn.adjoint(y)
 	@test norm(a1 - a0, Inf) / norm(a0, Inf) < tol
@@ -295,7 +310,14 @@ function nufft_test2( ;
 	@test A.name == "nufft2"
 	@test A.N == N
 
-	sn = nufft_init(w, N, n_shift=n_shift, pi_error=false, do_many=false)
+	so = nufft_init(w, N ; n_shift=n_shift, pi_error=false, operator=true)
+	Ao = so.A
+	@test Ao * x == A * vec(x)
+	y = Ao * x
+	@test Ao'*y == reshape(A'*y, N)
+
+	sn = nufft_init(w, N ; n_shift=n_shift, pi_error=false,
+		do_many=false, operator=true)
 	o3 = sn.nufft(x)
 	@test norm(o3 - o0, Inf) / norm(o0, Inf) < tol
 	true
@@ -388,15 +410,26 @@ self tests
 """
 function nufft(test::Symbol)
 	test != :test && throw("bad symbol $test")
-	@test_throws String nufft_eltype(ones(BigFloat,3))
-	@test_throws String nufft_init([0], 2)
-	@test_throws String nufft_init([0], 7)
-	@test_throws ArgumentError nufft_init([2π], 8)
-	@test nufft_plots() isa Plots.Plot
-	@test nufft_test1()
-	@test nufft_test1(; T=Float32)
-	@test nufft_test2()
-	@test nufft_test2(; T=Float32)
+	@testset "basics" begin
+		@test nufft_eltype(Bool) == Float32
+		@test nufft_eltype(Float16) == Float32
+		@test nufft_eltype(Float64) == Float64
+		@test_throws String nufft_eltype(BigFloat)
+		@test_throws String nufft_init([0], 2) # small
+		@test_throws String nufft_init([0], 7) # odd
+		@test_throws ArgumentError nufft_init([2π], 8) # π
+	end
+	@testset "1D" begin
+		@test nufft_test1()
+		@test nufft_test1(; T=Float32)
+	end
+	@testset "2D" begin
+		@test nufft_test2()
+		@test nufft_test2(; T=Float32)
+	end
+	@testset "plots" begin
+		@test nufft_plots() isa Plots.Plot
+	end
 	true
 end
 
@@ -405,7 +438,6 @@ end
 	# todo: 1d vs 2d
 	M = 4
 	N = (M,1)
-	seed!(0)
 	w = (0:(M-1))/M * 2 * pi
 	w = [w zeros(M)]
 	sd = dtft_init(w, N)
