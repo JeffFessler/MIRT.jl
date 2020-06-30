@@ -16,14 +16,19 @@ using ImageFiltering: imfilter, centered
 """
     getindex!(y::AbstractVector, x::AbstractArray{T,D}, mask::AbstractArray{Bool,D})
 Equivalent to the in-place `y .= x[mask]` but is non-allocating.
+
+For non-Boolean indexing, just use `@views y .= A[index]`, per
+https://discourse.julialang.org/t/efficient-non-allocating-in-place-getindex-for-bitarray/42268
 """
-@inline function getindex!(y::AbstractVector, x::AbstractArray{T,D},
-	mask::AbstractArray{Bool,D},
+@inline function getindex!(
+    y::AbstractVector,
+    x::AbstractArray{T,D},
+    mask::AbstractArray{Bool,D},
 ) where {T,D}
-    sum(mask) == length(y) || throw("wrong length")
-    size(mask) == size(x) || throw(DimensionMismatch("x vs mask"))
+    axes(y) == (Base.OneTo(sum(mask)),) || throw("y axes $(axes(y))")
+    axes(mask) == axes(x) || throw(DimensionMismatch("x vs mask"))
     count = 1
-    @inbounds for i in eachindex(mask, x)
+    @inbounds for i in 1:LinearIndices(mask)[findlast(mask)]
         y[count] = x[i]
         count += mask[i]
     end
@@ -202,7 +207,7 @@ function getindex!(test::Symbol)
 	x = randn(T, N...)
 	y0 = x[mask]
 	y1 = Array{T}(undef, K)
-	getindex!(y1, x, mask)
+	@test 0 == @allocated getindex!(y1, x, mask)
 	@test y0 == y1
 	true
 end
