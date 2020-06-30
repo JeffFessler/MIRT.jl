@@ -411,9 +411,9 @@ self tests
 function nufft(test::Symbol)
 	test != :test && throw("bad symbol $test")
 	@testset "basics" begin
-		@test nufft_eltype(Bool) == Float32
-		@test nufft_eltype(Float16) == Float32
-		@test nufft_eltype(Float64) == Float64
+		@test nufft_eltype(Bool) === Float32
+		@test nufft_eltype(Float16) === Float32
+		@test nufft_eltype(Float64) === Float64
 		@test_throws String nufft_eltype(BigFloat)
 		@test_throws String nufft_init([0], 2) # small
 		@test_throws String nufft_init([0], 7) # odd
