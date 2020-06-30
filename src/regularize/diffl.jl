@@ -12,7 +12,7 @@ https://docs.julialang.org/en/latest/manual/performance-tips/#Pre-allocating-out
 
 export diffl, diffl!, diffl_adj, diffl_adj!, diffl_map
 
-using LinearMapsAA: LinearMapAA
+using LinearMapsAA: LinearMapAA, LinearMapAM, LinearMapAO
 using Test: @test, @testset, @test_throws, @inferred
 
 
@@ -294,6 +294,7 @@ in
 
 options: see `diffl!`
 - `T::Type` for `LinearMapAA`, default `Float32`
+- `operator::Bool = false` use `true` for `LinearMapAO`
 
 out
 - `T` `LinearMapAA` object for computing finite differences via `T*x`
@@ -304,23 +305,35 @@ function diffl_map(
     dims::AbstractVector{Int} ;
     T::Type=Float32,
     edge::Symbol = :zero,
+    operator::Bool = false, # backward compatability
     kwargs...,
 ) where {D}
 
     !all(1 .<= dims .<= D) && throw(ArgumentError("dims $dims"))
     (edge == :none) && throw("edge=$edge unsupported")
 
+    forw!(g,x) = diffl!(g, x, dims ; edge=edge, kwargs...)
+    back!(z,g) = diffl_adj!(z, g, dims ; edge=edge, kwargs...)
+
+    if operator
+        return LinearMapAA(forw!, back!,
+            (length(dims), 1) .* prod(N) ;
+            prop = (name="diffl_map", N=N, dims=dims),
+            T=T, operator=true,
+            idim=N, odim=(N...,length(dims)),
+        )
+    end
+
     gshape = g -> reshape(g, N..., length(dims))
     return LinearMapAA(
-        (g,x) -> diffl!(gshape(g), reshape(x, N), dims ; edge=edge, kwargs...),
-        (z,g) -> vec(diffl_adj!(reshape(z,N), gshape(g), dims ; edge=edge, kwargs...)),
+        (g,x) -> forw!(gshape(g), reshape(x, N)),
+        (z,g) -> vec(back!(reshape(z,N), gshape(g))),
         (length(dims), 1) .* prod(N),
         (name="diffl_map", N=N, dims=dims),
         T=T,
     )
 end
 
-# todo: generalize LMAA for arrays to avoid reshape!
 
 # for single dimension case
 function diffl_map(
@@ -328,17 +341,30 @@ function diffl_map(
     dim::Int ;
     T::Type = Float32,
     edge::Symbol = :zero,
+    operator::Bool = false, # backward compatability
     kwargs...,
 ) where {D}
 
     (1 .<= dim .<= D) || throw(ArgumentError("dim $dim"))
     (edge == :none) && throw("edge=$edge unsupported")
 
+    forw!(g,x) = diffl!(g, x, dim ; edge=edge, kwargs...)
+    back!(z,g) = diffl_adj!(z, g, dim ; edge=edge, kwargs...)
+
+    if operator
+        return LinearMapAA(forw!, back!,
+            (1, 1) .* prod(N) ;
+            prop = (name="diffl_map", N=N, dim=dim),
+            T=T, operator=true,
+            idim=N, odim=N,
+        )
+    end
+
     return LinearMapAA(
-        (g,x) -> diffl!(reshape(g, N), reshape(x, N), dim ; edge=edge, kwargs...),
-        (z,g) -> vec(diffl_adj!(reshape(z,N), reshape(g, N), dim ; edge=edge, kwargs...)),
-        (1, 1) .* prod(N),
-        (name="diffl_map", N=N, dim=dim),
+        (g,x) -> forw!(reshape(g, N), reshape(x, N)),
+        (z,g) -> vec(back!(reshape(z,N), reshape(g, N))),
+        (1, 1) .* prod(N) ;
+        prop = (name="diffl_map", N=N, dim=dim),
         T=T,
     )
 end
@@ -355,22 +381,30 @@ function diffl_map(test::Symbol)
     test != :test && throw(ArgumentError("test $test"))
 
     N = (2,3); d = 2
-    T = diffl_map(N, d ; T=Int32, edge=:zero, add=false)
-    @test Matrix(T)' == Matrix(T')
-    @test T.name == "diffl_map"
 
-    @test_throws String diffl_map(N ; edge=:none) # unsupported
+    @testset "basics" begin
+        T = diffl_map(N, d ; T=Int32, edge=:zero, add=false)
+        @test Matrix(T)' == Matrix(T')
+        @test T.name == "diffl_map"
+        @test_throws String diffl_map(N ; edge=:none) # unsupported
+    end
 
-    for N in [(3,), (3,4), (2,3,4)]
-        dlist = [1, [1,]]
-        length(N) > 1 && push!(dlist, 2:-1:1, 1:length(N))
-        length(N) > 2 && push!(dlist, [length(N), 1])
-        isinteractive() && @show dlist
-        for d in dlist
-            for edge in (:zero, :circ)
-                for add in (false, true)
-                    T = diffl_map(N, d ; T=Int32, edge=edge, add=add)
-                    @test Matrix(T)' == Matrix(T')
+    @testset "adjoint" begin
+        for N in [(3,), (3,4), (2,3,4)]
+            dlist = [1, [1,]]
+            length(N) > 1 && push!(dlist, 2:-1:1, 1:length(N))
+            length(N) > 2 && push!(dlist, [length(N), 1])
+            isinteractive() && @show dlist
+            for d in dlist
+                for edge in (:zero, :circ)
+                    for add in (false, true)
+                        T = diffl_map(N, d ; T=Int32, edge=edge, add=add)
+                        @test Matrix(T)' == Matrix(T')
+                        @test T isa LinearMapAM
+                        O = diffl_map(N, d ; T=Int32, edge=edge, add=add, operator=true)
+                        @test O isa LinearMapAO
+                        @test Matrix(O)' == Matrix(O')
+                    end
                 end
             end
         end
