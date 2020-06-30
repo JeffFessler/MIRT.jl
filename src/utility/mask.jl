@@ -14,10 +14,10 @@ using ImageFiltering: imfilter, centered
 
 
 """
-    getindex!(y::Vector, x::AbstractArray, mask::AbstractArray{Bool})
+    getindex!(y::AbstractVector, x::AbstractArray{T,D}, mask::AbstractArray{Bool,D})
 Equivalent to the in-place `y .= x[mask]`.
 """
-@inline function getindex!(y::Vector, x::AbstractArray{T,D},
+@inline function getindex!(y::AbstractVector, x::AbstractArray{T,D},
 	mask::AbstractArray{Bool,D},
 ) where {T,D}
     sum(mask) == length(y) || throw("wrong length")
