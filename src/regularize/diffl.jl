@@ -35,8 +35,12 @@ Choose `edge=:none` to leave the first elements untouched.
 
 In 1D, if `x = [2, 6, 7]` then `g = [0, 4, 1]` with default options.
 """
-function diffl!(g::AbstractArray{Tg,N}, x::AbstractArray{Tx,N}, dim::Int
-    ; edge::Symbol=:zero, add::Bool=false,
+function diffl!(
+    g::AbstractArray{Tg,N},
+    x::AbstractArray{Tx,N},
+    dim::Int ;
+    edge::Symbol=:zero,
+    add::Bool=false,
 ) where {Tg,Tx,N}
 
     Base.require_one_based_indexing(g) && Base.require_one_based_indexing(x)
@@ -83,8 +87,11 @@ When `x` is a `N`-dimensional array, the `i`th slice of the `g` array
 This is useful for total variation (TV) and other regularizers
 that need finite differences along multiple dimensions.
 """
-function diffl!(g::AbstractArray{Tg,Ng}, x::AbstractArray{Tx,Nx},
-    dims::AbstractVector{Int} ; kwargs...,
+function diffl!(
+    g::AbstractArray{Tg,Ng},
+    x::AbstractArray{Tx,Nx},
+    dims::AbstractVector{Int} ;
+    kwargs...,
 ) where {Tg,Tx,Ng,Nx}
 
     Ng != Nx+1 && throw(DimensionMismatch("Ng=$Ng Nx=$Nx"))
@@ -180,9 +187,13 @@ Adjoint of left finite difference `diffl!`, in-place.
 Arrays `z` and `g` must be same size.
 See `diffl` for details.
 """
-function diffl_adj!(z::AbstractArray{Tz,N}, g::AbstractArray{Tg,N}, dim::Int
-    ; reset0::Bool=true,
-    edge::Symbol=:zero, add::Bool=false,
+function diffl_adj!(
+    z::AbstractArray{Tz,N},
+    g::AbstractArray{Tg,N},
+    dim::Int ;
+    reset0::Bool=true,
+    edge::Symbol=:zero,
+    add::Bool=false,
 ) where {Tz,Tg,N}
 
     1 <= dim <= N || throw(ArgumentError("dimension $dim out of range (1:$N)"))
@@ -227,8 +238,11 @@ end
 Adjoint of `diffl!` for multiple dimensions `dims`.
 Here `g` must have one more dimension than `z`.
 """
-function diffl_adj!(z::AbstractArray{Tz,Nz}, g::AbstractArray{Tg,Ng},
-    dims::AbstractVector{Int} ; kwargs...,
+function diffl_adj!(
+    z::AbstractArray{Tz,Nz},
+    g::AbstractArray{Tg,Ng},
+    dims::AbstractVector{Int} ;
+    kwargs...,
 ) where {Tz,Tg,Nz,Ng}
 
     Ng != Nz+1 && throw(DimensionMismatch("Ng=$Ng Nz=$Nz"))
@@ -259,13 +273,15 @@ diffl_adj(g::AbstractArray, dim::Int ; kwargs...) =
     z = diffl_adj(g::AbstractArray, dims::AbstractVector{Int} ; ...)
 Allocating version of `diffl!` for `dims`
 """
-function diffl_adj(g::AbstractArray{T,N}, dims::AbstractVector{Int}
-    ; kwargs...,
+function diffl_adj(
+    g::AbstractArray{T,N},
+    dims::AbstractVector{Int} ;
+    kwargs...,
 ) where {T,N}
 
     size(g)[end] != length(dims) &&
         throw(DimensionMismatch("sizes g=>$(size(g)) vs dims=$dims"))
-    diffl_adj!(similar(g, size(g)[1:(N-1)]...), g, dims ; kwargs...)
+    return diffl_adj!(similar(g, size(g)[1:(N-1)]...), g, dims ; kwargs...)
 end
 
 
@@ -283,7 +299,8 @@ out
 - `T` `LinearMapAA` object for computing finite differences via `T*x`
 using `diffl!` and `diffl_adj!`
 """
-function diffl_map(N::Dims{D},
+function diffl_map(
+    N::Dims{D},
     dims::AbstractVector{Int} ;
     T::Type=Float32,
     edge::Symbol = :zero,
@@ -306,7 +323,8 @@ end
 # todo: generalize LMAA for arrays to avoid reshape!
 
 # for single dimension case
-function diffl_map(N::Dims{D},
+function diffl_map(
+    N::Dims{D},
     dim::Int ;
     T::Type = Float32,
     edge::Symbol = :zero,
