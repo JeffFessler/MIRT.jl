@@ -1,13 +1,14 @@
 #=
 Afft.jl
 2019-07-07, Jeff Fessler, University of Michigan
+2020-06-30 in-place fft!
 =#
 
 export Afft
 
-# using MIRT: embed
+# using MIRT: embed!, getindex!
 using LinearMapsAA: LinearMapAA, LinearMapAM, LinearMapAO
-using FFTW: fft, ifft
+using FFTW: fft!, bfft!
 using Test: @test
 
 
@@ -19,18 +20,21 @@ Especially for compressed sensing MRI with Cartesian sampling.
 
 Option:
 - `operator::Bool` set to `true` to return a `LinearMapAO`
+- `work::AbstractArray` work space for in-place fft operations
 """
-function Afft(samp::AbstractArray{Bool} ;
+function Afft(samp::AbstractArray{Bool,D} ;
     T::DataType = ComplexF32,
     operator::Bool = false, # for backwards compatibility
-)
+    work::AbstractArray{S,D} = Array{T}(undef, size(samp)),
+) where {D, S <: Number}
+
+    forw! = (y,x) -> getindex!(y, fft!(copyto!(work,x)), samp)
+    back! = (x,y) -> bfft!(embed!(x,y,samp))
 
     dim = size(samp)
 
     if operator
-        return LinearMapAA(
-            x -> fft(x)[samp],
-            y -> prod(dim) * ifft(embed(y,samp)),
+        return LinearMapAA(forw!, back!,
             (sum(samp), prod(dim)), (name="fft",) ; T=T,
             idim = dim,
             operator = operator,
@@ -38,8 +42,10 @@ function Afft(samp::AbstractArray{Bool} ;
     end
 
     return LinearMapAA(
-        x -> fft(reshape(x,dim))[samp],
-        y -> prod(dim) * vec(ifft(embed(y,samp))),
+        (y,x) -> forw!(y, reshape(x,dim)),
+    #   x -> fft(reshape(x,dim))[samp],
+        (x,y) -> vec(back!(reshape(x,dim),y)),
+    #   y -> vec(bfft(embed(y,samp))),
         (sum(samp), prod(dim)), (name="fft",) ; T=T,
     )
 end
@@ -56,7 +62,7 @@ function Afft(test::Symbol)
     @testset "AM" begin
         A = Afft(samp)
         @test A isa LinearMapAM
-        @test isapprox(Matrix(A)', Matrix(A'))
+        @test Matrix(A)' ≈ Matrix(A')
         @test A * vec(ones(3,2)) == [6, 0, 0, 0, 0]
         @test A' * [1, 0, 0, 0, 0] == vec(ones(3,2))
         @test A.name == "fft"
@@ -66,9 +72,9 @@ function Afft(test::Symbol)
     @testset "AO" begin
         A = Afft(samp ; operator=true)
         @test A isa LinearMapAO
-        @test isapprox(Matrix(A)', Matrix(A'))
         @test A * ones(3,2) == [6, 0, 0, 0, 0]
         @test A' * [1, 0, 0, 0, 0] == ones(3,2)
+        @test Matrix(A)' ≈ Matrix(A')
     end
 
     true
