@@ -1,5 +1,13 @@
 In reverse chronological order
 
+0.10.0 2020-06-30
+
+2020-06-30
+offer LinearMapAO options for `Afft, Anufft, diffl_map`
+
+2020-06-29
+embed! getindex!
+
 2020-06-22
 In place left finite differences: `diffl!` `diffl_adj!` `diffl_map`
 
