@@ -1,8 +1,8 @@
 #=
 mask.jl
-Methods related to a image support mask:
-	embed, maskit, mask_or, mask_outline
+Methods related to an image support mask.
 2019-06-22 Jeff Fessler, University of Michigan
+2020-06-30 embed! getindex!
 =#
 
 export embed, embed!, mask_or, mask_outline, maskit, mask_test
@@ -15,12 +15,13 @@ using ImageFiltering: imfilter, centered
 
 """
     getindex!(y::AbstractVector, x::AbstractArray{T,D}, mask::AbstractArray{Bool,D})
-Equivalent to the in-place `y .= x[mask]`.
+Equivalent to the in-place `y .= x[mask]` but is non-allocating.
 """
 @inline function getindex!(y::AbstractVector, x::AbstractArray{T,D},
 	mask::AbstractArray{Bool,D},
 ) where {T,D}
     sum(mask) == length(y) || throw("wrong length")
+    size(mask) == size(x) || throw(DimensionMismatch("x vs mask"))
     count = 1
     @inbounds for i in 1:LinearIndices(mask)[findlast(mask)]
         y[count] = x[i]
