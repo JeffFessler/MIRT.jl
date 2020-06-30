@@ -6,22 +6,38 @@ Methods related to a image support mask:
 =#
 
 export embed, embed!, mask_or, mask_outline, maskit, mask_test
+export getindex!
 
-using Test: @test, @testset, @inferred
+using Test: @test, @testset, @test_throws, @inferred
 using ImageFiltering: imfilter, centered
 #using SparseArrays: sparse, findnz, AbstractSparseVector
+
+
+"""
+    getindex!(y::Vector, x::AbstractArray, mask::AbstractArray{Bool})
+Equivalent to the in-place `y .= x[mask]`.
+"""
+@inline function getindex!(y::Vector, x::AbstractArray{T,D},
+	mask::AbstractArray{Bool,D},
+) where {T,D}
+    sum(mask) == length(y) || throw("wrong length")
+    count = 1
+    @inbounds for i in 1:LinearIndices(mask)[findlast(mask)]
+        y[count] = x[i]
+        count += mask[i]
+    end
+    return y
+end
 
 
 """
     mask_or(mask)
 compress 3D mask to 2D by logical `or` along `z` direction
 """
-function mask_or(mask::AbstractArray{Bool})
-	ndim = ndims(mask)
-	return	ndim == 2 ? mask :
-			ndim == 3 ? dropdims(sum(mask, dims=3) .> 0, dims=3) :
-			throw("ndims(mask) = $ndim")
-end
+mask_or(mask::AbstractArray{Bool,2}) = mask
+mask_or(mask::AbstractArray{Bool,3}) =
+	dropdims(sum(mask, dims=3) .> 0, dims=3)
+mask_or(mask::AbstractArray{Bool}) = throw("ndims(mask) = $(ndims(mask))")
 
 
 """
@@ -34,6 +50,7 @@ function mask_or(test::Symbol)
 	@test (@inferred mask_or(mask2)) == mask2
 	mask3 = trues(3,4,5)
 	@test (@inferred mask_or(mask3)) == trues(3,4)
+	@test_throws String mask_or(trues(1,))
 	true
 end
 
@@ -42,12 +59,12 @@ end
     mask_outline(mask)
 return outer boundary of 2D mask (or mask_or for 3D)
 """
-function mask_outline(mask::AbstractArray{Bool})
-	mask2 = mask_or(mask)
-	tmp = imfilter(mask2, centered(ones(Int32,3,3))) # dilate
+function mask_outline(mask::AbstractMatrix{Bool})
+	tmp = imfilter(mask, centered(ones(Int32,3,3))) # dilate
 #	tmp = tmp[2:end-1,2:end-1] # 'same'
-	return (tmp .> 1) .& (.! mask2)
+	return (tmp .> 1) .& (.! mask)
 end
+mask_outline(mask::AbstractArray{Bool,3}) = mask_outline(mask_or(mask))
 
 
 """
@@ -58,6 +75,8 @@ function mask_outline(test::Symbol)
 	test != :test && throw(ArgumentError("test $test"))
 	mask2 = trues(3,4)
 	@test (@inferred mask_outline(mask2)) == falses(3,4)
+	mask3 = trues(3,4,5)
+	@test (@inferred mask_outline(mask3)) == falses(3,4)
 	true
 end
 
@@ -170,10 +189,32 @@ end
 
 
 """
+    getindex!(:test)
+self test
+"""
+function getindex!(test::Symbol)
+	test != :test && throw(ArgumentError("test $test"))
+	N = (2^2,2^3)
+	mask = rand(N...) .< 0.5
+	K = sum(mask)
+	T = ComplexF32
+	x = randn(T, N...)
+	y0 = x[mask]
+	y1 = Array{T}(undef, K)
+	getindex!(y1, x, mask)
+	@test y0 == y1
+	true
+end
+
+
+"""
     mask_test()
 self tests
 """
 function mask_test()
+	@testset "getindex!" begin
+		@test getindex!(:test)
+	end
 	@testset "mask_or" begin
 		@test mask_or(:test)
 	end
