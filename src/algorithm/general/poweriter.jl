@@ -10,9 +10,9 @@ using LinearAlgebra: opnorm, norm
 using Test: @test
 
 """
-`v1,σ1 = poweriter(A; niter=?, ...)`
+    v1,σ1 = poweriter(A; niter=?, ...)
 
-determine first right singular vector `v1`
+Determine first right singular vector `v1`
 and first singular value `σ1` of `A`
 by applying power iteration to `A'A`
 
@@ -29,12 +29,14 @@ out
 - `v1` `[N]` principal right singular vector
 - `σ1` spectral norm of `A`
 """
-function poweriter(A ;
-		niter::Int=200,
-		tol::Real = 1e-6,
-		x0::AbstractArray{<:Number} = ones(eltype(A), size(A,2)),
-		chat::Bool = true,
-	)
+function poweriter(
+    A ;
+    niter::Int=200,
+    tol::Real = 1e-6,
+    x0::AbstractArray{<:Number} = ones(eltype(A), size(A,2)),
+    chat::Bool = true,
+)
+
 	x = copy(x0)
 	ratio_old = Inf
 	for iter=1:niter
@@ -53,7 +55,7 @@ end
 
 
 """
-poweriter(:test)
+    poweriter(:test)
 self test
 """
 function poweriter(test::Symbol)

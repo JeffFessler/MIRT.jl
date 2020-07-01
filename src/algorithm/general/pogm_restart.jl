@@ -17,9 +17,9 @@ end
 
 
 """
-`x, out = pogm_restart(x0, Fcost, f_grad, f_L ;
+    x, out = pogm_restart(x0, Fcost, f_grad, f_L ;
 	f_mu=0, mom=:pogm, restart=:gr, restart_cutoff=0.,
-	bsig=1, niter=10, g_prox=(z,c)->z, fun=...)`
+	bsig=1, niter=10, g_prox=(z,c)->z, fun=...)
 
 Iterative proximal algorithms (PGM=ISTA, FPGM=FISTA, POGM) with restart.
 
@@ -102,16 +102,20 @@ Copyright 2017-3-31, Donghwan Kim and Jeff Fessler, University of Michigan
 2018-08-13 Julia 0.7.0
 2019-02-24 interface redesign
 """
-function pogm_restart(x0, Fcost::Function, f_grad::Function, f_L::Real ;
-		f_mu::Real = 0.,
-		mom::Symbol = :pogm, # :ogm :gm
-		restart::Symbol = :gr, # :fr :none
-		restart_cutoff::Real = 0.,
-		bsig::Real = 1,
-		niter::Int = 10,
-		g_prox::Function = (z, c::Real) -> z,
-		fun::Function = (iter::Int, xk, yk, is_restart::Bool) -> undef,
-	)
+function pogm_restart(
+    x0,
+    Fcost::Function,
+    f_grad::Function,
+    f_L::Real ;
+    f_mu::Real = 0.,
+    mom::Symbol = :pogm, # :ogm :gm
+    restart::Symbol = :gr, # :fr :none
+    restart_cutoff::Real = 0.,
+    bsig::Real = 1,
+    niter::Int = 10,
+    g_prox::Function = (z, c::Real) -> z,
+    fun::Function = (iter::Int, xk, yk, is_restart::Bool) -> undef,
+)
 
 	!in(mom, (:pgm, :fpgm, :pogm)) && throw(ArgumentError("mom $mom"))
 	!in(restart, (:none, :gr, :fr)) && throw(ArgumentError("restart $restart"))
@@ -262,7 +266,7 @@ end # pogm_restart()
 
 
 """
-`pogm_restart_test()`
+pogm_restart_test()
 self test
 """
 function pogm_restart_test()
@@ -302,7 +306,8 @@ end
 
 
 """
-`pogm_restart(:test)` self test
+    pogm_restart(:test)
+self test
 """
 function pogm_restart(test::Symbol)
 	test != :test && throw(ArgumentError("test $test"))

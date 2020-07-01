@@ -47,14 +47,14 @@ output
 	(all 0 by default). This is an array of length `niter+1`
 """
 function ogm_ls(
-		B::AbstractVector{<:Any},
-		gradf::AbstractVector{<:Function},
-		curvf::AbstractVector{<:Function},
-		x0::AbstractVector{<:Number} ;
-		niter::Int = 50,
-		ninner::Int = 5,
-		fun::Function = (x,iter) -> 0,
-	)
+    B::AbstractVector{<:Any},
+    gradf::AbstractVector{<:Function},
+    curvf::AbstractVector{<:Function},
+    x0::AbstractArray{<:Number} ; # usually Vector
+    niter::Int = 50,
+    ninner::Int = 5,
+    fun::Function = (x,iter) -> 0,
+)
 
 out = Array{Any}(undef, niter+1)
 out[1] = fun(x0, 0)
@@ -100,7 +100,7 @@ for iter = 1:niter
 		curv = 0
 		for j=1:J
 			tmp = By[j] + alf * Bd[j]
-			derh += real(Bd[j]' * gradf[j](tmp))
+			derh += real(dot(Bd[j], gradf[j](tmp)))
 			curv += sum(curvf[j](tmp) .* abs.(Bd[j]).^2)
 		end
 		curv < 0 && throw("curv < 0")
@@ -146,10 +146,11 @@ and that has a quadratic majorizer with diagonal Hessian given by `curv(x)`.
 Typically `curv = (x) -> L` where `L` is the Lipschitz constant of `grad`
 """
 function ogm_ls(
-		grad::Function,
-		curv::Function,
-		x0::AbstractVector{<:Number} ;
-		kwargs...)
+    grad::Function,
+    curv::Function,
+    x0::AbstractVector{<:Number} ;
+    kwargs...,
+)
 
 	return ogm_ls([I], [grad], [curv], x0; kwargs...)
 end

@@ -18,7 +18,7 @@ using LaTeXStrings
 
 
 """
-`(x,out) = ncg(B, gradf, curvf, x0; ...)`
+`(x,out) = ncg(B, gradf, curvf, x0 ; ...)`
 
 Nonlinear preconditioned conjugate gradient algorithm
 to minimize a general "inverse problem" cost function of the form
@@ -37,6 +37,8 @@ in
 		or a vector of curvature values for each element of ``z``
 - `x0`	initial guess; need `length(x) == size(B[j],2)` for ``j=1...J``
 
+Usually `x0` is a `Vector` but it can be an `Array` if each `B_j` is a linear operator (e.g., `LinearMapAO`) of suitable "dimensions".
+
 option
 - `niter`	# number of outer iterations; default 50
 - `ninner`	# number of inner iterations of MM line search; default 5
@@ -51,16 +53,16 @@ output
 	(all 0 by default). This is an array of length `niter+1`
 """
 function ncg(
-		B::AbstractVector{<:Any},
-		gradf::AbstractVector{<:Function},
-		curvf::AbstractVector{<:Function},
-		x0::AbstractVector{<:Number} ;
-		niter::Int = 50,
-		ninner::Int = 5,
-		P=I,
-		betahow::Symbol=:dai_yuan,
-		fun::Function = (x,iter) -> 0,
-	)
+    B::AbstractVector{<:Any},
+    gradf::AbstractVector{<:Function},
+    curvf::AbstractVector{<:Function},
+    x0::AbstractArray{<:Number} ; # usually a Vector
+    niter::Int = 50,
+    ninner::Int = 5,
+    P=I,
+    betahow::Symbol=:dai_yuan,
+    fun::Function = (x,iter) -> 0,
+)
 
 	out = Array{Any}(undef, niter+1)
 	out[1] = fun(x0, 0)
@@ -82,11 +84,11 @@ for iter = 1:niter
 		dir = npgrad
 	else
 		if betahow === :dai_yuan
-			denom =	(grad_new - grad_old)' * dir
+			denom =	dot(grad_new - grad_old, dir)
 			if denom == 0
 				betaval = 0
 			else
-				betaval = grad_new' * (P * grad_new) / denom
+				betaval = dot(grad_new, P * grad_new) / denom
 			end
 		else
 			throw(ArgumentError("unknown beta choice: $betahow"))
@@ -106,7 +108,7 @@ for iter = 1:niter
 		curv = 0
 		for j=1:J
 			tmp = Bx[j] + alf * Bd[j]
-			derh += real(Bd[j]' * gradf[j](tmp))
+			derh += real(dot(Bd[j], gradf[j](tmp)))
 			curv += sum(curvf[j](tmp) .* abs.(Bd[j]).^2)
 		end
 		curv < 0 && throw("bug: curv < 0")
@@ -140,10 +142,11 @@ and that has a quadratic majorizer with diagonal Hessian given by
 Typically `curv = (x) -> L` where `L` is the Lipschitz constant of `grad`
 """
 function ncg(
-		grad::Function,
-		curv::Function,
-		x0::AbstractVector{<:Number} ;
-		kwargs...)
+    grad::Function,
+    curv::Function,
+    x0::AbstractArray{<:Number} ;
+    kwargs...,
+)
 
 	return ncg([I], [grad], [curv], x0; kwargs...)
 end
