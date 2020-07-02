@@ -11,7 +11,7 @@ using LinearAlgebra: I, norm
 # for tests:
 using Test: @test, @test_throws, @inferred
 using Plots: Plot
-using LinearAlgebra: opnorm
+using LinearAlgebra: opnorm, dot
 using Random: seed!
 using Plots: plot, plot!, scatter!
 using LaTeXStrings

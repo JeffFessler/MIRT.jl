@@ -9,7 +9,7 @@ export ogm_ls
 using LinearAlgebra: I, norm
 
 # for plots
-using LinearAlgebra: norm, opnorm, I
+using LinearAlgebra: norm, opnorm, I, dot
 using Random: seed!
 using Plots
 using LaTeXStrings
