@@ -1,5 +1,12 @@
 In reverse chronological order
 
+0.11.0 2020-07-01
+
+Breaking change: make `LinearMapAO` the default
+for `Afft, Anufft, diffl_map, Aodwt`
+Also use `dot in `ncg` and `ogm_ls` algorithms
+to support array variables.
+
 0.10.0 2020-06-30
 
 2020-06-30
