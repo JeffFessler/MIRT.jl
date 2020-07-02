@@ -14,17 +14,17 @@ using Test: @test
 
 """
     A = Afft(samp::AbstractArray{Bool} ; T::DataType = ComplexF32)
-Make a LinearMap object for (under-sampled) FFT, of type `T`,
+Make a LinearMapAO object for (under-sampled) FFT, of type `T`,
 using given sampling pattern `samp`.
 Especially for compressed sensing MRI with Cartesian sampling.
 
 Option:
-- `operator::Bool` set to `true` to return a `LinearMapAO`
+- `operator::Bool=true` set to `false` to return a `LinearMapAM`
 - `work::AbstractArray` work space for in-place fft operations
 """
 function Afft(samp::AbstractArray{Bool,D} ;
     T::DataType = ComplexF32,
-    operator::Bool = false, # for backwards compatibility
+    operator::Bool = true, # !
     work::AbstractArray{S,D} = Array{T}(undef, size(samp)),
 ) where {D, S <: Number}
 
@@ -36,7 +36,7 @@ function Afft(samp::AbstractArray{Bool,D} ;
     if operator
         return LinearMapAA(forw!, back!,
             (sum(samp), prod(dim)), (name="fft",) ; T=T,
-            idim = dim,
+            idim = dim, # odim is 1D
             operator = operator,
         )
     end
@@ -60,7 +60,7 @@ function Afft(test::Symbol)
     samp = trues(3,2); samp[2] = false
 
     @testset "AM" begin
-        A = Afft(samp)
+        A = Afft(samp ; operator=false)
         @test A isa LinearMapAM
         @test Matrix(A)' ≈ Matrix(A')
         @test A * vec(ones(3,2)) == [6, 0, 0, 0, 0]
@@ -70,7 +70,7 @@ function Afft(test::Symbol)
     end
 
     @testset "AO" begin
-        A = Afft(samp ; operator=true)
+        A = Afft(samp)
         @test A isa LinearMapAO
         @test A * ones(3,2) == [6, 0, 0, 0, 0]
         @test A' * [1, 0, 0, 0, 0] == ones(3,2)

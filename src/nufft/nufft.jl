@@ -8,10 +8,12 @@ todo: open issues: small N, odd N, nufft!, adjoint!
 export nufft_init, nufft_plots, nufft
 
 #using MIRT: dtft_init, map_many
+#include("../utility/map_many.jl")
 using NFFT
 using Plots
 using LinearAlgebra: norm
-using LinearMapsAA: LinearMapAA, LinearMapAX, LinearMapAO
+using LinearMapsAA: LinearMapAA, LinearMapAM, LinearMapAO
+using Test: @test, @testset, @test_throws
 
 
 """
@@ -59,11 +61,11 @@ option
 - `pi_error::Bool`		throw error if ``|w| > π``, default `true`
    + Set to `false` only if you are very sure of what you are doing!
 - `do_many::Bool`	support extended inputs via `map_many`? default `true`
-- `operator::Bool` set to `true` to make `A` an `LinearMapAO`
+- `operator::Bool=true` set to `false` to make `A` an `LinearMapAM`
 
 out
 - `p NamedTuple` with fields
-	`nufft = x -> nufft(x), adjoint = y -> nufft_adj(y), A=LinearMapAX`
+	`nufft = x -> nufft(x), adjoint = y -> nufft_adj(y), A=LinearMapAO`
 
 The default settings are such that for a 1D signal of length N=512,
 the worst-case error is below 1e-5 which is probably adequate
@@ -76,7 +78,7 @@ function nufft_init(w::AbstractArray{<:Real}, N::Int ;
 	nfft_sigma::Real = 2.0,
 	pi_error::Bool = true,
 	do_many::Bool = true,
-	operator::Bool = false, # backward compatibility
+	operator::Bool = true, # !
 )
 
 	N < 6 && throw("NFFT may be erroneous for small N")
@@ -134,7 +136,7 @@ option
 - `pi_error::Bool`		throw error if ``|w| > π``, default `true`
    + Set to `false` only if you are very sure of what you are doing!
 - `do_many::Bool`	support extended inputs via `map_many`? default `true`
-- `operator::Bool` set to `true` to make `A` an `LinearMapAO`
+- `operator::Bool=true` set to `false` to make `A` an `LinearMapAM`
 
 The default `do_many` option is designed for parallel MRI where the k-space
 sampling pattern applies to every coil.
@@ -143,7 +145,7 @@ The coil and/or time dimensions must come after the spatial dimensions.
 
 out
 - `p NamedTuple` with fields
-	`nufft = x -> nufft(x), adjoint = y -> nufft_adj(y), A=LinearMapAX`
+	`nufft = x -> nufft(x), adjoint = y -> nufft_adj(y), A=LinearMapAO`
 	(Using `operator=true` allows the `LinearMapAO` to support `do_many`.)
 """
 function nufft_init(w::AbstractMatrix{<:Real}, N::Dims ;
@@ -152,7 +154,7 @@ function nufft_init(w::AbstractMatrix{<:Real}, N::Dims ;
 	nfft_sigma::Real = 2.0,
 	pi_error::Bool = true,
 	do_many::Bool = true,
-	operator::Bool = false, # backward compatibility
+	operator::Bool = true, # !
 )
 
 	any(N .< 6) && throw("NFFT may be erroneous for small N")
@@ -176,7 +178,7 @@ function nufft_init(w::AbstractMatrix{<:Real}, N::Dims ;
 	forw1 = x -> nfft(p, nufft_typer(CTa, x)) .* phasor
 	back1 = y -> nfft_adjoint(p, nufft_typer(CTa, y .* phasor_conj))
 
-	if operator
+	if operator # LinearMapAO
 		A = LinearMapAA(forw1, back1, (M, prod(N)),
 			(name="nufft$(length(N))", N=N, n_shift=n_shift) ; T=CT,
 			operator = true,
@@ -214,8 +216,8 @@ function nufft_test1( ;
 	w = (rand(M) .- 0.5) * 2 * pi
 	w = T.(w)
 	x = randn(complex(T), N)
-	sd = dtft_init(w, N; n_shift=n_shift)
-	sn = nufft_init(w, N, n_shift=n_shift)
+	sd = dtft_init(w, N ; n_shift=n_shift)
+	sn = nufft_init(w, N ; n_shift=n_shift, operator=false)
 	o0 = sd.dtft(x)
 	y = Complex{T}.(o0 / norm(o0))
 	a0 = sd.adjoint(y)
@@ -294,12 +296,11 @@ function nufft_test2( ;
 	a0 = sd.adjoint(y)
 	a1 = sn.adjoint(y)
 	@test norm(a1 - a0, Inf) / norm(a0, Inf) < tol
-	o2 = sn.A * vec(x)
+	o2 = sn.A * x
 	@test isequal(o1, o2)
 	a2 = sn.A' * y
-	a2 = reshape(a2, N)
 	@test isequal(a1, a2)
-	@test isapprox(Matrix(sn.A)', Matrix(sn.A')) # 2D adjoint test
+	@test Matrix(sn.A)' ≈ Matrix(sn.A') # 2D adjoint test
 
 	@test isequal(sn.nufft(cat(dims=4, x, 2x)),
 		cat(dims=3, sn.nufft(x), sn.nufft(2x)))
@@ -310,11 +311,11 @@ function nufft_test2( ;
 	@test A.name == "nufft2"
 	@test A.N == N
 
-	so = nufft_init(w, N ; n_shift=n_shift, pi_error=false, operator=true)
-	Ao = so.A
-	@test Ao * x == A * vec(x)
+	Ao = nufft_init(w, N ; n_shift=n_shift, pi_error=false, operator=true).A
+	Am = nufft_init(w, N ; n_shift=n_shift, pi_error=false, operator=false).A
+	@test Ao * x == Am * vec(x)
 	y = Ao * x
-	@test Ao'*y == reshape(A'*y, N)
+	@test Ao'*y == reshape(Am'*y, N)
 
 	sn = nufft_init(w, N ; n_shift=n_shift, pi_error=false,
 		do_many=false, operator=true)
@@ -334,7 +335,8 @@ function nufft_errors( ;
 	N::Int = 512,
 	w::AbstractArray{<:Real} = LinRange(0, 2π/N, M),
 	n_shift::Real = 0,
-	kwargs...)
+	kwargs...,
+)
 
 	sd = dtft_init(w, N ; n_shift=n_shift)
 	sn = nufft_init(w, N ; n_shift=n_shift, kwargs...)
@@ -363,7 +365,7 @@ end
 """
 nufft_plot_error_m( ; mlist=?)
 
-plot error vs NFFT sigma
+Plot error vs NFFT sigma
 """
 function nufft_plot_error_m(;
 	mlist::AbstractArray{<:Int} = 3:7)
@@ -379,7 +381,7 @@ end
 """
 nufft_plot_error_s( ; slist=?)
 
-plot error vs NFFT sigma
+Plot error vs NFFT sigma
 """
 function nufft_plot_error_s( ;
 	slist::AbstractArray{<:Real} = [1.5; 2:6])

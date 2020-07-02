@@ -294,7 +294,7 @@ in
 
 options: see `diffl!`
 - `T::Type` for `LinearMapAA`, default `Float32`
-- `operator::Bool = false` use `true` for `LinearMapAO`
+- `operator::Bool = true` use `false` for `LinearMapAM`
 
 out
 - `T` `LinearMapAA` object for computing finite differences via `T*x`
@@ -305,7 +305,7 @@ function diffl_map(
     dims::AbstractVector{Int} ;
     T::Type=Float32,
     edge::Symbol = :zero,
-    operator::Bool = false, # backward compatability
+    operator::Bool = true, # !
     kwargs...,
 ) where {D}
 
@@ -383,9 +383,10 @@ function diffl_map(test::Symbol)
     N = (2,3); d = 2
 
     @testset "basics" begin
-        T = diffl_map(N, d ; T=Int32, edge=:zero, add=false)
-        @test Matrix(T)' == Matrix(T')
-        @test T.name == "diffl_map"
+        O = diffl_map(N, d ; T=Int32, edge=:zero, add=false)
+        @test O isa LinearMapAM
+        @test Matrix(O)' == Matrix(O')
+        @test O.name == "diffl_map"
         @test_throws String diffl_map(N ; edge=:none) # unsupported
     end
 
@@ -398,12 +399,12 @@ function diffl_map(test::Symbol)
             for d in dlist
                 for edge in (:zero, :circ)
                     for add in (false, true)
-                        T = diffl_map(N, d ; T=Int32, edge=edge, add=add)
-                        @test Matrix(T)' == Matrix(T')
-                        @test T isa LinearMapAM
-                        O = diffl_map(N, d ; T=Int32, edge=edge, add=add, operator=true)
-                        @test O isa LinearMapAO
-                        @test Matrix(O)' == Matrix(O')
+                        for op in (false, true)
+                            O = diffl_map(N, d ;
+                                T=Int32, edge=edge, add=add, operator = op)
+                            @test Matrix(O)' == Matrix(O')
+                            @test O isa (op ? LinearMapAO : LinearMapAM)
+                        end
                     end
                 end
             end
