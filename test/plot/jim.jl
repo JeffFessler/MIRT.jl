@@ -2,13 +2,15 @@
 
 using MIRT: jim
 using LaTeXStrings
-using Test: @test
+using Test: @test, @test_throws
 
 
 jim()
 jim(:keys)
 jim(:clim)
 @test typeof(jim(:defs)) <: Dict
+
+@test_throws String jim(:bad)
 
 jim(ones(4,3), title="test2", xlabel=L"x")
 jim(rand(4,3,5), title=L"test3 x^2_i")
