@@ -5,9 +5,7 @@ ellipsoid_im.jl
 
 export ellipsoid_im
 
-using Plots
-using Test: @test, @test_throws
-#using MIRT: jim, MIRT_image_geom, image_geom
+#using MIRT: MIRT_image_geom, image_geom
 
 
 """
@@ -452,81 +450,3 @@ function spheroid_params(xfov, yfov, zfov, dx, dy, dz)
 	zradius = (zfov/2) - dz
 	return [ 0 0 0 xradius yradius zradius 0 0 1 ]
 end
-
-
-"""
-    ellipsoid_im()
-
-show docstring
-"""
-function ellipsoid_im()
-	@doc ellipsoid_im
-end
-
-
-"""
-ellipsoid_im_show()
-"""
-function ellipsoid_im_show()
-	ig = image_geom(nx=512, nz=64, dz=0.625, fov=500)
-	ig = ig.down(8)
-
-	spheroid = ellipsoid_im(ig, :spheroid)
-	p1 = jim(spheroid, title="spheroid")
-
-	x = ellipsoid_im(ig, :zhu; hu_scale=1000)
-	p2 = jim(x, title="zhu", clim=(900,1100))
-
-	plot(p1, p2)
-end
-
-
-"""
-ellipsoid_im_test()
-"""
-function ellipsoid_im_test()
-	ig = image_geom(nx=512, nz=64*2, dz=0.625, fov=500)
-	ig = ig.down(8)
-
-	#test different ellipses
-	ellipsoid_im(ig)
-	ellipsoid_im(ig, :zhu)
-	ellipsoid_im(ig, :kak, oversample=2)
-	ellipsoid_im(ig, :spheroid, return_params=true)
-	ellipsoid_im(ig; checkfov=true)
-	ellipsoid_im(ig; showmem=true)
-	@test_throws String ellipsoid_im(ig, :bad)
-	@test_throws String ellipsoid_im(ig, :spheroid, how=:bad)
-	@test_throws String shepp_logan_3d_parameters(0, 0, 0, :bad)
-	tmp = [1, 1, 1, 0, 0, 0]
-	@test !ellipsoid_im_check_fov(2, 9, 9, [3 0 0 1 1 1 0 0 1], tmp...)
-	@test !ellipsoid_im_check_fov(9, 2, 9, [0 3 0 1 1 1 0 0 1], tmp...)
-	@test !ellipsoid_im_check_fov(9, 9, 2, [0 0 3 1 1 1 0 0 1], tmp...)
-
-	#ell1 = ellipsoid_im(ig, :zhu; how=:fast) # fast doesn't work
-	#ell2 = ellipsoid_im(ig, :zhu; how=:lowmem) # lowmem calls fast - doesn't work
-	# todo: test slow vs fast
-	true
-end
-
-
-"""
-    ellipsoid_im(:test)
-
-`ellipsoid_im(:show)`
-
-run tests
-"""
-function ellipsoid_im(test::Symbol)
-	if test === :show
-		return ellipsoid_im_show()
-	end
-	test != :test && throw(ArgumentError("test $test"))
-	ellipsoid_im()
-	ellipsoid_im(:show)
-	@test ellipsoid_im_test()
-	true
-end
-
-#ellipsoid_im(:show)
-#ellipsoid_im(:test)

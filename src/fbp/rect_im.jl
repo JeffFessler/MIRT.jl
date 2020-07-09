@@ -5,8 +5,7 @@ rect_im.jl
 
 export rect_im
 
-using Plots
-# using MIRT: jim, MIRT_image_geom, downsample2
+#using MIRT: MIRT_image_geom, downsample2
 
 
 """
@@ -307,72 +306,4 @@ function smiley_parameters(xfov, yfov)
 		23	19	4	6	0	1
 	]
 	return rect
-end
-
-
-"""
-    rect_im()
-
-show docstring(s)
-"""
-function rect_im()
-	@doc rect_im
-end
-
-
-"""
-rect_im_show()
-"""
-function rect_im_show()
-	#plot(1:10, 1:10)
-	ig = image_geom(nx=2^8, ny=2^8, fov=100)
-
-	x0 = rect_im(ig, [[[0.5, 0, 3, 20]*ig.dx..., 0, 1]';], oversample=3)
-	p1 = jim(x0)
-
-	x1 = rect_im(ig, :default ; oversample=3, chat=true)
-	p2 = jim(x1, title="default rects")
-
-	x2 = rect_im(ig, :my_rect ; oversample=3, chat=true)
-	p3 = jim(x2, title="my rect")
-
-	x3 =rect_im(ig, :smiley ; oversample=3, chat=true)
-	p4 = jim(x3, title="smiley")
-
-	plot(p1, p2, p3, p4)
-end
-
-
-function rect_im_test()
-	fov = 100
-	rect_im_default_parameters(fov, fov)
-	rect_im_show()
-	true
-end
-
-
-"""
-    rect_im(:test)
-
-`rect_im(:show)`
-
-run tests
-"""
-function rect_im(test::Symbol)
-	if test === :show
-		return rect_im_show()
-	end
-	test != :test && throw(ArgumentError("test $test"))
-	ig = image_geom(nx=2^8, dx=3)
-	@test_throws String rect_im(ig, :bad)
-	rect_im(ig, :smiley, how=:fast, replace=true)
-	rect_im(ig, how=:slow, replace=true)
-	rect_im(32, ny=30, dx=3, params=:default, how=:slow, return_params=true)
-	rect_im(32, 30)
-	@test_throws String rect_im(32, :default, how=:bad)
-	rect_im(:show)
-	prompt()
-	@test rect_im_test()
-	rect_im()
-	true
 end

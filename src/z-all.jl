@@ -12,6 +12,3 @@ include("nufft/z-list.jl")
 
 include("regularize/z-list.jl")
 include("system/z-list.jl")
-
-
-include("../test/test_all_mirt.jl")
