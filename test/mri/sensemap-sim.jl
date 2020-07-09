@@ -1,101 +1,22 @@
-#=
-sensemap-sim.jl
-Simulate coil sensitivity maps
-2019-06-18, Jeff Fessler, University of Michigan
-=#
+# sensemap-sim.jl
 
-export ir_mri_sensemap_sim
+using MIRT: ir_mri_sensemap_sim
+using MIRT: jim, prompt, image_geom
 
-#using MIRT: jim, image_geom
+# todo: clean up
+import MIRT: ir_mri_sensemap_sim_test0 # ellipk
+import MIRT: ir_mri_sensemap_sim_test1 # basic test
+import MIRT: ir_mri_sensemap_sim_test2 # 2d test
+import MIRT: ir_mri_sensemap_sim_test3 # 3d test
 
-using SpecialFunctions: ellipk, ellipe
+#using SpecialFunctions: ellipk, ellipe
 using Test: @test, @inferred
 using Plots: Plot, plot, plot!, contour!, scatter!, quiver, quiver!, Arrow
 
 
-"""
-    (smap,info) = ir_mri_sensemap_sim(...)
+#=
 
-Simulate 2D or 3D sensitivity maps for sensitivity-encoded MRI based on
-grivich:00:tmf http://doi.org/10.1119/1.19461
-
-This code makes maps for multiple coils,
-but does not model coupling between coils,
-so most likely it is an approximation at best.
-
-option
-- `dims::Dims`		image size; default (64, 64)
-- `dx::Real`		pixel/voxel dimension; default: 3
-- `dy::Real`		pixel/voxel dimension; default: `dx`
-- `dz::Real`		""
-- `ncoil::Int`		# of coils total; default 4
-- `nring::Int`		# of rings of coils; default 1
-- `rcoil::Real`		coil radius; default `dx * nx / 2 * 0.50`
-- `dz_coil`			ring spacing in z; default `nz*dz/nring`
-			(3D geometry is a cylinder)
-- `coil_distance::Real`		distance of coil center from isocenter
-	for central ring of coils as a multiple of FOVx,
-	where `FOVx=nx*dx`; default 1.2
-- `orbit::Real`			default 360 [degrees]
-- `orbit_start::Union{Real,AbstractVector{<:Real}} = 0` scalar or `nring` [degrees]
-- `scale::Symbol`
-  + `:none` (default)
-  +	`ssos_center` make SSoS of center = 1
-
-out
-- `smap	[dims ncoil]`	simulated sensitivity maps (complex!)
-- `info::NamedTuple`	geometry information for plots
-
-All length parameters must have same units (e.g., mm or cm)
-
-Matlab notes:
-- 2005-6-20, Jeff Fessler and Amanda Funai, University of Michigan
-- 2014-08-19 JF more testing, verifying phase is correct
-- 2014-09-09 modified for 3D by Mai Le
-- 2016-05-03 JF fixes
-"""
-function ir_mri_sensemap_sim( ;
-		dims::Dims = (64,64), # 2D default
-		dx::Real = 3,
-		dy::Real = dx,
-		dz::Real = 3,
-		ncoil::Int = 4,
-		nring::Int = 1,
-		rcoil::Real = dx * dims[1] / 2 * 0.5,
-		dz_coil::Real = ((length(dims) == 3) ? dims[3] : 1) * dz / nring,
-		coil_distance::Real = 1.2, # multiplies fov/2
-		orbit::Real = 360,
-		orbit_start::Union{Real,AbstractVector{<:Real}} = 0,
-		scale::Symbol = :none, # or :ssos_center
-		chat::Bool = false,
-	)
-
-	(length(dims) < 2 || length(dims) > 3) && throw("2D or 3D only")
-	nx = dims[1]
-	ny = dims[2]
-	nz = (length(dims) == 3) ? dims[3] : 0
-
-	coils_per_ring = round(Int, ncoil / nring)
-	ncoil != nring * coils_per_ring && throw("nring must be divisor of ncoil")
-
-	(smap, info) = ir_mri_sensemap_sim_do(
-			nx, ny, nz,
-			dx, dy, dz,
-			ncoil, coils_per_ring, rcoil, dz_coil,
-			orbit, orbit_start, coil_distance, chat)
-
-	scale_center = (nz == 0) ?
-		1 / sqrt(sum(abs.(smap[round(Int,nx/2),round(Int,ny/2),:].^2))) :
-		1 / sqrt(sum(abs.(smap[round(Int,nx/2),round(Int,ny/2),round(Int,nz/2),:].^2)))
-
-	if scale === :ssos_center
-		smap *= Float32(scale_center)
-	elseif scale != :none
-		throw("scale $scale")
-	end
-
-	return (smap, info)
-end
+todo: untangle the plots?
 
 
 """
@@ -518,3 +439,27 @@ function ir_mri_sensemap_sim_test3( ; chat::Bool=false)
 			t.nlist, t.plist, t.rlist, t.olist, t.ulist,
 			t.nring, t.ncoilpr, t.rcoil)
 end
+
+
+=#
+
+
+ir_mri_sensemap_sim_test0() # ellipk
+prompt()
+ir_mri_sensemap_sim_test1() # basic test
+prompt()
+ir_mri_sensemap_sim_test2() # 2d test
+prompt()
+ir_mri_sensemap_sim_test3() # 3d test
+
+#=
+@test typeof(ir_mri_sensemap_sim_test0()) <: Plots.Plot # ellipk
+@test typeof(ir_mri_sensemap_sim_test1()) <: Plots.Plot # basic test
+@test typeof(ir_mri_sensemap_sim_test2()) <: Plots.Plot # 2d test
+@test typeof(ir_mri_sensemap_sim_test3()) <: Plots.Plot # 3d test
+=#
+
+#= for plotting
+ir_mri_sensemap_sim_test3(chat=true)
+ir_mri_sensemap_sim_test3(chat=true)
+=#
