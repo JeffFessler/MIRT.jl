@@ -3,7 +3,7 @@
 using MIRT: sino_geom
 using MIRT: sino_geom_help, sino_geom_plot, sino_geom_plot_grids
 using MIRT: image_geom, prompt
-#import MIRT: sino_geom_gamma_dfs
+import MIRT: sino_geom_gamma_dfs
 
 using Plots: plot!, plot
 using Test: @test, @test_throws, @inferred
@@ -99,7 +99,7 @@ end
 @test_throws String sino_geom(:ge1 ; units=:bad)
 
 sg = sino_geom(:ge1 ; orbit=:short)
-#sino_geom_gamma_dfs(sg) # todo - coverage?
+@test sino_geom_gamma_dfs(sg) isa Vector
 
 show(isinteractive() ? stdout : devnull, sg)
 show(isinteractive() ? stdout : devnull, MIME("text/plain"), sg)
