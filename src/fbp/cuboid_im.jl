@@ -301,14 +301,3 @@ end
 function cuboid_im(ig::MIRT_image_geom ; args...)
 	return cuboid_im(ig, :default ; args...)
 end
-
-
-
-"""
-    cuboid_im()
-
-show docstring
-"""
-function cuboid_im()
-	@doc cuboid_im
-end

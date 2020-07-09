@@ -41,33 +41,17 @@ end
 mirt_setup_plot()
 
 
-# test_all_mirt
 # Run all MIRT tests.
-#To avoid plotting during tests, first do `default(show=false)`
+# To avoid plotting during tests, first do `default(show=false)`
 
-# todo: old way (to cut):
-
-srclist = (
+otherlist = (
 "../data",
-#"algorithm",
-#"fbp",
-#"io",
-#"mri",
-#"nufft",
-"plot",
-"regularize",
-"system",
-"utility",
 )
 
-
 basedir = dirname(pathof(MIRT))
-#	@testset "all MIRT" begin
-for root in srclist
+for root in otherlist
 	@testset "$root" begin
 		tmp = joinpath(basedir, root, "z-test.jl")
-	#	tmp = joinpath(root, "z-test.jl")
-	#	printstyled(tmp * "\n", color=:blue, bold=true)
 		include(tmp)
 	end
 end
@@ -75,16 +59,15 @@ end
 
 # new way:
 srclist = (
-#"../data",
 "algorithm",
 "fbp",
 "io",
 "mri",
 "nufft",
-#"plot",
-#"regularize",
-#"system",
-#"utility",
+"plot",
+"regularize",
+"system",
+"utility",
 )
 
 for root in srclist

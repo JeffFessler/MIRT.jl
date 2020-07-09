@@ -58,7 +58,4 @@ xrs = cuboid_im(ig, :rotate, how=:sample)
 x3 = cuboid_im(ig, :default, how=:lowmem1)
 x5 = cuboid_im(ig)
 
-cuboid_im()
-
 cuboid_im_show()
-gui()

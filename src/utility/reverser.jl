@@ -6,7 +6,6 @@ https://stackoverflow.com/questions/27411401/julia-reverse-n-dimensional-arrays
 
 export reverser
 
-using Test: @test
 
 """
     y = reverser(x, dims)
@@ -22,17 +21,3 @@ end
 
 reverser(x::AbstractArray) = reverser(x, 1:ndims(x)) # all dimensions
 reverser(x::AbstractArray, d::Int) = reverser(x, [d])
-
-
-"""
-    reverser(:test)
-self test
-"""
-function reverser(test::Symbol)
-	test != :test && throw(ArgumentError("test $test"))
-	@test reverser(1:3) == 3:-1:1
-	@test reverser(1:3, 1) == 3:-1:1
-	@test reverser((1:3)', 1) == (1:3)'
-	@test reverser((1:3)', 2) == (3:-1:1)'
-	true
-end

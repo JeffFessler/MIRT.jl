@@ -5,7 +5,7 @@ using MIRT: sino_geom_help, sino_geom_plot, sino_geom_plot_grids
 using MIRT: image_geom, prompt
 #import MIRT: sino_geom_gamma_dfs
 
-using Plots: plot!, plot, scatter!, gui
+using Plots: plot!, plot
 using Test: @test, @test_throws, @inferred
 
 

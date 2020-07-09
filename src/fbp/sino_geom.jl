@@ -8,7 +8,7 @@ export MIRT_sino_geom, sino_geom
 export sino_geom_help, sino_geom_plot_grids, sino_geom_show, sino_geom_test
 
 # using MIRT: jim, image_geom, MIRT_image_geom, prompt
-using Plots: Plot, plot!, plot, scatter!, gui
+using Plots: Plot, plot!, plot, scatter, scatter!, gui
 using Test: @test, @test_throws, @inferred
 
 

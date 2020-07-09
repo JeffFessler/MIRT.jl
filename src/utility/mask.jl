@@ -5,10 +5,9 @@ Methods related to an image support mask.
 2020-06-30 embed! getindex!
 =#
 
-export embed, embed!, mask_or, mask_outline, maskit, mask_test
+export embed, embed!, mask_or, mask_outline, maskit
 export getindex!
 
-using Test: @test, @testset, @test_throws, @inferred
 using ImageFiltering: imfilter, centered
 #using SparseArrays: sparse, findnz, AbstractSparseVector
 
@@ -46,20 +45,6 @@ mask_or(mask::AbstractArray{Bool,3}) =
 mask_or(mask::AbstractArray{Bool}) = throw("ndims(mask) = $(ndims(mask))")
 
 
-"""
-    mask_or(:test)
-self test
-"""
-function mask_or(test::Symbol)
-	test != :test && throw(ArgumentError("test $test"))
-	mask2 = trues(3,4)
-	@test (@inferred mask_or(mask2)) === mask2
-	mask3 = trues(3,4,5)
-	@test (@inferred mask_or(mask3)) == trues(3,4)
-	@test_throws String mask_or(trues(1,))
-	true
-end
-
 
 """
     mask_outline(mask)
@@ -72,19 +57,6 @@ function mask_outline(mask::AbstractMatrix{Bool})
 end
 mask_outline(mask::AbstractArray{Bool,3}) = mask_outline(mask_or(mask))
 
-
-"""
-    mask_outline(:test)
-self test
-"""
-function mask_outline(test::Symbol)
-	test != :test && throw(ArgumentError("test $test"))
-	mask2 = trues(3,4)
-	@test (@inferred mask_outline(mask2)) == falses(3,4)
-	mask3 = trues(3,4,5)
-	@test (@inferred mask_outline(mask3)) == falses(3,4)
-	true
-end
 
 
 """
@@ -147,21 +119,6 @@ end
 =#
 
 
-"""
-    embed(:test)
-"""
-function embed(test::Symbol)
-	test != :test && throw(ArgumentError("test $test"))
-	mask = [false true true; true false false]
-	a = [0 2 3; 1 0 0]; v = a[mask]
-	b = similar(a)
-	@test (@inferred embed(v,mask)) == a
-	@test (@inferred embed([v 2v], mask)) == cat(dims=3, a, 2a)
-	@test embed!(b, v, mask ; filler=-1) == a + (-1) * .!mask
-#	@test embed(sparse(1:3),mask) == sparse([0 2 3; 1 0 0]) # later
-	true
-end
-
 
 """
     maskit(x::AbstractArray{<:Number})
@@ -179,59 +136,4 @@ function maskit(x::AbstractArray{<:Number}, mask::Array{Bool})
 		throw(DimensionMismatch("size(x) = $(size(x))"))
 	end
 	return x
-end
-
-
-"""
-    maskit(:test)
-"""
-function maskit(test::Symbol)
-	test != :test && throw(ArgumentError("test $test"))
-	mask = [false true true; true false false]
-	@inferred maskit([7 2 3; 1 7 7], mask)
-	@test maskit([7 2 3; 1 7 7], mask) == [1,2,3]
-	true
-end
-
-
-"""
-    getindex!(:test)
-self test
-"""
-function getindex!(test::Symbol)
-	test != :test && throw(ArgumentError("test $test"))
-	N = (2^2,2^3)
-	mask = rand(N...) .< 0.5
-	K = sum(mask)
-	T = ComplexF32
-	x = randn(T, N...)
-	y0 = x[mask]
-	y1 = Array{T}(undef, K)
-	@test 0 == @allocated getindex!(y1, x, mask)
-	@test y0 == y1
-	true
-end
-
-
-"""
-    mask_test()
-self tests
-"""
-function mask_test()
-	@testset "getindex!" begin
-		@test getindex!(:test)
-	end
-	@testset "mask_or" begin
-		@test mask_or(:test)
-	end
-	@testset "mask_outline" begin
-		@test mask_outline(:test)
-	end
-	@testset "embed" begin
-		@test embed(:test)
-	end
-	@testset "maskit" begin
-		@test maskit(:test)
-	end
-	true
 end

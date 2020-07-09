@@ -5,7 +5,6 @@ map_many.jl
 
 export map_many
 
-using Test: @test, @inferred
 
 """
     y = map_many(fun::Function, x::AbstractArray{<:Any}, idim::Dims)
@@ -47,20 +46,4 @@ function map_many(fun::Function, x::AbstractArray{<:Any}, idim::Dims)
 		out[:,l] = vec(fun(reshape((@view x[:,l]), idim)))
 	end
 	return reshape(out, odim..., ldim...) # [odim ldim]
-end
-
-
-"""
-    map_many(:test)
-self test
-"""
-function map_many(test::Symbol)
-	N = (4,3)
-	fun = x -> cat(dims=3, x, 4x)
-	x1 = ones(N)
-	x = cat(dims=3, x1, 2x1)
-
-#	@inferred map_many(fun, x, N) # fails because fun could be anything!
-	@test map_many(fun, x, N) == cat(dims=4, fun(x1), fun(2x1))
-	true
 end

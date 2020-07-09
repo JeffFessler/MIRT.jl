@@ -13,8 +13,6 @@ https://julialang.org/blog/2016/02/iteration
 
 export ndgrid
 
-using Test: @test, @inferred
-
 
 """
 `(xx,yy) = ndgrid(x::AbstractVector{<:Any}, y::AbstractVector{<:Any})`
@@ -40,18 +38,4 @@ function ndgrid(
 
 	tmp = Iterators.product(x, y, z)
 	return [p[1] for p in tmp], [p[2] for p in tmp], [p[3] for p in tmp]
-end
-
-
-"""
-`ndgrid(:test)`
-self test
-"""
-function ndgrid(test::Symbol)
-	test != :test && throw(ArgumentError("test $test"))
-
-	@inferred ndgrid(1:3, 2:4)
-	@test ndgrid(1:3, 2:4) == ([1 1 1; 2 2 2; 3 3 3], [2 3 4; 2 3 4; 2 3 4])
-	@test size(ndgrid(1:3, 4:5, 6:9)[3]) == (3,2,4)
-	true
 end

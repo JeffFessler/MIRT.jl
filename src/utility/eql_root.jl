@@ -2,8 +2,6 @@
 
 export eql_root
 
-using Test: @test, @test_throws, @inferred
-
 
 """
     x = eql_root(a,b,c)
@@ -37,25 +35,4 @@ function eql_root(a, b, c)
     (size(a) != size(b) || size(b) != size(c)) && throw(DimensionMismatch("all arguments must share dimensions"))
 
     eql_root.(a, b, c)
-end
-
-
-"""
-    eql_root(:test)
-self test
-"""
-function eql_root(x::Symbol)
-    x != :test && throw("Must use :test as input for testing")
-    tests = [1 1 -1;
-             0 1 2;
-             4 5 0;
-             1 0 9; # 3 both times
-             #1 0 -9; # -3 both times. omitted because out of prog scope
-             4 4 5] # (2x+5)(2x-1), so 1/2.
-    predicted = [-1, 1, 0, 3, 1/2]
-    results = eql_root(tests[:,1], tests[:,2], tests[:,3])
-  
-    @test results == predicted
-    @test eql_root(1, 1, -1) == -1
-    return true
 end
