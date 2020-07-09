@@ -1,6 +1,6 @@
 #=
 fld-write.jl
-write AVD .fld to file
+write AVS .fld to file
 2019-05-12, Jeff Fessler, University of Michigan
 =#
 
