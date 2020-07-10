@@ -2,6 +2,9 @@ In reverse chronological order
 
 0.12.0
 
+2020-07-10
+Breaking change for `ir_mri_sensemap_sim` to isolate plots
+
 2020-07-09
 Mildly breaking change: isolate almost all tests to `test/`
 
