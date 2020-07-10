@@ -93,24 +93,12 @@ set prompt state to one of:
 - `:nodraw` do not call gui(), just continue
 
 Actually it calls `display(plot!())` instead of `gui()`
-
-`prompt(:test)`
-self test
 """
 function prompt(key::Symbol)
 	global prompt_state
 
 	if key === :state
 		return prompt_state
-	end
-
-	if key === :test
-		tmp = prompt(:state) # save current state
-		prompt(:draw)
-		@test prompt(:state) === :draw
-		prompt()
-		prompt(tmp) # return to original state
-		return true
 	end
 
 	key ∉ (:prompt, :draw, :nodraw) && throw("prompt $prompt")

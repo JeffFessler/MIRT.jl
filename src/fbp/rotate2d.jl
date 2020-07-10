@@ -5,8 +5,6 @@ rotate2d.jl
 
 export rotate2d
 
-using Test: @test
-
 
 """
 `(xr,yr) = rotate2d(x, y, theta)`
@@ -17,17 +15,3 @@ function rotate2d(x, y, theta)
 	yr = -sin(theta) * x + cos(theta) * y
 	return (xr, yr)
 end
-
-
-"""
-`rotate2d(:test)`
-self test
-"""
-function rotate2d(test::Symbol)
-	test != :test && throw(ArgumentError("test $test"))
-	@test isapprox([rotate2d(1, 1, pi/2)...], [(1.,-1.)...])
-	true
-end
-
-
-# rotate2d(:test)

@@ -10,8 +10,6 @@ Jeff Fessler, 2019-06-27, University of Michigan
 
 export caller_name
 
-using Test: @test
-
 
 """
 `caller_name() or caller_name(;level=4)`
@@ -41,27 +39,3 @@ function caller_name( ; level::Int = 4)
 
 	return "$file $line $func(): "
 end
-
-
-"""
-`caller_name(:test)`
-"""
-function caller_name(test::Symbol)
-	test != :test && throw(ArgumentError("test $test"))
-
-	function f2()
-		caller_name()
-	end
-
-	line = 2 + @__LINE__
-	function f1()
-		f2() # this is two lines below @__LINE__ above
-	end
-
-	@test isa(f1(), String)
-	@test f1()[end-12:end] == ".jl $line f1(): "
-
-	true
-end
-
-# caller_name(:test)

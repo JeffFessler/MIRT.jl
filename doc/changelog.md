@@ -1,5 +1,10 @@
 In reverse chronological order
 
+0.12.0
+
+2020-07-09
+Mildly breaking change: isolate almost all tests to `test/`
+
 0.11.0 2020-07-01
 
 Breaking change: make `LinearMapAO` the default

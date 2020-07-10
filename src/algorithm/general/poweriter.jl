@@ -5,9 +5,8 @@ poweriter.jl
 
 export poweriter
 
-using Random: seed!
-using LinearAlgebra: opnorm, norm
-using Test: @test
+using LinearAlgebra: norm
+
 
 """
     v1,σ1 = poweriter(A; niter=?, ...)
@@ -51,29 +50,4 @@ function poweriter(
 		x /= norm(x)
 	end
 	return x, norm(A * x) / norm(x)
-end
-
-
-"""
-    poweriter(:test)
-self test
-"""
-function poweriter(test::Symbol)
-	test != :test && throw("bad symbol $test")
-	seed!(0)
-	M = 30
-	N = 20
-
-	A = randn(M,N) # real
-	s0 = opnorm(A)
-	chat = false
-	_,s1 = poweriter(A; tol=1e-9, chat=chat)
-	@test s0 ≈ s1
-
-	A = randn(ComplexF32, M, N) # complex
-	s0 = opnorm(A)
-	_,s1 = poweriter(A; tol=1e-9, chat=chat)
-	@test s0 ≈ s1
-
-	true
 end

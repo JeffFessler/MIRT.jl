@@ -1,36 +1,10 @@
 #=
 fld-write.jl
-write AVD .fld to file
+write AVS .fld to file
 2019-05-12, Jeff Fessler, University of Michigan
 =#
 
 export fld_write
-export ir_test_dir, ir_test_dir!
-
-
-"""
-`dir = ir_test_dir!(path)`
-
-set default test directory
-"""
-function ir_test_dir!(path::String)
-	ENV["MIRT_TEST_DIR"] = path
-end
-
-
-"""
-`dir = ir_test_dir`
-
-return default test directory `ENV["MIRT_TEST_DIR"]`; default is `/tmp`
-"""
-function ir_test_dir()
-#	get(ENV, "MIRT_TEST_DIR", "/tmp")
-	try
-		return ENV["MIRT_TEST_DIR"]
-	catch
-		return "/tmp"
-	end
-end
 
 
 """
@@ -180,47 +154,4 @@ function fld_write_data_fix(data::AbstractArray{<:Real})
 		throw("unsupported type $dtype")
 
 	return data
-end
-
-
-
-"""
-`fld_write_test1(file, data, ...)`
-"""
-function fld_write_test1(file, data; raw::Bool=false, chat::Bool=false, kwarg...)
-	fld_write(file, data; raw=raw, kwarg...)
-	tmp = fld_read(file, chat=chat)
-	tmp != data && throw("test failed for file = $file")
-
-	rm(file)
-	if raw
-		tmp = file[1:(end-4)] * ".raw"
-		rm(tmp)
-	end
-	true
-end
-
-
-"""
-`fld_write(:test ; chat::Bool)`
-
-tests writing and reading AVS `.fld` files of all key types
-"""
-function fld_write(test::Symbol; chat::Bool=false)
-	test != :test && throw("bug")
-
-	file = joinpath(ir_test_dir(), "fld-write-test.fld")
-
-	for dtype in (UInt8, Int16, Int32, Float32, Float64)
-		for endian in (:le, :be)
-			for raw in (false, true)
-				chat && @info "dtype=$dtype endian=$endian raw=$raw"
-				data = convert.(dtype, [5:8; 1:4])
-				fld_write_test1(file, data, endian=endian, raw=raw,
-					check=true, chat=chat)
-			end
-		end
-	end
-
-	true
 end

@@ -35,16 +35,3 @@ end
 
 
 ir_dump(io::IO, x::Any) = ir_dump(x ; io=io)
-
-
-"""
-`ir_dump(:test; io::IO = IOBuffer())`
-
-self test
-"""
-function ir_dump(test::Symbol ; io=IOBuffer())
-	test != :test && throw(ArgumentError("test $test"))
-	x = (a=1, b=2)
-	ir_dump(x, io=io)
-	true
-end

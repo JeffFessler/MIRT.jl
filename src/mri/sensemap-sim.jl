@@ -518,35 +518,3 @@ function ir_mri_sensemap_sim_test3( ; chat::Bool=false)
 			t.nlist, t.plist, t.rlist, t.olist, t.ulist,
 			t.nring, t.ncoilpr, t.rcoil)
 end
-
-
-
-"""
-    ir_mri_sensemap_sim(:test)
-self test
-"""
-function ir_mri_sensemap_sim(test::Symbol)
-	test != :test && throw(ArgumentError("test $test"))
-
-	ir_mri_sensemap_sim_test0() # ellipk
-	prompt()
-	ir_mri_sensemap_sim_test1() # basic test
-	prompt()
-	ir_mri_sensemap_sim_test2() # 2d test
-	prompt()
-	ir_mri_sensemap_sim_test3() # 3d test
-	prompt()
-
-#=
-	@test typeof(ir_mri_sensemap_sim_test0()) <: Plots.Plot # ellipk
-	@test typeof(ir_mri_sensemap_sim_test1()) <: Plots.Plot # basic test
-	@test typeof(ir_mri_sensemap_sim_test2()) <: Plots.Plot # 2d test
-	@test typeof(ir_mri_sensemap_sim_test3()) <: Plots.Plot # 3d test
-=#
-	true
-end
-
-#= for plotting
-ir_mri_sensemap_sim_test3(chat=true)
-ir_mri_sensemap_sim_test3(chat=true)
-=#

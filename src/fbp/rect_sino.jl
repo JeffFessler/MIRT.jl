@@ -6,7 +6,6 @@ rect_sino.jl
 
 export rect_sino
 
-using Plots: plot
 #using MIRT: sino_geom, MIRT_sino_geom, downsample2
 
 
@@ -130,93 +129,15 @@ end
 `trapezoid(t::Real, t1, t2, t3, t4)`
 """
 function trapezoid(t::Real, t1::Real, t2::Real, t3::Real, t4::Real)
+	(t, t1, t2, t3, t4) = promote(t, t1, t2, t3, t4)
+	T = eltype(t)
 	if t1 < t < t2
 		return (t - t1)/(t2 - t1)
 	elseif t2 <= t <= t3
-		return 1
+		return one(T)
 	elseif t3 < t < t4
 		return (t4 - t)/(t4 - t3)
 	else
-		return 0
+		return zero(T)
 	end
-end
-
-
-"""
-`rect_sino()`
-
-show doc strings
-"""
-function rect_sino()
-	@doc rect_sino
-end
-
-
-"""
-`rect_sino_test()`
-
-internal test routine: standard sampling
-"""
-function rect_sino_test()
-	rect = [60 10.5 38 27 0 1]
-	sg = sino_geom(:ge1, down=8)
-	rect_sino(sg, rect; xscale=-1, yscale=-1) # test scale
-	t = LinRange(-2, 5, 101)
-	f = trapezoid.(t, 1, 2, 3, 4.)
-#	plot(t,f)
-	true
-end
-
-
-"""
-`rect_sino_show()`
-show examples
-"""
-function rect_sino_show( ;
-		down::Int = 4,
-		rect::Matrix = [70 20 70 30 0 1],
-		orbit::Real = 360,
-		na::Int = 400,
-		oversample::Int = 2,
-	)
-
-#=
-	ig = image_geom(nx=512, ny=504, fov=500)
-	ig = ig.down(down)
-	xtrue = rect_im(ig, rect; oversample=4)
-=#
-
-	arg = (na=na, down=down, orbit=orbit, offset=0.25)
-	geoms = (
-		sino_geom(:par, nb = 444, d = 1 ; arg...),
-		sino_geom(:fan, nb = 888, d = 1 ; arg..., dsd = 949, dod = 408),
-		sino_geom(:fan, nb = 888, d = 1 ; arg...,
-			dsd = 949, dod = 408, dfs = Inf), # flat fan
-		sino_geom(:moj, nb = 666, d = 1 ; arg...),
-	)
-
-	ngeom = length(geoms)
-	pl = Array{Plot}(undef, ngeom)
-
-	for ii=1:ngeom
-		sg = geoms[ii]
-		sino = rect_sino(sg, rect; oversample=oversample)
-		dfs = sg.how === :fan ? " dfs=$(sg.dfs)" : ""
-		pl[ii] = jim(sg.r, sg.ad, sino, title="$(sg.how)$dfs")
-	end
-	plot(pl...)
-end
-
-
-"""
-`rect_sino(:test)`
-self test
-"""
-function rect_sino(test::Symbol)
-	test === :show && return rect_sino_show()
-	test != :test && throw(ArgumentError("test $test"))
-	rect_sino() # doc
-	rect_sino_test()
-	rect_sino(:show)
-	true
 end

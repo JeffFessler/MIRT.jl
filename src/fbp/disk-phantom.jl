@@ -6,7 +6,6 @@ generate random disk phantoms
 
 export disk_phantom_params
 
-# using MIRT: jim
 using Random: seed!
 
 
@@ -90,27 +89,3 @@ function disk_phantom_params( ;
 
 	return params
 end
-
-
-"""
-`disk_phantom_params(:test)`
-self test
-
-`disk_phantom_params(:show)`
-show example
-"""
-function disk_phantom_params(test::Symbol)
-	ig = image_geom(nx = 128, fov = 240)
-	params = disk_phantom_params( ; minsep = ig.dx*8)
-
-	if test === :show
-		tmp = ellipse_im(ig, params, oversample=3)
-		return jim(ig.x, ig.y, tmp)
-	end
-
-	test != :test && throw(ArgumentError("test $test"))
-	disk_phantom_params(:show)
-	true
-end
-
-# disk_phantom_params(:test)

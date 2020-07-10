@@ -11,7 +11,6 @@ export image_geom_circle
 export image_geom_ellipse
 
 #using MIRT: jim, downsample2, downsample3
-using Test: @test, @test_throws, @inferred
 using ImageTransformations: imresize
 
 
@@ -252,9 +251,7 @@ helper function needed to downsample `image_geom`
 """
 function _down_round(val::Real=1, dd::Real=1, down::Real=1)
 	out = val / down
-	if out != round(out)
-		out = 2 * round(out / 2) # keep it even if not an integer
-	end
+	out != round(out) && (out = 2 * round(out / 2)) # keep even if non-integer
 	dd = dd * down
 	return Int(out), dd
 end
@@ -404,19 +401,6 @@ end
 
 
 """
-image_geom_add_unitv_test()
-"""
-function image_geom_add_unitv_test()
-#	test != :test && throw(ArgumentError("test $test"))
-	image_geom_add_unitv(zeros(3,4), j=2)
-	image_geom_add_unitv(zeros(3,4), i=[2,3])
-	image_geom_add_unitv(zeros(3,4))
-	image_geom_add_unitv(zeros(3,4), c=[-1,-2])
-	true
-end
-
-
-"""
 image_geom_plot(ig)
 """
 function image_geom_plot(ig::MIRT_image_geom; kwargs...)
@@ -511,98 +495,3 @@ Base.getproperty(ig::MIRT_image_geom, s::Symbol) =
 
 Base.propertynames(ig::MIRT_image_geom) =
 	(fieldnames(typeof(ig))..., keys(image_geom_fun0)...)
-
-
-function image_geom_test2(ig::MIRT_image_geom)
-	# test 2D functions provided by the constructor
-	ig.dim
-	ig.x
-	ig.y
-	ig.wx
-	ig.wy
-	ig.xg
-	ig.yg
-	ig.fovs
-	ig.np
-	ig.mask_outline
-	ig.ones
-	ig.zeros
-	ig.u
-	ig.v
-	ig.ug
-	ig.vg
-	ig.fg
-	@test ig.shape(vec(ig.ones)) == ig.ones
-	@test ig.embed(ig.ones[ig.mask]) == Float32.(ig.mask)
-	@test ig.maskit(ig.ones) == Float32.(ones(ig.np))
-	ig.unitv(j=4)
-	ig.unitv(i=ones(Int, length(ig.dim)))
-	ig.unitv(c=zeros(Int, length(ig.dim)))
-#= todo-i: why do these fail?
-	@inferred image_geom_ellipse(8, 10, 1, 2)
-	@inferred ig.circ()
-	@inferred ig.plot()
-	@inferred ig.unitv()
-=#
-	ig.circ()
-	ig.plot()
-	ig.unitv()
-	@inferred ig.down(2)
-	@inferred ig.over(2)
-	image_geom_ellipse(8, 10, 1, 2)
-	true
-end
-
-function image_geom_test2()
-	@inferred image_geom(nx=16, dx=2, offsets=:dsp, mask=:all_but_edge)
-	@test_throws String image_geom(nx=16, dx=1, offsets=:bad)
-	@test_throws String image_geom(nx=16, dx=1, mask=:bad) # mask type
-	@test_throws String image_geom(nx=16, dx=1, mask=trues(2,2)) # mask size
-	ig = image_geom(nx=16, dx=2)
-	show(isinteractive() ? stdout : devnull, ig)
-	show(isinteractive() ? stdout : devnull, MIME("text/plain"), ig)
-	image_geom_test2(ig)
-	ig = image_geom(nx=16, dx=2, mask=:circ)
-	ig.over(2)
-	ig.down(3) # test both even and non-even factors
-	ig.help
-	true
-end
-
-
-function image_geom_test3(ig::MIRT_image_geom)
-	@test image_geom_test2(ig)
-	ig.wz
-	ig.zg
-	ig.mask_or
-	@inferred ig.expand_nz(2)
-	@inferred cbct(ig)
-	@test_throws String image_geom(nx=1, dx=1, nz=2, offset_z=-1, offsets=:dsp)
-	true
-end
-
-function image_geom_test3()
-	@inferred image_geom(nx=16, nz=4, dx=2, zfov=1)
-	ig = image_geom(nx=16, nz=4, dx=2, dz=3)
-	image_geom_test3(ig)
-	true
-end
-
-
-"""
-    image_geom(:test)
-self test
-"""
-function image_geom(test::Symbol)
-	if test === :help
-		image_geom_help()
-		return true
-	end
-	test != :test && throw(ArgumentError("test $test"))
-	@test image_geom_add_unitv_test()
-	@test _down_round(4, 3, 2)[1] == 2
-	@test image_geom_test2()
-	@test image_geom_test3()
-	@test image_geom(:help)
-	true
-end

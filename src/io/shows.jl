@@ -47,21 +47,3 @@ macro shows(ex)
 =#
 	return blk
 end
-
-
-#=
-This test was used solely during development
-
-"""
-`shows(:test)
-test macro `@shows`
-"""
-function shows(test::Symbol)
-	test != :test && throw(ArgumentError("test $test"))
-	var = ones(3,4)
-	@shows var
-	true
-end
-=#
-
-# shows(:test)

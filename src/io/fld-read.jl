@@ -309,13 +309,3 @@ function datatype_fld_to_mat(datatype::AbstractString)
 
 	return format, endian, bytes
 end
-
-
-"""
-`fld_read(:test)`
-self test
-"""
-function fld_read(test::Symbol)
-	# todo: test read slices when that feature is added
-	return fld_write(test)
-end

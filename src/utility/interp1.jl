@@ -5,9 +5,7 @@ emulate matlab's interp1()
 
 export interp1
 
-using Plots: scatter, plot!, gui
 using Interpolations
-using Test: @test, @test_throws, @inferred
 
 
 """
@@ -36,28 +34,4 @@ function interp1(x::AbstractVector{<:Real}, y::AbstractVector{<:Number}, xi ;
 		fun = extrapolate(fun, extrap)
 	end
 	fun.(xi)
-end
-
-
-"""
-    interp1(:test)
-self test
-"""
-function interp1(test::Symbol)
-	@test (@inferred interp1(1:4, 2:5, 1.5)) == 2.5
-	@test (@inferred interp1(1:2, [3im,4im], 1.5)) == 3.5im
-	x = LinRange(-1, 1, 21)
-	y = sin.(x*π)
-	xi = LinRange(-1, 1, 101) * 2
-	@test_throws BoundsError interp1(x, y, xi, extrap=nothing)
-	@test_throws BoundsError interp1(x, y, xi, extrap=Throw())
-	scatter(x, y, label="")
-	y0 = @inferred interp1(x, y, xi) # 0 extrapolation
-	plot!(xi, y0, label="0", ylim=[-2,2])
-	for ex in (Flat(), Line(), Periodic(), Reflect())
-		yy = @inferred interp1(x, y, xi, extrap=ex)
-		plot!(xi, yy, label="$ex")
-	end
-	gui()
-	true
 end

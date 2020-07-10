@@ -4,9 +4,8 @@ jinc.jl
 
 export jinc
 
-using SpecialFunctions: besselj1 #grab bessel function
-using Plots: plot
-using Test: @inferred
+using SpecialFunctions: besselj1 # grab bessel function
+
 
 """
     jinc(x)
@@ -19,25 +18,4 @@ function jinc(x::Real)
     if (x == 0) return convert(T, pi/4) end
     y = abs(x)
     convert(T, besselj1(pi*y) / (2*y))
-end
-
-"""
-    jinc(:test) jinc(:plot)
-self test, plot
-"""
-function jinc(test::Symbol)
-    if test === :plot
-        r = LinRange(-10,10,201)
-        return plot(r, jinc.(r))
-    end
-    !(test === :test) && throw("non-test, symbolic input to jinc")
-    jinx = x -> jinc.(x)
-    r = LinRange(-10,10,201)
-    @inferred jinx(r)
-    for T in (Int, Float16, Float32, Float64)
-        @inferred jinc(T(0))
-        @inferred jinc(T(1))
-    end
-    jinc(:plot)
-    true
 end

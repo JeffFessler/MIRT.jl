@@ -9,7 +9,6 @@ export Afft
 # using MIRT: embed!, getindex!
 using LinearMapsAA: LinearMapAA, LinearMapAM, LinearMapAO
 using FFTW: fft!, bfft!
-using Test: @test
 
 
 """
@@ -42,40 +41,8 @@ function Afft(samp::AbstractArray{Bool,D} ;
     end
 
     return LinearMapAA(
-        (y,x) -> forw!(y, reshape(x,dim)),
-    #   x -> fft(reshape(x,dim))[samp],
-        (x,y) -> vec(back!(reshape(x,dim),y)),
-    #   y -> vec(bfft(embed(y,samp))),
+        (y,x) -> forw!(y, reshape(x,dim)), # fft(reshape(x,dim))[samp]
+        (x,y) -> vec(back!(reshape(x,dim),y)), # vec(bfft(embed(y,samp)))
         (sum(samp), prod(dim)), (name="fft",) ; T=T,
     )
-end
-
-
-"""
-    A = Afft(:test)
-self test
-"""
-function Afft(test::Symbol)
-    test != :test && throw(ArgumentError("test $test"))
-    samp = trues(3,2); samp[2] = false
-
-    @testset "AM" begin
-        A = Afft(samp ; operator=false)
-        @test A isa LinearMapAM
-        @test Matrix(A)' ≈ Matrix(A')
-        @test A * vec(ones(3,2)) == [6, 0, 0, 0, 0]
-        @test A' * [1, 0, 0, 0, 0] == vec(ones(3,2))
-        @test A.name == "fft"
-        @test eltype(A) == ComplexF32
-    end
-
-    @testset "AO" begin
-        A = Afft(samp)
-        @test A isa LinearMapAO
-        @test A * ones(3,2) == [6, 0, 0, 0, 0]
-        @test A' * [1, 0, 0, 0, 0] == ones(3,2)
-        @test Matrix(A)' ≈ Matrix(A')
-    end
-
-    true
 end
