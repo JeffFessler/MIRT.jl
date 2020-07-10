@@ -1,20 +1,25 @@
 #=
 sensemap-sim.jl
 Simulate coil sensitivity maps
+
+Matlab notes:
+- 2005-6-20, Jeff Fessler and Amanda Funai, University of Michigan
+- 2014-08-19 JF more testing, verifying phase is correct
+- 2014-09-09 modified for 3D by Mai Le
+- 2016-05-03 JF fixes
+
 2019-06-18, Jeff Fessler, University of Michigan
 =#
 
 export ir_mri_sensemap_sim
 
-#using MIRT: jim, image_geom
-
 using SpecialFunctions: ellipk, ellipe
-using Test: @test, @inferred
-using Plots: Plot, plot, plot!, contour!, scatter!, quiver, quiver!, Arrow
+
+#using MIRT: ndgrid
 
 
 """
-    (smap,info) = ir_mri_sensemap_sim(...)
+    smap = ir_mri_sensemap_sim(...)
 
 Simulate 2D or 3D sensitivity maps for sensitivity-encoded MRI based on
 grivich:00:tmf http://doi.org/10.1119/1.19461
@@ -37,40 +42,77 @@ option
 	for central ring of coils as a multiple of FOVx,
 	where `FOVx=nx*dx`; default 1.2
 - `orbit::Real`			default 360 [degrees]
-- `orbit_start::Union{Real,AbstractVector{<:Real}} = 0` scalar or `nring` [degrees]
+- `orbit_start::AbstractVector{<:Real} = fill(0, nring)` [degrees]
 - `scale::Symbol`
   + `:none` (default)
   +	`ssos_center` make SSoS of center = 1
 
 out
 - `smap	[dims ncoil]`	simulated sensitivity maps (complex!)
-- `info::NamedTuple`	geometry information for plots
 
 All length parameters must have same units (e.g., mm or cm)
-
-Matlab notes:
-- 2005-6-20, Jeff Fessler and Amanda Funai, University of Michigan
-- 2014-08-19 JF more testing, verifying phase is correct
-- 2014-09-09 modified for 3D by Mai Le
-- 2016-05-03 JF fixes
 """
-function ir_mri_sensemap_sim( ;
-		dims::Dims = (64,64), # 2D default
-		dx::Real = 3,
-		dy::Real = dx,
-		dz::Real = 3,
-		ncoil::Int = 4,
-		nring::Int = 1,
-		rcoil::Real = dx * dims[1] / 2 * 0.5,
-		dz_coil::Real = ((length(dims) == 3) ? dims[3] : 1) * dz / nring,
-		coil_distance::Real = 1.2, # multiplies fov/2
-		orbit::Real = 360,
-		orbit_start::Union{Real,AbstractVector{<:Real}} = 0,
-		scale::Symbol = :none, # or :ssos_center
-		chat::Bool = false,
-	)
+function ir_mri_sensemap_sim( ; kwargs...)
+	return ir_mri_sensemap_sim(
+		Vector{Tuple{Int,Int}}(undef, 0) ; # ir_ic_pair
+		kwargs...,
+	)[1]
+end
 
-	(length(dims) < 2 || length(dims) > 3) && throw("2D or 3D only")
+
+"""
+    (smap,info) = ir_mri_sensemap_sim( :all ; kwargs)
+Like `ir_mri_sensemap_sim` but also returns `info` with data for all coils,
+mainly for testing and plotting.
+"""
+function ir_mri_sensemap_sim(all::Symbol ;
+	nring::Int = 1, ncoil::Int = 4, kwargs...,
+)
+	all == :all || throw("bad symbol argument $all")
+	return ir_mri_sensemap_sim(
+		vec(collect(Iterators.product(1:nring,1:ncoil))) ; # ir_ic_pair
+		nring=nring, ncoil=ncoil, kwargs...,
+	)
+end
+
+
+# handle (usual) scalar orbit_start
+#=
+(no: causes Method overwritten warning)
+function ir_mri_sensemap_sim( ir_ic_pair::Vector{Tuple{Int,Int}} ;
+	nring::Int = 1, orbit_start::Real = 0, kwargs...,
+)
+	return ir_mri_sensemap_sim( ir_ic_pair ; nring = nring,
+		orbit_start = repeat([orbit_start], nring),
+	)
+end
+=#
+
+
+"""
+    (smap,info) = ir_mri_sensemap_sim( ir_ic_pair ; kwargs)
+Like `ir_mri_sensemap_sim` but also returns `info` with data for specific coils
+where `ir_ic_pair::Vector{Tuple{Int,Int}}`.
+(Usually used internally only.)
+- `info::NamedTuple` geometry information for plots
+"""
+function ir_mri_sensemap_sim(
+	ir_ic_pair::Vector{Tuple{Int,Int}} ; # usually length 0
+	dims::Dims = (64,64), # 2D default
+	dx::Real = 3,
+	dy::Real = dx,
+	dz::Real = 3,
+	ncoil::Int = 4,
+	nring::Int = 1,
+	rcoil::Real = dx * dims[1] / 2 * 0.5,
+	dz_coil::Real = ((length(dims) == 3) ? dims[3] : 1) * dz / nring,
+	coil_distance::Real = 1.2, # multiplies fov/2
+	orbit::Real = 360,
+	orbit_start::AbstractVector{<:Real} = fill(0,nring),
+	scale::Symbol = :none, # or :ssos_center
+)
+
+	(2 <= length(dims) <= 3) || throw("2D or 3D only")
 	nx = dims[1]
 	ny = dims[2]
 	nz = (length(dims) == 3) ? dims[3] : 0
@@ -82,7 +124,7 @@ function ir_mri_sensemap_sim( ;
 			nx, ny, nz,
 			dx, dy, dz,
 			ncoil, coils_per_ring, rcoil, dz_coil,
-			orbit, orbit_start, coil_distance, chat)
+			orbit, orbit_start, coil_distance, ir_ic_pair)
 
 	scale_center = (nz == 0) ?
 		1 / sqrt(sum(abs.(smap[round(Int,nx/2),round(Int,ny/2),:].^2))) :
@@ -101,24 +143,22 @@ end
 """
     (smap, info) = ir_mri_sensemap_sim_do()
 """
-function ir_mri_sensemap_sim_do(nx, ny, nz,
-		dx, dy, dz, ncoil, ncoilpr, rcoil, dz_coil,
-		orbit, orbit_start, coil_distance, chat)
+function ir_mri_sensemap_sim_do(
+	nx, ny, nz,
+	dx, dy, dz, ncoil, ncoilpr, rcoil, dz_coil,
+	orbit, orbit_start, coil_distance, ir_ic_pair,
+)
 
+	T = Float32
 	nring = Int(ncoil / ncoilpr)
-	rlist = Float32(rcoil) * ones(Float32, ncoilpr, nring) # coil radii
+	rlist = T(rcoil) * ones(T, ncoilpr, nring) # coil radii
 
-	zerof = (arg...) -> zeros(Float32, arg...)
-	plist = zerof(ncoilpr, nring, 3) # position of coil center [x y z]
-	nlist = zerof(ncoilpr, nring, 3) # normal vector (inward) from coil center
-	olist = zerof(ncoilpr, nring, 3) # unit vector orthogonal to normal vector in x-y
-	ulist = zerof(ncoilpr, nring, 3) # upward vector
+	plist = zeros(T, ncoilpr, nring, 3) # position of coil center [x y z]
+	nlist = zeros(T, ncoilpr, nring, 3) # normal vector (inward) from coil center
+	olist = zeros(T, ncoilpr, nring, 3) # unit vector orthogonal to normal vector in x-y
+	ulist = zeros(T, ncoilpr, nring, 3) # upward vector
 
-	if length(orbit_start) == 1
-		orbit_start = repeat([orbit_start], nring)
-	elseif length(orbit_start) != nring
-		throw("bad orbit_start length")
-	end
+	length(orbit_start) != nring && throw("bad orbit_start length")
 
 	# cylindrical coil configuration, like abdominal coils
 	alist = deg2rad.(orbit) * (0:(ncoilpr-1)) / ncoilpr # coil angles [radians]
@@ -135,26 +175,22 @@ function ir_mri_sensemap_sim_do(nx, ny, nz,
 	end
 
 	# object coordinates
-	x = Float32.(((1:nx) .- (nx+1)/2) * dx)
-	y = Float32.(((1:ny) .- (ny+1)/2) * dy)
-	z = (nz > 0) ? Float32.(((1:nz) .- (nz+1)/2) * dz) : [0]
+	x = T.(((1:nx) .- (nx+1)/2) * dx)
+	y = T.(((1:ny) .- (ny+1)/2) * dy)
+	z = (nz > 0) ? T.(((1:nz) .- (nz+1)/2) * dz) : [0]
 	(xx, yy, zz) = ndgrid(x,y,z)
 
-	smap = zeros(ComplexF32, nx, ny, max(nz,1), ncoilpr, nring)
+	data_per_coil = Array{Any}(undef, nring, ncoilpr)
+
+	smap = zeros(Complex{T}, nx, ny, max(nz,1), ncoilpr, nring)
 	for ir = 1:nring
 		for ic=1:ncoilpr
 			# rotate coordinates to correspond to coil orientation
 			zr =	(xx .- plist[ic,ir,1]) .* nlist[ic,ir,1] +
 					(yy .- plist[ic,ir,2]) .* nlist[ic,ir,2] +
 					(zz .- plist[ic,ir,3]) .* nlist[ic,ir,3]
-			xr =	xx .* nlist[ic,ir,2] - yy .* nlist[ic,ir,1]
+			xr = xx .* nlist[ic,ir,2] - yy .* nlist[ic,ir,1]
 			yr = zz .- plist[ic,ir,3] # translate along object z axis
-
-#=
-			# show coordinates
-			jim(x, y, xr) #, xlabel x, ylabel y
-			jim(x, y, zr)
-=#
 
 			# compute sensitivity vectors in coil coordinates
 			tmp = ir_mri_smap1.(xr, yr, zr, rlist[ic,ir])
@@ -162,167 +198,29 @@ function ir_mri_sensemap_sim_do(nx, ny, nz,
 			sy = [p[2] for p in tmp]
 			sz = [p[3] for p in tmp]
 
-			# coil response depends on tranverse magnetization only?
+			# coil response depends on transverse magnetization only?
 			# todo: unsure if this should depend on sy and ulist in 3D
 				bx = sz * nlist[ic,ir,1] + sx * olist[ic,ir,1]
 				by = sz * nlist[ic,ir,2] + sx * olist[ic,ir,2]
 			#	bz = sz * nlist[ic,ir,3] + sx * olist[ic,ir,3]
 			smap[:,:,:,ic,ir] = complex.(bx, by)
 
-			if chat && nz == 0 # see field components
-				tmp = sqrt.(sx.^2 + sz.^2)
-				(xx,yy) = ndgrid(x,y)
-				plot(jim(x, y, sx, "sx"),
-					jim(x, y, sy, "sy"),
-					jim(x, y, sz, "sz"),
-					quiver(vec(xx), vec(yy), title="(sx,sy)",
-						quiver=(vec(sx./tmp), vec(sz./tmp))),
-					)
-				prompt()
-			end
-
-			if chat && nz == 0 # see final field components vs phase
-				(xx,yy) = ndgrid(x,y)
-				bb = sqrt.(bx.^2 + by.^2)
-				jim(x, y, angle.(smap[:,:,1,ic,1]), "phase", color=:hsv)
-				quiver!(vec(xx), vec(yy), title="(bx,by)",
-						quiver=(vec((bx./bb)), vec((by./bb))))
-				prompt()
+			if (ir,ic) ∈ ir_ic_pair # save data for plotting
+				data_per_coil[ir, ic] =
+					(xr=xr, yr=yr, zr=zr, sx=sx, sy=sy, sz=sz, bx=bx, by=by)
 			end
 		end
 	end
 
-	smap *= rlist[1] / Float32(2*pi) # trick: scale so maximum is near unity
-	smap = nz == 0 ?  reshape(smap, nx, ny, ncoil) :
+	smap *= rlist[1] / T(2π) # trick: scale so maximum is near unity
+	smap = nz == 0 ?
+		reshape(smap, nx, ny, ncoil) :
 		reshape(smap, nx, ny, nz, ncoil)
 
 	info = (x=x, y=y, z=z, dx=dx, dy=dy, dz=dz,
 		nlist=nlist, plist=plist, rlist=rlist, olist=olist, ulist=ulist,
-		nring=nring, ncoilpr=ncoilpr, rcoil=rcoil)
+		nring=nring, ncoilpr=ncoilpr, rcoil=rcoil, data=data_per_coil)
 	return smap, info
-end
-
-
-"""
-    ir_mri_sensemap_sim_show3()
-shows coil geometry but not the 3D smap
-"""
-function ir_mri_sensemap_sim_show3(smap, x, y, z, dx, dy, dz,
-	nlist, plist, rlist, olist, ulist, nring, ncoilpr, rcoil)
-
-	pcolor = ['c', 'g', 'r']
-	pcolor = i -> pcolor[1+rem(i,3)]
-
-	ir_plot3_cube(x,y,z)
-	scatter!(plist[:,:,1], plist[:,:,2], plist[:,:,3], label="") # coil centers
-
-#=
-	# coil normals - todo: 3d quiver not yet working
-	tmp1 = reshape(plist, :, 3)
-	tmp2 = reshape(nlist, :, 3)
-	quiver!(tmp1[:,1], tmp1[:,2], tmp1[:,3],
-		quiver=(tmp2[:,1], tmp2[:,2], tmp2[:,3]), label="3d")
-	prompt()
-=#
-
-	if true # coils
-		for ir = 1:nring
-			for ic = 1:ncoilpr
-				tmp = LinRange(0, 2*pi, 50)
-				tmp = cos.(tmp) * olist[ic,ir,:]' + sin.(tmp) * ulist[ic,ir,:]'
-				tmp = repeat(plist[ic,ir,:]', size(tmp,1), 1) + rcoil * tmp
-				plot!(tmp[:,1], tmp[:,2], tmp[:,3], label="")
-			#	patch(tmp[:,1], tmp[:,2], tmp[:,3], pcolor(ir),
-			#		edgecolor=:none, facealpha=0.5)
-			end
-		end
-	end
-	plot!()
-end
-
-
-"""
-    ir_plot3_cube(x,y,z)
-"""
-function ir_plot3_cube(x,y,z)
-	x1 = x[1]
-	x2 = x[end]
-	y1 = y[1]
-	y2 = y[end]
-	z1 = z[1]
-	z2 = z[end]
-	x = [x1,x2,x2,x1,x1,x1,x2,x2,x1,x1]
-	y = [y1,y1,y2,y2,y1,y1,y1,y2,y2,y1]
-	z = [z1,z1,z1,z1,z1,z2,z2,z2,z2,z2]
-	plot(x,y,z, label="", xlabel="x", ylabel="y", zlabel="z")
-end
-
-
-"""
-    ir_mri_sensemap_sim_show2()
-returns plot
-"""
-function ir_mri_sensemap_sim_show2(smap, x, y, dx, dy, nlist, plist, rlist)
-	if ndims(smap) == 3
-		(nx,ny,ncoil) = size(smap)
-	elseif ndims(smap) == 4
-		(nx,ny,nz,ncoil) = size(smap)
-	else
-		throw("unknown ndims(smap) = $(ndims(smap))")
-	end
-
-	pl = Array{Plot}(undef, ncoil, 3)
-	clim = (0, maximum(abs.(smap)))
-	xmax = maximum(abs.([vec(x); vec(y); vec(plist[:,:,[1,2]])]))
-	ymax = xmax
-	for ic=1:ncoil
-		tmp = smap[:,:,ic]
-		p = jim(x, y, abs.(tmp), clim=clim, "Magnitude $ic")
-		plot!(p, xlim=[-1,1]*1.1*xmax, xtick=(-1:1) * nx/2 * dx)
-		plot!(p, ylim=[-1,1]*1.1*xmax, ytick=(-1:1) * nx/2 * dy)
-
-		scatter!(p, [0], [0], marker=:o, label="", color=:green) # center
-		scatter!(p, vec(plist[:,:,1]), vec(plist[:,:,2]),
-			marker=:o, label="", color=:blue) # coil location
-		xdir = nlist[ic,1,2]
-		ydir = nlist[ic,1,1]
-		r = rlist[ic,1]
-		plot!(p, plist[ic,1,1].+r*xdir*[-1,1], plist[ic,1,2].+r*ydir*[1,-1],
-			label="", color=:blue, linewidth=3) # coil
-		pl[ic,1] = p
-
-		ph = angle.(tmp) # show raw phase (understandable with hsv colormap)
-		p = jim(x, y, ph, "Phase", clim=(-pi,pi), color=:hsv)
-		plot!(p, xlim=[-1,1]*1.1*xmax, xtick=(-1:1) * nx/2 * dx)
-		plot!(p, ylim=[-1,1]*1.1*xmax, ytick=(-1:1) * nx/2 * dy)
-		pl[ic,2] = p
-	end
-
-	ssos = sqrt.(sum(abs.(smap).^2, dims=ndims(smap)))
-	ssos = ssos / ssos[Int(end/2),Int(end/2)]
-
-	p = jim(x, y, ssos, "SSoS (normalized)",
-		#	xlim=[-1,1]*1.1*xmax,
-			xtick=(-1:1) * nx/2 * dx,
-			ytick=(-1:1) * ny/2 * dy)
-	pl[1,3] = p
-
-	if true # quiver plot for 1st coil
-		bx = real(smap[:,:,1])
-		by = imag(smap[:,:,1])
-		(xx,yy) = ndgrid(x,y)
-		p = quiver(vec(xx), vec(yy), quiver=(vec(bx), vec(by)),
-				aspect_ratio = 1,
-				arrow = Arrow(:simple,:head, 0.01, 0.01), # no effect!?
-				title = "Field pattern in x-y plane")
-		pl[2,3] = p
-	end
-
-	for ic=3:ncoil
-		pl[ic,3] = plot(xaxis=:off,yaxis=:off,grid=:off) # kludge
-	end
-
-	return plot(pl...)
 end
 
 
@@ -362,16 +260,6 @@ function ir_mri_smap1(x, y, z, a)
 		(K + (1 - r^2 - z^2) / ((1 - r)^2 + z^2) * E)
 	smap_z /= a
 
-#=
-	if any(r == 0) # test code to explore when r is near 0
-		r0 = LinRange(0,5e-7,101)
-		z0 = 0.4
-		t0 = ir_mri_smap_r.(r0, z0)
-		slope = 3*pi * z0 / ((1+z0^2)^2.5)
-		plot(r0, t0); plot!(r0, slope * r0)
-	end
-=#
-
 	# the following is B_r in eqn (17) in grivich:00:tmf
 	smap_r = 2 * z / r * ((1+r)^2 + z^2)^(-0.5) *
 		((1 + r^2 + z^2) / ((1-r)^2 + z^2) * E - K)
@@ -391,130 +279,4 @@ function ir_mri_smap1(x, y, z, a)
 #	smap_y = smap_r * sin(phi)
 
 	return Float32(smap_x), Float32(smap_y), Float32(smap_z)
-end
-
-
-"""
-    ir_mri_sensemap_sim_test0()
-show ellipke
-"""
-function ir_mri_sensemap_sim_test0()
-	@inferred ir_mri_smap_r(5e-7, 0.4)
-	m = LinRange(0,1,101)
-	(k,e) = (ellipk.(m), ellipe.(m))
-	plot(xaxis=[0,1], yaxis=[0,3π/2])
-	plot!(m, k, label="k")
-	plot!(m, e, label="e")
-	plot!(ytick=((0:3)*pi/2, ["0", "π/2", "π", "3π/2"]))
-end
-
-
-"""
-    ir_mri_sensemap_sim_test1()
-test ir_mri_smap1 routine, cf Fig. 4 of grivich:00:tmf
-"""
-function ir_mri_sensemap_sim_test1()
-	a = 1
-	x = LinRange{Float32}(-2,2,99)
-	y = LinRange{Float32}(-2,2,97)
-#	zlist = Float32[0.001, 0.1, 0.2, 0.5, 1.0]
-	zlist = Float32[0.1, 0.2, 0.5, 1.0]
-#	(xx,yy,zz) = ndgrid(x, y, zlist)
-	tmp = Iterators.product(x, y, zlist)
-	tmp = [ir_mri_smap1(i[1], i[2], i[3], a) for i in tmp]
-	smap_x = [p[1] for p in tmp]
-	smap_y = [p[2] for p in tmp]
-	smap_z = [p[3] for p in tmp]
-#	(smap_x, smap_y, smap_z) = ir_mri_smap1.(xx, yy, zz, a)
-	smap_b = @. sqrt(smap_x^2 + smap_y^2)
-#	return plot(ir_mri_sensemap_sim_test1_show(smap_x, x, y, zlist, "x")...)
-
-	return plot(layout=(4,length(zlist)),
-			ir_mri_sensemap_sim_test1_show(smap_x, x, y, zlist, "x")...,
-			ir_mri_sensemap_sim_test1_show(smap_y, x, y, zlist, "y")...,
-			ir_mri_sensemap_sim_test1_show(smap_z, x, y, zlist, "z")...,
-			ir_mri_sensemap_sim_test1_show(smap_b, x, y, zlist, "b")...,
-		)
-end
-
-
-"""
-    ir_mri_sensemap_sim_test1_show()
-"""
-function ir_mri_sensemap_sim_test1_show(smap, x, y, zlist, title)
-	clim = (-20,20)
-	nz = length(zlist)
-	pl = Array{Plot}(undef, nz)
-	for iz = 1:nz
-		pl[iz] = jim(x, y, smap[:,:,iz],
-			title=title, clim=clim, xtick=[-2,2], ytick=[-2,2])
-		blim = (zlist[iz] < 0.5) ? [7,12,19] : [1,3,5]
-		contour!(pl[iz], x, y, abs.(smap[:,:,iz])', levels=blim,
-			color=:blue, colorbar_entry=false)
-		contour!(pl[iz], x, y, abs.(smap[:,:,iz])', levels=[0,0].+0.001,
-			color=:green, colorbar_entry=false)
-		title == "b" && plot!(xlabel="z = $(zlist[iz])")
-	end
-	return pl
-end
-
-
-"""
-    ir_mri_sensemap_sim_test2( ; chat)
-return plot with 2D example
-"""
-function ir_mri_sensemap_sim_test2( ; chat::Bool=true)
-
-	@test_throws String ir_mri_sensemap_sim(scale=:bug)
-	@test_throws String ir_mri_sensemap_sim(nring=2, orbit_start = [1,2,3])
-
-	(smap,t) = #@inferred # todo-i fails?
-		ir_mri_sensemap_sim(dims=(32,32), scale=:ssos_center, chat=chat)
-
-	if true # check rotational symmetry in 4-coil case
-		for ic=2:4
-			tmp = rotl90(smap[:,:,1], ic-1)
-			@test isapprox(abs.(tmp), abs.(smap[:,:,ic]))
-			p1 = angle.(tmp) .+ (ic-1) * pi/2 # add pi/2 to rotated
-			p2 = angle.(smap[:,:,ic])
-			tmp = ComplexF32.(cis.(p2 - p1))
-			@test isapprox(tmp, ones(size(tmp))) # trick: equivs mod 2*pi
-		end
-	end
-
-	return ir_mri_sensemap_sim_show2(smap,
-		t.x, t.y, t.dx, t.dy, t.nlist, t.plist, t.rlist)
-end
-
-
-"""
-    ir_mri_sensemap_sim_test3( ; chat)
-return plot that illustrates 3D sense maps
-"""
-function ir_mri_sensemap_sim_test3( ; chat::Bool=false)
-	nring = 3
-	ncoil = 4 * nring
-	ig = image_geom(nx=16, ny=14, nz=10, fov=200, dz=20, mask=:circ) # 20cm fov
-#	ig = image_geom(nx=72, ny=48, nz=12, fov=22, zfov=10) % michelle
-
-	(smap,t) = #@inferred # todo-i fails
-		ir_mri_sensemap_sim(dims=(ig.nx, ig.ny, ig.nz),
-			dx=ig.dx, dz=ig.dz,
-			orbit_start = 1*[0,45,0],
-			rcoil=70, nring=nring, ncoil=ncoil, chat=chat)
-
-	if true
-		tmp = smap .* repeat(ig.mask, 1,1,1,ncoil)
-		jim(ncol=ig.nz, tmp, abswarn=false)
-		chat && prompt()
-		tmp = permutedims(tmp, [1,3,2,4]) # [nx nz ny ncoil] z cuts are smooth
-		jim(ncol=ig.ny, tmp, abswarn=false)
-		chat && prompt()
-		jim(ncol=1, tmp[:,:,round(Int,end/2),:], abswarn=false)
-		chat && prompt()
-	end
-
-	ir_mri_sensemap_sim_show3(smap, t.x, t.y, t.z, t.dx, t.dy, t.dz,
-			t.nlist, t.plist, t.rlist, t.olist, t.ulist,
-			t.nring, t.ncoilpr, t.rcoil)
 end
