@@ -12,7 +12,7 @@ using Test: @inferred
 xtrue = ir_load_brainweb_t1_256()
 (nx, ny) = size(xtrue)
 ncoil = 8
-(smap, _) = ir_mri_sensemap_sim(dims = (nx, ny), dx=192/nx, ncoil=ncoil, rcoil=100)
+smap = ir_mri_sensemap_sim(dims = (nx, ny), dx=192/nx, ncoil=ncoil, rcoil=100)
 idata = smap .* xtrue
 σ = snr2sigma(50, idata)
 idata = idata + σ * randn(ComplexF32, size(idata))
