@@ -35,6 +35,7 @@ end
 function mask_or_test()
 	mask2 = trues(3,4)
 	@test (@inferred mask_or(mask2)) === mask2
+	@test sum(mask_or(mask2)) == length(mask2)
 	mask3 = trues(3,4,5)
 	@test (@inferred mask_or(mask3)) == trues(3,4)
 	@test_throws String mask_or(trues(1,))
