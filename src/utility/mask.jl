@@ -39,7 +39,7 @@ end
     mask_or(mask)
 compress 3D mask to 2D by logical `or` along `z` direction
 """
-mask_or(mask::AbstractArray{Bool,2}) = mask
+@inline mask_or(mask::AbstractArray{Bool,2}) = mask
 mask_or(mask::AbstractArray{Bool,3}) =
 	dropdims(sum(mask, dims=3) .> 0, dims=3)
 mask_or(mask::AbstractArray{Bool}) = throw("ndims(mask) = $(ndims(mask))")
