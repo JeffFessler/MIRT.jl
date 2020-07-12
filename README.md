@@ -1,6 +1,6 @@
 # MIRT (Michigan Image Reconstruction Toolbox) in Julia
 
-[![Build Status](https://travis-ci.org/JeffFessler/MIRT.jl.svg?branch=master)](https://travis-ci.org/JeffFessler/MIRT.jl) 
+[![][action-img]][action-url]
 [![codecov.io](http://codecov.io/github/JeffFessler/MIRT.jl/coverage.svg?branch=master)](http://codecov.io/github/JeffFessler/MIRT.jl?branch=master) 
 [![Coveralls](https://coveralls.io/repos/github/JeffFessler/MIRT.jl/badge.svg?branch=master)](https://coveralls.io/github/JeffFessler/MIRT.jl?branch=master)
 https://github.com/JeffFessler/MIRT.jl
@@ -64,3 +64,7 @@ http://web.eecs.umich.edu/~fessler/irt/reproduce/
 
 Current version is compatible with Julia 1.3.
 Older tagged versions should work with older Julia versions.
+
+
+[action-img]: https://github.com/JeffFessler/MIRT.jl/workflows/Unit%20test/badge.svg
+[action-url]: https://github.com/JeffFessler/MIRT.jl/actions

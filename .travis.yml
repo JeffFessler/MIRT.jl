@@ -1,19 +1,11 @@
+# Until https://github.com/julia-actions/julia-uploadcodecov/issues/1 get fixed
+# submit coverage report via travis
 language: julia
 
-julia:
-# - 1.2
-# - 1.3
-  - 1.4
-# - 1.5
-
+julia: 1
+os: linux
 codecov: true
-
 coveralls: true
-
-os:
-  - linux
-# - osx
-# - windows
 
 # https://reflectoring.io/skip-ci-build/
 before_install:
