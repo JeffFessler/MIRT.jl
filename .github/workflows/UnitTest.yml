@@ -21,6 +21,8 @@ jobs:
       matrix:
         julia-version: ['1.4', '1', 'nightly']
         os: [ubuntu-latest, windows-latest, macOS-latest]
+      # temporarilly set it to false as CI is broken in windows
+      fail-fast: false
 
     steps:
       - uses: actions/checkout@v1.0.0
