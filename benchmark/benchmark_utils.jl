@@ -1,13 +1,4 @@
-# diffs.jl
-
-import MIRT
-using LinearMapsAA: LinearMapAA
-using Random: seed!
-using BenchmarkTools: @btime
-
-
 # old 2D versions for comparison with the new N-D versions
-
 """
     d = diff2d_forw_old(X)
 
@@ -80,40 +71,3 @@ function diff2d_map_old(M::Int, N::Int)
         (N*(M-1)+M*(N-1), N*M), (name="diff2_map",),
     )
 end
-
-
-# timing runs
-function diff_map_time( ; M::Int=2^7, N::Int=2^7+1)
-    seed!(0)
-    x = randn(M * N)
-    T2d = diff2d_map_old(M, N)
-    Tnd = MIRT.diff_map((M, N))
-
-    # check consistency
-    d2d = T2d * x
-    dnd = Tnd * x
-    @assert d2d == dnd
-
-    d = d2d
-    y2d = T2d' * d
-    ynd = Tnd' * d
-    @assert y2d == ynd[:]
-
-    # time diff_forw
-    @btime $T2d * $x
-    @btime $Tnd * $x
-
-    # time diff_adj
-    @btime $T2d' * $d
-    @btime $Tnd' * $d
-    nothing
-end
-
-#= ir71 with 1.4.2
-  98.381 μs (16 allocations: 762.73 KiB)
-  58.344 μs (18 allocations: 508.77 KiB)
-  159.237 μs (39 allocations: 1.00 MiB)
-  102.423 μs (115 allocations: 384.05 KiB)
-=#
-
-diff_map_time()
