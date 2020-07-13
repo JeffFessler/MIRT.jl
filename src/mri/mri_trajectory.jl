@@ -20,7 +20,7 @@ Generate kspace trajectory samples and density compensation functions.
 option
 * `ktype::Symbol` k-space trajectory type; default `:radial`
 * `N::Dims` target image size; default (32,30)
-* `fov` field of view in x and y (and z); default [250,250] mm
+* `fov` field of view in x and y (and z); default (250,250) mm
 * `arg_wi` options to pass to `ir_mri_density_comp` - not yet done
 * `kwargs` options for the specific trajectory
 
@@ -42,12 +42,13 @@ trajectory types:
 `:gads` (emulate golden-angle data sharing per winkelmann:07:aor)
 """
 function mri_trajectory( ;
-		ktype::Symbol = :radial,
-		N::Dims = (32,30),
-		fov::AbstractVector{<:Number} = 250 * ones(length(N)),
-		wi::Union{AbstractArray{<:Real},Nothing} = nothing,
-		arg_wi::Any = nothing, # not done
-		kwargs...) # optional arguments for specific trajectories
+	ktype::Symbol = :radial,
+	N::Dims{D} = (32,30),
+	fov::NTuple{D,Real} = ntuple(i -> 250, length(N)),
+	wi::Union{AbstractArray{<:Real},Nothing} = nothing,
+	arg_wi::Any = nothing, # not done
+	kwargs..., # optional arguments for specific trajectories
+) where {D}
 
 	length(N) ∉ (2,3) && throw("only 2d and 3d done")
 
@@ -189,9 +190,9 @@ end
 # mri_trajectory_epi_under()
 # EPI, with optional under-sampling
 function mri_trajectory_epi_under(N, fov ;
-		under::Int = 2, # default is every other phase encode
-		samp::AbstractVector{<:Bool} = rem.(0:(N[2]-1), under) .== 0,
-	)
+	under::Int = 2, # default is every other phase encode
+	samp::AbstractVector{<:Bool} = rem.(0:(N[2]-1), under) .== 0,
+)
 	nx = N[1]
 	ny = N[2]
 	omx = (-nx/2:nx/2-1) / nx * 2π # [-π,π) in x
@@ -213,37 +214,39 @@ emulate 2D golden angle radial sampling with data sharing
 option:
 `Nro` # of samples in each readout/spoke
 `shift` shift along read-out due to gradient delays (stress)
-`kmax_frac` fractions of maximum krad (0.5) for rings
+`kmax_frac` fractions of maximum krad (0.5) for rings (annuli)
 `under` under-sampling factor for each annulus
 """
-function mri_trajectory_gads(N, fov ;
-		Nro::Int = maximum(N),
-		delta_ro::Real = 1/Nro,
-		shift::Real = -0.75,
-		kmax_frac::Array = [0.20, 0.35, 0.501],
-		nspoke::Array = floor.(Int, π * kmax_frac * Nro),
-		under::Array = [1, 1, 0.6],
-		start::AbstractArray = (0:2) * π/4
-	)
+function mri_trajectory_gads(
+	N::Dims,
+	fov ; # todo: unused!?
+	Nro::Int = maximum(N),
+	delta_ro::Real = 1/Nro,
+	shift::Real = -0.75,
+	kmax_frac::NTuple{Nring,Real} = (0.20, 0.35, 0.501),
+	nspoke::NTuple{Nring,Int} = floor.(Int, π .* kmax_frac .* Nro),
+	under::NTuple{Nring,Real} = (1, 1, 0.6),
+	start::NTuple{Nring,Real} = (0, 1, 2) .* (π/4),
+) where {Nring}
 
-	nspoke = floor.(Int, nspoke .* under)
-	if true # make fibonacci for more uniform coverage
+	nspoke = floor.(Int, nspoke .* under) # under-sampling factor
+	if true # make fibonacci for more uniform coverage per ring
 		phi = (1 + sqrt(5)) / 2
-		n = round.(log.(nspoke * sqrt(5) .+ 0.5) / log(phi))
-		nspoke = phi.^n / sqrt(5) .+ 0.5
+		n = round.(log.(nspoke .* sqrt(5) .+ 0.5) ./ log(phi))
+		nspoke = phi.^n ./ sqrt(5) .+ 0.5
 		nspoke = floor.(Int, nspoke)
 	end
-	nring = length(nspoke)
-	kmax_frac = [0; kmax_frac]
+
+	kmax_frac = (0, kmax_frac...)
 	omega = zeros(0,2)
-	for ir=1:nring
+	for ir=1:Nring
 		#todo: not sure here
 		kspace = ir_mri_kspace_ga_radial(Nspoke = nspoke[ir],
 			Nro = Nro, delta_ro = delta_ro, shift = shift, start = start[ir])
 
 		kspace = reshape(kspace, :, 2)
 		krad = vec(sqrt.(sum(kspace.^2, dims = 2)))
-		good = (kmax_frac[ir] .<= krad) .& (krad .< kmax_frac[ir+1])
+		good = kmax_frac[ir] .<= krad .< kmax_frac[ir+1]
 		kspace = kspace[good, :]
 		omega = [omega; 2π*kspace]
 	end
@@ -263,12 +266,14 @@ option:
 
 todo: generalize to 3D using barger:02:trc
 """
-function mri_trajectory_radial(N::Dims, fov ;
-		nr::Int = round(Int, maximum(N)/2),
-		ir::AbstractArray{Int} = 0:nr,
-		na_nr::Real = 2π,
-		na::Int = 4*ceil(Int, na_nr * nr/4), # mult of 4
-	)
+function mri_trajectory_radial(
+	N::Dims,
+	fov ;
+	nr::Int = round(Int, maximum(N)/2),
+	ir::AbstractArray{Int} = 0:nr,
+	na_nr::Real = 2π,
+	na::Int = 4*ceil(Int, na_nr * nr/4), # mult of 4
+)
 
 	om = ir/nr * π
 	ang = (0:na-1)/na * 2π
@@ -298,15 +303,15 @@ dt : time sample spacing (4 usec)
 ti : time samples
 """
 function mri_trajectory_rosette3(N, fov ;
-		f1::Real = 211,
-		f2::Real = 117.13,
-		f3::Real = length(N) == 3 ? 73.65 : 0,
-		omax::Real = π,
-		nshot::Int = 32, # todo: shots vs arms
-		nt::Int = length(N) == 3 ? 16385 : 2^9, # time samples (65.536 ms for 4 usec dt)
-		dt::Real = 4e-6, # time sample spacing (4 usec)
-		ti::AbstractVector = (0:nt-1) * dt, # time samples
-	)
+	f1::Real = 211,
+	f2::Real = 117.13,
+	f3::Real = length(N) == 3 ? 73.65 : 0,
+	omax::Real = π,
+	nshot::Int = 32, # todo: shots vs arms
+	nt::Int = length(N) == 3 ? 16385 : 2^9, # time samples (65.536 ms for 4 usec dt)
+	dt::Real = 4e-6, # time sample spacing (4 usec)
+	ti::AbstractVector = (0:nt-1) * dt, # time samples
+)
 
 	tmp = 2π * ti
 	p1 = f1 * tmp

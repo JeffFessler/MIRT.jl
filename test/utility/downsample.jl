@@ -63,7 +63,7 @@ function downsample3_test()
 	end
 
 	x = ones(4, 6, 8)
-	@test downsample3_loop(x, [2, 2, 2]) == downsample3_perm(x, (2, 2, 2))
+	@test downsample3_loop(x, (2, 2, 2)) == downsample3_perm(x, (2, 2, 2))
 
 	true
 end
