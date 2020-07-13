@@ -1,5 +1,8 @@
 In reverse chronological order
 
+Use tuples in `downsample2` and related functions.
+This is a slightly breaking change.
+
 0.12.0 2020-07-13
 
 2020-07-10
