@@ -1,6 +1,6 @@
 In reverse chronological order
 
-0.12.0
+0.12.0 2020-07-13
 
 2020-07-10
 Breaking change for `ir_mri_sensemap_sim` to isolate plots
