@@ -6,7 +6,7 @@ using MIRT: jim, image_geom, prompt, max_percent_diff
 import MIRT: mri_objects_trap
 using FFTW: fft, fftshift, ifftshift
 using Plots
-using Test: @test
+using Test: @test, @test_throws #, @inferred
 
 
 # 2D test
@@ -99,6 +99,7 @@ function mri_objects_trap_test()
     plot!(xtick = [0 -len/2 len/2-dz/2 len/2 len/2+dz/2])
 end
 
+@test_throws String mri_objects(:bad)
 
 @test mri_objects_trap_test() isa Plots.Plot
 prompt()

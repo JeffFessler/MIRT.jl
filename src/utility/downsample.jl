@@ -28,8 +28,11 @@ out
 
 Copyright 2019-03-05, Jeff Fessler, University of Michigan
 """
-function downsample_dim1(x::AbstractArray{<:Number}, down::Int
-		; warn::Bool = isinteractive())
+function downsample_dim1(
+	x::AbstractArray{<:Number},
+	down::Int ;
+	warn::Bool = isinteractive(),
+)
 
 	dim = size(x)
 	dim1 = dim[1]
@@ -64,8 +67,11 @@ out
 
 Copyright 2019-03-05, Jeff Fessler, University of Michigan
 """
-function downsample1(x::AbstractVector{<:Number}, down::Int
-		; warn::Bool = isinteractive())
+function downsample1(
+	x::AbstractVector{<:Number},
+	down::Int ;
+	warn::Bool = isinteractive(),
+)
 
 	dim = size(x)
 	dim1 = dim[1]
@@ -88,7 +94,7 @@ end
 downsample by averaging by integer factors
 in
 - `x [nx ny]`
-- `down` can be a scalar (same factor for both dimensions) or a 2-vector
+- `down` can be a scalar (same factor for both dimensions) or a `NTuple{2,Int}`
 
 option
 - `warn::Bool` warn if noninteger multiple; default `isinteractive()`
@@ -97,13 +103,12 @@ option
 out
 - `y [nx/down ny/down]`
 """
-function downsample2(x::AbstractMatrix{<:Number},
-		down::AbstractVector{Int},
-		; warn::Bool = isinteractive(),
-		T::DataType = eltype(x[1] / down[1])
-	)
-
-	length(down) != 2 && throw("bad down $down")
+function downsample2(
+	x::AbstractMatrix{<:Number},
+	down::NTuple{2,Int} ;
+	warn::Bool = isinteractive(),
+	T::DataType = eltype(x[1] / down[1])
+)
 
 	idim = size(x)
 	odim = floor.(Int, idim ./ down)
@@ -147,7 +152,7 @@ function downsample2(x::AbstractMatrix{<:Number},
 end
 
 downsample2(x::AbstractArray{<:Number,2}, down::Int ; args...) =
-	downsample2(x, [down, down] ; args...)
+	downsample2(x, (down, down) ; args...)
 
 
 """
@@ -156,7 +161,7 @@ downsample2(x::AbstractArray{<:Number,2}, down::Int ; args...) =
 downsample by averaging by integer factors
 in
 - `x [nx ny nz]`
-- `down` can be a scalar (same factor for all dimensions) or a 3-vector
+- `down` can be a scalar (same factor for all dimensions) or a `NTuple{3,Int}`
 
 option
 - `warn::Bool` warn if noninteger multiple; default true
@@ -165,13 +170,12 @@ option
 out
 - `y [nx/down ny/down nz/down]`
 """
-function downsample3(x::AbstractArray{<:Number,3},
-		down::AbstractVector{Int}
-		; warn::Bool = isinteractive(),
-		T::DataType = eltype(x[1] / down[1])
-	)
-
-	length(down) != 3 && throw(DimensionMismatch("down $down"))
+function downsample3(
+	x::AbstractArray{<:Number,3},
+	down::NTuple{3,Int} ;
+	warn::Bool = isinteractive(),
+	T::DataType = eltype(x[1] / down[1]),
+)
 
 	idim = size(x)
 	odim = floor.(Int, idim ./ down)
@@ -182,14 +186,15 @@ function downsample3(x::AbstractArray{<:Number,3},
 end
 
 downsample3(x::AbstractArray{<:Number,3}, down::Int ; args...) =
-	downsample3(x, [down, down, down] ; args...)
+	downsample3(x, (down, down, down) ; args...)
 
 
 # this method is good for @inferred but is slower!
-function downsample3_loop(x::AbstractArray{<:Number,3},
-		down::AbstractVector{Int} ;
-		T::DataType = eltype(x[1] / down[1]),
-	)
+function downsample3_loop(
+	x::AbstractArray{<:Number,3},
+	down::NTuple{3,Int} ;
+	T::DataType = eltype(x[1] / down[1]),
+)
 
 	odim = floor.(Int, size(x) ./ down)
 
@@ -212,7 +217,7 @@ end
 
 
 # this method fails @inferred but is faster!
-function downsample3_perm(x::AbstractArray{<:Number,3}, down::Dims{3})
+function downsample3_perm(x::AbstractArray{<:Number,3}, down::NTuple{3,Int})
 
 	# down sample along each dimension
 	y = downsample_dim1(x, down[1])

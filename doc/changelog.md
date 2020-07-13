@@ -1,5 +1,12 @@
 In reverse chronological order
 
+0.12.0 for real this time
+
+Use tuples in `downsample2` and related functions.
+This is a slightly breaking change.
+
+0.12.0 2020-07-13 - false start
+
 0.11.0 2020-07-13 (because it would not let me tag 0.12 here)
 
 2020-07-10
