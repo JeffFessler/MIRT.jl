@@ -1,8 +1,12 @@
 # MIRT (Michigan Image Reconstruction Toolbox) in Julia
 
-[![Build Status](https://travis-ci.org/JeffFessler/MIRT.jl.svg?branch=master)](https://travis-ci.org/JeffFessler/MIRT.jl) 
-[![codecov.io](http://codecov.io/github/JeffFessler/MIRT.jl/coverage.svg?branch=master)](http://codecov.io/github/JeffFessler/MIRT.jl?branch=master) 
-[![Coveralls](https://coveralls.io/repos/github/JeffFessler/MIRT.jl/badge.svg?branch=master)](https://coveralls.io/github/JeffFessler/MIRT.jl?branch=master)
+[![Build Status][travis-img]][travis-url]
+[![Build Status][pkgeval-img]][pkgeval-url]
+[![Codecov.io][codecov-img]][codecov-url]
+[![Coveralls][coveralls-img]][coveralls-url]
+[![docs][docs-stable-img]][docs-stable-url]
+[![docs][docs-dev-img]][docs-dev-url]
+
 https://github.com/JeffFessler/MIRT.jl
 
 This is a collection of tools for
@@ -64,3 +68,19 @@ http://web.eecs.umich.edu/~fessler/irt/reproduce/
 
 Current version is compatible with Julia 1.3.
 Older tagged versions should work with older Julia versions.
+
+
+<!-- URLs -->
+
+[pkgeval-img]: https://juliaci.github.io/NanosoldierReports/pkgeval_badges/I/ImageDraw.svg
+[pkgeval-url]: https://juliaci.github.io/NanosoldierReports/pkgeval_badges/report.html
+[travis-img]: https://travis-ci.org/JeffFessler/MIRT.jl.svg?branch=master
+[travis-url]: https://travis-ci.org/JeffFessler/MIRT.jl
+[codecov-img]: https://codecov.io/github/JeffFessler/MIRT.jl/coverage.svg?branch=master
+[codecov-url]: https://codecov.io/github/JeffFessler/MIRT.jl?branch=master
+[coveralls-img]: https://coveralls.io/repos/JeffFessler/MIRT.jl/badge.svg?branch=master
+[coveralls-url]: https://coveralls.io/github/JeffFessler/MIRT.jl?branch=master
+[docs-stable-img]: https://img.shields.io/badge/docs-stable-blue.svg
+[docs-stable-url]: https://JeffFessler/MIRT.jl/stable
+[docs-dev-img]: https://img.shields.io/badge/docs-dev-blue.svg
+[docs-dev-url]: https://JeffFessler/MIRT.jl/dev
