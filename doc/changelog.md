@@ -1,6 +1,13 @@
 In reverse chronological order
 
-0.12.0
+0.12.0 for real this time
+
+Use tuples in `downsample2` and related functions.
+This is a slightly breaking change.
+
+0.12.0 2020-07-13 - false start
+
+0.11.0 2020-07-13 (because it would not let me tag 0.12 here)
 
 2020-07-10
 Breaking change for `ir_mri_sensemap_sim` to isolate plots
@@ -8,7 +15,7 @@ Breaking change for `ir_mri_sensemap_sim` to isolate plots
 2020-07-09
 Mildly breaking change: isolate almost all tests to `test/`
 
-0.11.0 2020-07-01
+0.11.0 2020-07-01 - forgot to tag it
 
 Breaking change: make `LinearMapAO` the default
 for `Afft, Anufft, diffl_map, Aodwt`

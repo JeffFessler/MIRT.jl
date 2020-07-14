@@ -3,7 +3,12 @@
 language: julia
 
 julia: 1
+
 os: linux
+
+notifications:
+  email: false
+
 codecov: true
 coveralls: true
 

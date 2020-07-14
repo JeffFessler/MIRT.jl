@@ -32,8 +32,8 @@ function image_geom_test2(ig::MIRT_image_geom)
 #	@inferred # todo
 	ig.unitv()
 	ig.unitv(j=4)
-	ig.unitv(i=ones(Int, length(ig.dim)))
-	ig.unitv(c=zeros(Int, length(ig.dim)))
+	ig.unitv(i=ntuple(i->1, length(ig.dim)))
+	ig.unitv(c=ntuple(i->0, length(ig.dim)))
 #= todo-i: why do these fail?
 	@inferred image_geom_ellipse(8, 10, 1, 2)
 	@inferred ig.circ()
