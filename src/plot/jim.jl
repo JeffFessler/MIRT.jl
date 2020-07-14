@@ -7,7 +7,6 @@ jiffy image display
 export jim
 
 using Plots: heatmap, plot!, annotate!
-using LaTeXStrings
 using MosaicViews: mosaicview
 using FFTViews: FFTView
 
