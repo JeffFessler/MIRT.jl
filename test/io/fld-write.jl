@@ -6,6 +6,7 @@ using MIRT: fld_write, fld_read
 using Test: @test, @inferred
 
 
+#=
 """
 `dir = ir_test_dir!(path)`
 
@@ -29,6 +30,7 @@ function ir_test_dir()
 		return "/tmp"
 	end
 end
+=#
 
 
 
@@ -51,7 +53,8 @@ end
 
 # test writing and reading AVS `.fld` files of all key types
 
-file = joinpath(ir_test_dir(), "fld-write-test.fld")
+dir = mktempdir()
+file = joinpath(dir, "fld-write-test.fld")
 chat = isinteractive()
 
 for dtype in (UInt8, Int16, Int32, Float32, Float64)
