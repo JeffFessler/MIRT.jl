@@ -67,7 +67,7 @@ http://web.eecs.umich.edu/~fessler/irt/reproduce/
 
 ## Compatibility
 
-Current version is compatible with Julia 1.3, 1.4.
+Current version is compatible with Julia 1.4.
 Older tagged versions should work with older Julia versions.
 
 <!-- URLs -->
