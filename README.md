@@ -24,7 +24,8 @@ This software was developed at the
 by
 [Jeff Fessler](http://web.eecs.umich.edu/~fessler)
 and his
-[group](http://web.eecs.umich.edu/~fessler/group).
+[group](http://web.eecs.umich.edu/~fessler/group),
+with valuable contributions from the Julia community.
 
 
 ## Getting started
@@ -66,12 +67,12 @@ http://web.eecs.umich.edu/~fessler/irt/reproduce/
 
 ## Compatibility
 
-Current version is compatible with Julia 1.3.
+Current version is compatible with Julia 1.4.
 Older tagged versions should work with older Julia versions.
 
-
 <!-- URLs -->
-
+[action-img]: https://github.com/JeffFessler/MIRT.jl/workflows/Unit%20test/badge.svg
+[action-url]: https://github.com/JeffFessler/MIRT.jl/actions
 [pkgeval-img]: https://juliaci.github.io/NanosoldierReports/pkgeval_badges/I/ImageDraw.svg
 [pkgeval-url]: https://juliaci.github.io/NanosoldierReports/pkgeval_badges/report.html
 [travis-img]: https://travis-ci.org/JeffFessler/MIRT.jl.svg?branch=master
