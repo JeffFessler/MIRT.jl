@@ -1,6 +1,6 @@
 # MIRT (Michigan Image Reconstruction Toolbox) in Julia
 
-[![Build Status][travis-img]][travis-url]
+[![Build Status][action-img]][action-url]
 [![Build Status][pkgeval-img]][pkgeval-url]
 [![Codecov.io][codecov-img]][codecov-url]
 [![Coveralls][coveralls-img]][coveralls-url]
