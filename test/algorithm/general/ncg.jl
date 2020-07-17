@@ -8,12 +8,23 @@ using Random: seed!
 using Plots: plot, plot!, scatter!, gui
 using LaTeXStrings
 using Test: @test, @test_throws, @inferred
+using LinearMapsAA
 
 
-seed!(0); M = 40; N = 10; A = randn(M,N); y = randn(M)
+odim = (10,4); idim = (5,2)
+M = prod(odim)
+N = prod(idim)
+seed!(0)
+A = randn(M,N)
 a2 = opnorm(A)^2
+y = randn(M)
 reg = 0.1 * a2
 xh = (A'A + reg*I) \ A'y
+if true # stress test with AO
+	A = LinearMapAA(A ; odim=odim, idim=idim)
+	xh = reshape(xh, idim)
+	y = reshape(y, odim)
+end
 cost = (x) -> 1/2 * norm(A * x - y)^2 + reg/2 * norm(x)^2
 fun = (x,iter) -> (cost(x) - cost(xh), norm(x - xh) / norm(xh), time())
 grad1 = (x) -> A' * (A * x - y) + reg * x
@@ -29,12 +40,13 @@ curvf = [v -> 1, v -> reg]
 #	error("todo")
 
 niter = 40
-x1, out1 = ncg(   grad1, curv1, zeros(N), niter=niter, fun=fun)
-x2, out2 = ncg(B, gradf, curvf, zeros(N), niter=niter, fun=fun)
+x0 = zeros(size(xh))
+x1, out1 = ncg(   grad1, curv1, x0, niter=niter, fun=fun)
+x2, out2 = ncg(B, gradf, curvf, x0, niter=niter, fun=fun)
 @test x1 ≈ xh
 @test x2 ≈ xh
 
-@test_throws ArgumentError ncg(grad1, curv1, zeros(N), betahow=:test)
+@test_throws ArgumentError ncg(grad1, curv1, x0, betahow=:test)
 
 lf = x -> log10(max(x,1e-17))
 costk = out -> lf.([out[k][1] for k=1:niter+1])

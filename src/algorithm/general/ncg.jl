@@ -53,7 +53,7 @@ function ncg(
     x0::AbstractArray{<:Number} ; # usually a Vector
     niter::Int = 50,
     ninner::Int = 5,
-    P=I,
+    P = I, # trick: this is an overloaded I (by LinearMapsAA)
     betahow::Symbol=:dai_yuan,
     fun::Function = (x,iter) -> 0,
 )
