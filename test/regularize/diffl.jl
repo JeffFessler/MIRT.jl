@@ -58,7 +58,7 @@ N = (2,3); d = 2
 
 @testset "basics" begin
 	O = diffl_map(N, d ; T=Int32, edge=:zero, add=false)
-	@test O isa LinearMapAM
+	@test O isa LinearMapAO
 	@test Matrix(O)' == Matrix(O')
 	@test O.name == "diffl_map"
 	@test_throws String diffl_map(N ; edge=:none) # unsupported
