@@ -285,7 +285,7 @@ function diffl_map(
     dim::Int ;
     T::Type = Float32,
     edge::Symbol = :zero,
-    operator::Bool = false, # backward compatability
+    operator::Bool = true, # !
     kwargs...,
 ) where {D}
 
