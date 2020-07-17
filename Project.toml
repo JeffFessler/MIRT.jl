@@ -1,7 +1,7 @@
 name = "MIRT"
 uuid = "7035ae7a-3787-11e9-139a-5545ed3dc201"
 authors = ["fessler <fessler@umich.edu>"]
-version = "0.12.0"
+version = "0.12.1"
 
 [deps]
 Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
@@ -31,7 +31,7 @@ ImageFiltering = "0.6"
 ImageTransformations = "0.8"
 Interpolations = "0.12"
 LaTeXStrings = "1.1"
-LinearMapsAA = "0.6"
+LinearMapsAA = "0.6.5"
 MIRTio = "0.2"
 MosaicViews = "0.2"
 NFFT = "0.5"
