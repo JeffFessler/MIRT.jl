@@ -1,6 +1,6 @@
 # nufft.jl
 
-using MIRT: nufft_init, nufft_errors
+using MIRT: Anufft, nufft_init, nufft_errors
 using MIRT: dtft_init
 import MIRT: nufft_eltype
 
@@ -51,6 +51,14 @@ function nufft_test1( ;
 	B = sn.A
 	@test B isa LinearMapAO
 
+	A = Anufft(w, N, n_shift=n_shift)
+	@test A isa LinearMapAO
+	@test A * x == o3
+
+	A = Anufft(w', N, n_shift=n_shift) # w shape
+	@test A._odim == (1,M)
+	@test A * x == transpose(o3)
+
 	sn.nufft(ones(Int,N)) # produce a "conversion" warning
 	true
 end
@@ -61,7 +69,7 @@ nufft_test2( ; M=?, N=?, n_shift=?, T=?, tol=?)
 simple 2D test
 """
 function nufft_test2( ;
-	M::Int = 31,
+	M::Int = 35,
 	N::Dims = (10,8),
 	n_shift::AbstractVector{<:Real} = [4,3],
 	T::DataType = Float64, tol::Real = 2e-6,
@@ -130,6 +138,19 @@ function nufft_test2( ;
 		do_many=false, operator=true)
 	o3 = sn.nufft(x)
 	@test norm(o3 - o0, Inf) / norm(o0, Inf) < tol
+
+	A = Anufft(w, N, n_shift=n_shift)
+	@test A isa LinearMapAO
+	@test A * x == o3
+
+	if M == 35
+		odim = (7, 5) # test array output
+		w = reshape(w, odim..., 2)
+		A = Anufft(w, N, n_shift=n_shift)
+		@test A._odim == odim
+		@test A * x == reshape(o3, odim)
+	end
+
 	true
 end
 
