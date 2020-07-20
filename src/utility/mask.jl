@@ -124,7 +124,7 @@ end
     maskit(x::AbstractArray{<:Number})
 opposite of embed
 """
-function maskit(x::AbstractArray{<:Number}, mask::Array{Bool})
+function maskit(x::AbstractArray{<:Number}, mask::AbstractArray{Bool})
 	dim = size(x)
 	x = reshape(x, length(mask), :)
 	x = x[vec(mask),:] # reshape(mask, prod(_dim()))]

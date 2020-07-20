@@ -14,11 +14,10 @@ export image_geom_ellipse
 using ImageTransformations: imresize
 
 
-# todo: should have subtypes for 2D and 3D
 """
     MIRT_image_geom
 
-Image geometry "struct" with essential parameters
+Image geometry "struct" with essential parametersA for 2d & 3d
 """
 struct MIRT_image_geom
 	# options for 2D image geometry
@@ -34,7 +33,7 @@ struct MIRT_image_geom
 	dz::Float32			# voxel size
 	offset_z::Float32	# unitless
 
-	mask::Array{Bool}	# logical mask
+	mask::AbstractArray{Bool} # logical mask
 end
 
 
@@ -137,9 +136,9 @@ function cbct(ig::MIRT_image_geom; nthread::Int=1)
 		Cint(ig.nx), Cint(ig.ny), Cint(ig.nz), Cfloat(ig.dx),
 		Cfloat(ig.dy), Cfloat(ig.dz),
 		Cfloat(ig.offset_x), Cfloat(ig.offset_y), Cfloat(ig.offset_z),
-			pointer(UInt8.(ig.mask_or)),
-			pointer(Cint.(iy_start)), pointer(Cint.(iy_end)),
-		)
+		pointer(UInt8.(ig.mask_or)),
+		pointer(Cint.(iy_start)), pointer(Cint.(iy_end)),
+	)
 end
 
 
@@ -315,11 +314,13 @@ pad both ends
 function image_geom_expand_nz(ig::MIRT_image_geom, nz_pad::Int)
 	!ig.is3 && throw("expand_nz only valid for 3D")
 	out_nz = ig.nz + 2*nz_pad
-	out_mask = cat(dims=3, repeat(ig.mask[:,:,1], 1, 1, nz_pad), ig.mask,
-			repeat(ig.mask[:,:,end], 1, 1, nz_pad))
+	out_mask = cat(dims=3, repeat(ig.mask[:,:,1], 1, 1, nz_pad),
+		ig.mask, repeat(ig.mask[:,:,end], 1, 1, nz_pad),
+	)
 	return MIRT_image_geom(
 		ig.nx, ig.ny, ig.dx, ig.dy, ig.offset_x, ig.offset_y,
-		out_nz, ig.dz, ig.offset_z, out_mask)
+		out_nz, ig.dz, ig.offset_z, out_mask,
+	)
 end
 
 
@@ -337,7 +338,8 @@ function image_geom_over(ig::MIRT_image_geom, over::Int)
 		ig.nx*over, ig.ny*over, ig.dx/over, ig.dy/over,
 		ig.offset_x*over, ig.offset_y*over,
 		ig.nz*over, ig.dz/over, ig.offset_z*over,
-		mask_over)
+		mask_over,
+	)
 end
 
 
