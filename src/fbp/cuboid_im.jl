@@ -5,7 +5,7 @@ cuboid_im.jl
 
 export cuboid_im
 
-#using MIRT: MIRT_image_geom, downsample3, rotate2d
+#using MIRT: ImageGeom, downsample3, rotate2d
 
 
 """
@@ -17,26 +17,29 @@ generate cuboid phantom image from parameters:
 		xy_angle_degrees z_angle_degrees amplitude]`
 
 in
-- `ig::MIRT_image_geom`		`image_geom()` object
-- `params`					`[N 9]`  cuboid parameters.
-							note: "diameter" not "radius"
+- `ig::ImageGeom`
+- `params`			`[N 9]`  cuboid parameters.
+					note: "diameter" not "radius"
 
 options
-- `oversample::Int` 	 oversampling factor (for partial volume)
-- `how::Symbol`				`:sample` use samples
-							`:lowmem1` one slice per time
-							`:exact` perfect partial volume if angle* = 0
-							default: `:exact` if non rotated, else `:sample`
+- `oversample::Int` oversampling factor (for partial volume)
+- `how::Symbol`		`:sample` use samples
+					`:lowmem1` one slice per time
+					`:exact` perfect partial volume if angle* = 0
+					default: `:exact` if non rotated, else `:sample`
 - `return_params::Bool`	if true, return both phantom and params
 
 out
 - `phantom`		`[nx ny nz]` image
 - `params`		`[N 9]` cuboid parameters (only return if return_params=true)
 """
-function cuboid_im(ig::MIRT_image_geom, params::AbstractMatrix{<:Real} ;
-		oversample::Int = 1,
-		how::Symbol = :auto,
-		return_params::Bool = false)
+function cuboid_im(
+	ig::ImageGeom,
+	params::AbstractMatrix{<:Real} ;
+	oversample::Int = 1,
+	how::Symbol = :auto,
+	return_params::Bool = false,
+)
 
 	size(params,2) != 9 && throw("bad cuboid parameter vector size")
 	any(params[:,4:6] .< 0) && throw("cuboid `diameters` must be nonnegative")
@@ -280,7 +283,7 @@ end
 
 `code = :default | :rotate` # add more options
 """
-function cuboid_im(ig::MIRT_image_geom, params::Symbol ; args...)
+function cuboid_im(ig::ImageGeom, params::Symbol ; args...)
 	fov = ig.fovs
 	if params === :default
 		params = default_cuboid_parameters(fov, fov, fov)
@@ -298,6 +301,4 @@ end
 
 `:default` default parameters
 """
-function cuboid_im(ig::MIRT_image_geom ; args...)
-	return cuboid_im(ig, :default ; args...)
-end
+cuboid_im(ig::ImageGeom ; args...) = cuboid_im(ig, :default ; args...)

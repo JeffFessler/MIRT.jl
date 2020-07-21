@@ -33,14 +33,15 @@ out
 note: `op ellipse` in aspire with `nsub=3` is `oversample=4 = 2^(3-1)` here
 
 """
-function ellipse_im(ig::MIRT_image_geom,
-		params::AbstractMatrix{<:Real} ;
-		rot::Real = 0,
-		oversample::Int = 1,
-		hu_scale::Real = 1,
-		replace::Bool = false,
-		how::Symbol = :fast, # todo
-	)
+function ellipse_im(
+	ig::ImageGeom,
+	params::AbstractMatrix{<:Real} ;
+	rot::Real = 0,
+	oversample::Int = 1,
+	hu_scale::Real = 1,
+	replace::Bool = false,
+	how::Symbol = :fast, # todo
+)
 
 	if size(params,2) != 6
 		throw("bad ellipse parameter vector size")
@@ -242,7 +243,7 @@ end
 
 `code = :shepplogan | :shepplogan_emis | :shepplogan_brainweb | :southpark`
 """
-function ellipse_im(ig::MIRT_image_geom, params::Symbol ; kwarg...)
+function ellipse_im(ig::ImageGeom, params::Symbol ; kwarg...)
 	params = ellipse_im_params(ig, params)
 	return ellipse_im(ig, params ; kwarg...)
 end
@@ -253,17 +254,17 @@ end
 
 `:shepplogan` (default) for given image geometry `ig`
 """
-function ellipse_im(ig::MIRT_image_geom ; kwarg...)
+function ellipse_im(ig::ImageGeom ; kwarg...)
 	return ellipse_im(ig, :shepplogan; kwarg...)
 end
 
 
 """
-    params = ellipse_im_params(ig::MIRT_image_geom, params::Symbol)
+    params = ellipse_im_params(ig::ImageGeom, params::Symbol)
 
 `code = :shepplogan | :shepplogan_emis | :shepplogan_brainweb | :southpark | :disks`
 """
-function ellipse_im_params(ig::MIRT_image_geom, params::Symbol)
+function ellipse_im_params(ig::ImageGeom, params::Symbol)
 	if params === :disks
 		params = disk_phantom_params(fov=ig.fovs[1])
 	elseif params === :shepplogan || params === :kak

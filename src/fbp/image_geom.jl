@@ -4,9 +4,10 @@ Methods related to an image geometry for image reconstruction
 2017-10-02 Samuel Rohrer, University of Michigan
 2019-03-05 Jeff Fessler, Julia 1.1 + tests
 2019-06-23 Jeff Fessler, overhaul
+2020-07-21 Jeff Fessler, D-dimensional
 =#
 
-export MIRT_image_geom, image_geom, cbct
+export ImageGeom, image_geom, cbct
 export image_geom_circle
 export image_geom_ellipse
 
@@ -15,26 +16,45 @@ using ImageTransformations: imresize
 
 
 """
-    MIRT_image_geom
+    ImageGeom{D}
 
-Image geometry "struct" with essential parametersA for 2d & 3d
+- `dims::Dims{D}` image dimensions
+- `deltas::NTuple{D,Float32}` pixel sizes
+- `offsets::NTuple{D,Float32}` unitless
+- `mask::AbstractArray{Bool,D}` logical mask
+
+Image geometry "struct" with essential parameters
 """
-struct MIRT_image_geom
-	# options for 2D image geometry
-	nx::Int				# image dimension 1
-	ny::Int				# image dimension 2
-	dx::Float32			# pixel size
-	dy::Float32			# pixel size
-	offset_x::Float32	# unitless
-	offset_y::Float32	# unitless
+struct ImageGeom{D}
+	dims::Dims{D} # image dimensions
+	deltas::NTuple{D,Float32} # pixel sizes
+	offsets::NTuple{D,Float32} # unitless
+	mask::AbstractArray{Bool,D} # logical mask
 
-	# options for 3D image geometry
-	nz::Int				# image dimension 3
-	dz::Float32			# voxel size
-	offset_z::Float32	# unitless
-
-	mask::AbstractArray{Bool} # logical mask
+	function ImageGeom{D}(
+		dims::Dims{D},
+		deltas::NTuple{D,Real},
+		offsets::NTuple{D,Real},
+		mask::AbstractArray{Bool,D},
+	) where {D}
+		any(dims .<= 0) && throw("dims must be positive")
+		any(deltas .== 0) && throw("deltas must be nonzero")
+		size(mask) == dims ||
+			throw(DimensionMismatch("mask size $(size(mask)) vs dims $dims"))
+		new{D}(dims, Float32.(deltas), Float32.(offsets), mask)
+	end
 end
+
+"""
+    ImageGeom{D}(dims, deltas, offsets, [, mask])
+Constructor
+"""
+ImageGeom{D}(
+	dims::Dims{D},
+	deltas::NTuple{D,Real},
+	offsets::NTuple{D,Real},
+	) where {D} = ImageGeom{D}(dims, deltas, offsets, trues(dims))
+
 
 
 """
@@ -94,7 +114,7 @@ function image_geom_help( ; io::IO = isinteractive() ? stdout : devnull)
 	circ(rx=,ry=,cx=,cy=)	circle of given radius and center (cylinder in 3D)
 	plot()		plot the image geometry
 
-	Methods that return a new MIRT_image_geom:
+	Methods that return a new `ImageGeom:`
 
 	down(down::Int)		down-sample geometry by given factor
 	over(over::Int)		over-sample geometry by given factor
@@ -125,10 +145,10 @@ struct MIRT_cbct_ig
 end
 
 """
-cbct(ig::MIRT_image_geom; nthread=1)
+cbct(ig::ImageGeom; nthread=1)
 constructor for `MIRT_cbct_ig`
 """
-function cbct(ig::MIRT_image_geom; nthread::Int=1)
+function cbct(ig::ImageGeom{3} ; nthread::Int=1)
 	iy_start = [0]
 	iy_end = [ig.ny]
 	nthread != 1 && throw("only nthread=1 for now due to iy_start")
@@ -146,7 +166,7 @@ end
 """
     ig = image_geom(...)
 
-Constructor for `MIRT_image_geom`
+Constructor for `ImageGeom`
 
 # Arguments
 - `nx::Int = 128`
@@ -161,7 +181,7 @@ Constructor for `MIRT_image_geom`
 - `zfov::Real = ?` (if specified, then `nz*dz`)
 - `offset_z::Real = 0` (unitless)
 - `offsets::Symbol = :none` or :dsp
-- `mask::Union{Symbol,AbstractArray{Bool}} = :all` | `:circ` | `:all_but_edge`
+- `mask::Union{Symbol,AbstractArray{Bool}} = :all` | `:circ` | `:all_but_edge_xy`
 """
 function image_geom( ;
 	nx::Int = 128,
@@ -227,12 +247,18 @@ function image_geom( ;
 		mask = is3 ? trues(nx, ny, nz) : trues(nx, ny)
 	elseif mask === :circ
 		mask = image_geom_circle(nx, ny, dx, dy)
-	elseif mask === :all_but_edge
-		mask = trues(nx,ny,nz)
+		if nz > 0
+			mask = repeat(mask, 1, 1, nz)
+		end
+	elseif mask === :all_but_edge_xy
+		mask = trues(nx,ny,max(nz,1))
 		mask[  1,   :, :] .= false
 		mask[end,   :, :] .= false
 		mask[  :,   1, :] .= false
 		mask[  :, end, :] .= false
+		if !is3
+			mask = mask[:,:,1]
+		end
 	elseif isa(mask, Symbol)
 		throw("mask symbol $mask")
 	elseif size(mask,1) != nx || size(mask,2) != ny || (is3 && size(mask,3) != nz)
@@ -240,20 +266,30 @@ function image_geom( ;
 	end
 
 	# return the object
-	return MIRT_image_geom(nx, ny, dx, dy, offset_x, offset_y,
-		nz, dz, offset_z, mask)
+	return is3 ?
+		ImageGeom{3}((nx, ny, nz), (dx, dy, dz),
+			(offset_x, offset_y, offset_z), mask) :
+		ImageGeom{2}((nx, ny), (dx, dy),
+			(offset_x, offset_y), mask)
 end
 
 
+
 """
-image_geom_down_round()
+(n,d) = image_geom_down_round()
 helper function needed to downsample `image_geom`
 """
-function _down_round(val::Real=1, dd::Real=1, down::Real=1)
-	out = val / down
-	out != round(out) && (out = 2 * round(out / 2)) # keep even if non-integer
-	dd = dd * down
-	return Int(out), dd
+function _down_round(
+	val::NTuple{D,Real},
+	dd::NTuple{D,Real},
+	down::NTuple{D,Real},
+) where {D}
+	out = val ./ down
+	# for non-divisors make dim a multiple of 2
+	fun = out -> out == round(out) ? out : 2 * round(out / 2)
+	out = fun.(out)
+	dd = dd .* down
+	return Int.(out), dd
 end
 
 
@@ -262,83 +298,63 @@ end
 down sample an image geometry by the factor `down`
 cf `image_geom_downsample`
 """
-function ig_downsample(
-	ig::MIRT_image_geom,
-	down::Union{NTuple{2,Int},NTuple{3,Int}},
-)
+function ig_downsample(ig::ImageGeom{D}, down::NTuple{D,Int}) where {D}
 
 	# call the down round function
-	down_nx, down_dx = _down_round(ig.nx, ig.dx, down[1])
-	down_ny, down_dy = _down_round(ig.ny, ig.dy, down[2])
+	down_dim, deltas = _down_round(ig.dims, ig.deltas, down)
 	# adjust to "pixel" units
-	down_offset_x = ig.offset_x / down[1]
-	down_offset_y = ig.offset_y / down[2]
-
-	if ig.is3 # 3d case
-		down_nz, down_dz = _down_round(ig.nz, ig.dz, down[3])
-		down_offset_z = ig.offset_z / down[3]
-	else
-		down_nz = 0; down_dz = 0; down_offset_z = 0
-	end
+	down_offsets = ig.offsets ./ down
 
 	# carefully down-sample the mask
 	mdim = size(ig.mask)
 	if ig.is3
-		if (down_nx, down_ny, down_nz) .* down == mdim
+		if down_dim .* down == mdim
 			down_mask = downsample3(ig.mask, down) .> 0
 		else
 			throw("bug: bad mask size. need to address mask downsampling")
 		end
 	else
-		if (down_nx, down_ny) .* down == mdim
+		if down_dim .* down == mdim
 			down_mask = downsample2(ig.mask, down) .> 0
 		else
-			down_mask = imresize(ig.mask, (down_nx,down_ny)...) .> 0
+			down_mask = imresize(ig.mask, down_dim...) .> 0
 		end
 	end
 
-	return MIRT_image_geom(
-		down_nx, down_ny, down_dx, down_dy, down_offset_x, down_offset_y,
-		down_nz, down_dz, down_offset_z, down_mask)
+	return ImageGeom{D}(down_dim, deltas, down_offsets, down_mask)
 end
 
-ig_downsample(ig::MIRT_image_geom, down::Int) = ig.is3 ?
-	ig_downsample(ig, (down,down,down)) :
-	ig_downsample(ig, (down,down))
+ig_downsample(ig::ImageGeom{D}, down::Int) where {D} =
+	ig_downsample(ig, ntuple(i->down, D))
 
 
 """
-ig_new = image_geom_expand_nz(ig::MIRT_image_geom, nz_pad::Int)
+ig_new = image_geom_expand_nz(ig::ImageGeom{3}, nz_pad::Int)
 pad both ends
 """
-function image_geom_expand_nz(ig::MIRT_image_geom, nz_pad::Int)
-	!ig.is3 && throw("expand_nz only valid for 3D")
+function image_geom_expand_nz(ig::ImageGeom{3}, nz_pad::Int)
 	out_nz = ig.nz + 2*nz_pad
 	out_mask = cat(dims=3, repeat(ig.mask[:,:,1], 1, 1, nz_pad),
 		ig.mask, repeat(ig.mask[:,:,end], 1, 1, nz_pad),
 	)
-	return MIRT_image_geom(
-		ig.nx, ig.ny, ig.dx, ig.dy, ig.offset_x, ig.offset_y,
-		out_nz, ig.dz, ig.offset_z, out_mask,
+	return ImageGeom{3}((ig.dims[1], ig.dims[2], out_nz),
+		ig.deltas, ig.offsets, out_mask,
 	)
 end
 
 
 """
-ig_over = image_geom_over(ig::MIRT_image_geom, over::Int)
+ig_over = image_geom_over(ig::ImageGeom, over::Int)
 over-sample an image geometry by the factor `over`
 """
-function image_geom_over(ig::MIRT_image_geom, over::Int)
+function image_geom_over(ig::ImageGeom{D}, over::Int) where {D}
 	if all(ig.mask .== true)
-		mask_over = trues(ig.dim)
+		mask_over = trues(ig.dims .* over)
 	else
-		mask_over = imresize(ig.mask, ig.dim .* over) .> 0
+		mask_over = imresize(ig.mask, ig.dims .* over) .> 0
 	end
-	return MIRT_image_geom(
-		ig.nx*over, ig.ny*over, ig.dx/over, ig.dy/over,
-		ig.offset_x*over, ig.offset_y*over,
-		ig.nz*over, ig.dz/over, ig.offset_z*over,
-		mask_over,
+	return ImageGeom{D}(ig.dims .* over, ig.deltas ./ over,
+		ig.offsets .* over, mask_over,
 	)
 end
 
@@ -415,22 +431,21 @@ end
 """
 image_geom_plot(ig)
 """
-function image_geom_plot(ig::MIRT_image_geom ; kwargs...)
-	return ig.is3 ?
-		jim(ig.x, ig.y, ig.mask_or,
-			"(dx,dy,dz)=$(ig.dx),$(ig.dy),$(ig.dz)" ; kwargs...) :
-		jim(ig.x, ig.y, ig.mask, "(nx,ny)=$(ig.nx),$(ig.ny)" ; kwargs...)
-end
+image_geom_plot(ig::ImageGeom{2} ; kwargs...) =
+	jim(ig.x, ig.y, ig.mask, "(nx,ny)=$(ig.nx),$(ig.ny)" ; kwargs...)
+image_geom_plot(ig::ImageGeom{3} ; kwargs...) =
+	jim(ig.x, ig.y, ig.mask_or,
+		"(dx,dy,dz)=$(ig.dx),$(ig.dy),$(ig.dz)" ; kwargs...)
 
 
 """
-    show(io::IO, ig::MIRT_image_geom)
-    show(io::IO, ::MIME"text/plain", ig::MIRT_image_geom)
+    show(io::IO, ig::ImageGeom)
+    show(io::IO, ::MIME"text/plain", ig::ImageGeom)
 """
-Base.show(io::IO, ig::MIRT_image_geom) =
-	print(io, "MIRT_image_geom: $(ig.dim)")
+Base.show(io::IO, ig::ImageGeom) =
+	print(io, "ImageGeom: $(ig.dim)")
 
-function Base.show(io::IO, ::MIME"text/plain", ig::MIRT_image_geom)
+function Base.show(io::IO, ::MIME"text/plain", ig::ImageGeom)
 	ir_dump(io, ig)
 end
 
@@ -440,14 +455,24 @@ end
 image_geom_fun0 = Dict([
 	(:help, ig -> image_geom_help()),
 
+	(:ndim, ig -> length(ig.dims)),
+	(:nx, ig -> ig.dims[1]),
+	(:ny, ig -> ig.ndim >= 2 ? ig.dims[2] : 0),
+	(:nz, ig -> ig.ndim >= 3 ? ig.dims[3] : 0),
 	(:is3, ig -> ig.nz > 0),
-	(:dim, ig -> ig.is3 ? (ig.nx, ig.ny, ig.nz) : (ig.nx, ig.ny)),
-	(:fovs, ig -> ig.is3 ?
-		(abs(ig.dx)*ig.nx, abs(ig.dy)*ig.ny, abs(ig.dz)*ig.nz) :
-			(abs(ig.dx)*ig.nx, abs(ig.dy)*ig.ny)),
+	(:dim, ig -> ig.dims),
+	(:fovs, ig -> abs.(ig.deltas) .* ig.dims),
 
-	(:zeros, ig -> zeros(Float32, ig.dim)), # (nx, ny, nz) : zeros(nx, ny)
-	(:ones, ig -> ones(Float32, ig.dim)), # (nx, ny, nz) : zeros(nx, ny)
+	(:zeros, ig -> zeros(Float32, ig.dim)),
+	(:ones, ig -> ones(Float32, ig.dim)),
+
+	(:dx, ig -> ig.deltas[1]),
+	(:dy, ig -> ig.ndim >= 2 ? ig.deltas[2] : Float32(0)),
+	(:dz, ig -> ig.ndim >= 3 ? ig.deltas[3] : Float32(0)),
+
+	(:offset_x, ig -> ig.offsets[1]),
+	(:offset_y, ig -> ig.ndim >= 2 ? ig.offsets[2] : Float32(0)),
+	(:offset_z, ig -> ig.ndim >= 3 ? ig.offsets[3] : Float32(0)),
 
 	(:x, ig -> ((0:ig.nx-1) .- ig.wx) * ig.dx),
 	(:y, ig -> ((0:ig.ny-1) .- ig.wy) * ig.dy),
@@ -483,7 +508,7 @@ image_geom_fun0 = Dict([
 
 	# simple functions
 
-	(:plot, ig -> ((;kwargs...) -> image_geom_plot(ig ; kwargs...))),
+	(:plot, ig -> (( ; kwargs...) -> image_geom_plot(ig ; kwargs...))),
 	(:embed, ig -> (x::AbstractArray{<:Number} -> embed(x, ig.mask))),
 	(:maskit, ig -> (x::AbstractArray{<:Number} -> maskit(x, ig.mask))),
 	(:shape, ig -> (x::AbstractArray{<:Number} -> reshape(x, ig.dim))),
@@ -502,9 +527,9 @@ image_geom_fun0 = Dict([
 
 # Tricky overloading here!
 
-Base.getproperty(ig::MIRT_image_geom, s::Symbol) =
+Base.getproperty(ig::ImageGeom, s::Symbol) =
 		haskey(image_geom_fun0, s) ? image_geom_fun0[s](ig) :
 		getfield(ig, s)
 
-Base.propertynames(ig::MIRT_image_geom) =
+Base.propertynames(ig::ImageGeom) =
 	(fieldnames(typeof(ig))..., keys(image_geom_fun0)...)
