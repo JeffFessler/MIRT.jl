@@ -26,7 +26,7 @@ function ir_dump(y::Any ; io::IO = stdout, ntuplemax::Int = 3)
 			print(io, " ", getfield(y, fd))
 		end
 		if ft == String
-			print(io, " '", getfield(y, fd), "'")
+			print(io, " \"", getfield(y, fd), "\"")
 		end
 		if ft <: Tuple # nice for ImageGeom
 			tmp = getfield(y, fd)
