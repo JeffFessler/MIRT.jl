@@ -4,7 +4,7 @@ using MIRT: ImageGeom, image_geom, cbct
 using MIRT: image_geom_ellipse
 #using MIRT: jim
 
-using Test: @test, @test_throws, @inferred
+using Test: @test, @testset, @test_throws, @inferred
 
 
 function image_geom_test2(ig::ImageGeom)
@@ -93,5 +93,10 @@ function image_geom_test3()
 end
 
 
-@test image_geom_test2()
-@test image_geom_test3()
+@testset "2d" begin
+	@test all(ImageGeom{1}((2,), (3,), (0,)).mask)
+	@test image_geom_test2()
+end
+@testset "3d" begin
+	@test image_geom_test3()
+end
