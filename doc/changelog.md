@@ -1,6 +1,10 @@
 In reverse chronological order
 
-0.12.0 for real this time
+
+2020-07-21
+Breaking change: ImageGeom
+
+0.12.0 2020-07-14 for real this time
 
 Use tuples in `downsample2` and related functions.
 This is a slightly breaking change.

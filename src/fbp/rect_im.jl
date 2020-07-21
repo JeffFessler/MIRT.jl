@@ -5,7 +5,7 @@ rect_im.jl
 
 export rect_im
 
-#using MIRT: MIRT_image_geom, downsample2
+#using MIRT: ImageGeom, downsample2
 
 
 """
@@ -33,15 +33,17 @@ out
 - `phantom`		`[nx ny]` image (Float32)
 - `params`		`[Nrect 6]` rect parameters (only return if `return_params=true`)
 """
-function rect_im(ig::MIRT_image_geom,
-		params::AbstractArray{<:Real,2} ;
-		oversample::Int = 1,
-		hu_scale::Real = 1,
-		fov::Real = maximum(ig.fovs),
-		chat::Bool = false,
-		how::Symbol = :auto,
-		replace::Bool = false,
-		return_params::Bool = false)
+function rect_im(
+	ig::ImageGeom,
+	params::AbstractArray{<:Real,2} ;
+	oversample::Int = 1,
+	hu_scale::Real = 1,
+	fov::Real = maximum(ig.fovs),
+	chat::Bool = false,
+	how::Symbol = :auto,
+	replace::Bool = false,
+	return_params::Bool = false,
+)
 
 	size(params,2) != 6 && throw("bad rect parameter vector size")
 
@@ -219,7 +221,7 @@ end
 
 `code = :my_rect | :default | :smiley`
 """
-function rect_im(ig::MIRT_image_geom, params::Symbol ; args...)
+function rect_im(ig::ImageGeom, params::Symbol ; args...)
 	fov = ig.fovs
 	if params === :my_rect
 		params = my_rect(fov...)
@@ -239,9 +241,7 @@ end
 
 `:default` (default) for given image geometry `ig`
 """
-function rect_im(ig::MIRT_image_geom ; args...)
-	return rect_im(ig, :default ; args...)
-end
+rect_im(ig::ImageGeom ; args...) = rect_im(ig, :default ; args...)
 
 
 

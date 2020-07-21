@@ -52,7 +52,7 @@ function mri_kspace_spiral( ; fov::Real = 22,
 		gradxy = [gx gy]
 	else
 		kspace = permutedims(cat(dims = 3, kx, ky), [1,3,2])
- 		gradxy = permutedims(cat(dims = 3, gx, gy), [1,3,2])
+		gradxy = permutedims(cat(dims = 3, gx, gy), [1,3,2])
 	end
 	omega = 2π * [kx ky] / N
 
@@ -84,16 +84,16 @@ function genkspace(FOV, N, ld, nint, gamp, gslew, tsamp, warn_nk ;
 		genspi(FOV, N, nl=nint, gamp=gamp, gslew=gslew)
 
 	ik = 0:(length(kxi)-1)
- 	tk = 0:(dts/tsamp*length(kxi)-1)
+	tk = 0:(dts/tsamp*length(kxi)-1)
 	tk = tk * tsamp
- 	kxt = interp1(ik*dts, kxi, tk)
- 	kyt = interp1(ik*dts, kyi, tk)
+	kxt = interp1(ik*dts, kxi, tk)
+	kyt = interp1(ik*dts, kyi, tk)
 
 	ig = 0:(length(Gx)-1)
 	tg = 0:(dts/tsamp*length(Gx)-1)
 	tg = tg * tsamp
 	gxt = interp1(ig*dts, Gx, tg)
- 	gyt = interp1(ig*dts, Gy, tg)
+	gyt = interp1(ig*dts, Gy, tg)
 
 	if flag == 1
 		nk = length(kxt) - 2
@@ -160,8 +160,8 @@ augmented with archimedian gmax limit
 inputs [args]
         D = FOV; cm
         N = matrix size()
-	 	Tmax = longest acquisition allowed; s
-	 	dts = output sample spacing; s
+		Tmax = longest acquisition allowed; s
+		dts = output sample spacing; s
         gtype = trajectory type()
 option [CVs]
 		nl = number of interleaves

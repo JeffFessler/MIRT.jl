@@ -11,7 +11,7 @@ Date Update:  October 7th 2019
 
 export image_geom_mri
 
-#using MIRT: image_geom, MIRT_image_geom
+#using MIRT: image_geom
 
 
 """
@@ -21,6 +21,5 @@ Same as `image_geom()` but default offsets are 0.5 so that
 image pixel indices go from -N/2 to N/2-1.
 
 """
-function image_geom_mri( ; kwargs...)
-    return image_geom( ; offset_x = .5, offset_y = .5, offset_z = .5, kwargs...)
-end
+image_geom_mri( ; kwargs...) =
+    image_geom( ; offset_x = .5, offset_y = .5, offset_z = .5, kwargs...)

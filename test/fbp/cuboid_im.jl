@@ -4,7 +4,7 @@ using MIRT: cuboid_im, image_geom, jim
 
 using Plots
 using Test: @test, @test_throws, @inferred
-#using MIRT: jim, MIRT_image_geom, downsample3, rotate2d
+#using MIRT: jim, downsample3, rotate2d
 
 
 """

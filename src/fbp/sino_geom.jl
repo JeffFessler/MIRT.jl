@@ -7,7 +7,7 @@ sinogram geometry for 2D tomographic image reconstruction
 export MIRT_sino_geom, sino_geom
 export sino_geom_help, sino_geom_plot_grids, sino_geom_show, sino_geom_test
 
-# using MIRT: jim, image_geom, MIRT_image_geom, prompt
+# using MIRT: jim, image_geom, ImageGeom, prompt
 using Plots: Plot, plot!, plot, scatter, scatter!, gui
 
 
@@ -16,7 +16,7 @@ using Plots: Plot, plot!, plot, scatter, scatter!, gui
 struct to describe a 2D sinogram geometry
 """
 struct MIRT_sino_geom
-	how::Symbol				# :par | :moj | :fan 
+	how::Symbol				# :par | :moj | :fan
 	units::Symbol			# :nothing | :mm | :cm etc.
 	nb::Int					# # of "radial" samples, aka ns
 	na::Int					# # of angular samples
@@ -25,7 +25,7 @@ struct MIRT_sino_geom
 	orbit::Float32			# [degrees]
 	orbit_start::Float32	# [degrees]
 	offset::Float32			# sample offset, cf offset_r or offset_s [unitless]
-	strip_width::Float32	# 
+	strip_width::Float32	#
 
 	# for fan:
 	source_offset::Float32	# same units as d, etc., e.g., [mm]
@@ -544,7 +544,7 @@ end
     sino_geom_plot()
 picture of the source position / detector geometry
 """
-function sino_geom_plot(sg ; ig::Union{Nothing,MIRT_image_geom}=nothing)
+function sino_geom_plot(sg ; ig::Union{Nothing,ImageGeom}=nothing)
 	plot(aspect_ratio=1)
 
 	xmax = sg.rfov; xmin = -xmax; (ymin,ymax) = (xmin,xmax)

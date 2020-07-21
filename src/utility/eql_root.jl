@@ -19,13 +19,13 @@ out
 """
 function eql_root(a::Real, b::Real, c::Real)
     (a < 0) && throw(DomainError(a, "a must be enonnegative"))
-    
-    if a == 0        
+
+    if a == 0
         return c / b / 2 # trivially solve case where a == 0
     end
-    
+
     det = sqrt(b^2 + a * c) # determinant / 2
-    
+
     # handle positive and negative b appropriately:
     return (b > 0) ? c / (det + b) : (det - b) / a
 end

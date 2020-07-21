@@ -54,7 +54,7 @@ in
 - `N::Int` signal length
 
 option
-- `nfft_m::Int` 		see NFFT.jl documentation; default 4
+- `nfft_m::Int`		see NFFT.jl documentation; default 4
 - `nfft_sigma::Real`	"", default 2.0
 - `n_shift::Real`		often is N/2; default 0
 - `pi_error::Bool`		throw error if ``|w| > π``, default `true`
@@ -134,7 +134,7 @@ in
 - `N::Dims{D}` signal dimensions
 
 option
-- `nfft_m::Int` 		see NFFT.jl documentation; default 4
+- `nfft_m::Int`		see NFFT.jl documentation; default 4
 - `nfft_sigma::Real`	"", default 2.0
 - `n_shift::AbstractVector{<:Real}`	`[D]`	often is N/2; default zeros(D)
 - `pi_error::Bool`		throw error if ``|w| > π``, default `true`

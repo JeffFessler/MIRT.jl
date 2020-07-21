@@ -5,7 +5,7 @@ ellipsoid_im.jl
 
 export ellipsoid_im
 
-#using MIRT: MIRT_image_geom, image_geom
+#using MIRT: ImageGeom, image_geom
 
 
 """
@@ -17,8 +17,8 @@ generate ellipsoid phantom image from parameters:
 		xy_angle_degrees, z_angle_degrees, density]`
 
 in
-- `ig`			from `image_geom()`
-- `params`		`[N 9]` ellipsoid parameters.
+- `ig::ImageGeom`	from `image_geom()`
+- `params`			`[N 9]` ellipsoid parameters.
 
 option
 - `oversample::Int`		oversampling factor (default:1)
@@ -34,13 +34,16 @@ out
 - `phantom`		`[nx ny nz]` image
 - `params`		`[N 9]` ellipsoid parameters (only if `return_params=true`)
 """
-function ellipsoid_im(ig::MIRT_image_geom, params::AbstractMatrix{<:Real} ;
-		oversample::Int = 1,
-		checkfov::Bool = false,
-		how::Symbol = :slow,
-		showmem::Bool = false,
-		hu_scale::Real = 1,
-		return_params::Bool = false)
+function ellipsoid_im(
+	ig::ImageGeom,
+	params::AbstractMatrix{<:Real} ;
+	oversample::Int = 1,
+	checkfov::Bool = false,
+	how::Symbol = :slow,
+	showmem::Bool = false,
+	hu_scale::Real = 1,
+	return_params::Bool = false,
+)
 
 	size(params,2) != 9 && throw("bad cuboid parameter vector size")
 	params[:,9] .*= hu_scale
@@ -341,7 +344,7 @@ end
 
 `ptype = :zhu | :kak | :e3d | :spheroid`
 """
-function ellipsoid_im(ig::MIRT_image_geom, ptype::Symbol ; args...)
+function ellipsoid_im(ig::ImageGeom, ptype::Symbol ; args...)
 	xfov = ig.fovs[1]
 	yfov = ig.fovs[2]
 	zfov = ig.fovs[3]
@@ -368,9 +371,7 @@ end
 
 `:zhu` (default) for given image geometry `ig`
 """
-function ellipsoid_im(ig::MIRT_image_geom ; args...)
-	return ellipsoid_im(ig, :zhu ; args...)
-end
+ellipsoid_im(ig::ImageGeom ; args...) = ellipsoid_im(ig, :zhu ; args...)
 
 
 """
@@ -400,7 +401,7 @@ function shepp_logan_3d_parameters(xfov, yfov, zfov, ptype)
 		0		0.1		-0.25	0.046	0.046	0.046	0	0	0.02
 		0		0.1		-0.25	0.046	0.046	0.046	0	0	0.02
 		-0.8	-0.65	-0.25	0.046	0.023	0.02	0	0	0.01
-		0.06	-0.065	 -0.25	0.046	0.023	0.02	90	0	0.01
+		0.06	-0.065	-0.25	0.046	0.023	0.02	90	0	0.01
 		0.06	-0.105	 0.625	0.56	0.04	0.1		90	0	0.02
 		0		0.1		-0.625	0.056	0.056	0.1		0	0	-0.02
 	]

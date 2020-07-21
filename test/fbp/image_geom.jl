@@ -1,15 +1,18 @@
 # image_geom.jl
 
-using MIRT: MIRT_image_geom, image_geom, cbct
+using MIRT: ImageGeom, image_geom, cbct
 using MIRT: image_geom_ellipse
 #using MIRT: jim
 
-using Test: @test, @test_throws, @inferred
+using Test: @test, @testset, @test_throws, @inferred
 
 
-function image_geom_test2(ig::MIRT_image_geom)
+function image_geom_test2(ig::ImageGeom)
 	# test 2D functions provided by the constructor
 	ig.dim
+	ig.dims
+	ig.deltas
+	ig.offsets
 	ig.x
 	ig.y
 	ig.wx
@@ -52,7 +55,8 @@ end
 
 
 function image_geom_test2()
-	@inferred image_geom(nx=16, dx=2, offsets=:dsp, mask=:all_but_edge)
+	#@inferred
+	image_geom(nx=16, dx=2, offsets=:dsp, mask=:all_but_edge_xy)
 	@test_throws String image_geom(nx=16, dx=1, offsets=:bad)
 	@test_throws String image_geom(nx=16, dx=1, mask=:bad) # mask type
 	@test_throws String image_geom(nx=16, dx=1, mask=trues(2,2)) # mask size
@@ -68,7 +72,7 @@ function image_geom_test2()
 end
 
 
-function image_geom_test3(ig::MIRT_image_geom)
+function image_geom_test3(ig::ImageGeom)
 	@test image_geom_test2(ig)
 	ig.wz
 	ig.zg
@@ -81,12 +85,18 @@ end
 
 
 function image_geom_test3()
-	@inferred image_geom(nx=16, nz=4, dx=2, zfov=1)
+	#@inferred
+	image_geom(nx=16, nz=4, dx=2, zfov=1)
 	ig = image_geom(nx=16, nz=4, dx=2, dz=3)
 	image_geom_test3(ig)
 	true
 end
 
 
-@test image_geom_test2()
-@test image_geom_test3()
+@testset "2d" begin
+	@test all(ImageGeom{1}((2,), (3,), (0,)).mask)
+	@test image_geom_test2()
+end
+@testset "3d" begin
+	@test image_geom_test3()
+end
