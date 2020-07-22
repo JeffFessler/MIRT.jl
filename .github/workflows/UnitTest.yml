@@ -21,12 +21,9 @@ jobs:
       matrix:
       # jf: reduce testing for lower carbon footprint
       # julia-version: ['1.4', '1', 'nightly']
-        julia-version: ['1.4']
-      # os: [ubuntu-latest, windows-latest, macOS-latest]
-        os: [ubuntu-latest]
-      # temporarilly set it to false as CI is broken in windows
-      # fail-fast: false
-      fail-fast: true
+        julia-version: ['1.4', 'nightly']
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+      # fail-fast: true
 
     steps:
       - uses: actions/checkout@v1.0.0
