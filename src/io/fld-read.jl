@@ -137,9 +137,8 @@ function fld_read(
 		filetype = arg_get(header, "filetype", false)
 		chat && @info("Current file = '$file', External file = '$extfile', type='$filetype'")
 
-		if occursin("skip=",prod(header))
-			_skip = arg_get(prod(header),"skip")
-		end
+		_skip = occursin("skip=",prod(header)) ?
+			arg_get(prod(header),"skip") : 0
 
 		if filetype != "multi"
 			if !isfile(extfile)
@@ -193,13 +192,10 @@ function fld_read_single(
 		@info("rdims=$rdims")
 		throw("file count != data count")
 	end
-	if endian == "ieee-le"
-		data .= htol.(data)
-	elseif endian == "ieee-be"
-		data .= hton.(data)
-	end
 
-	return data
+	return endian === :le ? htol.(data) :
+		endian === :be ? hton.(data) :
+		throw("bug $endian")
 end
 
 
@@ -256,23 +252,23 @@ Determine data format from .fld header datatype.
 function datatype_fld_to_mat(datatype::AbstractString)
 
 	dict = Dict([
-		("byte", (UInt8, "ieee-be", 1)), # :be irrelevant
-		("short_be", (UInt16, "ieee-be", 2)),
-		("short_sun", (UInt16, "ieee-be", 2)),
-		("xdr_short", (UInt16, "ieee-be", 2)),
-		("short_le", (UInt16, "ieee-le", 2)),
+		("byte", (UInt8, :be, 1)), # :be irrelevant
+		("short_be", (UInt16, :be, 2)),
+		("short_sun", (UInt16, :be, 2)),
+		("xdr_short", (UInt16, :be, 2)),
+		("short_le", (UInt16, :le, 2)),
 		("int", (Int32, "", 4)), # native int - not portable
-		("int_le", (Int32, "ieee-le", 4)),
-		("int_be", (Int32, "ieee-be", 4)),
-		("xdr_int", (Int32, "ieee-be", 4)),
+		("int_le", (Int32, :le, 4)),
+		("int_be", (Int32, :be, 4)),
+		("xdr_int", (Int32, :be, 4)),
 		("float", (Float32, "", 4)), # native float - not portable
-		("float_le", (Float32, "ieee-le", 4)),
-		("float_be", (Float32, "ieee-be", 4)),
-		("xdr_float", (Float32, "ieee-be", 4)),
+		("float_le", (Float32, :le, 4)),
+		("float_be", (Float32, :be, 4)),
+		("xdr_float", (Float32, :be, 4)),
 		("double", (Float64, "", 8)), # native 64oat - not portable
-		("double_le", (Float64, "ieee-le", 8)),
-		("double_be", (Float64, "ieee-be", 8)),
-		("xdr_double", (Float64, "ieee-be", 8)),
+		("double_le", (Float64, :le, 8)),
+		("double_be", (Float64, :be, 8)),
+		("xdr_double", (Float64, :be, 8)),
 	])
 
 	return dict[datatype] # format, endian, bytes

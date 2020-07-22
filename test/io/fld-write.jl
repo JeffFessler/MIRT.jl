@@ -1,7 +1,7 @@
 # fld-write.jl
 
 using MIRT: fld_write, fld_read
-import MIRT: fld_write_data_fix
+#import MIRT: fld_write_data_fix
 
 #using MIRT: ir_test_dir, ir_test_dir!
 using Test: @test, @testset, @test_throws, @inferred
@@ -58,20 +58,29 @@ dir = mktempdir()
 file = joinpath(dir, "fld-write-test.fld")
 chat = isinteractive()
 
-for dtype in (UInt8, Int16, Int32, Float32, Float64)
-	for endian in (:le, :be)
-		for raw in (false, true)
-			chat && @info "dtype=$dtype endian=$endian raw=$raw"
-			data = convert.(dtype, [5:8; 1:4])
-			@test fld_write_test1(file, data, endian=endian, raw=raw,
-				head = ["dtype=$dtype endian=$endian raw=$raw",],
-				check=true, chat=false)
+@testset "write std" begin
+	for dtype in (UInt8, Int16, Int32, Float32, Float64)
+		for endian in (:le, :be)
+			for raw in (false, true)
+				chat && @info "dtype=$dtype endian=$endian raw=$raw"
+				data = convert.(dtype, [5:8; 1:4])
+				@test fld_write_test1(file, data, endian=endian, raw=raw,
+					head = ["dtype=$dtype endian=$endian raw=$raw",],
+					check=true, chat=false)
+			end
 		end
 	end
 end
 
+@testset "write odd" begin
+	for T in (BigFloat, Float16, BigInt, Int64, Bool)
+		data = T.([1 0 1])
+		@test fld_write_test1(file, data ; check=true, chat=false)
+	end
+end
 
 @testset "fld convert" begin
+#=
 	pairs = (
 		(BigFloat, Float64),
 		(Float16, Float32),
@@ -83,5 +92,6 @@ end
 		data = in.([1 0 1])
 		@test eltype(fld_write_data_fix(data)) == out
 	end
+=#
 	@test_throws ArgumentError fld_write_data_fix(Rational.([1 0 1]))
 end
