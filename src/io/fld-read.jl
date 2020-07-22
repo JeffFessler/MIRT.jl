@@ -25,11 +25,12 @@ out
 - `head::String`	array of header information
 
 """
-function fld_header(file::AbstractString ;
-		dir::String = "",
-		chat::Bool = false,
-		keepopen::Bool = false,
-	)
+function fld_header(
+	file::AbstractString ;
+	dir::String = "",
+	chat::Bool = false,
+	keepopen::Bool = false,
+)
 
 	file = joinpath(dir, file)
 	fid = open(file)
@@ -107,10 +108,11 @@ out
 - `data`	Array (1D - 5D) in the data type of the file itself
 
 """
-function fld_read(file::AbstractString ;
-		dir::String = "",
-		chat::Bool = false,
-	)
+function fld_read(
+	file::AbstractString ;
+	dir::String = "",
+	chat::Bool = false,
+)
 
 	file = joinpath(dir, file)
 
@@ -169,8 +171,10 @@ function fld_read(file::AbstractString ;
 end
 
 
-function fld_read_single(file, fid, dims, datatype, fieldtype,
-	is_external_file, extfile, format, endian, bytes, _skip)
+function fld_read_single(
+	file, fid, dims, datatype, fieldtype,
+	is_external_file, extfile, format, endian, bytes, _skip,
+)
 
 	# reopen file to same position, with appropriate endian too.
 	if is_external_file
@@ -247,65 +251,29 @@ end
 """
 `format, endian, bytes = datatype_fld_to_mat(datatype)`
 
-determine data format from .fld header datatype
+Determine data format from .fld header datatype.
 """
 function datatype_fld_to_mat(datatype::AbstractString)
-	if datatype == "byte"
-		format = UInt8
-		endian = "ieee-be" # irrelevant
-		bytes = 1
 
-	elseif datatype in ["short_be", "short_sun", "xdr_short"]
-		format = Int16
-		endian = "ieee-be"
-		bytes = 2
-	elseif datatype == "short_le"
-		format = Int16
-		endian = "ieee-le"
-		bytes = 2
+	dict = Dict([
+		("byte", (UInt8, "ieee-be", 1)), # :be irrelevant
+		("short_be", (UInt16, "ieee-be", 2)),
+		("short_sun", (UInt16, "ieee-be", 2)),
+		("xdr_short", (UInt16, "ieee-be", 2)),
+		("short_le", (UInt16, "ieee-le", 2)),
+		("int", (Int32, "", 4)), # native int - not portable
+		("int_le", (Int32, "ieee-le", 4)),
+		("int_be", (Int32, "ieee-be", 4)),
+		("xdr_int", (Int32, "ieee-be", 4)),
+		("float", (Float32, "", 4)), # native float - not portable
+		("float_le", (Float32, "ieee-le", 4)),
+		("float_be", (Float32, "ieee-be", 4)),
+		("xdr_float", (Float32, "ieee-be", 4)),
+		("double", (Float64, "", 8)), # native 64oat - not portable
+		("double_le", (Float64, "ieee-le", 8)),
+		("double_be", (Float64, "ieee-be", 8)),
+		("xdr_double", (Float64, "ieee-be", 8)),
+	])
 
-	elseif datatype == "int"
-		format = Int32
-		endian = "" # native int - not portable
-		bytes = 4
-	elseif datatype == "int_le"
-		format = Int32
-		endian = "ieee-le"
-		bytes = 4
-	elseif datatype in ["int_be", "xdr_int"]
-		format = Int32
-		endian = "ieee-be"
-		bytes = 4
-
-	elseif datatype == "float"
-		format = Float32 # typeof(1.)
-		endian = "" # native float - not portable
-		bytes = 4
-	elseif datatype == "float_le"
-		format = Float32
-		endian = "ieee-le"
-		bytes = 4
-	elseif datatype in ["float_be", "xdr_float"]
-		format = Float32
-		endian = "ieee-be"
-		bytes = 4
-
-	elseif datatype == "double"
-		format = Float64
-		endian = "" # native double - not portable
-		bytes = 8
-	elseif datatype == "double_le"
-		format = Float64
-		endian = "ieee-le"
-		bytes = 8
-	elseif datatype in ["double_be", "xdr_double"]
-		format = Float64
-		endian = "ieee-be"
-		bytes = 8
-
-	else
-		throw("format '$datatype' not yet implemented. ask jeff!")
-	end
-
-	return format, endian, bytes
+	return dict[datatype] # format, endian, bytes
 end

@@ -1,9 +1,10 @@
 # fld-write.jl
 
 using MIRT: fld_write, fld_read
+import MIRT: fld_write_data_fix
 
 #using MIRT: ir_test_dir, ir_test_dir!
-using Test: @test, @inferred
+using Test: @test, @testset, @test_throws, @inferred
 
 
 #=
@@ -37,8 +38,8 @@ end
 """
 `fld_write_test1(file, data, ...)`
 """
-function fld_write_test1(file, data; raw::Bool=false, chat::Bool=false, kwarg...)
-	@inferred fld_write(file, data; raw=raw, kwarg...)
+function fld_write_test1(file, data ; raw::Bool=false, chat::Bool=false, kwarg...)
+	@inferred fld_write(file, data ; raw=raw, kwarg...)
 	tmp = fld_read(file, chat=chat)
 	tmp != data && throw("test failed for file = $file")
 
@@ -63,7 +64,24 @@ for dtype in (UInt8, Int16, Int32, Float32, Float64)
 			chat && @info "dtype=$dtype endian=$endian raw=$raw"
 			data = convert.(dtype, [5:8; 1:4])
 			@test fld_write_test1(file, data, endian=endian, raw=raw,
+				head = ["dtype=$dtype endian=$endian raw=$raw",],
 				check=true, chat=false)
 		end
 	end
+end
+
+
+@testset "fld convert" begin
+	pairs = (
+		(BigFloat, Float64),
+		(Float16, Float32),
+		(BigInt, Int32),
+		(Int64, Int32),
+		(Bool, UInt8),
+	)
+	for (in, out) in pairs
+		data = in.([1 0 1])
+		@test eltype(fld_write_data_fix(data)) == out
+	end
+	@test_throws ArgumentError fld_write_data_fix(Rational.([1 0 1]))
 end
