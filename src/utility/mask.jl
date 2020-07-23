@@ -126,14 +126,11 @@ opposite of embed
 """
 function maskit(x::AbstractArray{<:Number}, mask::AbstractArray{Bool})
 	dim = size(x)
+	((ndims(x) >= ndims(mask)) && (size(x)[1:ndims(mask)] == size(mask))) ||
+		throw(DimensionMismatch("size x $(size(x)) vs mask $(size(mask))"))
 	x = reshape(x, length(mask), :)
 	x = x[vec(mask),:] # reshape(mask, prod(_dim()))]
-	if length(dim) == ndims(mask)
-		x = dropdims(x, dims=2) # squeeze
-	elseif length(dim) > ndims(mask)
-		x = reshape(x, :, dim[(1+ndims(mask)):end])
-	else
-		throw(DimensionMismatch("size(x) = $(size(x))"))
-	end
-	return x
+	return length(dim) == ndims(mask) ?
+		dropdims(x, dims=2) : # squeeze
+		reshape(x, :, dim[(1+ndims(mask)):end]...)
 end
