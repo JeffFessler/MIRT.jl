@@ -7,9 +7,8 @@ export fld_header, fld_read
 
 
 """
-`head = fld_header(file::String, ...)`
-
-`head, is_external_file, fid = fld_header(file, keepopen=true)`
+    head = fld_header(file::String, ...)
+    head, is_external_file, fid = fld_header(file, keepopen=true)
 
 read header data from AVS format `.fld` file
 
@@ -93,16 +92,16 @@ end
 # + [ ] short datatype
 
 """
-`fld_read(file::String)`
+    fld_read(file::String)
 
-read data from AVS format `.fld` file
+Read data from AVS format `.fld` file
 
 in
 - `file`	file name, usually ending in `.fld`
 
 option
-- `dir`		String	prepend file name with this directory; default ""
-- `chat`	Bool	verbose?
+- `dir::String`	prepend file name with this directory; default ""
+- `chat::Bool`	verbose?
 
 out
 - `data`	Array (1D - 5D) in the data type of the file itself
@@ -117,6 +116,7 @@ function fld_read(
 	file = joinpath(dir, file)
 
 	header, is_external_file, fid = fld_header(file, keepopen=true, chat=chat)
+	chat && @info("is_external_file = $is_external_file")
 
 	# parse header to determine data dimensions and type
 	ndim = arg_get(header, "ndim")
@@ -138,7 +138,7 @@ function fld_read(
 		chat && @info("Current file = '$file', External file = '$extfile', type='$filetype'")
 
 		_skip = occursin("skip=",prod(header)) ?
-			arg_get(prod(header),"skip") : 0
+			arg_get([prod(header)], "skip", false) : 0
 
 		if filetype != "multi"
 			if !isfile(extfile)
@@ -150,7 +150,7 @@ function fld_read(
 				!isfile(extfile) && throw("no external ref file $extfile")
 			end
 		else
-			throw("multi not supported yet")
+			throw("multi not supported yet") # todo
 		end
 	else
 		filetype = ""

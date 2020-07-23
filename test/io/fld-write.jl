@@ -95,3 +95,41 @@ end
 =#
 	@test_throws ArgumentError fld_write_data_fix(Rational.([1 0 1]))
 end
+
+
+# for future testing of reading "multi" external files
+@testset "write multi" begin
+#	file = "../tmp2.fld"
+#	file = "tmp.fld"
+	data = rand(Float32, 7, 9, 2)
+	file1 = "$(basename(file)).part1"
+	file2 = "$(basename(file)).part2"
+	head = [
+		"# AVS field file"
+		"ndim=3"
+		"dim1=7"
+		"dim2=9"
+		"dim3=2"
+		"nspace=3"
+		"veclen=1"
+		"data=float"
+		"field=uniform"
+		"variable 1 file=2 filetype=multi skip=0"
+		file1
+		file2
+	]
+	open(file, "w") do fid
+		for line in head
+			println(fid, line)
+		end
+		file1 = joinpath(dirname(file), file1)
+		file2 = joinpath(dirname(file), file2)
+		write(file1, data[:,:,1])
+		write(file2, data[:,:,2])
+	end
+#	run(`cat $file`)
+#	run(`ls -l $file1`)
+#	run(`op range $file`)
+
+	@test_throws String tmp = fld_read(file) # todo some day...
+end
