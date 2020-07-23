@@ -57,6 +57,8 @@ end
 		end
 	end
 
+	@test fld_header(file) isa Array{<:AbstractString}
+
 	# ensure that it throws if no extfile
 	@test_throws String tmp = fld_read(file)
 

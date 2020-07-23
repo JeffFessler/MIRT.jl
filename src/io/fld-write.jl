@@ -52,8 +52,7 @@ function fld_write(
 		(Int32, endian === :le ? "int_le" : "xdr_int"),
 		])
 
-	dtype = eltype(data)
-	datatype = typedict[dtype] # throws error if not there
+	datatype = typedict[eltype(data)] # throws error if not there
 
 	file = joinpath(dir, file)
 #	@show file
@@ -67,10 +66,7 @@ function fld_write(
 
 	# open output avs file for writing
 	fid = open(file, "w")
-	fraw = fid # default
-	if raw
-        fraw = open(fileraw, "w")
-	end
+	fraw = raw ? open(fileraw, "w") : fid
 
 	# write header
 	ndim = ndims(data)
@@ -96,12 +92,12 @@ function fld_write(
 	end
 
 	# finally, write the binary data
-	host_is_le = ENDIAN_BOM == 0x04030201
-	fun = (host_is_le == (endian === :le)) ?
+	host_is_le = () -> ENDIAN_BOM == 0x04030201
+	fun = (host_is_le() == (endian === :le)) ?
 		identity : # host/file same endian
-		(host_is_le && (endian === :be)) ?
+		(host_is_le() && (endian === :be)) ?
 		hton :
-		(!host_is_le && (endian === :le)) ?
+		(!host_is_le() && (endian === :le)) ?
 		write(fraw, htol.(data)) :
 		throw("not done")
 	write(fraw, fun.(data))
