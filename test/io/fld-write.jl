@@ -1,7 +1,7 @@
 # fld-write.jl
 
 using MIRT: fld_write, fld_read
-#import MIRT: fld_write_data_fix
+import MIRT: fld_write_data_fix
 
 #using MIRT: ir_test_dir, ir_test_dir!
 using Test: @test, @testset, @test_throws, @inferred
@@ -94,4 +94,45 @@ end
 	end
 =#
 	@test_throws ArgumentError fld_write_data_fix(Rational.([1 0 1]))
+end
+
+
+# for future testing of reading "multi" external files
+@testset "write multi" begin
+#	file = "../tmp2.fld"
+#	file = "tmp.fld"
+	data = rand(Float32, 7, 9, 2)
+	file1 = "$(basename(file)).part1"
+	file2 = "$(basename(file)).part2"
+	head = [
+		"# AVS field file"
+		"ndim=3"
+		"dim1=7"
+		"dim2=9"
+		"dim3=2"
+		"nspace=3"
+		"veclen=1"
+		"data=float"
+		"field=uniform"
+		"variable 1 file=2 filetype=multi skip=0"
+		file1
+		file2
+	]
+
+	open(file, "w") do fid
+		for line in head
+			println(fid, line)
+		end
+	end
+
+	file1 = joinpath(dirname(file), file1)
+	file2 = joinpath(dirname(file), file2)
+	write(file1, data[:,:,1])
+	write(file2, data[:,:,2])
+
+#	run(`cat $file`)
+#	run(`ls -l $file1`)
+#	run(`op range $file`)
+
+	@test_throws String tmp = fld_read(file) # todo some day...
 end

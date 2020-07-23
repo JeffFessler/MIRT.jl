@@ -34,7 +34,72 @@ end
 end
 
 
+@testset "fld ascii" begin
+	tdir = mktempdir()
+	file = joinpath(tdir, "fld-read-test.fld")
+	extfilename = "fld-read-test.txt"
+	chat = isinteractive()
 
+	data = Float32.(1:5)
+	head = [
+		"# AVS field file"
+		"ndim=1"
+		"dim1=5"
+		"nspace=1"
+		"veclen=1"
+		"data=float"
+		"field=uniform"
+		"variable 1 file=$extfilename filetype=ascii"
+	]
+	open(file, "w") do fid
+		for line in head
+			println(fid, line)
+		end
+	end
+
+	# ensure that it throws if no extfile
+	@test_throws String tmp = fld_read(file)
+
+	# write ascii and test
+	extfile = joinpath(tdir, extfilename)
+	open(extfile, "w") do fid
+		for d in data
+			println(fid, d)
+		end
+	end
+
+#	run(`op range $file`)
+	tmp = fld_read(file ; chat=chat)
+	@test tmp == data
+	@test eltype(tmp) == Float32
+
+	rm(file)
+	rm(extfile)
+end
+
+
+@testset "read no ext" begin # missing extfile
+	tdir = mktempdir()
+	file = joinpath(tdir, "fld-read-test.fld")
+	head = [
+		"# AVS field file"
+		"ndim=1"
+		"dim1=4"
+		"nspace=1"
+		"veclen=1"
+		"data=float"
+		"field=uniform"
+		"variable 1 file=bad.txt filetype=binary"
+	]
+	open(file, "w") do fid
+		for line in head
+			println(fid, line)
+		end
+	end
+
+	@test_throws String fld_read(file)
+	rm(file)
+end
 
 
 # todo: test read slices when that feature is added

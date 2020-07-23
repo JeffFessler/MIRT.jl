@@ -7,9 +7,8 @@ export fld_header, fld_read
 
 
 """
-`head = fld_header(file::String, ...)`
-
-`head, is_external_file, fid = fld_header(file, keepopen=true)`
+    head = fld_header(file::String, ...)
+    head, is_external_file, fid = fld_header(file, keepopen=true)
 
 read header data from AVS format `.fld` file
 
@@ -93,16 +92,16 @@ end
 # + [ ] short datatype
 
 """
-`fld_read(file::String)`
+    fld_read(file::String)
 
-read data from AVS format `.fld` file
+Read data from AVS format `.fld` file
 
 in
 - `file`	file name, usually ending in `.fld`
 
 option
-- `dir`		String	prepend file name with this directory; default ""
-- `chat`	Bool	verbose?
+- `dir::String`	prepend file name with this directory; default ""
+- `chat::Bool`	verbose?
 
 out
 - `data`	Array (1D - 5D) in the data type of the file itself
@@ -117,6 +116,7 @@ function fld_read(
 	file = joinpath(dir, file)
 
 	header, is_external_file, fid = fld_header(file, keepopen=true, chat=chat)
+	chat && @info("is_external_file = $is_external_file")
 
 	# parse header to determine data dimensions and type
 	ndim = arg_get(header, "ndim")
@@ -128,7 +128,6 @@ function fld_read(
 	chat && @info("dims=$dims")
 
 	# external file (binary data in another file)
-	# todo: external ASCII files to be implemented (from fld_read.m)
 	_skip = 0
 	if is_external_file
 		close(fid)
@@ -138,19 +137,28 @@ function fld_read(
 		chat && @info("Current file = '$file', External file = '$extfile', type='$filetype'")
 
 		_skip = occursin("skip=",prod(header)) ?
-			arg_get(prod(header),"skip") : 0
 
-		if filetype != "multi"
+    	arg_get([prod(header)], "skip", false) : 0
+
+		if filetype == "ascii"
+			tmp = dirname(file)
+			extfile = joinpath(tmp, extfile)
+			chat && @info("extfile = $extfile")
+			isfile(extfile) || throw("no ascii file $extfile")
+			format, _, _ = datatype_fld_to_mat(datatype)
+			return fld_read_ascii(extfile, (dims...,), format)
+
+		elseif filetype != "multi"
 			if !isfile(extfile)
 				fdir = file
-				slash = findlast(isequal('/'),fdir)
+				slash = findlast(isequal('/'), fdir) # todo: windows?
 				isnothing(slash) && throw("cannot find external file $extfile")
 				fdir = fdir[1:slash]
-				extfile = fdir*extfile # add directory
+				extfile = fdir * extfile # add directory
 				!isfile(extfile) && throw("no external ref file $extfile")
 			end
 		else
-			throw("multi not supported yet")
+			throw("multi not supported yet") # todo
 		end
 	else
 		filetype = ""
@@ -170,9 +178,23 @@ function fld_read(
 end
 
 
+
+# todo: currently supports only one entry per line (see fld_read.m)
+function fld_read_ascii(extfile::AbstractString, dims::Dims, datatype::DataType)
+	data = zeros(datatype, dims)
+	open(extfile, "r") do fid
+		for i in 1:length(data)
+			tmp = readline(fid)
+			data[i] = parse(Float64, tmp)
+		end
+	end
+	return data
+end
+
+
 function fld_read_single(
 	file, fid, dims, datatype, fieldtype,
-	is_external_file, extfile, format, endian, bytes, _skip,
+	is_external_file, extfile, format::DataType, endian, bytes, _skip,
 )
 
 	# reopen file to same position, with appropriate endian too.
@@ -185,7 +207,7 @@ function fld_read_single(
 	rdims = dims # from handling slice option
 
 	# read binary data and reshape appropriately
-	data = Array{format}(undef,rdims...)
+	data = Array{format}(undef, rdims...)
 	try
 		read!(fid,data)
 	catch
