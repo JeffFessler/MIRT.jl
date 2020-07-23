@@ -55,7 +55,11 @@ end
 function maskit_test()
 	mask = [false true true; true false false]
 	@inferred maskit([7 2 3; 1 7 7], mask)
-	@test maskit([7 2 3; 1 7 7], mask) == [1,2,3]
+	data = [7 2 3; 1 7 7]
+	@test maskit(data, mask) == [1,2,3]
+	data = repeat(data, 1, 1, 2)
+	@test maskit(data, mask) == repeat(1:3, 1, 2)
+	@test_throws DimensionMismatch maskit([0], mask)
 	true
 end
 
