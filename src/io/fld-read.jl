@@ -128,7 +128,6 @@ function fld_read(
 	chat && @info("dims=$dims")
 
 	# external file (binary data in another file)
-	# todo: external ASCII files to be implemented (from fld_read.m)
 	_skip = 0
 	if is_external_file
 		close(fid)
@@ -140,7 +139,15 @@ function fld_read(
 		_skip = occursin("skip=",prod(header)) ?
 			arg_get([prod(header)], "skip", false) : 0
 
-		if filetype != "multi"
+		if filetype == "ascii"
+			tmp = dirname(file)
+			extfile = joinpath(tmp, extfile)
+			chat && @info("extfile = $extfile")
+			isfile(extfile) || throw("no ascii file $extfile")
+			format, _, _ = datatype_fld_to_mat(datatype)
+			return fld_read_ascii(extfile, (dims...,), format)
+
+		elseif filetype != "multi"
 			if !isfile(extfile)
 				fdir = file
 				slash = findlast(isequal('/'),fdir)
@@ -170,9 +177,22 @@ function fld_read(
 end
 
 
+# todo: currently supports only one entry per line (see fld_read.m)
+function fld_read_ascii(extfile::AbstractString, dims::Dims, datatype::DataType)
+	data = zeros(datatype, dims)
+	open(extfile, "r") do fid
+		for i in 1:length(data)
+			tmp = readline(fid)
+			data[i] = parse(Float64, tmp)
+		end
+	end
+	return data
+end
+
+
 function fld_read_single(
 	file, fid, dims, datatype, fieldtype,
-	is_external_file, extfile, format, endian, bytes, _skip,
+	is_external_file, extfile, format::DataType, endian, bytes, _skip,
 )
 
 	# reopen file to same position, with appropriate endian too.
@@ -185,7 +205,7 @@ function fld_read_single(
 	rdims = dims # from handling slice option
 
 	# read binary data and reshape appropriately
-	data = Array{format}(undef,rdims...)
+	data = Array{format}(undef, rdims...)
 	try
 		read!(fid,data)
 	catch
