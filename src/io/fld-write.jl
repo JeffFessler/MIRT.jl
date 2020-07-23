@@ -29,14 +29,16 @@ option
 
 # * `how::Symbol`			file data type; default `:data` infer from data
 
-function fld_write(file::String, data::AbstractArray{<:Real};
+function fld_write(
+	file::String,
+	data::AbstractArray{<:Real} ;
 	check::Bool = true,
 	dir::String = "",
 	endian::Symbol = :le,
 	head::Array{String} = empty([""]),
 #	how::Symbol = :data,
 	raw::Bool = false,
-	)
+)
 
 	data = fld_write_data_fix(data) # make data suitable for writing in .fld
 
@@ -95,13 +97,14 @@ function fld_write(file::String, data::AbstractArray{<:Real};
 
 	# finally, write the binary data
 	host_is_le = ENDIAN_BOM == 0x04030201
-	if host_is_le == (endian === :le) # host/file same endian
-		write(fraw, data) # finally, write the binary data
-	elseif host_is_le && (endian === :be)
-		write(fraw, hton.(data))
-	elseif !host_is_le && (endian === :le)
-		write(fraw, htol.(data))
-	end
+	fun = (host_is_le == (endian === :le)) ?
+		identity : # host/file same endian
+		(host_is_le && (endian === :be)) ?
+		hton :
+		(!host_is_le && (endian === :le)) ?
+		write(fraw, htol.(data)) :
+		throw("not done")
+	write(fraw, fun.(data))
 
 	close(fid)
 
@@ -116,42 +119,23 @@ end
 `data = fld_write_data_fix(data)`
 convert data to format suitable for writing to .fld file
 """
-function fld_write_data_fix(data::AbstractArray{<:Real})
-
-	dtype = eltype(data)
-
-	if dtype == BigFloat
-		@warn "BigFloat downgraded to Float64"
-		return Float64.(data)
-	end
-
-	if dtype == Float16
-		@warn "Float16 upgraded to Float32"
-		return Float32.(data)
-	end
-
-	if dtype == BigInt
-		@warn "BigInt downgraded to Int32"
-		return Int32.(data)
-	end
-
-	if dtype == Int128
-		@warn "Int128 downgraded to Int64"
-		return Int64.(data)
-	end
-
-	if dtype == Int64
-		@warn "Int64 downgraded to Int32"
-		return Int32.(data)
-	end
-
-	if eltype(data) == Bool
-		@warn "Bool upgraded to UInt8"
-		return UInt8.(data)
-	end
-
-	!in(dtype, (Float32, Float64, UInt8, Int16, Int32)) &&
-		throw("unsupported type $dtype")
-
-	return data
+function fld_write_data_fix(data::AbstractArray{BigFloat})
+	@warn "BigFloat downgraded to Float64"
+	return Float64.(data)
 end
+function fld_write_data_fix(data::AbstractArray{Float16})
+	@warn "Float16 promoted to Float32"
+	return Float32.(data)
+end
+function fld_write_data_fix(data::AbstractArray{T}) where {T <: Union{BigInt, Int64}}
+	@warn "$T downgraded to Int32"
+	return Int32.(data)
+end
+function fld_write_data_fix(data::AbstractArray{Bool})
+	@warn "Bool promoted to UInt8"
+	return UInt8.(data)
+end
+@inline fld_write_data_fix(data::AbstractArray{T}) where
+	{T <: Union{Float32, Float64, UInt8, Int16, Int32}} = data
+fld_write_data_fix(data::AbstractArray{T}) where {T <: Any} =
+		throw(ArgumentError("unsupported type $T"))

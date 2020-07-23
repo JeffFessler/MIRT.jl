@@ -7,9 +7,8 @@ export fld_header, fld_read
 
 
 """
-`head = fld_header(file::String, ...)`
-
-`head, is_external_file, fid = fld_header(file, keepopen=true)`
+    head = fld_header(file::String, ...)
+    head, is_external_file, fid = fld_header(file, keepopen=true)
 
 read header data from AVS format `.fld` file
 
@@ -25,11 +24,12 @@ out
 - `head::String`	array of header information
 
 """
-function fld_header(file::AbstractString ;
-		dir::String = "",
-		chat::Bool = false,
-		keepopen::Bool = false,
-	)
+function fld_header(
+	file::AbstractString ;
+	dir::String = "",
+	chat::Bool = false,
+	keepopen::Bool = false,
+)
 
 	file = joinpath(dir, file)
 	fid = open(file)
@@ -92,29 +92,31 @@ end
 # + [ ] short datatype
 
 """
-`fld_read(file::String)`
+    fld_read(file::String)
 
-read data from AVS format `.fld` file
+Read data from AVS format `.fld` file
 
 in
 - `file`	file name, usually ending in `.fld`
 
 option
-- `dir`		String	prepend file name with this directory; default ""
-- `chat`	Bool	verbose?
+- `dir::String`	prepend file name with this directory; default ""
+- `chat::Bool`	verbose?
 
 out
 - `data`	Array (1D - 5D) in the data type of the file itself
 
 """
-function fld_read(file::AbstractString ;
-		dir::String = "",
-		chat::Bool = false,
-	)
+function fld_read(
+	file::AbstractString ;
+	dir::String = "",
+	chat::Bool = false,
+)
 
 	file = joinpath(dir, file)
 
 	header, is_external_file, fid = fld_header(file, keepopen=true, chat=chat)
+	chat && @info("is_external_file = $is_external_file")
 
 	# parse header to determine data dimensions and type
 	ndim = arg_get(header, "ndim")
@@ -126,7 +128,6 @@ function fld_read(file::AbstractString ;
 	chat && @info("dims=$dims")
 
 	# external file (binary data in another file)
-	# todo: external ASCII files to be implemented (from fld_read.m)
 	_skip = 0
 	if is_external_file
 		close(fid)
@@ -135,21 +136,28 @@ function fld_read(file::AbstractString ;
 		filetype = arg_get(header, "filetype", false)
 		chat && @info("Current file = '$file', External file = '$extfile', type='$filetype'")
 
-		if occursin("skip=",prod(header))
-			_skip = arg_get(prod(header),"skip")
-		end
+		_skip = occursin("skip=",prod(header)) ?
+			arg_get([prod(header)], "skip", false) : 0
 
-		if filetype != "multi"
+		if filetype == "ascii"
+			tmp = dirname(file)
+			extfile = joinpath(tmp, extfile)
+			chat && @info("extfile = $extfile")
+			isfile(extfile) || throw("no ascii file $extfile")
+			format, _, _ = datatype_fld_to_mat(datatype)
+			return fld_read_ascii(extfile, (dims...,), format)
+
+		elseif filetype != "multi"
 			if !isfile(extfile)
 				fdir = file
-				slash = findlast(isequal('/'),fdir)
+				slash = findlast(isequal('/'), fdir) # todo: windows?
 				isnothing(slash) && throw("cannot find external file $extfile")
 				fdir = fdir[1:slash]
-				extfile = fdir*extfile # add directory
+				extfile = fdir * extfile # add directory
 				!isfile(extfile) && throw("no external ref file $extfile")
 			end
 		else
-			throw("multi not supported yet")
+			throw("multi not supported yet") # todo
 		end
 	else
 		filetype = ""
@@ -169,8 +177,23 @@ function fld_read(file::AbstractString ;
 end
 
 
-function fld_read_single(file, fid, dims, datatype, fieldtype,
-	is_external_file, extfile, format, endian, bytes, _skip)
+# todo: currently supports only one entry per line (see fld_read.m)
+function fld_read_ascii(extfile::AbstractString, dims::Dims, datatype::DataType)
+	data = zeros(datatype, dims)
+	open(extfile, "r") do fid
+		for i in 1:length(data)
+			tmp = readline(fid)
+			data[i] = parse(Float64, tmp)
+		end
+	end
+	return data
+end
+
+
+function fld_read_single(
+	file, fid, dims, datatype, fieldtype,
+	is_external_file, extfile, format::DataType, endian, bytes, _skip,
+)
 
 	# reopen file to same position, with appropriate endian too.
 	if is_external_file
@@ -182,20 +205,17 @@ function fld_read_single(file, fid, dims, datatype, fieldtype,
 	rdims = dims # from handling slice option
 
 	# read binary data and reshape appropriately
-	data = Array{format}(undef,rdims...)
+	data = Array{format}(undef, rdims...)
 	try
 		read!(fid,data)
 	catch
 		@info("rdims=$rdims")
 		throw("file count != data count")
 	end
-	if endian == "ieee-le"
-		data .= htol.(data)
-	elseif endian == "ieee-be"
-		data .= hton.(data)
-	end
 
-	return data
+	return endian === :le ? htol.(data) :
+		endian === :be ? hton.(data) :
+		throw("bug $endian")
 end
 
 
@@ -247,65 +267,29 @@ end
 """
 `format, endian, bytes = datatype_fld_to_mat(datatype)`
 
-determine data format from .fld header datatype
+Determine data format from .fld header datatype.
 """
 function datatype_fld_to_mat(datatype::AbstractString)
-	if datatype == "byte"
-		format = UInt8
-		endian = "ieee-be" # irrelevant
-		bytes = 1
 
-	elseif datatype in ["short_be", "short_sun", "xdr_short"]
-		format = Int16
-		endian = "ieee-be"
-		bytes = 2
-	elseif datatype == "short_le"
-		format = Int16
-		endian = "ieee-le"
-		bytes = 2
+	dict = Dict([
+		("byte", (UInt8, :be, 1)), # :be irrelevant
+		("short_be", (UInt16, :be, 2)),
+		("short_sun", (UInt16, :be, 2)),
+		("xdr_short", (UInt16, :be, 2)),
+		("short_le", (UInt16, :le, 2)),
+		("int", (Int32, "", 4)), # native int - not portable
+		("int_le", (Int32, :le, 4)),
+		("int_be", (Int32, :be, 4)),
+		("xdr_int", (Int32, :be, 4)),
+		("float", (Float32, "", 4)), # native float - not portable
+		("float_le", (Float32, :le, 4)),
+		("float_be", (Float32, :be, 4)),
+		("xdr_float", (Float32, :be, 4)),
+		("double", (Float64, "", 8)), # native 64oat - not portable
+		("double_le", (Float64, :le, 8)),
+		("double_be", (Float64, :be, 8)),
+		("xdr_double", (Float64, :be, 8)),
+	])
 
-	elseif datatype == "int"
-		format = Int32
-		endian = "" # native int - not portable
-		bytes = 4
-	elseif datatype == "int_le"
-		format = Int32
-		endian = "ieee-le"
-		bytes = 4
-	elseif datatype in ["int_be", "xdr_int"]
-		format = Int32
-		endian = "ieee-be"
-		bytes = 4
-
-	elseif datatype == "float"
-		format = Float32 # typeof(1.)
-		endian = "" # native float - not portable
-		bytes = 4
-	elseif datatype == "float_le"
-		format = Float32
-		endian = "ieee-le"
-		bytes = 4
-	elseif datatype in ["float_be", "xdr_float"]
-		format = Float32
-		endian = "ieee-be"
-		bytes = 4
-
-	elseif datatype == "double"
-		format = Float64
-		endian = "" # native double - not portable
-		bytes = 8
-	elseif datatype == "double_le"
-		format = Float64
-		endian = "ieee-le"
-		bytes = 8
-	elseif datatype in ["double_be", "xdr_double"]
-		format = Float64
-		endian = "ieee-be"
-		bytes = 8
-
-	else
-		throw("format '$datatype' not yet implemented. ask jeff!")
-	end
-
-	return format, endian, bytes
+	return dict[datatype] # format, endian, bytes
 end
