@@ -137,7 +137,8 @@ function fld_read(
 		chat && @info("Current file = '$file', External file = '$extfile', type='$filetype'")
 
 		_skip = occursin("skip=",prod(header)) ?
-			arg_get([prod(header)], "skip", false) : 0
+
+    	arg_get([prod(header)], "skip", false) : 0
 
 		if filetype == "ascii"
 			tmp = dirname(file)
@@ -175,6 +176,7 @@ function fld_read(
 
 	return data
 end
+
 
 
 # todo: currently supports only one entry per line (see fld_read.m)

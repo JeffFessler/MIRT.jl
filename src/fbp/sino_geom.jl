@@ -11,6 +11,8 @@ export sino_geom_help, sino_geom_plot_grids, sino_geom_show, sino_geom_test
 using Plots: Plot, plot!, plot, scatter, scatter!, gui
 
 
+# todo: parametric type with "how" ?
+
 """
     MIRT_sino_geom
 struct to describe a 2D sinogram geometry
@@ -132,7 +134,7 @@ See also
 
 Jeff Fessler, University of Michigan
 """
-function sino_geom(how::Symbol; kwarg...)
+function sino_geom(how::Symbol ; kwarg...)
 	if how === :par
 		sg = sino_geom_par( ; kwarg...)
 	elseif how === :fan
@@ -195,21 +197,21 @@ end
     sg = sino_geom_fan()
 """
 function sino_geom_fan( ;
-		units::Symbol = :none,
-		nb::Int = 128,
-		na::Int = 2 * floor(Int, nb * pi/2 / 2),
-		d::Real = 1,
-		orbit::Union{Symbol,Real} = 360, # [degrees]
-		orbit_start::Real = 0,
-		strip_width::Real = d,
-		offset::Real = 0,
-		source_offset::Real = 0,
-		dsd::Real = 4*nb*d,	# dis_src_det
-	#	dso::Real = [],		# dis_src_iso
-		dod::Real = nb*d,	# dis_iso_det
-		dfs::Real = 0,		# dis_foc_src (3rd gen CT)
-		down::Int = 1,
-	)
+	units::Symbol = :none,
+	nb::Int = 128,
+	na::Int = 2 * floor(Int, nb * pi/2 / 2),
+	d::Real = 1,
+	orbit::Union{Symbol,Real} = 360, # [degrees]
+	orbit_start::Real = 0,
+	strip_width::Real = d,
+	offset::Real = 0,
+	source_offset::Real = 0,
+	dsd::Real = 4*nb*d,	# dis_src_det
+#	dso::Real = [],		# dis_src_iso
+	dod::Real = nb*d,	# dis_iso_det
+	dfs::Real = 0,		# dis_foc_src (3rd gen CT)
+	down::Int = 1,
+)
 
 	dfs != 0 && !isinf(dfs) && throw("dfs $dfs") # must be 0 or Inf
 
@@ -233,16 +235,16 @@ end
     sg = sino_geom_par( ... )
 """
 function sino_geom_par( ;
-		units::Symbol = :none,
-		nb::Int = 128,
-		na::Int = 2 * floor(Int, nb * pi/2 / 2),
-		down::Int = 1,
-		d::Real = 1,
-		orbit::Real = 180, # [degrees]
-		orbit_start::Real = 0,
-		strip_width::Real = d,
-		offset::Real = 0,
-	)
+	units::Symbol = :none,
+	nb::Int = 128,
+	na::Int = 2 * floor(Int, nb * pi/2 / 2),
+	down::Int = 1,
+	d::Real = 1,
+	orbit::Real = 180, # [degrees]
+	orbit_start::Real = 0,
+	strip_width::Real = d,
+	offset::Real = 0,
+)
 
 	sg = MIRT_sino_geom(:par, units,
 		nb, na, d, orbit, orbit_start, offset, strip_width,
@@ -256,16 +258,16 @@ end
     sg = sino_geom_moj( ... )
 """
 function sino_geom_moj( ;
-		units::Symbol = :none,
-		nb::Int = 128,
-		na::Int = 2 * floor(Int, nb * pi/2 / 2),
-		down::Int = 1,
-		d::Real = 1, # means dx for :moj
-		orbit::Real = 180, # [degrees]
-		orbit_start::Real = 0,
-		strip_width::Real = d, # ignored ?
-		offset::Real = 0,
-	)
+	units::Symbol = :none,
+	nb::Int = 128,
+	na::Int = 2 * floor(Int, nb * pi/2 / 2),
+	down::Int = 1,
+	d::Real = 1, # means dx for :moj
+	orbit::Real = 180, # [degrees]
+	orbit_start::Real = 0,
+	strip_width::Real = d, # ignored ?
+	offset::Real = 0,
+)
 
 	sg = MIRT_sino_geom(:moj, units,
 		nb, na, d, orbit, orbit_start, offset, strip_width,
@@ -392,9 +394,11 @@ end
     sino_geom_unitv()
 sinogram with a single ray
 """
-function sino_geom_unitv(sg::MIRT_sino_geom;
-		ib=round(Int, sg.nb/2+1),
-		ia=round(Int, sg.na/2+1))
+function sino_geom_unitv(
+	sg::MIRT_sino_geom ;
+	ib::Int = round(Int, sg.nb/2+1),
+	ia::Int = round(Int, sg.na/2+1),
+)
 	out = sg.zeros
 	out[ib,ia] = 1
 	return out
@@ -472,7 +476,8 @@ sino_geom_fun0 = Dict([
 	(:plot_grid, sg -> sino_geom_plot_grid(sg)),
 
 	# angular dependent d for :moj
-	(:d_ang, sg -> sg.d * max.(abs.(cos.(sg.ar)), abs.(sin.(sg.ar)))),
+	(:d_moj, sg -> ar -> sg.d * max(abs(cos(ar)), abs(sin(ar)))),
+	(:d_ang, sg -> sg.d_moj.(sg.ar)),
 
 	(:shape, sg -> ((x::AbstractArray{<:Number} -> reshape(x, sg.dim..., :)))),
 	(:taufun, sg -> ((x,y) -> sino_geom_taufun(sg,x,y))),
@@ -558,10 +563,10 @@ function sino_geom_plot(sg ; ig::Union{Nothing,ImageGeom}=nothing)
 	plot!(xtick=round.([xmin, 0, xmax], digits=0))
 	plot!(ytick=round.([ymin, 0, ymax], digits=2))
 
-	t = LinRange(0, 2*pi, 1001)
+	θ = LinRange(0, 2*pi, 1001)
 	rfov = sg.rfov
 	scatter!([0], [0], marker=:circle, label="")
-	plot!(rfov * cos.(t), rfov * sin.(t), color=:magenta, label="") # rfov circle
+	plot!(rfov * cos.(θ), rfov * sin.(θ), color=:magenta, label="") # rfov circle
 	rfov = round(sg.rfov, digits=1)
 	plot!(xlabel="x", ylabel="y", title = "$(sg.how): rfov = $rfov")
 
@@ -573,13 +578,13 @@ function sino_geom_plot(sg ; ig::Union{Nothing,ImageGeom}=nothing)
 	if sg.how === :fan
 		x0 = 0
 		y0 = sg.dso
-		t = LinRange(0, 2*pi, 100)
+		t = LinRange(0, 2π, 100)
 		rot = sg.ar[1]
 		rot = [cos(rot) -sin(rot); sin(rot) cos(rot)]
 		p0 = rot * [x0; y0]
 		pd = rot * [sg.xds'; sg.yds'] # detector points
 
-		tmp = sg.ar .+ pi/2 # trick: angle beta defined ccw from y axis
+		tmp = sg.ar .+ π/2 # trick: angle beta defined ccw from y axis
 		scatter!([p0[1]], [p0[2]], color=:yellow, label="") # source
 		plot!(sg.dso * cos.(t), sg.dso * sin.(t), color=:cyan, label="") # source circle
 		scatter!(sg.dso * cos.(tmp), sg.dso * sin.(tmp), markerstrokecolor=:auto,
@@ -592,11 +597,11 @@ function sino_geom_plot(sg ; ig::Union{Nothing,ImageGeom}=nothing)
 		plot!(title="$(sg.how): dfs = $(sg.dfs)")
 	end
 
-	if sg.how === :moj && false
-		t = LinRange(0, 2*pi, 100)
-		rmax = maximum(sg.s)
-		rphi = sg.nb/2 * sg.d ./ (max(abs.(cos.(t)), abs.(sin.(t))))
-		plot!(rphi .* cos.(t), rphi .* sin.(t), label="") # fov circle
+	if sg.how === :moj
+		θ = LinRange(0, 2π, 100)
+		rphi = sg.nb/2 * sg.d_moj.(θ)
+		plot!(rphi .* cos.(θ), rphi .* sin.(θ), color=:blue, label="")
+	#	rmax = maximum(sg.s)
 	#	axis([-1 1 -1 1] * max([rmax ig.fov/2]) * 1.1)
 	end
 
@@ -610,11 +615,12 @@ sinogram geometry for GE lightspeed system
 These numbers are published in IEEE T-MI Oct. 2006, p.1272-1283 wang:06:pwl
 """
 function sino_geom_ge1( ;
-		na::Int = 984,
-		nb::Int = 888,
-		orbit::Union{Symbol,Real} = 360,
-		units::Symbol = :mm, # default units is mm
-		kwarg...)
+	na::Int = 984,
+	nb::Int = 888,
+	orbit::Union{Symbol,Real} = 360,
+	units::Symbol = :mm, # default units is mm
+	kwarg...,
+)
 
 	if orbit === :short
 		na = 642 # trick: reduce na for short scans
@@ -626,9 +632,10 @@ function sino_geom_ge1( ;
 			throw("units $units")
 
 	return sino_geom(:fan ; units=units,
-			nb=nb, na=na,
-			d = 1.0239/scale, offset = 1.25,
-			dsd = 949.075/scale,
-			dod = 408.075/scale,
-			dfs = 0, kwarg...)
+		nb=nb, na=na,
+		d = 1.0239/scale, offset = 1.25,
+		dsd = 949.075/scale,
+		dod = 408.075/scale,
+		dfs = 0, kwarg...,
+	)
 end
