@@ -118,15 +118,18 @@ end
 		file1
 		file2
 	]
+
 	open(file, "w") do fid
 		for line in head
 			println(fid, line)
 		end
-		file1 = joinpath(dirname(file), file1)
-		file2 = joinpath(dirname(file), file2)
-		write(file1, data[:,:,1])
-		write(file2, data[:,:,2])
 	end
+
+	file1 = joinpath(dirname(file), file1)
+	file2 = joinpath(dirname(file), file2)
+	write(file1, data[:,:,1])
+	write(file2, data[:,:,2])
+
 #	run(`cat $file`)
 #	run(`ls -l $file1`)
 #	run(`op range $file`)

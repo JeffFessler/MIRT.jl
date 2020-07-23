@@ -78,5 +78,29 @@ end
 end
 
 
+@testset "read no ext" begin # missing extfile
+	tdir = mktempdir()
+	file = joinpath(tdir, "fld-read-test.fld")
+	head = [
+		"# AVS field file"
+		"ndim=1"
+		"dim1=4"
+		"nspace=1"
+		"veclen=1"
+		"data=float"
+		"field=uniform"
+		"variable 1 file=bad.txt filetype=binary"
+	]
+	open(file, "w") do fid
+		for line in head
+			println(fid, line)
+		end
+	end
+
+	@test_throws String fld_read(file)
+	rm(file)
+end
+
+
 # todo: test read slices when that feature is added
 # fld_write ...
