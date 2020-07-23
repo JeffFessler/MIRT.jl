@@ -1,7 +1,7 @@
 # fld-write.jl
 
 using MIRT: fld_write, fld_read
-#import MIRT: fld_write_data_fix
+import MIRT: fld_write_data_fix
 
 #using MIRT: ir_test_dir, ir_test_dir!
 using Test: @test, @testset, @test_throws, @inferred
