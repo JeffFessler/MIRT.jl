@@ -6,7 +6,7 @@ jiffy image display
 
 export jim
 
-using Plots: heatmap, plot!, annotate!
+using Plots: heatmap, plot, plot!, annotate!
 using MosaicViews: mosaicview
 using FFTViews: FFTView
 

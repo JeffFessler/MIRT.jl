@@ -39,7 +39,8 @@ function rect_sino_show( ;
 
 	for ii=1:ngeom
 		sg = geoms[ii]
-		sino = rect_sino(sg, rect; oversample=oversample)
+		over = (sg isa SinoMoj) ? 1 : oversample
+		sino = rect_sino(sg, rect; oversample=over)
 		pl[ii] = jim(sg.r, sg.ad, sino, title="$(typeof(sg))")
 	end
 	plot(pl...)

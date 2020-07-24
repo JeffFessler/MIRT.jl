@@ -8,17 +8,15 @@ export SinoGeom, sino_geom, sino_geom_par, sino_geom_fan, sino_geom_moj
 export SinoPar, SinoFan, SinoMoj, SinoFanArc, SinoFanFlat
 export sino_geom_help
 
-# using MIRT:
-
 
 abstract type SinoGeom end
 abstract type SinoFan <: SinoGeom end
 
-"`SinoPar()` 2D parallel-beam sinogram geometry"
+"`SinoPar` 2D parallel-beam sinogram geometry"
 struct SinoPar <: SinoGeom
 	units::Symbol			# :nothing | :mm | :cm etc.
-	nb::Int					# # of "radial" samples, aka ns
-	na::Int					# # of angular samples
+	nb::Int					# # of "radial" samples, aka nr
+	na::Int					# # of angular samples, aka nϕ
 	d::Float32				# dr, "radial" sample spacing
 	orbit::Float32			# [degrees]
 	orbit_start::Float32	# [degrees]
@@ -26,11 +24,11 @@ struct SinoPar <: SinoGeom
 	strip_width::Float32	#
 end
 
-"`SinoMoj()` 2D Mojette sinogram geometry"
+"`SinoMoj` 2D Mojette sinogram geometry"
 struct SinoMoj <: SinoGeom
 	units::Symbol			# :nothing | :mm | :cm etc.
 	nb::Int					# # of "radial" samples, aka ns
-	na::Int					# # of angular samples
+	na::Int					# # of angular samples, aka nϕ
 	d::Float32				# dx, pixels must be square
 	orbit::Float32			# [degrees]
 	orbit_start::Float32	# [degrees]
@@ -38,11 +36,11 @@ struct SinoMoj <: SinoGeom
 	strip_width::Float32	#
 end
 
-"`SinoFanArc()` 2D Fan-beam sinogram geometry for arc detector"
+"`SinoFanArc` 2D Fan-beam sinogram geometry for arc detector"
 struct SinoFanArc <: SinoFan
 	units::Symbol			# :nothing | :mm | :cm etc.
 	nb::Int					# # of "radial" samples, aka ns
-	na::Int					# # of angular samples
+	na::Int					# # of angular samples, aka nβ
 	d::Float32				# ds detector sample spacing
 	orbit::Float32			# [degrees]
 	orbit_start::Float32	# [degrees]
@@ -56,11 +54,11 @@ struct SinoFanArc <: SinoFan
 	dfs::Float32			# distance from focal spot to source
 end
 
-"`SinoFanFlat()` 2D Fan-beam sinogram geometry for flat detector"
+"`SinoFanFlat` 2D Fan-beam sinogram geometry for flat detector"
 struct SinoFanFlat <: SinoFan
 	units::Symbol			# :nothing | :mm | :cm etc.
 	nb::Int					# # of "radial" samples, aka ns
-	na::Int					# # of angular samples
+	na::Int					# # of angular samples, aka nβ
 	d::Float32				# ds detector sample spacing
 	orbit::Float32			# [degrees]
 	orbit_start::Float32	# [degrees]
@@ -86,7 +84,7 @@ function sino_geom_help( ; io::IO = isinteractive() ? stdout : devnull )
 	"\n
 	Derived values
 
-	sg.dim			dimensions: (nb,na)
+	sg.dim			dimensions: `(nb,na)`
 	sg.ds|dr		radial sample spacing (NaN for :moj)
 	sg.s			[nb] s sample locations
 	sg.w			(nb-1)/2 + offset ('middle' sample position)
@@ -98,7 +96,7 @@ function sino_geom_help( ; io::IO = isinteractive() ? stdout : devnull )
 	sg.xds			[nb] center of detector elements (beta=0)
 	sg.yds			[nb] ''
 	sg.grid			(rg, phigrid) [nb na] parallel-beam coordinates
-	sg.plot_grid	plot sg.grid
+	sg.plot_grid(scatter)	plot `sg.grid` using `Plots.scatter`
 
 	For mojette:
 
@@ -116,7 +114,7 @@ function sino_geom_help( ; io::IO = isinteractive() ? stdout : devnull )
 	sg.shape(sino)		reshape sinograms into array [nb na :]
 	sg.unitv(;ib,ia)	unit 'vector' with single nonzero element
 	sg.taufun(x,y)		projected s/ds for each (x,y) pair [numel(x) na]
-	sg.plot(;ig)		plot system geometry (most useful for fan)
+	sg.plot!(plot!;ig)	plot system geometry (mostly for SinoFan)
 	\n")
 end
 
@@ -165,7 +163,6 @@ out
 See also
 - `sino_geom_help()` help on methods
 - `sino_geom_plot_grids()` show sampling
-- `sino_geom_test()` self test
 
 Jeff Fessler, University of Michigan
 """
@@ -240,7 +237,7 @@ function sino_geom_over(sg::T, over::Int) where {T <: Union{SinoPar, SinoMoj}}
 end
 function sino_geom_over(sg::SinoMoj, over::Int)
 	over == 1 && return sg
-	@warn("Possibly not meaningful for Mojette")
+	@warn("Sinogram over-sample $over possibly not meaningful for Mojette")
 	return SinoMoj(_sino_geom_over(sg, over)...)
 end
 function sino_geom_over(sg::SinoFan, over::Int)
@@ -491,16 +488,17 @@ sino_geom_fun0 = Dict([
 	(:yds, sg -> sino_geom_yds(sg)),
 	(:dso, sg -> sg.dsd - sg.dod),
 	(:grid, sg -> sino_geom_grid(sg)),
-	(:plot_grid, sg -> sino_geom_plot_grid(sg)),
+	(:plot_grid, sg -> ((plot::Function) -> sino_geom_plot_grid(sg, plot))),
 
-	# angular dependent d for :moj
-	(:d_moj, sg -> ar -> sg.d * max(abs(cos(ar)), abs(sin(ar)))),
-	(:d_ang, sg -> sg.d_moj.(sg.ar)),
-
-	(:shape, sg -> ((x::AbstractArray{<:Number} -> reshape(x, sg.dim..., :)))),
+	(:plot!, sg ->
+		((plot!::Function ; ig=nothing) -> sino_geom_plot!(sg, plot! ; ig=ig))),
+	(:shape, sg -> (((x::AbstractArray) -> reshaper(x, sg.dim)))),
 	(:taufun, sg -> ((x,y) -> sino_geom_taufun(sg,x,y))),
 	(:unitv, sg -> ((;kwarg...) -> sino_geom_unitv(sg; kwarg...))),
-	(:plot, sg -> ((;ig=nothing) -> sino_geom_plot(sg, ig=ig))),
+
+	# angular dependent d for :moj
+	(:d_moj, sg -> (ar -> sg.d * max(abs(cos(ar)), abs(sin(ar))))),
+	(:d_ang, sg -> sg.d_moj.(sg.ar)),
 
 	# functions that return new geometry:
 
@@ -518,6 +516,14 @@ Base.getproperty(sg::SinoGeom, s::Symbol) =
 
 Base.propertynames(sg::SinoGeom) =
 	(fieldnames(typeof(sg))..., keys(sino_geom_fun0)...)
+
+
+"""
+    reshaper(x::AbstractArray, dim:Dims)
+Reshape `x` to size `dim` with `:` only if needed
+"""
+reshaper(x::AbstractArray, dim::Dims) =
+	(length(x) == prod(dim)) ? reshape(x, dim) : reshape(x, dim..., :)
 
 
 """

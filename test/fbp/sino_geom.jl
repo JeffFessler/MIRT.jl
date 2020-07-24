@@ -5,7 +5,7 @@ using MIRT: sino_geom_help, sino_geom_plot, sino_geom_plot_grids
 using MIRT: image_geom, prompt
 import MIRT: sino_geom_gamma_dfs
 
-using Plots: plot!, plot
+using Plots: plot!, plot, scatter, gui
 using Test: @test, @test_throws, @inferred
 
 
@@ -31,7 +31,8 @@ function sino_geom_show( ; kwarg...)
 	pl = Array{Any}(undef, nsg)
 	for ii = 1:nsg
 		sg = sg_list[ii].down(down)
-		pl[ii] = sino_geom_plot(sg)
+	#	pl[ii] = sino_geom_plot(sg)
+		pl[ii] = plot(); sino_geom_plot!(sg, plot!)
 		plot!(pl[ii], xlim=[-1,1]*550, ylim=[-1,1]*550)
 		plot!(pl[ii], xtick=[-1,0,1]*250)
 	end
@@ -86,16 +87,21 @@ for ii = 1:nsg
 	end
 
 	sg.grid
-	sg.plot_grid
+	sg.plot_grid(plot)
+#	gui(); prompt()
 
-	sg.d_ang # angular dependent d for :moj
+	if sg isa SinoMoj
+		sg.d_moj(0)
+		sg.d_ang # angular dependent d for :moj
+	end
 
-	sg.shape(vec(sg.ones))
+	@test sg.shape(vec(sg.ones)) == sg.ones
 	sg.taufun(ig.x, 0*ig.x)
 	sg.unitv()
 	sg.unitv(ib=1, ia=2)
 
-	pl[ii] = sg.plot(ig=ig)
+	pl[ii] = plot(); sg.plot!(plot! ; ig=ig)
+#	gui(); prompt()
 end
 
 #@inferred todo
@@ -113,7 +119,7 @@ show(isinteractive() ? stdout : devnull, MIME("text/plain"), sg)
 
 @inferred sino_geom_help()
 
-pg = sino_geom_plot_grids()
+pg = sino_geom_plot_grids(plot)
 ps = sino_geom_show()
 
 plot(pg..., ps..., layout=(2,4))
