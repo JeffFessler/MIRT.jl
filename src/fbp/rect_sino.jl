@@ -6,7 +6,7 @@ rect_sino.jl
 
 export rect_sino
 
-#using MIRT: sino_geom, MIRT_sino_geom, downsample2
+#using MIRT: sino_geom, SinoGeom, downsample2
 
 
 """
@@ -16,9 +16,9 @@ Create sinogram projection of one or more rectangles.
 Works for any sinogram geometry.
 
 in
-- `sg::MIRT_sino_geom,`		sinogram geometry object from `sino_geom()`
-- `rects::Matrix`			`[ne 6]` rectangle parameters
-							`[centx centy widthx widthy angle_degrees value]`
+- `sg::SinoGeom`	sinogram geometry object from `sino_geom()`
+- `rects::Matrix`		`[ne 6]` rectangle parameters
+						`[centx centy widthx widthy angle_degrees value]`
 
 options
 - `oversample::Int`	oversampling factor for emulating "strips"
@@ -31,8 +31,12 @@ out
 
 To get the sample locations, use `(pos,ang) = sg.grid`
 """
-function rect_sino(sg::MIRT_sino_geom, rects::AbstractMatrix{<:Real} ;
-		oversample::Int = 1, kwargs...)
+function rect_sino(
+	sg::SinoGeom,
+	rects::AbstractMatrix{<:Real} ;
+	oversample::Int = 1,
+	kwargs...,
+)
 
 	sg = sg.over(oversample)
 	(rg, ϕg) = sg.grid
@@ -64,11 +68,13 @@ options
 out
 - `sino::AbstractArray{Float32}` same size as `rg` and `ϕg`
 """
-function rect_sino(rg::AbstractArray{<:Real}, ϕg::AbstractArray{<:Real},
-		rects::AbstractMatrix{<:Real} ;
-		xscale::Int = 1,
-		yscale::Int = 1,
-	)
+function rect_sino(
+	rg::AbstractArray{<:Real},
+	ϕg::AbstractArray{<:Real},
+	rects::AbstractMatrix{<:Real} ;
+	xscale::Int = 1,
+	yscale::Int = 1,
+)
 
 	size(rects,2) != 6 && throw("6 parameters per rectangle")
 	size(rg) != size(ϕg) && throw("rg and ϕg size mismatch")

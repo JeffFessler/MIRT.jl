@@ -4,21 +4,42 @@ sinogram geometry for 2D tomographic image reconstruction
 2019-07-01, Jeff Fessler, University of Michigan
 =#
 
-export MIRT_sino_geom, sino_geom
+export SinoGeom, sino_geom
+export SinoGeomType, SinoPar, SinoFan, SinoMoj #, SinoFanArc, SinoFanFlat
+export SinoGeomPar, SinoGeomMoj, SinoGeomFan #, SinoGeomFanArc, SinoGeomFanFlat
 export sino_geom_help, sino_geom_plot_grids, sino_geom_show, sino_geom_test
 
 # using MIRT: jim, image_geom, ImageGeom, prompt
 using Plots: Plot, plot!, plot, scatter, scatter!, gui
 
 
-# todo: parametric type with "how" ?
+abstract type SinoGeomType end
+#abstract type SinoFan <: SinoGeomType end
+
+"`SinoPar()` parallel-beam geometry"
+struct SinoPar <: SinoGeomType end
+
+"`SinoMoj()` Mojette geometry"
+struct SinoMoj <: SinoGeomType end
+
+"`SinoFan()` Fan-beam geometry"
+struct SinoFan <: SinoGeomType end
+
+#=
+"`SinoFanArc()` Fan-beam geometry for arc detector"
+struct SinoFanArc <: SinoFan end
+
+"`SinoFanFlat()` Fan-beam geometry for flat detector"
+struct SinoFanFlat <: SinoFan end
+=#
+
 
 """
-    MIRT_sino_geom
+    SinoGeom
 struct to describe a 2D sinogram geometry
 """
-struct MIRT_sino_geom
-	how::Symbol				# :par | :moj | :fan
+struct SinoGeom{G}
+#	how::Symbol				# :par | :moj | :fan
 	units::Symbol			# :nothing | :mm | :cm etc.
 	nb::Int					# # of "radial" samples, aka ns
 	na::Int					# # of angular samples
@@ -37,6 +58,12 @@ struct MIRT_sino_geom
 #	dso::Float32			# dis_src_iso = dsd-dod, Inf for parallel beam
 	dfs::Float32			# distance from focal spot to source
 end
+
+SinoGeomPar = SinoGeom{SinoPar}
+SinoGeomMoj = SinoGeom{SinoMoj}
+SinoGeomFan = SinoGeom{SinoFan}
+#SinoGeomFanArc = SinoGeom{SinoFanArc}
+#SinoGeomFanFlat = SinoGeom{SinoFanFlat}
 
 
 """
@@ -88,7 +115,7 @@ end
 """
     function sg = sino_geom(...)
 
-Constructor for `MIRT_sino_geom`
+Constructor for `SinoGeom`
 
 Create the "sinogram geometry" structure that describes the sampling
 characteristics of a given sinogram for a 2D parallel or fan-beam system.
@@ -124,7 +151,7 @@ fan beam distances:
 				use `Inf` for flat detector
 
 out
-- `sg::MIRT_sino_geom`	initialized structure
+- `sg::SinoGeom`	initialized structure
 
 See also
 - `sino_geom_help()` help on methods
@@ -162,13 +189,13 @@ end
     sg = downsample(sg, down)
 down-sample (for testing with small problems)
 """
-function downsample(sg::MIRT_sino_geom, down::Int)
+function downsample(sg::SinoGeom{G}, down::Int) where {G}
 	down == 1 && return sg
 
 	nb = 2 * round(Int, sg.nb / down / 2) # keep it even
 	na = round(Int, sg.na / down)
 
-	return MIRT_sino_geom(sg.how, sg.units,
+	return SinoGeom{G}(sg.units,
 		nb, na, sg.d * down, sg.orbit, sg.orbit_start, sg.offset,
 		sg.strip_width * down,
 		sg.source_offset, sg.dsd, sg.dod, sg.dfs)
@@ -180,12 +207,12 @@ end
 over-sample in "radial" dimension
 Probably not meaningful for mojette sampling because d=dx.
 """
-function sino_geom_over(sg::MIRT_sino_geom, over::Int)
+function sino_geom_over(sg::SinoGeom{G}, over::Int) where {G}
 	if over == 1
 		return sg
 	end
 
-	return MIRT_sino_geom(sg.how, sg.units,
+	return SinoGeom{G}(sg.units,
 		sg.nb * over, sg.na, sg.d / over,
 		sg.orbit, sg.orbit_start, sg.offset * over,
 		sg.strip_width / over,
@@ -216,14 +243,14 @@ function sino_geom_fan( ;
 	dfs != 0 && !isinf(dfs) && throw("dfs $dfs") # must be 0 or Inf
 
 	if orbit === :short # trick
-		sg_tmp = MIRT_sino_geom(:fan, units,
+		sg_tmp = SinoGeom{SinoFan}(units,
 			nb, na, d, 0, orbit_start, offset, strip_width,
 			source_offset, dsd, dod, dfs)
 		orbit = sg_tmp.orbit_short
 	end
 	isa(orbit, Symbol) && throw("orbit :orbit")
 
-	sg = MIRT_sino_geom(:fan, units,
+	sg = SinoGeom{SinoFan}(units,
 		nb, na, d, orbit, orbit_start, offset, strip_width,
 		source_offset, dsd, dod, dfs)
 
@@ -246,7 +273,7 @@ function sino_geom_par( ;
 	offset::Real = 0,
 )
 
-	sg = MIRT_sino_geom(:par, units,
+	sg = SinoGeom{SinoPar}(units,
 		nb, na, d, orbit, orbit_start, offset, strip_width,
 		0, 0, 0, 0)
 
@@ -269,7 +296,7 @@ function sino_geom_moj( ;
 	offset::Real = 0,
 )
 
-	sg = MIRT_sino_geom(:moj, units,
+	sg = SinoGeom{SinoMoj}(units,
 		nb, na, d, orbit, orbit_start, offset, strip_width,
 		0, 0, 0, 0)
 
@@ -301,11 +328,29 @@ end
     sino_geom_rfov()
 radial FOV
 """
-function sino_geom_rfov(sg)
-	return	sg.how === :par ? maximum(abs.(sg.r)) :
-			sg.how === :fan ? sg.dso * sin(sg.gamma_max) :
-			sg.how === :moj ? sg.nb/2 * minimum(sg.d_ang) : # todo: check
-				throw("bad how $(sg.how)")
+sino_geom_rfov(sg::SinoGeomPar) = maximum(abs.(sg.r))
+sino_geom_rfov(sg::SinoGeomFan) = sg.dso * sin(sg.gamma_max)
+sino_geom_rfov(sg::SinoGeomMoj) = sg.nb/2 * minimum(sg.d_ang) # todo: check
+
+
+function _sino_geom_taufun(sg::Union{SinoGeomPar,SinoGeomMoj}, x, y)
+	ar = sg.ar' # row vector, for outer-product
+	return (x * cos.(ar) + y * sin.(ar)) / sg.dr # tau
+end
+
+function _sino_geom_taufun(sg::SinoGeomFan, x, y)
+	b = sg.ar' # row vector, for outer-product
+	xb = x * cos.(b) + y * sin.(b)
+	yb = -x * sin.(b) + y * cos.(b)
+	tangam = (xb .- sg.source_offset) ./ (sg.dso .- yb) # e,tomo,fan,L,gam
+	if sg.dfs == 0 # arc
+		tau = sg.dsd / sg.ds * atan.(tangam)
+	elseif isinf(sg.dfs) # flat
+		tau = sg.dsd / sg.ds * tangam
+#	else
+#		throw("bad dfs $(sg.dfs)")
+	end
+	return tau
 end
 
 
@@ -313,29 +358,11 @@ end
     sino_geom_taufun()
 projected `s/ds`, useful for footprint center and support
 """
-function sino_geom_taufun(sg, x, y)
+function sino_geom_taufun(sg::SinoGeom{G}, x, y) where {G}
 	size(x) != size(y) && throw("bad x,y size")
 	x = vec(x)
 	y = vec(y)
-	if sg.how === :par || sg.how === :moj # todo: check
-		ar = sg.ar' # row vector, for outer-product
-		tau = (x * cos.(ar) + y * sin.(ar)) / sg.dr
-	elseif sg.how === :fan
-		b = sg.ar' # row vector, for outer-product
-		xb = x * cos.(b) + y * sin.(b)
-		yb = -x * sin.(b) + y * cos.(b)
-		tangam = (xb .- sg.source_offset) ./ (sg.dso .- yb) # e,tomo,fan,L,gam
-		if sg.dfs == 0 # arc
-			tau = sg.dsd / sg.ds * atan.(tangam)
-		elseif isinf(sg.dfs) # flat
-			tau = sg.dsd / sg.ds * tangam
-#		else
-#			throw("bad dfs $(sg.dfs)")
-		end
-#	else
-#		throw("bad how $(sg.how)")
-	end
-	return tau
+	return _sino_geom_taufun(sg, x, y)
 end
 
 
@@ -343,22 +370,19 @@ end
     sino_geom_xds()
 center positions of detectors (for beta = 0)
 """
-function sino_geom_xds(sg)
-	if sg.how === :par
+sino_geom_xds(sg::SinoGeomPar) = sg.s .+ sg.source_offset
+
+# todo: really should be angle dependent:
+sino_geom_xds(sg::SinoGeomMoj) = sg.s .+ sg.source_offset
+
+function sino_geom_xds(sg::SinoGeomFan)
+	if sg.dfs == 0 # arc
+		gam = sg.gamma
+		xds = sg.dsd * sin.(gam)
+	elseif isinf(sg.dfs) # flat
 		xds = sg.s
-	elseif sg.how === :moj
-		xds = sg.s # todo: really should be angle dependent
-	elseif sg.how === :fan
-		if sg.dfs == 0 # arc
-			gam = sg.gamma
-			xds = sg.dsd * sin.(gam)
-		elseif isinf(sg.dfs) # flat
-			xds = sg.s
-	#	else
-	#		throw("bad dfs $(sg.dfs))")
-		end
 #	else
-#		throw("bad how $(sg.how)")
+#		throw("bad dfs $(sg.dfs))")
 	end
 	return xds .+ sg.source_offset
 end
@@ -368,23 +392,16 @@ end
     sino_geom_yds()
 center positions of detectors (for beta = 0)
 """
-function sino_geom_yds(sg)
-
-	if sg.how === :par
-		yds = zeros(Float32, sg.nb)
-	elseif sg.how === :moj
-		yds = zeros(Float32, sg.nb)
-	elseif sg.how === :fan
-		if sg.dfs == 0 # arc
-			gam = sg.gamma
-			yds = sg.dso .- sg.dsd * cos.(gam)
-		elseif isinf(sg.dfs) # flat
-			yds = fill(-sg.dod, sg.nb)
-	#	else
-	#		throw("bad dfs $(sg.dfs))")
-		end
+sino_geom_yds(sg::SinoGeomPar) = zeros(Float32, sg.nb)
+sino_geom_yds(sg::SinoGeomMoj) = zeros(Float32, sg.nb)
+function sino_geom_yds(sg::SinoGeomFan)
+	if sg.dfs == 0 # arc
+		gam = sg.gamma
+		yds = sg.dso .- sg.dsd * cos.(gam)
+	elseif isinf(sg.dfs) # flat
+		yds = fill(-sg.dod, sg.nb)
 #	else
-#		throw("bad how $(sg.how)")
+#		throw("bad dfs $(sg.dfs))")
 	end
 	return yds
 end
@@ -395,7 +412,7 @@ end
 sinogram with a single ray
 """
 function sino_geom_unitv(
-	sg::MIRT_sino_geom ;
+	sg::SinoGeom ;
 	ib::Int = round(Int, sg.nb/2+1),
 	ia::Int = round(Int, sg.na/2+1),
 )
@@ -406,7 +423,7 @@ end
 
 
 """
-    (rg, ϕg) = sino_geom_grid(sg::MIRT_sino_geom)
+    (rg, ϕg) = sino_geom_grid(sg::SinoGeom)
 
 Return grids `rg` and `ϕg` (in radians) of size `[nb na]`
 of equivalent *parallel-beam* `(r,ϕ)` (radial, angular) sampling positions,
@@ -414,19 +431,16 @@ for any sinogram geometry.
 For parallel beam this is just `ndgrid(sg.r, sg.ar)`
 but for fan beam and mojette this involves more complicated computations.
 """
-function sino_geom_grid(sg::MIRT_sino_geom)
+sino_geom_grid(sg::SinoGeomPar) = ndgrid(sg.r, sg.ar)
 
-	if sg.how === :par
-		return ndgrid(sg.r, sg.ar)
+function sino_geom_grid(sg::SinoGeomFan)
+	gamma = sg.gamma
+	rad = sg.dso * sin.(gamma) + sg.source_offset * cos.(gamma)
+	rg = repeat(rad, 1, sg.na) # [nb na]
+	return (rg, gamma .+ sg.ar') # [nb na] phi = gamma + beta
+end
 
-	elseif sg.how === :fan
-		gamma = sg.gamma
-		rad = sg.dso * sin.(gamma) + sg.source_offset * cos.(gamma)
-		rg = repeat(rad, 1, sg.na) # [nb na]
-		return (rg, gamma .+ sg.ar') # [nb na] phi = gamma + beta
-	end
-
-	# otherwise :moj (mojette)
+function sino_geom_grid(sg::SinoGeomMoj) # (mojette)
 	phi = sg.ar
 	# trick: ray_spacing aka ds comes from dx which is sg.d for mojette
 	wb = (sg.nb - 1)/2 + sg.offset
@@ -437,20 +451,22 @@ end
 
 
 """
-    show(io::IO, sg::MIRT_sino_geom)
-    show(io::IO, ::MIME"text/plain", sg::MIRT_sino_geom)
+    show(io::IO, sg::SinoGeom)
+    show(io::IO, ::MIME"text/plain", sg::SinoGeom)
 """
-Base.show(io::IO, sg::MIRT_sino_geom) =
-    print(io, "MIRT_sino_geom: $(sg.dim)")
-function Base.show(io::IO, ::MIME"text/plain", sg::MIRT_sino_geom)
+Base.show(io::IO, sg::SinoGeom{G}) where {G} =
+    print(io, "SinoGeom{$G}: $(sg.dim)")
+function Base.show(io::IO, ::MIME"text/plain", sg::SinoGeom)
     ir_dump(io, sg)
 end
 
+sino_geom_how(sg::SinoGeom{G}) where {G} = G
 
 # Extended properties
 
 sino_geom_fun0 = Dict([
 	(:help, sg -> sino_geom_help()),
+	(:how, sg -> sino_geom_how(sg)),
 
 	(:dim, sg -> (sg.nb, sg.na)),
 	(:w, sg -> (sg.nb-1)/2 + sg.offset),
@@ -494,11 +510,11 @@ sino_geom_fun0 = Dict([
 
 # Tricky overloading here!
 
-Base.getproperty(sg::MIRT_sino_geom, s::Symbol) =
+Base.getproperty(sg::SinoGeom, s::Symbol) =
 		haskey(sino_geom_fun0, s) ? sino_geom_fun0[s](sg) :
 		getfield(sg, s)
 
-Base.propertynames(sg::MIRT_sino_geom) =
+Base.propertynames(sg::SinoGeom) =
 	(fieldnames(typeof(sg))..., keys(sino_geom_fun0)...)
 
 
@@ -506,9 +522,9 @@ Base.propertynames(sg::MIRT_sino_geom) =
     sino_geom_plot_grid()
 scatter plot of (r,phi) sampling locations from `sg.grid`
 """
-function sino_geom_plot_grid(sg::MIRT_sino_geom)
+function sino_geom_plot_grid(sg::SinoGeom{G}) where {G}
 	(r, phi) = sg.grid
-	dfs = sg.how === :fan ? " dfs=$(sg.dfs)" : ""
+	dfs = G === :fan ? " dfs=$(sg.dfs)" : ""
 	ylim = [min(0, rad2deg(minimum(phi))), max(360, rad2deg(maximum(phi)))]
 	rmax = ceil(maximum(abs.(r))/10, digits=0)*10
 	scatter(r, rad2deg.(phi), label="", markersize=1, markerstrokecolor=:auto,

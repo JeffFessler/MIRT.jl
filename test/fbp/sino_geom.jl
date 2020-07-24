@@ -92,7 +92,8 @@ for ii = 1:nsg
 	pl[ii] = sg.plot(ig=ig)
 end
 
-@inferred sino_geom(:ge1 ; units=:cm)
+#@inferred todo
+@test sino_geom(:ge1 ; units=:cm) isa SinoGeomFan
 
 @test_throws String sino_geom(:badhow)
 @test_throws String sino_geom(:ge1 ; dfs=-1)
