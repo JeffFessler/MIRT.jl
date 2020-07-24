@@ -11,7 +11,7 @@ export ImageGeom, image_geom, cbct
 export image_geom_circle
 export image_geom_ellipse
 
-#using MIRT: jim, downsample2, downsample3
+#using MIRT: downsample2, downsample3
 using ImageTransformations: imresize
 
 
@@ -112,7 +112,7 @@ function image_geom_help( ; io::IO = isinteractive() ? stdout : devnull)
 				i: (ix,iy[,iz]) index from 1 to nx,ny
 				c: (cx,cy[,cz]) index from +/- n/2 center at floor(n/2)+1
 	circ(rx=,ry=,cx=,cy=)	circle of given radius and center (cylinder in 3D)
-	plot()		plot the image geometry
+	plot(jim)	plot the image geometry using the `jim` function
 
 	Methods that return a new `ImageGeom:`
 
@@ -429,12 +429,13 @@ end
 
 
 """
-image_geom_plot(ig)
+image_geom_plot(ig, how ; kwargs...)
+The `how` argument should be `jim` to be useful.
 """
-image_geom_plot(ig::ImageGeom{2} ; kwargs...) =
-	jim(ig.x, ig.y, ig.mask, "(nx,ny)=$(ig.nx),$(ig.ny)" ; kwargs...)
-image_geom_plot(ig::ImageGeom{3} ; kwargs...) =
-	jim(ig.x, ig.y, ig.mask_or,
+image_geom_plot(ig::ImageGeom{2}, how::Function ; kwargs...) =
+	how(ig.x, ig.y, ig.mask, "(nx,ny)=$(ig.nx),$(ig.ny)" ; kwargs...)
+image_geom_plot(ig::ImageGeom{3}, how::Function ; kwargs...) =
+	how(ig.x, ig.y, ig.mask_or,
 		"(dx,dy,dz)=$(ig.dx),$(ig.dy),$(ig.dz)" ; kwargs...)
 
 
@@ -508,7 +509,8 @@ image_geom_fun0 = Dict([
 
 	# simple functions
 
-	(:plot, ig -> (( ; kwargs...) -> image_geom_plot(ig ; kwargs...))),
+	(:plot, ig -> ((how::Function ; kwargs...) ->
+		image_geom_plot(ig, how ; kwargs...))),
 	(:embed, ig -> (x::AbstractArray{<:Number} -> embed(x, ig.mask))),
 	(:maskit, ig -> (x::AbstractArray{<:Number} -> maskit(x, ig.mask))),
 	(:shape, ig -> (x::AbstractArray{<:Number} -> reshape(x, ig.dim))),
