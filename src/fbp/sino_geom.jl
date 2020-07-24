@@ -235,9 +235,8 @@ end
 over-sample in "radial" dimension
 Probably not meaningful for mojette sampling because d=dx.
 """
-function sino_geom_over(sg::SinoPar, over::Int)
-	over == 1 && return sg
-	return SinoPar(_sino_geom_over(sg, over)...)
+function sino_geom_over(sg::T, over::Int) where {T <: Union{SinoPar, SinoMoj}}
+	return (over == 1) ? sg : T(_sino_geom_over(sg, over)...)
 end
 function sino_geom_over(sg::SinoMoj, over::Int)
 	over == 1 && return sg
