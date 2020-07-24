@@ -44,8 +44,7 @@ function ellipse_sino_show( ;
 	for ii=1:ngeom
 		sg = geoms[ii]
 		sino = ellipse_sino(sg, ell; oversample=oversample)
-		dfs = sg.how === :fan ? " dfs=$(sg.dfs)" : ""
-		pl[ii,1] = jim(sino, title="$(sg.how)$dfs")
+		pl[ii,1] = jim(sino, title="$(typeof(sg))")
 		pl[ii,2] = sg.plot(ig=ig)
 	end
 #	plot(pl..., layout=(2,ngeom)) # too small

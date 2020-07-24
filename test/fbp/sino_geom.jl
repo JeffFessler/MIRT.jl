@@ -60,8 +60,10 @@ for ii = 1:nsg
 
 	sg.ad[2]
 	sg.rfov
-	@inferred sg.down(2)
-	@inferred sg.over(2)
+	#@inferred
+	sg.down(2)
+	#@inferred
+	sg.over(2)
 	sg.dim
 	sg.w
 	sg.ones
@@ -70,15 +72,19 @@ for ii = 1:nsg
 	sg.ds
 	sg.r
 	sg.s
-	sg.gamma
-	sg.gamma_max
-	sg.orbit_short
 	sg.ad
 	sg.ar
 	sg.xds
 	sg.yds
-	sg.dfs
-	sg.dso
+
+	if sg isa SinoFan
+		sg.gamma
+		sg.gamma_max
+		sg.dfs
+		sg.dso
+		sg.orbit_short
+	end
+
 	sg.grid
 	sg.plot_grid
 
@@ -93,7 +99,7 @@ for ii = 1:nsg
 end
 
 #@inferred todo
-@test sino_geom(:ge1 ; units=:cm) isa SinoGeomFan
+@test sino_geom(:ge1 ; units=:cm) isa SinoFanArc
 
 @test_throws String sino_geom(:badhow)
 @test_throws String sino_geom(:ge1 ; dfs=-1)
