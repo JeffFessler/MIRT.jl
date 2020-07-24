@@ -212,13 +212,8 @@ end
     sg = downsample(sg, down)
 down-sample (for testing with small problems)
 """
-function downsample(sg::SinoPar, down::Int)
-	down == 1 && return sg
-	return SinoPar(_downsample(sg, down)...)
-end
-function downsample(sg::SinoMoj, down::Int)
-	down == 1 && return sg
-	return SinoMoj(_downsample(sg, down)...)
+function downsample(sg::T, down::Int) where {T <: Union{SinoPar, SinoMoj}}
+	return (down == 1) ? sg : T(_downsample(sg, down)...)
 end
 function downsample(sg::SinoFan, down::Int)
 	down == 1 && return sg
@@ -475,9 +470,6 @@ end
 
 sino_geom_fun0 = Dict([
 	(:help, sg -> sino_geom_help()),
-#	(:how, sg -> sino_geom_how(sg)),
-#	(:how, sg -> ((sg::SinoGeom{G} where {G}) -> G)(sg)),
-	(:how, sg -> typeof(sg)),
 
 	(:dim, sg -> (sg.nb, sg.na)),
 	(:w, sg -> (sg.nb-1)/2 + sg.offset),
