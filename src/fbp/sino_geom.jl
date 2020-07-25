@@ -11,9 +11,10 @@ export sino_geom_help
 
 abstract type SinoGeom end
 abstract type SinoFan <: SinoGeom end
+abstract type SinoParallel <: SinoGeom end
 
 "`SinoPar` 2D parallel-beam sinogram geometry"
-struct SinoPar <: SinoGeom
+struct SinoPar <: SinoParallel
 	units::Symbol			# :nothing | :mm | :cm etc.
 	nb::Int					# # of "radial" samples, aka nr
 	na::Int					# # of angular samples, aka nϕ
@@ -25,7 +26,7 @@ struct SinoPar <: SinoGeom
 end
 
 "`SinoMoj` 2D Mojette sinogram geometry"
-struct SinoMoj <: SinoGeom
+struct SinoMoj <: SinoParallel
 	units::Symbol			# :nothing | :mm | :cm etc.
 	nb::Int					# # of "radial" samples, aka ns
 	na::Int					# # of angular samples, aka nϕ
@@ -209,7 +210,7 @@ end
     sg = downsample(sg, down)
 down-sample (for testing with small problems)
 """
-function downsample(sg::T, down::Int) where {T <: Union{SinoPar, SinoMoj}}
+function downsample(sg::T, down::Int) where {T <: SinoParallel}
 	return (down == 1) ? sg : T(_downsample(sg, down)...)
 end
 function downsample(sg::SinoFan, down::Int)
@@ -230,20 +231,15 @@ end
 """
     sg = sino_geom_over(sg, over::Int)
 over-sample in "radial" dimension
-Probably not meaningful for mojette sampling because d=dx.
+For Mojette sampling, it means that `d = dx/over`.
 """
-function sino_geom_over(sg::T, over::Int) where {T <: Union{SinoPar, SinoMoj}}
+function sino_geom_over(sg::T, over::Int) where {T <: SinoParallel}
 	return (over == 1) ? sg : T(_sino_geom_over(sg, over)...)
 end
-function sino_geom_over(sg::SinoMoj, over::Int)
-	over == 1 && return sg
-	@warn("Sinogram over-sample $over possibly not meaningful for Mojette")
-	return SinoMoj(_sino_geom_over(sg, over)...)
-end
 function sino_geom_over(sg::SinoFan, over::Int)
-	over == 1 && return sg
-	return SinoFanMaker(sg.dfs)(_sino_geom_over(sg, over)...,
-		sg.source_offset, sg.dsd, sg.dod, sg.dfs)
+	return (over == 1) ? sg :
+		SinoFanMaker(sg.dfs)(_sino_geom_over(sg, over)...,
+			sg.source_offset, sg.dsd, sg.dod, sg.dfs)
 end
 
 
@@ -353,10 +349,10 @@ radial FOV
 """
 sino_geom_rfov(sg::SinoPar) = maximum(abs.(sg.r))
 sino_geom_rfov(sg::SinoFan) = sg.dso * sin(sg.gamma_max)
-sino_geom_rfov(sg::SinoMoj) = sg.nb/2 * minimum(sg.d_ang) # todo: check
+sino_geom_rfov(sg::SinoMoj) = sg.nb/2 * minimum(sg.d_ang) # (ignores offset)
 
 
-function _sino_geom_taufun(sg::Union{SinoPar,SinoMoj}, x, y)
+function _sino_geom_taufun(sg::SinoParallel, x, y)
 	ar = sg.ar' # row vector, for outer-product
 	return (x * cos.(ar) + y * sin.(ar)) / sg.dr # tau
 end
