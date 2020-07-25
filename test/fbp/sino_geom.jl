@@ -1,7 +1,7 @@
 # sino_geom.jl
 
 using MIRT: sino_geom
-using MIRT: sino_geom_help, sino_geom_plot, sino_geom_plot_grids
+using MIRT: sino_geom_help, sino_geom_plot_grids
 using MIRT: image_geom, prompt
 import MIRT: sino_geom_gamma_dfs
 
@@ -31,7 +31,6 @@ function sino_geom_show( ; kwarg...)
 	pl = Array{Any}(undef, nsg)
 	for ii = 1:nsg
 		sg = sg_list[ii].down(down)
-	#	pl[ii] = sino_geom_plot(sg)
 		pl[ii] = plot(); sino_geom_plot!(sg, plot!)
 		plot!(pl[ii], xlim=[-1,1]*550, ylim=[-1,1]*550)
 		plot!(pl[ii], xtick=[-1,0,1]*250)
