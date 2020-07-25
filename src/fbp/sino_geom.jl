@@ -237,7 +237,7 @@ function sino_geom_over(sg::T, over::Int) where {T <: SinoParallel}
 	return (over == 1) ? sg : T(_sino_geom_over(sg, over)...)
 end
 function sino_geom_over(sg::SinoFan, over::Int)
-	return (over == 1) ? return sg :
+	return (over == 1) ? sg :
 		SinoFanMaker(sg.dfs)(_sino_geom_over(sg, over)...,
 			sg.source_offset, sg.dsd, sg.dod, sg.dfs)
 end
