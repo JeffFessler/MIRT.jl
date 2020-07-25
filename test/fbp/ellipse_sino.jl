@@ -18,7 +18,6 @@ function ellipse_sino_show( ;
 	orbit::Real = 360,
 	na::Int = 400,
 	oversample::Int = 2,
-	ip::Int = 1,
 )
 
 	ig = image_geom(nx=512, ny=504, dx=1, dy=1, mask=:circ)
@@ -39,25 +38,21 @@ function ellipse_sino_show( ;
 	)
 
 	ngeom = length(geoms)
-	pl = Array{Plot}(undef, ngeom, 2)
+	pl = Array{Plot}(undef, ngeom)
 
 	for ii=1:ngeom
 		sg = geoms[ii]
-		sino = ellipse_sino(sg, ell; oversample=oversample)
-		dfs = sg.how === :fan ? " dfs=$(sg.dfs)" : ""
-		pl[ii,1] = jim(sino, title="$(sg.how)$dfs")
-		pl[ii,2] = sg.plot(ig=ig)
+		over = (sg isa SinoMoj) ? 1 : oversample
+		sino = ellipse_sino(sg, ell ; oversample=over)
+		pl[ii] = jim(sino, title="$(typeof(sg))")
 	end
-#	plot(pl..., layout=(2,ngeom)) # too small
-	plot(pl[:,ip]...)
+	plot(pl...)
 end
 
 
 ell = [ 40 70 50 150 20 10 ]
 sg = sino_geom(:ge1, down=8)
 #@inferred # todo
-ellipse_sino(sg, ell; xscale=-1, yscale=-1) # test scale
+ellipse_sino(sg, ell ; xscale=-1, yscale=-1) # test scale
 
 ellipse_sino_show()
-prompt()
-ellipse_sino_show(ip=2)

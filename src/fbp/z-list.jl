@@ -2,6 +2,7 @@
 
 include("image_geom.jl")
 include("sino_geom.jl")
+include("sino_plot.jl") # todo: move to democard
 
 include("rotate2d.jl")
 

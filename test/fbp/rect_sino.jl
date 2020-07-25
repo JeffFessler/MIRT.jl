@@ -12,12 +12,12 @@ using Test: @test, @test_throws, @inferred
 show examples
 """
 function rect_sino_show( ;
-		down::Int = 4,
-		rect::Matrix = [70 20 70 30 0 1],
-		orbit::Real = 360,
-		na::Int = 400,
-		oversample::Int = 2,
-	)
+	down::Int = 4,
+	rect::Matrix = [70 20 70 30 0 1],
+	orbit::Real = 360,
+	na::Int = 400,
+	oversample::Int = 2,
+)
 
 #=
 	ig = image_geom(nx=512, ny=504, fov=500)
@@ -39,9 +39,9 @@ function rect_sino_show( ;
 
 	for ii=1:ngeom
 		sg = geoms[ii]
-		sino = rect_sino(sg, rect; oversample=oversample)
-		dfs = sg.how === :fan ? " dfs=$(sg.dfs)" : ""
-		pl[ii] = jim(sg.r, sg.ad, sino, title="$(sg.how)$dfs")
+		over = (sg isa SinoMoj) ? 1 : oversample
+		sino = rect_sino(sg, rect; oversample=over)
+		pl[ii] = jim(sg.r, sg.ad, sino, title="$(typeof(sg))")
 	end
 	plot(pl...)
 end

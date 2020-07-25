@@ -2,7 +2,7 @@
 
 using MIRT: ImageGeom, image_geom, cbct
 using MIRT: image_geom_ellipse
-#using MIRT: jim
+using MIRT: jim
 
 using Test: @test, @testset, @test_throws, @inferred
 
@@ -44,7 +44,7 @@ function image_geom_test2(ig::ImageGeom)
 	@inferred ig.unitv()
 =#
 	ig.circ()
-	ig.plot()
+	ig.plot(jim)
 #	isinteractive() && gui()
 	ig.unitv()
 	@inferred ig.down(2)

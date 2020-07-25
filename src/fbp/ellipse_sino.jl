@@ -6,7 +6,7 @@ ellipse_sino.jl
 
 export ellipse_sino
 
-#using MIRT: sino_geom, MIRT_sino_geom, downsample2
+#using MIRT: sino_geom, SinoGeom, downsample2
 
 
 """
@@ -16,9 +16,9 @@ Create sinogram projection of one or more ellipses.
 Works for any sinogram geometry.
 
 in
-- `sg::MIRT_sino_geom,`		sinogram geometry object from `sino_geom()`
-- `ells::Matrix`			`[ne 6]` ellipse parameters
-							`[centx centy radx rady angle_degrees amplitude]`
+- `sg::SinoGeom`	sinogram geometry object from `sino_geom()`
+- `ells::Matrix`		`[ne 6]` ellipse parameters
+						`[centx centy radx rady angle_degrees amplitude]`
 
 options
 - `oversample::Int`	oversampling factor for emulating "strips"
@@ -31,7 +31,7 @@ out
 
 To get the sample locations, use `(pos,ang) = sg.grid`
 """
-function ellipse_sino(sg::MIRT_sino_geom, ells::AbstractMatrix{<:Real} ;
+function ellipse_sino(sg::SinoGeom, ells::AbstractMatrix{<:Real} ;
 		oversample::Int = 1, kwargs...)
 
 	sg = sg.over(oversample)

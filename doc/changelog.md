@@ -1,5 +1,9 @@
 In reverse chronological order
 
+2020-07-23
+Breaking change: SinoGeom
+
+Many changes to improve codecov, including more complete `fld_read fld_write`
 
 2020-07-21
 Breaking change: ImageGeom
