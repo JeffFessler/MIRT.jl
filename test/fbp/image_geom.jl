@@ -3,6 +3,7 @@
 using MIRT: ImageGeom, image_geom, cbct
 using MIRT: image_geom_ellipse
 using MIRT: jim
+using ConstantArrays: ConstantArray
 
 using Test: @test, @testset, @test_throws, @inferred
 
@@ -61,6 +62,7 @@ function image_geom_test2()
 	@test_throws String image_geom(nx=16, dx=1, mask=:bad) # mask type
 	@test_throws String image_geom(nx=16, dx=1, mask=trues(2,2)) # mask size
 	ig = image_geom(nx=16, dx=2)
+	@test ig.mask == ConstantArray(ig.dims)
 	show(isinteractive() ? stdout : devnull, ig)
 	show(isinteractive() ? stdout : devnull, MIME("text/plain"), ig)
 	image_geom_test2(ig)
