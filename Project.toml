@@ -4,10 +4,10 @@ authors = ["fessler <fessler@umich.edu>"]
 version = "0.13.1"
 
 [deps]
-ConstantArrays = "ca278567-1944-4a35-ad5d-9f58fc68adb0"
 Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 FFTViews = "4f61f5a4-77b1-5117-aa51-3ab5ef4ef0cd"
 FFTW = "7a1cc6ca-52ef-59f5-83cd-3a7055c09341"
+FillArrays = "1a297f60-69ca-5386-bcde-b61e274b549b"
 ImageFiltering = "6a3955dd-da59-5b1f-98d4-e7296123deb5"
 ImageTransformations = "02fcd773-0e25-5acc-982a-7f6622650795"
 Interpolations = "a98d9a8b-a2ab-59e6-89dd-64a1c18fca59"
@@ -26,13 +26,12 @@ SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 Wavelets = "29a6e085-ba6d-5f35-a997-948ac2efa89a"
 
 [compat]
-ConstantArrays = "0.1"
+FillArrays = "0.9"
 FFTViews = "0.3"
 FFTW = "1.2"
 ImageFiltering = "0.6"
 ImageTransformations = "0.8"
 Interpolations = "0.12"
-LaTeXStrings = "1.1"
 LinearMapsAA = "0.6.5"
 MIRTio = "0.2"
 MosaicViews = "0.2"
