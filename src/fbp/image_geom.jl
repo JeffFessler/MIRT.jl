@@ -12,6 +12,7 @@ export image_geom_circle
 export image_geom_ellipse
 
 #using MIRT: downsample2, downsample3
+using FillArrays: Trues
 using ImageTransformations: imresize
 
 
@@ -47,13 +48,14 @@ end
 
 """
     ImageGeom{D}(dims, deltas, offsets, [, mask])
-Constructor
+Constructor for `ImageGeom`
+Default `mask` is `Trues(dims)` which is akin to `trues(dims)`.
 """
 ImageGeom{D}(
 	dims::Dims{D},
 	deltas::NTuple{D,Real},
 	offsets::NTuple{D,Real},
-	) where {D} = ImageGeom{D}(dims, deltas, offsets, trues(dims))
+) where {D} = ImageGeom{D}(dims, deltas, offsets, Trues(dims))
 
 
 
@@ -244,7 +246,7 @@ function image_geom( ;
 
 	# mask
 	if mask === :all
-		mask = is3 ? trues(nx, ny, nz) : trues(nx, ny)
+		mask = is3 ? Trues(nx, ny, nz) : Trues(nx, ny)
 	elseif mask === :circ
 		mask = image_geom_circle(nx, ny, dx, dy)
 		if nz > 0
@@ -348,8 +350,8 @@ ig_over = image_geom_over(ig::ImageGeom, over::Int)
 over-sample an image geometry by the factor `over`
 """
 function image_geom_over(ig::ImageGeom{D}, over::Int) where {D}
-	if all(ig.mask .== true)
-		mask_over = trues(ig.dims .* over)
+	if ig.mask == Trues(ig.dims) || all(ig.mask .== true)
+		mask_over = Trues(ig.dims .* over)
 	else
 		mask_over = imresize(ig.mask, ig.dims .* over) .> 0
 	end
