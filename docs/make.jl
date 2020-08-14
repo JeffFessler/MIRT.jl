@@ -4,9 +4,11 @@ using MIRT
 # examples_templates, examples_theme = cardtheme("grid")
 # examples, examples_cb = makedemos("examples", examples_templates)
 
-format = Documenter.HTML(edit_link = "master",
-                         prettyurls = get(ENV, "CI", nothing) == "true")
-                        #  assets = [examples_theme])
+format = Documenter.HTML(
+    edit_link = "master",
+    prettyurls = get(ENV, "CI", nothing) == "true",
+#   assets = [examples_theme],
+)
 
 
 makedocs(
@@ -15,6 +17,7 @@ makedocs(
     sitename = "MIRT.jl",
     pages    = [
         "Home" => "index.md",
+        "Table of Contents" => "toc.md",
         # "Examples" => examples,
         "Function References" => "reference.md",
     ]
@@ -22,4 +25,4 @@ makedocs(
 
 # examples_cb()
 
-deploydocs(repo   = "github.com/JeffFessler/MIRT.jl")
+deploydocs(repo = "github.com/JeffFessler/MIRT.jl")
