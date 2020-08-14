@@ -14,14 +14,16 @@ function shows_string(file::String, line::String, varname::String, var::Any)
 end
 
 # print only if the session is interactive
-function shows_print(string::String
-		; io::IO = isinteractive() ? stdout : IOBuffer())
+function shows_print(
+    string::String ;
+    io::IO = isinteractive() ? stdout : IOBuffer(),
+)
 	print(io, string)
 end
 
 
 """
-`@shows expr`
+    @shows expr
 
 Show the type and size of an expression `expr` (typically a variable).
 
