@@ -16,23 +16,27 @@ Create sinogram projection of one or more ellipses.
 Works for any sinogram geometry.
 
 in
-- `sg::SinoGeom`	sinogram geometry object from `sino_geom()`
-- `ells::Matrix`		`[ne 6]` ellipse parameters
-						`[centx centy radx rady angle_degrees amplitude]`
+- `sg::SinoGeom` sinogram geometry object from `sino_geom()`
+- `ells::Matrix` `[ne 6]` ellipse parameters
+   * `[centx centy radx rady angle_degrees amplitude]`
 
 options
 - `oversample::Int`	oversampling factor for emulating "strips"
-						default 1: just 1 ray per detector element
+   * default 1: just 1 ray per detector element
 - `xscale::Int`		use -1 to flip in x (not recommended); default 1
 - `yscale::Int`		use -1 to flip in y (not recommended); default 1
 
 out
-- `sino`		`[nb na]` sinogram
+- `sino` `[nb na]` sinogram
 
 To get the sample locations, use `(pos,ang) = sg.grid`
 """
-function ellipse_sino(sg::SinoGeom, ells::AbstractMatrix{<:Real} ;
-		oversample::Int = 1, kwargs...)
+function ellipse_sino(
+    sg::SinoGeom,
+    ells::AbstractMatrix{<:Real} ;
+    oversample::Int = 1,
+    kwargs...,
+)
 
 	sg = sg.over(oversample)
 	(rg, ϕg) = sg.grid
@@ -54,21 +58,23 @@ for arbitrary radial/angular sampling grid locations `(rg, ϕg)`
 in
 - `rg::AbstractArray{<:Real}`	radial sampling locations
 - `ϕg::AbstractArray{<:Real}`	angular sampling locations (radians)
-- `ells::Matrix`			`[ne 6]` ellipse parameters
-							`[centx centy radx rady angle_degrees amplitude]`
+- `ells::Matrix` `[ne 6]` ellipse parameters
+   * `[centx centy radx rady angle_degrees amplitude]`
 
 options
-- `xscale::Int`		use -1 to flip in x (not recommended); default 1
-- `yscale::Int`		use -1 to flip in y (not recommended); default 1
+- `xscale::Int` use -1 to flip in x (not recommended); default 1
+- `yscale::Int` use -1 to flip in y (not recommended); default 1
 
 out
 - `sino::AbstractArray{Float32}` same size as `rg` and `ϕg`
 """
-function ellipse_sino(rg::AbstractArray{<:Real}, ϕg::AbstractArray{<:Real},
-		ells::AbstractMatrix{<:Real} ;
-		xscale::Int = 1,
-		yscale::Int = 1,
-	)
+function ellipse_sino(
+    rg::AbstractArray{<:Real},
+    ϕg::AbstractArray{<:Real},
+    ells::AbstractMatrix{<:Real} ;
+    xscale::Int = 1,
+    yscale::Int = 1,
+)
 
 	size(ells,2) != 6 && throw("6 parameters per ellipse")
 	size(rg) != size(ϕg) && throw("rg and ϕg size mismatch")

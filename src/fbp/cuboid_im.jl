@@ -25,7 +25,7 @@ options
 - `how::Symbol`
    * `:sample` use samples
    * `:lowmem1` one slice per time
-   * `:exact` perfect partial volume if angle* = 0
+   * `:exact` perfect partial volume if `*angle* = 0`
    * default: `:exact` if non rotated, else `:sample`
 - `return_params::Bool`	if true, return both `phantom` and `params`
 
