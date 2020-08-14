@@ -2,7 +2,7 @@
 
 using MIRT: ellipsoid_im, shepp_logan_3d_parameters
 using MIRT: image_geom, jim
-import MIRT: ellipsoid_im_check_fov
+import MIRT: _ellipsoid_im_check_fov
 
 using Plots
 using Test: @test, @test_throws
@@ -39,9 +39,9 @@ ellipsoid_im(ig; showmem=true)
 @test_throws String shepp_logan_3d_parameters(0, 0, 0, :bad)
 
 tmp = [1, 1, 1, 0, 0, 0]
-@test !ellipsoid_im_check_fov(2, 9, 9, [3 0 0 1 1 1 0 0 1], tmp...)
-@test !ellipsoid_im_check_fov(9, 2, 9, [0 3 0 1 1 1 0 0 1], tmp...)
-@test !ellipsoid_im_check_fov(9, 9, 2, [0 0 3 1 1 1 0 0 1], tmp...)
+@test !_ellipsoid_im_check_fov(2, 9, 9, [3 0 0 1 1 1 0 0 1], tmp...)
+@test !_ellipsoid_im_check_fov(9, 2, 9, [0 3 0 1 1 1 0 0 1], tmp...)
+@test !_ellipsoid_im_check_fov(9, 9, 2, [0 0 3 1 1 1 0 0 1], tmp...)
 
 #ell1 = ellipsoid_im(ig, :zhu; how=:fast) # fast doesn't work
 #ell2 = ellipsoid_im(ig, :zhu; how=:lowmem) # lowmem calls fast - doesn't work
