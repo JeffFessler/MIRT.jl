@@ -45,12 +45,12 @@ end
 Setup 1D NUFFT,
 for computing fast ``O(N \\log N)`` approximation to
 
-``X[m] = sum_{n=0}^{N-1} x[n] exp(-i w[m] (n - n_shift)), m=1,…,M``
+``X[m] = \\sum_{n=0}^{N-1} x[n] \\exp(-i w[m] (n - n_{shift})), m=1,…,M``
 
 in
 - `w::AbstractArray{<:Real}` `[M]` frequency locations (units radians/sample)
-	+ `eltype(w)` determines the NFFTPlan type; so to save memory use Float32!
-	+ `size(w)` determines `odim` for `A` if `operator=true`
+   + `eltype(w)` determines the NFFTPlan type; so to save memory use Float32!
+   + `size(w)` determines `odim` for `A` if `operator=true`
 - `N::Int` signal length
 
 option
@@ -63,8 +63,8 @@ option
 - `operator::Bool=true` set to `false` to make `A` an `LinearMapAM`
 
 out
-- `p NamedTuple` with fields
-	`nufft = x -> nufft(x), adjoint = y -> nufft_adj(y), A=LinearMapAO`
+- `p NamedTuple`
+`(nufft = x -> nufft(x), adjoint = y -> nufft_adj(y), A::LinearMapAO)`
 
 The default settings are such that for a 1D signal of length N=512,
 the worst-case error is below 1e-5 which is probably adequate
@@ -125,7 +125,7 @@ end
 Setup multi-dimensional NUFFT,
 for computing fast ``O(N \\log N)`` approximation to
 
-``X[m] = sum_{n=0}^{N-1} x[n] exp(-i w[m,:] (n - n_shift)), m=1,…,M``
+``X[m] = \\sum_{n=0}^{N-1} x[n] \\exp(-i w[m,:] (n - n_{shift})), m=1,…,M``
 
 in
 - `w::AbstractArray{<:Real}` `[M,D]` frequency locations (units radians/sample)

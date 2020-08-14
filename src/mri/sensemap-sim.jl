@@ -37,10 +37,10 @@ option
 - `nring::Int`		# of rings of coils; default 1
 - `rcoil::Real`		coil radius; default `dx * nx / 2 * 0.50`
 - `dz_coil`			ring spacing in z; default `nz*dz/nring`
-			(3D geometry is a cylinder)
+   * (3D geometry is a cylinder)
 - `coil_distance::Real`		distance of coil center from isocenter
-	for central ring of coils as a multiple of FOVx,
-	where `FOVx=nx*dx`; default 1.2
+   * for central ring of coils as a multiple of `FOVx`,
+   * where `FOVx=nx*dx`; default 1.2
 - `orbit::Real`			default 360 [degrees]
 - `orbit_start::AbstractVector{<:Real} = fill(0, nring)` [degrees]
 - `scale::Symbol`

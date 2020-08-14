@@ -63,16 +63,20 @@ end
 
 
 """
-`genkspace`
+    genkspace
+
 Generate the proper length of k-space trajectory.
-It linearly interpolates the output of genspiral to the correct length()
+
+It linearly interpolates the output of `genspiral` to the correct `length()`
 & takes care of the rotations for the interleaves.
-ld is the length of the data
-nint is the number of interleaves
+* `ld` is the length of the data
+* `nint` is the number of interleaves
 Brad Sutton; University of Michigan
 """
-function genkspace(FOV, N, ld, nint, gamp, gslew, tsamp, warn_nk ;
-		rotamount::Int = 0)
+function genkspace(
+    FOV, N, ld, nint, gamp, gslew, tsamp, warn_nk ;
+    rotamount::Int = 0,
+)
 	nk = ld/nint
 
 	flag = (nk == 0) # auto determine number of k-space points
@@ -156,30 +160,33 @@ to gradients at 4us.
 
 multi-shot spiral design
 uses Duyn's approximate slewrate limited design
-augmented with archimedian gmax limit
-inputs [args]
-        D = FOV; cm
-        N = matrix size()
-		Tmax = longest acquisition allowed; s
-		dts = output sample spacing; s
-        gtype = trajectory type()
-option [CVs]
-		nl = number of interleaves
-		gamp = design grad max; G/cm
-		gslew = design slew rate; mT/m/ms
-		nramp = number of rampdown points; default 0
- out
-		Gx; Gy
-		grev
- time is in sec()
-	rev 0 12/26/98	original
-	rev 1 4/15/99	little better calc of ts
+augmented with archimedian `gmax` limit
+in [args]
+* `D` = FOV; cm
+* `N` = matrix size()
 
- borrowed from Doug Noll; Univ. of Michigan
- modified to take more input cv's
+* `Tmax` = longest acquisition allowed; s
+* `dts` = output sample spacing; s
+* `gtype` = trajectory type()
+
+option [CVs]
+* `nl` = number of interleaves
+* `gamp` = design grad max; G/cm
+* `gslew` = design slew rate; mT/m/ms
+* `nramp` = number of rampdown points; default 0
+
+out
+* `Gx; Gy`
+
+time is in sec()
+* rev 0 12/26/98	original
+* rev 1 4/15/99	little better calc of ts
+
+Borrowed from Doug Noll; Univ. of Michigan.
+Modified to take more input cv's.
 """
 function genspi(D, N ;
-		nl::Int = 1, gamp::Real = 202, gslew::Int = 180, nramp::Int = 0)
+	nl::Int = 1, gamp::Real = 202, gslew::Int = 180, nramp::Int = 0)
 
 	########## Predefined variables
 	GRESMAX = 21000

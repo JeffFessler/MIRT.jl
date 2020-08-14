@@ -9,8 +9,9 @@ export max_percent_diff
 """
     d = max_percent_diff(s1, s2, [options])
 
-compute the "maximum percent difference" between two signals: `s1, s2`
-default is to normalize by `maximum(abs.(s1))`
+Compute the "maximum percent difference" between two signals: `s1, s2`.
+
+Default is to normalize by `maximum(abs.(s1))`.
 
 options
 - `maxboth::Bool` use max of both arguments to normalize; default `false`

@@ -10,11 +10,11 @@ export ellipsoid_im
 
 """
     phantom = ellipsoid_im(ig, params;
-	oversample=1, checkfov=false, how=:slow, showmem=false, hu_scale=1, return_params=false)`
+	oversample=1, checkfov=false, how=:slow, showmem=false, hu_scale=1, return_params=false)
 
 generate ellipsoid phantom image from parameters:
-	`[x_center, y_center, z_center, x_radius, y_radius, z_radius,
-		xy_angle_degrees, z_angle_degrees, density]`
+`[x_center, y_center, z_center, x_radius, y_radius, z_radius,
+	xy_angle_degrees, z_angle_degrees, density]`
 
 in
 - `ig::ImageGeom`	from `image_geom()`
@@ -23,9 +23,10 @@ in
 option
 - `oversample::Int`		oversampling factor (default:1)
 - `checkfov::Bool`		warn if any ellipsoid is out of fov
-- `how::Symbol`				`:fast` does it fast -- to do, only works slow
-							`:lowmem` uses less memory than :fast but slower
-							`:slow` default
+- `how::Symbol`
+   * `:fast` does it fast -- to do, only works slow
+   * `:lowmem` uses less memory than `:fast` but slower
+   * `:slow` default
 - `showmem::Bool`
 - `hu_scale::Real`			use 1000 to scale shepp-logan to HU; default 1
 - `return_params::Bool`		if true, return both phantom and params
@@ -56,7 +57,7 @@ function ellipsoid_im(
 			ig.offset_x, ig.offset_y, ig.offset_z)
 	phantom = zeros(Float32, ig.nx, ig.ny, ig.nz)
 
-	checkfov && !ellipsoid_im_check_fov(args...) && throw("ellipsoid exceeds FOV")
+	checkfov && !_ellipsoid_im_check_fov(args...) && throw("ellipsoid exceeds FOV")
 
 	if how === :slow
 		phantom += ellipsoid_im_slow(args..., showmem)
@@ -82,7 +83,7 @@ end
 
 
 """
-ellipsoid_im_slow()
+    ellipsoid_im_slow()
 
 brute force fine grid - can use lots of memory
 """
@@ -131,7 +132,7 @@ end
 
 #=
 """
-ellipsoid_im_fast()
+    ellipsoid_im_fast()
 
 currently not working
 only slow option works
@@ -275,7 +276,7 @@ end
 
 
 """
-ellipsoid_im_lowmem()
+    ellipsoid_im_lowmem()
 
 Do 'one slice at a time' to reduce memory
 """
@@ -293,10 +294,7 @@ end
 =#
 
 
-"""
-ellipsoid_im_check_fov()
-"""
-function ellipsoid_im_check_fov(nx, ny, nz, params,
+function _ellipsoid_im_check_fov(nx, ny, nz, params,
 		dx, dy, dz, offset_x, offset_y, offset_z)
 	wx = (nx - 1)/2 + offset_x
 	wy = (ny - 1)/2 + offset_y
@@ -387,7 +385,7 @@ end
 
 
 """
-shepp_logan_3d_parameters()
+    shepp_logan_3d_parameters()
 
 most of these values are unitless 'fractions of field of view'
 """
@@ -441,9 +439,6 @@ function shepp_logan_3d_parameters(xfov, yfov, zfov, ptype)
 end
 
 
-"""
-spheroid_params()
-"""
 function spheroid_params(xfov, yfov, zfov, dx, dy, dz)
 #	xfov = nx * dx, number * size
 	xradius = (xfov/2) - dx
