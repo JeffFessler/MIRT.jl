@@ -18,20 +18,20 @@ generate cuboid phantom image from parameters:
 
 in
 - `ig::ImageGeom`
-- `params`			`[N 9]`  cuboid parameters.
-					note: "diameter" not "radius"
+- `params` `[N 9]` cuboid parameters ("diameter" not "radius")
 
 options
 - `oversample::Int` oversampling factor (for partial volume)
-- `how::Symbol`		`:sample` use samples
-					`:lowmem1` one slice per time
-					`:exact` perfect partial volume if angle* = 0
-					default: `:exact` if non rotated, else `:sample`
-- `return_params::Bool`	if true, return both phantom and params
+- `how::Symbol`
+   * `:sample` use samples
+   * `:lowmem1` one slice per time
+   * `:exact` perfect partial volume if angle* = 0
+   * default: `:exact` if non rotated, else `:sample`
+- `return_params::Bool`	if true, return both `phantom` and `params`
 
 out
-- `phantom`		`[nx ny nz]` image
-- `params`		`[N 9]` cuboid parameters (only return if return_params=true)
+- `phantom` `[nx ny nz]` image
+- `params` `[N 9]` cuboid parameters (only return if `return_params=true`)
 """
 function cuboid_im(
 	ig::ImageGeom,
