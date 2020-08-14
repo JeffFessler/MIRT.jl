@@ -16,7 +16,9 @@ OGM with a line search; Drori&Taylor @arxiv 1803.05676;
 to minimize a general "inverse problem" cost function of the form
 ``\\Psi(x) = \\sum_{j=1}^J f_j(B_j x)``
 where each function ``f_j(v)`` has a quadratic majorizer of the form
-``q_j(v;u) = f_j(u) + \\nabla f_j(u) (v - u) + 1/2 \\|v - u\\|^2_{C_j(u)}``
+```math
+q_j(v;u) = f_j(u) + \\nabla f_j(u) (v - u) + 1/2 \\|v - u\\|^2_{C_j(u)}
+```
 where ``C_j(u)`` is diagonal matrix of curvatures.
 (It suffices for each ``f_j`` to have a Lipschitz smooth gradient.)
 

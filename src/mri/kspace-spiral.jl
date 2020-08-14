@@ -162,12 +162,12 @@ multi-shot spiral design
 uses Duyn's approximate slewrate limited design
 augmented with archimedian `gmax` limit
 in [args]
-* `D = FOV; cm
-* `N = matrix size()
+* `D` = FOV; cm
+* `N` = matrix size()
 
-* `Tmax = longest acquisition allowed; s
-* `dts = output sample spacing; s
-* `gtype = trajectory type()
+* `Tmax` = longest acquisition allowed; s
+* `dts` = output sample spacing; s
+* `gtype` = trajectory type()
 
 option [CVs]
 * `nl` = number of interleaves

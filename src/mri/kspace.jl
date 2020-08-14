@@ -24,11 +24,13 @@ option
 
 out
 - `kspace`	`[Nro Nspoke 2]` (Float32)
-   * `kx` and `ky` k-space locations for `Nspoke*Nro` samples
+
+`kx` and `ky` k-space locations for `Nspoke*Nro` samples
 in interval `(-0.5 0.5]` for default `shift`, `delta_ro`
 so default units are "cycles / sample"
 
 2015-07 Mai Le, original Matlab version
+
 2015-07-04 Jeff Fessler, minor changes to Matlab version
 """
 function ir_mri_kspace_ga_radial( ;

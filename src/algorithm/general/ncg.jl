@@ -18,7 +18,9 @@ Nonlinear preconditioned conjugate gradient algorithm
 to minimize a general "inverse problem" cost function of the form
 ``\\Psi(x) = \\sum_{j=1}^J f_j(B_j x)``
 where each function ``f_j(v)`` has a quadratic majorizer of the form
-`` q_j(v;u) = f_j(u) + \\nabla f_j(u) (v - u) + 1/2 \\|v - \\u|^2_{C_j(u)} ``
+```math
+q_j(v;u) = f_j(u) + \\nabla f_j(u) (v - u) + 1/2 \\|v - u\\|^2_{C_j(u)}
+```
 where ``C_j(u)`` is diagonal matrix of curvatures.
 (It suffices for each ``f_j`` to have a Lipschitz smooth gradient.)
 
@@ -28,10 +30,12 @@ in
 - `B`		array of ``J`` blocks ``B_1,...,B_J``
 - `gradf`	array of ``J`` functions return gradients of ``f_1,...,f_J``
 - `curvf`	array of ``J`` functions `z -> curv(z)` that return a scalar
-		or a vector of curvature values for each element of ``z``
+or a vector of curvature values for each element of ``z``
 - `x0`	initial guess; need `length(x) == size(B[j],2)` for ``j=1...J``
 
-Usually `x0` is a `Vector` but it can be an `Array` if each `B_j` is a linear operator (e.g., `LinearMapAO`) of suitable "dimensions".
+Usually `x0` is a `Vector` but it can be an `Array`
+if each `B_j` is a linear operator (e.g., `LinearMapAO`)
+of suitable "dimensions".
 
 option
 - `niter`	# number of outer iterations; default 50
@@ -39,12 +43,12 @@ option
 - `P`		# preconditioner; default `I`
 - `betahow`	"beta" method for the search direction; default `:dai_yuan`
 - `fun`		User-defined function to be evaluated with two arguments (x,iter).
-			It is evaluated at (x0,0) and then after each iteration.
+   * It is evaluated at (x0,0) and then after each iteration.
 
 output
 - `x`		final iterate
 - `out`		`[niter+1] (fun(x0,0), fun(x1,1), ..., fun(x_niter,niter))`
-	(all 0 by default). This is an array of length `niter+1`
+   * (all 0 by default). This is an array of length `niter+1`
 """
 function ncg(
     B::AbstractVector{<:Any},
