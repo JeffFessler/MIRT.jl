@@ -130,7 +130,7 @@ end
 
 
 """
-phantom = rect_im_slow()
+    phantom = rect_im_slow()
 for rotated rectangles
 """
 function rect_im_slow(params_in, nx, ny, dx, dy, offset_x, offset_y, replace)

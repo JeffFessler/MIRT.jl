@@ -84,7 +84,7 @@ end
 
 
 """
-cuboid_im_sample()
+    cuboid_im_sample()
 
 :sample
 """
@@ -131,7 +131,7 @@ end
 
 
 """
-cuboid_im_exact()
+    cuboid_im_exact()
 
 :exact
 
@@ -194,7 +194,7 @@ end
 
 
 """
-cuboid_im_lowmem1(...)
+    cuboid_im_lowmem1(...)
 
 This version does `:sample` 1 slice at a time to reduce memory
 """
@@ -210,9 +210,6 @@ function cuboid_im_lowmem1(nx, ny, nz, params,
 end
 
 
-"""
-default_cuboid_parameters()
-"""
 function default_cuboid_parameters(xfov, yfov, zfov)
 	return [
 	0	0		0	60	60	2	0	0	1
@@ -222,9 +219,6 @@ function default_cuboid_parameters(xfov, yfov, zfov)
 end
 
 
-"""
-rotated_cuboid_parameters()
-"""
 function rotated_cuboid_parameters(xfov, yfov, zfov)
 	return [
 	0	0	0	60	60	2	45	0	1

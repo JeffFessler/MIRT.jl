@@ -8,25 +8,25 @@ export ir_mri_kspace_ga_radial
 
 
 """
-`kspace = ir_mri_kspace_ga_radial(; Nro=?, Nspoke=?, ...)`
+    kspace = ir_mri_kspace_ga_radial(; Nro=?, Nspoke=?, ...)
 
 Generate k-space sampling pattern for "golden angle" radial sampling.
 
 option
 - `Nro:Int`		number of samples in each readout/spoke, default 256
 - `Nspoke::Int`	number of spokes, default 1
-- `start::Real`	first angle in series [radians], default pi/2
+- `start::Real`	first angle in series [radians], default π/2
 - `angle::Real`	angular spacing [radians], default GA
-- `delta_ro::Real`	readout spacing, default 1/Nro
+- `delta_ro::Real`	readout spacing, default `1/Nro`
 - `shift::Real`		shift due to gradient delays, default 0
-		radial sample locations are `ir * delta_ro`
-		where `ir = [-(Nro/2 - 1):1:Nro/2] + shift`
+   * radial sample locations are `ir * delta_ro`
+   * where `ir = [-(Nro/2 - 1):1:Nro/2] + shift`
 
 out
 - `kspace`	`[Nro Nspoke 2]` (Float32)
-			kx and ky k-space locations for Nspoke*Nro samples
-			in interval (-0.5 0.5] for default shift, delta_ro
-			so default units are "cycles / sample"
+   * `kx` and `ky` k-space locations for `Nspoke*Nro` samples
+in interval `(-0.5 0.5]` for default `shift`, `delta_ro`
+so default units are "cycles / sample"
 
 2015-07 Mai Le, original Matlab version
 2015-07-04 Jeff Fessler, minor changes to Matlab version

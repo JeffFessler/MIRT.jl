@@ -25,7 +25,7 @@ option
 - `checkfov::Bool`		warn if any ellipsoid is out of fov
 - `how::Symbol`
    * `:fast` does it fast -- to do, only works slow
-   * `:lowmem` uses less memory than :fast but slower
+   * `:lowmem` uses less memory than `:fast` but slower
    * `:slow` default
 - `showmem::Bool`
 - `hu_scale::Real`			use 1000 to scale shepp-logan to HU; default 1

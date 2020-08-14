@@ -10,19 +10,19 @@ export rect_sino
 
 
 """
-`sino = rect_sino(sg, rects ; oversample=1, xscale=1, yscale=1)`
+    sino = rect_sino(sg, rects ; oversample=1, xscale=1, yscale=1)
 
 Create sinogram projection of one or more rectangles.
 Works for any sinogram geometry.
 
 in
-- `sg::SinoGeom`	sinogram geometry object from `sino_geom()`
-- `rects::Matrix`		`[ne 6]` rectangle parameters
-						`[centx centy widthx widthy angle_degrees value]`
+- `sg::SinoGeom` sinogram geometry object from `sino_geom()`
+- `rects::Matrix` `[ne 6]` rectangle parameters
+   * `[centx centy widthx widthy angle_degrees value]`
 
 options
 - `oversample::Int`	oversampling factor for emulating "strips"
-						default 1: just 1 ray per detector element
+   * default 1: just 1 ray per detector element
 - `xscale::Int`		use -1 to flip in x (not recommended); default 1
 - `yscale::Int`		use -1 to flip in y (not recommended); default 1
 
@@ -49,8 +49,8 @@ end
 
 
 """
-`sino = rect_sino(rg::AbstractArray{<:Real}, ϕg::AbstractArray{<:Real},
-		rects ; oversample=1, xscale=1, yscale=1)`
+    sino = rect_sino(rg::AbstractArray{<:Real}, ϕg::AbstractArray{<:Real},
+		rects ; oversample=1, xscale=1, yscale=1)
 
 Create sinogram projection of one or more rectangles,
 for arbitrary radial/angular sampling grid locations `(rg, ϕg)`
@@ -58,12 +58,12 @@ for arbitrary radial/angular sampling grid locations `(rg, ϕg)`
 in
 - `rg::AbstractArray{<:Real}`	radial sampling locations
 - `ϕg::AbstractArray{<:Real}`	angular sampling locations (radians)
-- `rects::Matrix`			`[n 6]` rectangle parameters
-							`[centx centy widthx widthy angle_degrees value]`
+- `rects::Matrix` `[n 6]` rectangle parameters
+  * `[centx centy widthx widthy angle_degrees value]`
 
 options
-- `xscale::Int`		use -1 to flip in x (not recommended); default 1
-- `yscale::Int`		use -1 to flip in y (not recommended); default 1
+- `xscale::Int` use -1 to flip in x (not recommended); default 1
+- `yscale::Int` use -1 to flip in y (not recommended); default 1
 
 out
 - `sino::AbstractArray{Float32}` same size as `rg` and `ϕg`

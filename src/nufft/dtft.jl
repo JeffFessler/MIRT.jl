@@ -21,7 +21,7 @@ using LinearMapsAA: LinearMapAA, LinearMapAO
     X = dtft(w, x ; n_shift=?)
 1D DTFT
 
-``X[m] = \\sum_{n=0}^{N-1} x[n] exp(-i w[m] (n - `n_shift`)), m=1,…,M``
+``X[m] = \\sum_{n=0}^{N-1} x[n] \\exp(-i w[m] (n - n_{shift})), m=1,…,M``
 
 in
 - `w::AbstractVector{<:Real}`	`[M]` frequency locations ("units" radians/sample)
@@ -43,7 +43,7 @@ end
     X = dtft(w, x ; n_shift=?)
 multi-dimensional DTFT (DSFT)
 
-``X[m] = \\sum_{n=0}^{N-1} x[n] exp(-i w[m,:] (n - `n_shift`)), m=1,…,M``
+``X[m] = \\sum_{n=0}^{N-1} x[n] \\exp(-i w[m,:] (n - n_{shift})), m=1,…,M``
 where here `n` is a `CartesianIndex`
 
 in
@@ -138,7 +138,7 @@ end
     x = dtft_adj(w, X, N ; n_shift=?)
 adjoint for 1D DTFT
 
-``x[n] = \\sum_{m=1}^M X[m] exp(i w[m] (n - `n_shift`)), n=0,…,N-1``
+``x[n] = \\sum_{m=1}^M X[m] \\exp(i w[m] (n - n_{shift})), n=0,…,N-1``
 
 This is the *adjoint* (transpose) of `dtft`, not an *inverse* DTFT.
 
@@ -171,7 +171,7 @@ end
     x = dtft_adj(w, X, N ; n_shift=?)
 adjoint for multi-dimensional DTFT (DSFT)
 
-``x[n] = \\sum_{m=1}^M X[m] exp(i w[m,:] (n - `n_shift`)), n=0,…,N-1``
+``x[n] = \\sum_{m=1}^M X[m] \\exp(i w[m,:] (n - n_{shift})), n=0,…,N-1``
 where here `n` is a `CartesianIndex`
 
 in

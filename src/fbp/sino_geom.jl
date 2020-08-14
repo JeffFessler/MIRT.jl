@@ -137,26 +137,26 @@ options for all geometries (including parallel-beam):
 - `units::Symbol`	e.g. `:cm` or `:mm`; default: :none
 - `orbit_start`		default: 0
 - `orbit`			[degrees] default: `180` for parallel / mojette
-					and `360` for fan
-					can be `:short` for fan-beam short scan
+and `360` for fan
+   * can be `:short` for fan-beam short scan
 - `down::Int`		down-sampling factor, for testing
 
 - `nb`				# radial samples cf `nr` (i.e., `ns` for `:fan`)
 - `na`				# angular samples (cf `nbeta` for `:fan`)
 - `d`				radial sample spacing; cf `dr` or `ds`; default 1
-					for mojette this is actually `dx`
+  * for mojette this is actually `dx`
 - `offset`			cf `offset_r` `channel_offset` unitless; default 0
-			(relative to centerline between two central channels).
-			Use 0.25 or 1.25 for "quarter-detector offset"
+   * (relative to centerline between two central channels).
+   * Use 0.25 or 1.25 for "quarter-detector offset"
 - `strip_width`		detector width; default: `d`
 
 options for fan-beam
 - `source_offset`		same units as d; use with caution! default 0
 fan beam distances:
-- `dsd`		cf `dis_src_det`	default: `Inf` (parallel beam)
-- `dod`		cf `dis_iso_det`	default: `0`
-- `dfs`		cf `dis_foc_src`	default: `0` (3rd generation CT arc),
-				use `Inf` for flat detector
+- `dsd` cf `dis_src_det` default: `Inf` (parallel beam)
+- `dod` cf `dis_iso_det` default: `0`
+- `dfs` cf `dis_foc_src` default: `0` (3rd generation CT arc),
+   * use `Inf` for flat detector
 
 out
 - `sg::SinoGeom`	initialized structure
