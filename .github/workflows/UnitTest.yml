@@ -23,7 +23,7 @@ jobs:
       # julia-version: ['1.4', '1', 'nightly']
         julia-version: ['1.5', 'nightly']
         os: [ubuntu-latest, windows-latest, macOS-latest]
-        fail-fast: true
+      # fail-fast: true
 
     steps:
       - uses: actions/checkout@v1.0.0
