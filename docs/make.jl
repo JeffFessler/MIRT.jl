@@ -20,9 +20,12 @@ makedocs(
         "Table of Contents" => "toc.md",
         # "Examples" => examples,
         "Function References" => "reference.md",
-    ]
+    ],
+    authors = "Jeff Fessler and contributors",
 )
 
 # examples_cb()
 
-deploydocs(repo = "github.com/JeffFessler/MIRT.jl")
+deploydocs(
+    repo = "github.com/JeffFessler/MIRT.jl.git",
+)
