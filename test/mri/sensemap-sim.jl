@@ -178,7 +178,7 @@ function ir_mri_sensemap_sim_show2(smap, x, y, dx, dy, nlist, plist, rlist)
 		pl[ic,2] = p
 	end
 
-	ssos = sqrt.(sum(abs.(smap).^2, dims=ndims(smap)))
+	ssos = sqrt.(sum(abs2.(smap), dims=ndims(smap)))
 	ssos = ssos / ssos[Int(end/2),Int(end/2)]
 
 	p = jim(x, y, ssos, "SSoS (norm.)",
