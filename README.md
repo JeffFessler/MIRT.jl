@@ -82,6 +82,6 @@ Older tagged versions should work with older Julia versions.
 [coveralls-img]: https://coveralls.io/repos/JeffFessler/MIRT.jl/badge.svg?branch=master
 [coveralls-url]: https://coveralls.io/github/JeffFessler/MIRT.jl?branch=master
 [docs-stable-img]: https://img.shields.io/badge/docs-stable-blue.svg
-[docs-stable-url]: https://JeffFessler/MIRT.jl/stable
+[docs-stable-url]: https://JeffFessler.github.io/MIRT.jl/stable
 [docs-dev-img]: https://img.shields.io/badge/docs-dev-blue.svg
-[docs-dev-url]: https://JeffFessler/MIRT.jl/dev
+[docs-dev-url]: https://JeffFessler.github.io/MIRT.jl/dev
