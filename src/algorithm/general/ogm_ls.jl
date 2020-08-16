@@ -97,7 +97,7 @@ for iter = 1:niter
 		for j=1:J
 			tmp = By[j] + alf * Bd[j]
 			derh += real(dot(Bd[j], gradf[j](tmp)))
-			curv += sum(curvf[j](tmp) .* abs.(Bd[j]).^2)
+			curv += sum(curvf[j](tmp) .* abs2.(Bd[j]))
 		end
 		curv < 0 && throw("curv < 0")
 		if curv > 0
