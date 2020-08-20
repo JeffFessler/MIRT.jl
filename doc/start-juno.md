@@ -5,10 +5,10 @@ http://docs.junolab.org/latest/man/installation/
 to set up the [Juno IDE](https://junolab.org/) in
   the [Atom editor](https://atom.io), including:
 
-  - Install [Julia](https://julialang.org) (1.4 or later recommended).
+  - Install [Julia](https://julialang.org) (1.5 or later recommended).
   - Power users: set a shell alias for "julia" to the julia executable.
 On my Mac my path is
-`~/../freeware/Julia-1.4.app/Contents/Resources/julia/bin/julia`
+`~/../freeware/Julia-1.5.app/Contents/Resources/julia/bin/julia`
   - Install the [Atom editor](https://atom.io).
   - Use Atom to install the `uber-juno` package. This may take a couple minutes.
   - Click "Yes" for the question about "Juno-specific panes on startup", unless you are an Atom guru.
@@ -56,7 +56,7 @@ I use the `vim-mode-plus` key bindings, installed using Atom preferences.
 [this debugging tutorial](http://docs.junolab.org/latest/man/debugging)
 
 * The default setting in Julia seems to be to use just one thread.
-Even your laptop probably has multiple cores and using them all
+Your copmuter probably has multiple cores and using them all
 will help the code run faster.
 To use all cores,
 set the
