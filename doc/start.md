@@ -1,10 +1,10 @@
-* Install Julia (1.3 or later recommended) from https://julialang.org/
+* Install Julia (1.5 or later recommended) from https://julialang.org/
 * Explore the extensive documentation at https://docs.julialang.org/
 * Launch Julia and use the `]` key to enter its package manager.
 * Add any packages needed for these notebooks using the `add` command.
 * For example `add Plots` to add the `Plots` package.
 * Other crucial standard packages are `FFTW` `FFTViews`
-* You will also need the package `IJulia` to run any of these demo notebooks.
+* You will also need the package `IJulia` to run any Jupyter demo notebooks.
 * Add MIRT by typing `add MIRT`
 (Automatically loads from https://github.com/JeffFessler/MIRT.jl because MIRT.jl is a registered package.)
 * Type `precompile` to have Julia precompile the added packages.

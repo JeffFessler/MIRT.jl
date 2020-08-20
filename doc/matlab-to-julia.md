@@ -4,10 +4,10 @@ Many of the functions in MIRT.jl were converted from corresponding
 functions in the
 [Matlab version of MIRT](https://github.com/JeffFessler/mirt/tree/master)
 
-Studying this can be helpful for planning translations of other Matlab functions.
+Studying them can be helpful for planning translations of other Matlab functions.
 
 Here is a list of Julia functions that have direct counter-parts
-in Matlab MIRT directories of the same name:
+in Matlab MIRT directories of the same base name:
 
 * `fbp/cuboid_im.jl`
 * `fbp/ellipse_im.jl`
