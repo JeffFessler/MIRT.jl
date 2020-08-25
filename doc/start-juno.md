@@ -56,7 +56,7 @@ I use the `vim-mode-plus` key bindings, installed using Atom preferences.
 [this debugging tutorial](http://docs.junolab.org/latest/man/debugging)
 
 * The default setting in Julia seems to be to use just one thread.
-Your copmuter probably has multiple cores and using them all
+Your computer probably has multiple cores and using them all
 will help the code run faster.
 To use all cores,
 set the
