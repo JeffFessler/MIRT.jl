@@ -16,7 +16,7 @@ using LinearMapsAA: LinearMapAA, LinearMapAM, LinearMapAO
 
 """
     nufft_eltype(::DataType)
-ensure NFFTPlan is Float32 or Float64
+ensure plan_nfft eltype is Float32 or Float64
 """
 nufft_eltype(::Type{<:Integer}) = Float32
 nufft_eltype(::Type{<: Union{Float16,Float32}}) = Float32
@@ -49,7 +49,7 @@ for computing fast ``O(N \\log N)`` approximation to
 
 in
 - `w::AbstractArray{<:Real}` `[M]` frequency locations (units radians/sample)
-   + `eltype(w)` determines the NFFTPlan type; so to save memory use Float32!
+   + `eltype(w)` determines the `plan_nfft` type; so to save memory use Float32!
    + `size(w)` determines `odim` for `A` if `operator=true`
 - `N::Int` signal length
 
@@ -90,8 +90,8 @@ function nufft_init(
 	T = nufft_eltype(eltype(w))
 	CT = Complex{T}
 	CTa = AbstractArray{Complex{T}}
-	f = convert(Array{T}, vec(w)/(2π)) # note: NFFTPlan must have correct type
-	p = NFFTPlan(f, N, nfft_m, nfft_sigma) # create plan
+	f = convert(Array{T}, vec(w)/(2π)) # note: plan_nfft must have correct type
+	p = plan_nfft(f, N, nfft_m, nfft_sigma) # create plan
 	M = length(w)
 	# extra phase here because NFFT always starts from -N/2
 	phasor = convert(CTa, cis.(-vec(w) * (N/2 - n_shift)))
@@ -129,7 +129,7 @@ for computing fast ``O(N \\log N)`` approximation to
 
 in
 - `w::AbstractArray{<:Real}` `[M,D]` frequency locations (units radians/sample)
-	+ `eltype(w)` determines the NFFTPlan type; so to save memory use Float32!
+	+ `eltype(w)` determines the `plan_nfft` type; so to save memory use Float32!
 	+ `size(w)[1:(end-1)]` determines `odim` if `operator=true`
 - `N::Dims{D}` signal dimensions
 
@@ -178,10 +178,10 @@ function nufft_init(
 	T = nufft_eltype(eltype(w))
 	CT = Complex{T}
 	CTa = AbstractArray{Complex{T}}
-	f = convert(Array{T}, w/(2π)) # note: NFFTPlan must have correct type
-	p = NFFTPlan(f', N, nfft_m, nfft_sigma) # create plan
+	f = convert(Array{T}, w/(2π)) # note: plan_nfft must have correct type
+	p = plan_nfft(f', N, nfft_m, nfft_sigma) # create plan
 
-	# extra phase here because NFFT always starts from -N/2
+	# extra phase here because NFFT.jl always starts from -N/2
 	phasor = convert(CTa, cis.(-w * (collect(N)/2. - n_shift)))
 	phasor_conj = conj.(phasor)
 	# todo: in-place

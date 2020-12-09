@@ -266,15 +266,15 @@ end
 	M = 6
 	x1 = collect((-Int(M/2)):(Int(M/2)-1))/M
 	N1 = M
-	p1 = NFFTPlan(x1, N1)
-#	p1 = NFFTPlan(x1', (N1,)) # this works too
+	p1 = plan_nfft(x1, N1)
+#	p1 = plan_nfft(x1', (N1,)) # this works too
 #	f1 = ones(N1)
 	f1 = [1.,2,3,4,0,0]
 	o1 = nfft(p1, complex(f1)) # slightly annoying to have to use complex() here
 
 	N2 = (M,4) # works fine with "4" instead of "1" here and separable signal
 	x2 = [x1 zeros(M)]
-	p2 = NFFTPlan(x2', N2)
+	p2 = plan_nfft(x2', N2)
 	f2 = f1 * [0,0,1,0]'
 	o2 = nfft(p2, complex(f2)) # ditto
 

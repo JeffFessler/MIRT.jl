@@ -1,5 +1,9 @@
 In reverse chronological order
 
+2020-12-08
+towards 0.13.2 after NFFT.jl update requires `NFFTPlan` to `plan_nfft`.
+todo: expose cuda option!
+
 2020-07-23
 Breaking change: SinoGeom
 
