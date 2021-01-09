@@ -1,13 +1,12 @@
 # MIRT (Michigan Image Reconstruction Toolbox) in Julia
 
-<div align="center"><img src="deps/mirt-logo.svg" alt="MIRTlogo" width="150"/></div>
-
 [![Build Status][action-img]][action-url]
 [![Build Status][pkgeval-img]][pkgeval-url]
 [![Codecov.io][codecov-img]][codecov-url]
 [![Coveralls][coveralls-img]][coveralls-url]
 [![docs][docs-stable-img]][docs-stable-url]
 [![docs][docs-dev-img]][docs-dev-url]
+<img src="deps/mirt-logo.svg" alt="MIRTlogo" width="150"/>
 
 https://github.com/JeffFessler/MIRT.jl
 
