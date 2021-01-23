@@ -38,9 +38,13 @@ end
 """
 `fld_write_test1(file, data, ...)`
 """
-function fld_write_test1(file, data ; raw::Bool=false, chat::Bool=false, kwarg...)
-	@inferred fld_write(file, data ; raw=raw, kwarg...)
-	tmp = fld_read(file, chat=chat)
+function fld_write_test1(file, data ;
+	raw::Bool=false,
+	warn::Bool=false,
+	chat::Bool=false, kwarg...
+)
+	@inferred fld_write(file, data ; raw, warn, kwarg...)
+	tmp = fld_read(file ; chat)
 	tmp != data && throw("test failed for file = $file")
 
 	rm(file)
@@ -64,7 +68,7 @@ chat = isinteractive()
 			for raw in (false, true)
 				chat && @info "dtype=$dtype endian=$endian raw=$raw"
 				data = convert.(dtype, [5:8; 1:4])
-				@test fld_write_test1(file, data, endian=endian, raw=raw,
+				@test fld_write_test1(file, data ; endian, raw,
 					head = ["dtype=$dtype endian=$endian raw=$raw",],
 					check=true, chat=false)
 			end

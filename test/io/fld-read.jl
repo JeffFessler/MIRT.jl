@@ -11,7 +11,7 @@ dir = mktempdir()
 @testset "fld eof" begin
 	file = joinpath(dir, "fld-read-eof-test.fld")
 	open(file, "w") do fid
-		@show fid
+	#	@show fid
 	    println(fid, "# AVS field file eof test")
 	end
 	@test_throws String fld_read(file)

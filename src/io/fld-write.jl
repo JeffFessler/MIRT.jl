@@ -8,7 +8,7 @@ export fld_write
 
 
 """
-`fld_write(file, data, varargin)`
+`fld_write(file, data ; varargin)`
 
 write data into AVS format `.fld` file
 
@@ -37,10 +37,11 @@ function fld_write(
 	endian::Symbol = :le,
 	head::Array{String} = empty([""]),
 #	how::Symbol = :data,
+	warn::Bool = true,
 	raw::Bool = false,
 )
 
-	data = fld_write_data_fix(data) # make data suitable for writing in .fld
+	data = fld_write_data_fix(data ; warn) # make data suitable for writing in .fld
 
 	endian != :le && endian != :be && throw("endian '$endian' unknown")
 
@@ -115,23 +116,31 @@ end
 `data = fld_write_data_fix(data)`
 convert data to format suitable for writing to .fld file
 """
-function fld_write_data_fix(data::AbstractArray{BigFloat})
-	@warn "BigFloat downgraded to Float64"
+function fld_write_data_fix(data::AbstractArray{BigFloat} ; warn::Bool=true)
+	warn && (@warn "BigFloat downgraded to Float64")
 	return Float64.(data)
 end
-function fld_write_data_fix(data::AbstractArray{Float16})
-	@warn "Float16 promoted to Float32"
+
+function fld_write_data_fix(data::AbstractArray{Float16} ; warn::Bool=true)
+	warn && (@warn "Float16 promoted to Float32")
 	return Float32.(data)
 end
-function fld_write_data_fix(data::AbstractArray{T}) where {T <: Union{BigInt, Int64}}
-	@warn "$T downgraded to Int32"
+
+function fld_write_data_fix(
+	data::AbstractArray{T} ;
+	warn::Bool=true,
+) where {T <: Union{BigInt, Int64}}
+	warn && (@warn "$T downgraded to Int32")
 	return Int32.(data)
 end
-function fld_write_data_fix(data::AbstractArray{Bool})
-	@warn "Bool promoted to UInt8"
+
+function fld_write_data_fix(data::AbstractArray{Bool} ; warn::Bool=true)
+	warn && (@warn "Bool promoted to UInt8")
 	return UInt8.(data)
 end
-@inline fld_write_data_fix(data::AbstractArray{T}) where
+
+@inline fld_write_data_fix(data::AbstractArray{T} ; warn::Bool=true) where
 	{T <: Union{Float32, Float64, UInt8, Int16, Int32}} = data
-fld_write_data_fix(data::AbstractArray{T}) where {T <: Any} =
+
+fld_write_data_fix(data::AbstractArray{T} ; warn::Bool=true) where {T <: Any} =
 		throw(ArgumentError("unsupported type $T"))
