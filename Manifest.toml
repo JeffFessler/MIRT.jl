@@ -916,7 +916,7 @@ uuid = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
 
 [[Wavelets]]
 deps = ["DSP", "FFTW", "LinearAlgebra", "Reexport", "SpecialFunctions", "Statistics"]
-git-tree-sha1 = "b62f006014f2326c3558114b8e0111aefe526942"
+git-tree-sha1 = "652628df18d784b6ea81f536c8c55fc48e1f53f8"
 repo-rev = "master"
 repo-url = "https://github.com/JeffFessler/Wavelets.jl"
 uuid = "29a6e085-ba6d-5f35-a997-948ac2efa89a"
