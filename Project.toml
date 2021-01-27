@@ -27,19 +27,18 @@ Wavelets = "29a6e085-ba6d-5f35-a997-948ac2efa89a"
 
 [compat]
 FFTViews = "0.3"
-FFTW = "1.3"
-FillArrays = "0.11"
+FFTW = "1.2, 1.3"
+FillArrays = "0.9, 0.10, 0.11"
 ImageFiltering = "0.6"
 ImageTransformations = "0.8"
-Interpolations = "0.13"
+Interpolations = "0.12, 0.13"
 LinearMapsAA = "0.6.5"
 MIRTio = "0.3"
 MosaicViews = "0.2"
 NFFT = "0.6"
 Plots = "1.10"
 Reexport = "0.2, 1.0"
-SpecialFunctions = "1"
-Wavelets = "0.9.4"
+SpecialFunctions = "0.10, 1"
 julia = "1.5"
 
 [extras]
