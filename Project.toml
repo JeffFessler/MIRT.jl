@@ -39,7 +39,7 @@ NFFT = "0.6"
 Plots = "1.10"
 Reexport = "0.2, 1.0"
 SpecialFunctions = "0.10, 1"
-Wavlets = "0.9"
+Wavelets = "0.9"
 julia = "1.5"
 
 [extras]
