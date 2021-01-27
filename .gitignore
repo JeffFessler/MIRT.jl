@@ -3,6 +3,7 @@
 *.jl.mem
 .*.*.swp
 .DS_Store
+Manifest.toml
 /.benchmarkci
 /docs/build
 /docs/src/democards
