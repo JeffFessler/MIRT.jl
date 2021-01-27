@@ -1,7 +1,7 @@
 name = "MIRT"
 uuid = "7035ae7a-3787-11e9-139a-5545ed3dc201"
 authors = ["fessler <fessler@umich.edu>"]
-version = "0.13.2"
+version = "0.13.3"
 
 [deps]
 Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
@@ -27,13 +27,13 @@ Wavelets = "29a6e085-ba6d-5f35-a997-948ac2efa89a"
 
 [compat]
 FFTViews = "0.3"
-FFTW = "1.2"
+FFTW = "1"
 FillArrays = "0.9, 0.10, 0.11"
 ImageFiltering = "0.6"
 ImageTransformations = "0.8"
 Interpolations = "0.12, 0.13"
 LinearMapsAA = "0.6.5"
-MIRTio = "0.2, 0.3"
+MIRTio = "0.3"
 MosaicViews = "0.2"
 NFFT = "0.6"
 Plots = "1.10"
