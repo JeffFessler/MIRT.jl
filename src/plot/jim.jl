@@ -249,7 +249,7 @@ end
 function jim(test::Symbol)
 	global jim_def
 	if test === :keys
-		return keys(jim_def)
+		return sort(collect(keys(jim_def)))
 	end
 	if test === :defs
 		return jim_def
