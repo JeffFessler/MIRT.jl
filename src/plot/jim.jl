@@ -16,6 +16,7 @@ jim_def = Dict([
 	:aspect_ratio => :equal,
 	:clim => nothing,
 	:color => :grays,
+	:colorbar => :legend,
 	:line3plot => true, # lines around sub image for 3d mosaic?
 	:line3type => (:yellow),
 	:ncol => 0,
@@ -55,6 +56,7 @@ option
 - `aspect_ratio`; default `:equal`
 - `clim`; default `(minimum(z),maximum(z))`
 - `color` (colormap, e.g. `:hsv`); default `:grays`
+- `colorbar` (e.g. `:none`); default `:legend`
 - `ncol` for mosaicview for 3D and higher arrays; default `0` does auto select
 - `padval` padding value for mosaic view; default `minimum(z)`
 - `line3plot` lines around sub image for 3d mosaic; default `false`
@@ -80,6 +82,7 @@ function jim(z::AbstractArray{<:Real} ;
 		aspect_ratio = jim_def[:aspect_ratio],
 		clim = nothing_else(jim_def[:clim], (minimum(z), maximum(z))),
 		color = jim_def[:color],
+		colorbar = jim_def[:colorbar],
 		line3plot = jim_def[:line3plot],
 		line3type = jim_def[:line3type],
 		ncol::Int = jim_def[:ncol],
@@ -145,6 +148,7 @@ function jim(z::AbstractArray{<:Real} ;
 			aspect_ratio=aspect_ratio,
 			clim=clim,
 			color=color,
+			colorbar=colorbar,
 			title=title,
 			yflip=yflip,
 			xlabel=xlabel,
@@ -245,7 +249,7 @@ end
 function jim(test::Symbol)
 	global jim_def
 	if test === :keys
-		return keys(jim_def)
+		return sort(collect(keys(jim_def)))
 	end
 	if test === :defs
 		return jim_def
