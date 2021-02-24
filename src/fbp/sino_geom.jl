@@ -198,8 +198,8 @@ SinoFanMaker(dfs::Real) =
 
 # common to all
 function _downsample(sg::SinoGeom, down::Int)
-	nb = 2 * round(Int, sg.nb / down / 2) # keep it even
-	na = round(Int, sg.na / down)
+	nb = 2 * (sg.nb ÷ 2down) # keep it even
+	na = sg.na ÷ down
 	return (sg.units,
 		nb, na, sg.d * down, sg.orbit, sg.orbit_start, sg.offset,
 		sg.strip_width * down)
@@ -249,7 +249,7 @@ end
 function sino_geom_fan( ;
 	units::Symbol = :none,
 	nb::Int = 128,
-	na::Int = 2 * floor(Int, nb * pi/2 / 2),
+	na::Int = 2 * floor(Int, nb * π/2 / 2),
 	d::Real = 1,
 	orbit::Union{Symbol,Real} = 360, # [degrees]
 	orbit_start::Real = 0,
@@ -289,7 +289,7 @@ end
 function sino_geom_par( ;
 	units::Symbol = :none,
 	nb::Int = 128,
-	na::Int = 2 * floor(Int, nb * pi/2 / 2),
+	na::Int = 2 * floor(Int, nb * π/2 / 2),
 	down::Int = 1,
 	d::Real = 1,
 	orbit::Real = 180, # [degrees]
@@ -309,7 +309,7 @@ end
 function sino_geom_moj( ;
 	units::Symbol = :none,
 	nb::Int = 128,
-	na::Int = 2 * floor(Int, nb * pi/2 / 2),
+	na::Int = 2 * floor(Int, nb * π/2 / 2),
 	down::Int = 1,
 	d::Real = 1, # means dx for :moj
 	orbit::Real = 180, # [degrees]
@@ -409,8 +409,8 @@ sinogram with a single ray
 """
 function sino_geom_unitv(
 	sg::SinoGeom ;
-	ib::Int = round(Int, sg.nb/2+1),
-	ia::Int = round(Int, sg.na/2+1),
+	ib::Int = sg.nb ÷ 2 + 1,
+	ia::Int = sg.na ÷ 2 + 1,
 )
 	out = sg.zeros
 	out[ib,ia] = 1

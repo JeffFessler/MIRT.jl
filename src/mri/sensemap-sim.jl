@@ -127,8 +127,8 @@ function ir_mri_sensemap_sim(
 			orbit, orbit_start, coil_distance, ir_ic_pair)
 
 	scale_center = (nz == 0) ?
-		1 / sqrt(sum(abs2.(smap[round(Int,nx/2),round(Int,ny/2),:]))) :
-		1 / sqrt(sum(abs2.(smap[round(Int,nx/2),round(Int,ny/2),round(Int,nz/2),:])))
+		1 / sqrt(sum(abs2.(smap[nx÷2,ny÷2,:]))) :
+		1 / sqrt(sum(abs2.(smap[nx÷2,ny÷2,nz÷2,:])))
 
 	if scale === :ssos_center
 		smap *= Float32(scale_center)
@@ -150,7 +150,7 @@ function ir_mri_sensemap_sim_do(
 )
 
 	T = Float32
-	nring = Int(ncoil / ncoilpr)
+	nring = ncoil ÷ ncoilpr
 	rlist = T(rcoil) * ones(T, ncoilpr, nring) # coil radii
 
 	plist = zeros(T, ncoilpr, nring, 3) # position of coil center [x y z]

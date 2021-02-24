@@ -237,9 +237,9 @@ function genspi(D, N ;
 
 	# gmax limited approximation
 	l3 = 0
-	T=ts
+	T = ts
 	if Gmax > gamp
-		T = ((pi*N/nl)*(pi*N/nl) - thetas*thetas)/(2*gamma*gamp*D/nl) + ts
+		T = ((π*N/nl)*(π*N/nl) - thetas*thetas)/(2*gamma*gamp*D/nl) + ts
 		t = (ts+dt):dt:T
 		theta = sqrt.(thetas * thetas .+ (2 * gamma * gamp * D) .* (t .- ts) / nl)
 		c = cos.(theta)
@@ -251,8 +251,10 @@ function genspi(D, N ;
 		if (maximum(ind2) > length(gy))
 			gy = [gy; zeros(maximum(ind2) - length(gy))]
 		end
-		gx[floor.(Int,ind2)] = gamp.*(c./theta - s)
-		gy[floor.(Int,ind2)] = gamp.*(s./theta + c)
+#		gx[floor.(Int,ind2)] = gamp.*(c./theta - s)
+#		gy[floor.(Int,ind2)] = gamp.*(s./theta + c)
+		gx[ind2] = gamp.*(c./theta - s)
+		gy[ind2] = gamp.*(s./theta + c)
 		l3 = length(t)
 	end
 

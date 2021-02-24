@@ -264,7 +264,7 @@ end
 #=
 	# todo MWE for 1D vs 2D
 	M = 6
-	x1 = collect((-Int(M/2)):(Int(M/2)-1))/M
+	x1 = collect((-(M÷2)):((M÷2)-1))/M
 	N1 = M
 	p1 = plan_nfft(x1, N1)
 #	p1 = plan_nfft(x1', (N1,)) # this works too

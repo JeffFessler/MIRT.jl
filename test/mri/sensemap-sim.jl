@@ -179,7 +179,7 @@ function ir_mri_sensemap_sim_show2(smap, x, y, dx, dy, nlist, plist, rlist)
 	end
 
 	ssos = sqrt.(sum(abs2.(smap), dims=ndims(smap)))
-	ssos = ssos / ssos[Int(end/2),Int(end/2)]
+	ssos = ssos / ssos[end÷2,end÷2]
 
 	p = jim(x, y, ssos, "SSoS (norm.)",
 		#	xlim=[-1,1]*1.1*xmax,
@@ -320,7 +320,7 @@ function ir_mri_sensemap_sim_test3( ; chat::Bool=false)
 		tmp = permutedims(tmp, [1,3,2,4]) # [nx nz ny ncoil] z cuts are smooth
 		jim(ncol=ig.ny, tmp, abswarn=false)
 		chat && prompt()
-		jim(ncol=1, tmp[:,:,round(Int,end/2),:], abswarn=false)
+		jim(ncol=1, tmp[:,:,end÷2,:], abswarn=false)
 		chat && prompt()
 	end
 

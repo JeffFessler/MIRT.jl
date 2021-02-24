@@ -288,7 +288,7 @@ function _down_round(
 ) where {D}
 	out = val ./ down
 	# for non-divisors make dim a multiple of 2
-	fun = out -> out == round(out) ? out : 2 * round(out / 2)
+	fun = out -> out == round(out) ? out : 2 * (out ÷ 2)
 	out = fun.(out)
 	dd = dd .* down
 	return Int.(out), dd
@@ -422,7 +422,7 @@ function image_geom_add_unitv(
 		out[i...] += one(T)
 	else
 		any(i .!= 0) && throw("i $i")
-		tmp = c .+ Int.(floor.(size(out) ./ 2)) .+ 1
+		tmp = c .+ (size(out) .÷ 2) .+ 1
 		out[tmp...] += one(T)
 	end
 

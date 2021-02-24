@@ -37,7 +37,7 @@ function downsample_dim1(
 	dim = size(x)
 	dim1 = dim[1]
 	x = reshape(x, dim1, :) # [n1 *Nd]
-	m1 = Int(floor(dim1 / down))
+	m1 = dim1 ÷ down
 	if m1 * down < dim1
 		warn && @warn("truncating input size $dim1 to $(m1 * down)")
 		x = x[1:(m1*down),:]
@@ -75,7 +75,7 @@ function downsample1(
 
 	dim = size(x)
 	dim1 = dim[1]
-	m1 = floor(Int, dim1 / down)
+	m1 = dim1 ÷ down
 	if m1 * down < dim1
 		warn && @warn("truncating input size $dim1 to $(m1 * down)")
 		y = reshape((@view x[1:(m1*down)]), down, :)
@@ -111,7 +111,7 @@ function downsample2(
 )
 
 	idim = size(x)
-	odim = floor.(Int, idim ./ down)
+	odim = idim .÷ down
 
 	warn && any(odim .* down .!= idim) && @warn("truncating to $odim")
 
@@ -178,7 +178,7 @@ function downsample3(
 )
 
 	idim = size(x)
-	odim = floor.(Int, idim ./ down)
+	odim = idim .÷ down
 
 	warn && any(odim .* down .!= idim) && @warn("truncating to $odim")
 
@@ -196,7 +196,7 @@ function downsample3_loop(
 	T::DataType = eltype(x[1] / down[1]),
 )
 
-	odim = floor.(Int, size(x) ./ down)
+	odim = size(x) .÷ down
 
 	y = Array{T}(undef, odim[1], odim[2], odim[3])
 	d1 = down[1]
