@@ -409,8 +409,8 @@ sinogram with a single ray
 """
 function sino_geom_unitv(
 	sg::SinoGeom ;
-	ib::Int = round(Int, sg.nb/2+1),
-	ia::Int = round(Int, sg.na/2+1),
+	ib::Int = sg.nb ÷ 2 + 1,
+	ia::Int = sg.na ÷ 2 + 1,
 )
 	out = sg.zeros
 	out[ib,ia] = 1

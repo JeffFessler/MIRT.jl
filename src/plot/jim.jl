@@ -92,8 +92,8 @@ function jim(z::AbstractArray{<:Real} ;
 		xlabel::AbstractString = jim_def[:xlabel],
 		ylabel::AbstractString = jim_def[:ylabel],
 		fft0::Bool = jim_def[:fft0],
-		x = fft0 ? Int.(-size(z,1)/2:size(z,1)/2-1) : (1:size(z,1)),
-		y = fft0 ? Int.(-size(z,2)/2:size(z,2)/2-1) : (1:size(z,2)),
+		x = fft0 ? ((-size(z,1)÷2):(size(z,1)÷2-1)) : (1:size(z,1)),
+		y = fft0 ? ((-size(z,2)÷2):(size(z,2)÷2-1)) : (1:size(z,2)),
 		xtick = (minimum(x) < 0 && maximum(x) > 0) ?
 			[minfloor(x),0,maxceil(x)] : [minfloor(x),maxceil(x)],
 		ytick = (minimum(y) < 0 && maximum(y) > 0) ?
@@ -162,12 +162,12 @@ function jim(z::AbstractArray{<:Real} ;
 		m1 = (1+size(z,1)) / n1 # add one because of mosaicview non-edge
 		m2 = (1+size(z,2)) / n2
 		plot_box! = (ox, oy) -> plot!(
-			ox .+ [0,1,1,0,0]*n1 .+ 0.0,
-			oy .+ [0,0,1,1,0]*n2 .+ 0.0,
+			ox .+ [0,1,1,0,0] * n1 .+ 0.0,
+			oy .+ [0,0,1,1,0] * n2 .+ 0.0,
 			line=jim_def[:line3type], label="")
 		for ii=0:n3-1
 			i1 = mod(ii, m1)
-			i2 = floor(ii / m1)
+			i2 = ii ÷ m1
 			plot_box!(i1*n1, i2*n2)
 		end
 	end

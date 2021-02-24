@@ -320,7 +320,7 @@ function ir_mri_sensemap_sim_test3( ; chat::Bool=false)
 		tmp = permutedims(tmp, [1,3,2,4]) # [nx nz ny ncoil] z cuts are smooth
 		jim(ncol=ig.ny, tmp, abswarn=false)
 		chat && prompt()
-		jim(ncol=1, tmp[:,:,round(Int,end/2),:], abswarn=false)
+		jim(ncol=1, tmp[:,:,end÷2,:], abswarn=false)
 		chat && prompt()
 	end
 
