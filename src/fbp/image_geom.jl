@@ -278,7 +278,7 @@ end
 
 
 """
-(n,d) = image_geom_down_round()
+    (n,d) = _down_round()
 helper function needed to downsample `image_geom`
 """
 function _down_round(
@@ -286,12 +286,9 @@ function _down_round(
 	dd::NTuple{D,Real},
 	down::NTuple{D,Real},
 ) where {D}
-	out = val ./ down
 	# for non-divisors make dim a multiple of 2
-	fun = out -> out == round(out) ? out : 2 * (out ÷ 2)
-	out = fun.(out)
-	dd = dd .* down
-	return Int.(out), dd
+	fun = r -> r == round(r) ? Int(r) : 2 * round(Int, r/2)
+	return @. fun(val / down), dd .* down
 end
 
 
