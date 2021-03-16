@@ -11,11 +11,11 @@ format = Documenter.HTML(
 )
 
 
-makedocs(
-    modules  = [MIRT],
-    format   = format,
+makedocs(;
+    modules = [MIRT],
+    format,
     sitename = "MIRT.jl",
-    pages    = [
+    pages = [
         "Home" => "index.md",
         "Table of Contents" => "toc.md",
         # "Examples" => examples,
@@ -26,6 +26,8 @@ makedocs(
 
 # examples_cb()
 
-deploydocs(
+deploydocs(;
     repo = "github.com/JeffFessler/MIRT.jl.git",
+    devbranch = "master",
+    versions = ["stable" => "v^", "dev" => "dev"],
 )
