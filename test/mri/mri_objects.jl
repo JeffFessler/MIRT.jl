@@ -96,7 +96,7 @@ function mri_objects_trap_test()
     trap0 = mri_objects_trap(z, 0, len)
     plot(z, trap, label="trap")
     plot!(z, trap0, label="rect")
-    plot!(xtick = [0 -len/2 len/2-dz/2 len/2 len/2+dz/2])
+    plot!(xtick = [0, -len/2, len/2-dz/2, len/2, len/2+dz/2])
 end
 
 @test_throws String mri_objects(:bad)
