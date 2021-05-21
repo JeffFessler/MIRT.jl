@@ -4,6 +4,7 @@ authors = ["fessler <fessler@umich.edu>"]
 version = "0.13.3"
 
 [deps]
+AVSfldIO = "b6189060-daf9-4c28-845a-cc0984b81781"
 Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 FFTViews = "4f61f5a4-77b1-5117-aa51-3ab5ef4ef0cd"
 FFTW = "7a1cc6ca-52ef-59f5-83cd-3a7055c09341"
