@@ -4,11 +4,11 @@ using Test: @testset
 
 list = [
 "caller_name.jl"
-"fld-read.jl"
+"fld-read-deprecated.jl"
 "ir_dump.jl"
 "prompt.jl"
 "shows.jl"
-"fld-write.jl"
+"fld-write-deprecated.jl"
 ]
 
 # todo: temporary work around for:
