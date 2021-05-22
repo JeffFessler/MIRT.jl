@@ -1,4 +1,4 @@
-# fld-read.jl
+# fld-read-deprecated.jl
 
 using MIRT: fld_header, fld_read
 import MIRT: arg_get, string_to_array, fld_read_single

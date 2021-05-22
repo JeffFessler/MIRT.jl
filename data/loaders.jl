@@ -1,12 +1,15 @@
 # loaders.jl
 # utilities for loading in data / images
 
-"""
-`data = ir_load_brainweb_t1_256()`
+using FileIO: load
 
-load brainweb T1-weighted MRI slice of size 256x256
+"""
+    data = ir_load_brainweb_t1_256()
+
+Load brainweb T1-weighted MRI slice of size `256 × 256`
 """
 function ir_load_brainweb_t1_256()
-	file = joinpath(dirname(pathof(MIRT)), "../data/mri/brainweb_t1_256.fld")
-	return Float32.(fld_read(file))' # transpose!
+	dirmirt = normpath(dirname(pathof(MIRT)), "..")
+	file = joinpath(dirmirt, "data", "mri", "brainweb_t1_256.fld")
+	return Float32.(load(file))' # transpose!
 end

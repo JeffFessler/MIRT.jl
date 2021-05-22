@@ -1,39 +1,12 @@
 # fld-write.jl
 
 using MIRT: fld_write, fld_read
-import MIRT: fld_write_data_fix
+#import MIRT: fld_write_data_fix
 
 #using MIRT: ir_test_dir, ir_test_dir!
 using Test: @test, @testset, @test_throws, @inferred
 
-
 #=
-"""
-`dir = ir_test_dir!(path)`
-
-set default test directory
-"""
-function ir_test_dir!(path::String)
-	ENV["MIRT_TEST_DIR"] = path
-end
-
-
-"""
-`dir = ir_test_dir`
-
-return default test directory `ENV["MIRT_TEST_DIR"]`; default is `/tmp`
-"""
-function ir_test_dir()
-#	get(ENV, "MIRT_TEST_DIR", "/tmp")
-	try
-		return ENV["MIRT_TEST_DIR"]
-	catch
-		return "/tmp"
-	end
-end
-=#
-
-
 
 """
 `fld_write_test1(file, data, ...)`
@@ -139,4 +112,14 @@ end
 #	run(`op range $file`)
 
 	@test_throws String tmp = fld_read(file) # todo some day...
+end
+
+=#
+
+@testset "fld io" begin
+	x = 1:5
+	file = tempname() * ".fld"
+	fld_write(file, x)
+	y = fld_read(file)
+	@test x == y
 end
