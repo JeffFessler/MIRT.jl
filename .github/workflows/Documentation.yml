@@ -32,6 +32,14 @@ jobs:
             ${{ runner.os }}-test-${{ env.cache-name }}-
             ${{ runner.os }}-test-
             ${{ runner.os }}-
+      - run: julia --color=yes -e 'using Pkg; VERSION >= v"1.5-" && !isdir(joinpath(DEPOT_PATH[1], "registries", "General")) && Pkg.Registry.add("General")'
+        shell: bash
+        env:
+          # We set `JULIA_PKG_SERVER` only for this step to enforce
+          # `Pkg.Registry.add` to use Git.  This way, Pkg.jl can send
+          # the request metadata to pkg.julialang.org when installing
+          # packages via `Pkg.test`.
+          JULIA_PKG_SERVER: ""
       - name: Install dependencies
         run: julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
       - name: Build and deploy
