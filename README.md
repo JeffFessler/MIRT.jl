@@ -77,12 +77,12 @@ Older tagged versions should work with older Julia versions.
 
 As of `v0.14`, the following functions are deprecated
 (but still supported for now)
-| old | new |
-| :--- | :--- |
-| `jim` | `MIRTjim.jim` |
-| `prompt` | `MIRTjim.prompt` |
-| `fld_read` | `FileIO.load` |
-| `fld_write` | `FileIO.save` |
+| old | new | see |
+| :--- | :--- | :--- |
+| `jim` | `MIRTjim.jim` | [MIRTjim.jl](https://github.com/JeffFessler/MIRTjim.jl) |
+| `prompt` | `MIRTjim.prompt` | |
+| `fld_read` | `FileIO.load` | [AVSfldIO.jl](https://github.com/JeffFessler/AVSfldIO.jl) |
+| `fld_write` | `FileIO.save` | [FileIO.jl](https://github.com/JuliaIO/FileIO.jl) |
 
 
 <!-- URLs -->
