@@ -8,4 +8,4 @@ export jim
 
 import MIRTjim # jim
 
-@deprecated jim MIRTjim.jim
+@deprecate jim MIRTjim.jim
