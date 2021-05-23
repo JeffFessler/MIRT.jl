@@ -5,10 +5,10 @@ using LaTeXStrings
 using Test: @test, @test_throws
 
 
-jim()
+#jim()
 jim(:keys)
 jim(:clim)
-@test typeof(jim(:defs)) <: Dict
+@test jim(:defs) isa Dict
 
 @test_throws String jim(:bad)
 
