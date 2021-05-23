@@ -69,8 +69,21 @@ http://web.eecs.umich.edu/~fessler/irt/reproduce/
 
 ## Compatibility
 
-Current version is tested with Julia 1.5.
+Current version is tested with "latest" stable version of Julia
+(currently 1.6.1).
 Older tagged versions should work with older Julia versions.
+
+## Deprecations
+
+As of `v0.14`, the following functions are deprecated
+(but still supported for now)
+| old | new |
+| :--- | :--- |
+| `jim` | `MIRTjim.jim` |
+| `prompt` | `MIRTjim.prompt` |
+| `fld_read` | `FileIO.load` |
+| `fld_write` | `FileIO.save` |
+
 
 <!-- URLs -->
 [action-img]: https://github.com/JeffFessler/MIRT.jl/workflows/Unit%20test/badge.svg

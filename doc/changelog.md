@@ -1,7 +1,13 @@
 In reverse chronological order
 
+2021-05-23
+v0.14
+
+2021-05-22
+deprecate `jim` and `prompt` to `MIRTjim`
+
 2021-05-21
-move fld_read and fld_write to FileIO / AVSfldIO
+move `fld_read` and `fld_write` to FileIO / AVSfldIO
 
 2020-12-08
 towards 0.13.2 after NFFT.jl update requires `NFFTPlan` to `plan_nfft`.
