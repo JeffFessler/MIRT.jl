@@ -7,4 +7,4 @@ export prompt
 
 import MIRTjim # prompt
 
-@deprecate prompt MIRTjim.prompt
+@deprecate prompt(args... ; kwargs...) MIRTjim.prompt(args... ; kwargs...)
