@@ -1,7 +1,7 @@
 # mri_trajectory.jl
 
 
-using MIRT: mri_trajectory image_geom_mri
+using MIRT: mri_trajectory, image_geom_mri
 using MIRTjim: prompt
 
 using Plots
