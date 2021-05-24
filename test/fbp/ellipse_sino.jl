@@ -1,13 +1,14 @@
 # ellipse_sino.jl
 
 using MIRT: ellipse_sino
-using MIRT: image_geom, sino_geom, ellipse_im, jim, prompt
+using MIRT: image_geom, sino_geom, ellipse_im
+using MIRTjim: jim, prompt
 using Plots: plot, Plot
 using Test: @test, @inferred
 
 
 """
-`ellipse_sino_show()`
+    ellipse_sino_show()
 show examples
 
 To see more, use `MIRT.ellipse_sino_show(ip=2)`

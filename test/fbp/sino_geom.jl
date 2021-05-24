@@ -2,10 +2,11 @@
 
 using MIRT: sino_geom
 using MIRT: sino_geom_help, sino_geom_plot_grids
-using MIRT: image_geom, prompt
+using MIRT: image_geom
+using MIRTjim: prompt
 import MIRT: sino_geom_gamma_dfs
 
-using Plots: plot!, plot, scatter, gui
+using Plots: plot!, plot, scatter
 using Test: @test, @test_throws, @inferred
 
 
@@ -87,7 +88,7 @@ for ii = 1:nsg
 
 	sg.grid
 	sg.plot_grid(plot)
-#	gui(); prompt()
+#	prompt()
 
 	if sg isa SinoMoj
 		sg.d_moj(0)
@@ -100,7 +101,7 @@ for ii = 1:nsg
 	sg.unitv(ib=1, ia=2)
 
 	pl[ii] = plot(); sg.plot!(plot! ; ig=ig)
-#	gui(); prompt()
+#	prompt()
 end
 
 #@inferred todo
