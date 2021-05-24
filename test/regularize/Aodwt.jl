@@ -1,14 +1,14 @@
 # Aodwt.jl
 
 using MIRT: Aodwt
-using MIRT: jim
+using MIRTjim: jim
 
 using LinearMapsAA: LinearMapAM, LinearMapAO
 using Test: @test
 
 
 """
-Aodwt_show( ; dims::Dims=(64,32), level::Int=3)
+    Aodwt_show( ; dims::Dims=(64,32), level::Int=3)
 show scales
 """
 function Aodwt_show( ; dims::Dims = (64, 32), level::Int=3)

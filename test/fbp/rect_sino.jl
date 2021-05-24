@@ -1,14 +1,15 @@
 # rect_sino.jl
 
-using MIRT: rect_sino, sino_geom, jim
+using MIRT: rect_sino, sino_geom
 import MIRT: trapezoid
+using MIRTjim: jim
 
 using Plots: plot
 using Test: @test, @test_throws, @inferred
 
 
 """
-`rect_sino_show()`
+    rect_sino_show()
 show examples
 """
 function rect_sino_show( ;

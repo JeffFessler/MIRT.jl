@@ -114,7 +114,7 @@ function image_geom_help( ; io::IO = isinteractive() ? stdout : devnull)
 				i: (ix,iy[,iz]) index from 1 to nx,ny
 				c: (cx,cy[,cz]) index from +/- n/2 center at floor(n/2)+1
 	circ(rx=,ry=,cx=,cy=)	circle of given radius and center (cylinder in 3D)
-	plot(jim)	plot the image geometry using the `jim` function
+	plot(jim)	plot the image geometry using the `MIRTjim.jim` function
 
 	Methods that return a new `ImageGeom:`
 
@@ -428,8 +428,8 @@ end
 
 
 """
-image_geom_plot(ig, how ; kwargs...)
-The `how` argument should be `jim` to be useful.
+    image_geom_plot(ig, how ; kwargs...)
+The `how` argument should be `MIRTjim.jim` to be useful.
 """
 image_geom_plot(ig::ImageGeom{2}, how::Function ; kwargs...) =
 	how(ig.x, ig.y, ig.mask, "(nx,ny)=$(ig.nx),$(ig.ny)" ; kwargs...)
