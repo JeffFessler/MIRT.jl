@@ -1,7 +1,8 @@
 # ellipsoid_im.jl
 
 using MIRT: ellipsoid_im, shepp_logan_3d_parameters
-using MIRT: image_geom, jim
+using MIRT: image_geom
+using MIRTjim: jim
 import MIRT: _ellipsoid_im_check_fov
 
 using Plots
@@ -9,7 +10,7 @@ using Test: @test, @test_throws
 
 
 """
-ellipsoid_im_show()
+    ellipsoid_im_show()
 """
 function ellipsoid_im_show(ig)
 	x1 = ellipsoid_im(ig, :spheroid)

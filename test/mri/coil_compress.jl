@@ -1,7 +1,8 @@
 # coil_compress.jl
 
 using MIRT: ir_mri_coil_compress
-using MIRT: jim, prompt, ir_mri_sensemap_sim, ir_load_brainweb_t1_256
+using MIRTjim: jim, prompt
+using MIRT: ir_mri_sensemap_sim, ir_load_brainweb_t1_256
 import MIRT: snr2sigma
 
 using LinearAlgebra: svd, norm

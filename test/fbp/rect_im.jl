@@ -1,13 +1,14 @@
 # rect_im.jl
 
-using MIRT: rect_im, image_geom, jim
+using MIRT: rect_im, image_geom
+using MIRTjim: jim
 
 using Plots: plot
 using Test: @test, @test_throws, @inferred
 
 
 """
-rect_im_show()
+    rect_im_show()
 """
 function rect_im_show()
 	ig = image_geom(nx=2^8, ny=2^8, fov=100)

@@ -2,7 +2,8 @@
 
 using MIRT: mri_objects
 
-using MIRT: jim, image_geom, prompt, max_percent_diff
+using MIRTjim: jim, prompt
+using MIRT: image_geom, max_percent_diff
 import MIRT: mri_objects_trap
 using FFTW: fft, fftshift, ifftshift
 using Plots

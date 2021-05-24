@@ -1,6 +1,7 @@
 # disk-phantom.jl
 
-using MIRT: disk_phantom_params, ellipse_im, jim
+using MIRT: disk_phantom_params, ellipse_im
+using MIRTjim: jim
 using Test: @inferred
 
 

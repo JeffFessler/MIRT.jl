@@ -1,7 +1,8 @@
 # ellipse_im.jl
 
 using MIRT: ellipse_im, ellipse_im_fast, ellipse_im_params
-using MIRT: image_geom, disk_phantom_params, shepp_logan_parameters, jim
+using MIRT: image_geom, disk_phantom_params, shepp_logan_parameters
+using MIRTjim: jim
 
 using Plots: plot
 #using Printf: @sprintf

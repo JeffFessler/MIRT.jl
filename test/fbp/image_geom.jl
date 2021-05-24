@@ -2,7 +2,7 @@
 
 using MIRT: ImageGeom, image_geom, cbct
 using MIRT: image_geom_ellipse
-using MIRT: jim
+using MIRTjim: jim
 using FillArrays: Trues
 
 using Test: @test, @testset, @test_throws, @inferred

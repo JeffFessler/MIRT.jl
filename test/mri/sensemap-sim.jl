@@ -1,7 +1,8 @@
 # sensemap-sim.jl
 
 using MIRT: ir_mri_sensemap_sim
-using MIRT: jim, prompt, image_geom, ndgrid
+using MIRTjim: jim, prompt
+using MIRT: image_geom, ndgrid
 import MIRT: ir_mri_smap_r
 import MIRT: ir_mri_smap1
 
@@ -76,7 +77,7 @@ end
 
 
 """
-ellipke_plot()
+    ellipke_plot()
 """
 function ellipke_plot()
 	m = LinRange(0,1,101)
