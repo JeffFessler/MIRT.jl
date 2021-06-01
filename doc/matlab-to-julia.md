@@ -27,3 +27,22 @@ Here are some that come from MIRT files in different directories:
 * `nufft/dtft.jl`	<- `nufft/dtft.m`
 * `regularize/Aodwt.jl`	<- `penalty/Godwt1.m`
 * `utility/mask.jl`	<- `utility/masker.m` `utility/embed.m`
+
+
+Matlab does not support named keyword arguments,
+so the Matlab version of MIRT uses a custom approach called
+[`vararg_pair`](https://github.com/JeffFessler/mirt/blob/master/utilities/vararg_pair.m)
+as a work-around.
+In Julia you replace any such use
+with
+[named keyword arguments](https://docs.julialang.org/en/v1/manual/functions/#Keyword-Arguments)
+with appropriate default values.
+
+When translating code from Matlab to Julia,
+often you will need to locate some functions in Matlab version of MIRT.
+To search for those functions,
+one way is to go to the repo
+https://github.com/JeffFessler/mirt
+and then enter the function name in the github search bar.
+Github will then return a list like this
+https://github.com/JeffFessler/mirt/search?q=vararg_pair
