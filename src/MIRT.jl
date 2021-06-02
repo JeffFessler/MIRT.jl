@@ -2,13 +2,10 @@
 
 
 """
-`MIRT` is the Michigan Image Reconstruction Toolbox
+    MIRT is the Michigan Image Reconstruction Toolbox
 """
 module MIRT
-	using Reexport
 
-	@reexport using MIRTio # make I/O routines available
-
-	include("z-all.jl")
+    include("z-all.jl")
 
 end # module

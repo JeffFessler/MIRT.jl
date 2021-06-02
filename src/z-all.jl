@@ -1,7 +1,6 @@
 # MIRT/z-all.jl
 
 include("utility/z-list.jl")
-include("plot/z-list.jl")
 include("../data/z-list.jl")
 
 include("algorithm/z-list.jl")
