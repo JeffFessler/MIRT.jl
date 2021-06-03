@@ -1,7 +1,7 @@
 name = "MIRT"
 uuid = "7035ae7a-3787-11e9-139a-5545ed3dc201"
 authors = ["fessler <fessler@umich.edu>"]
-version = "0.14.0"
+version = "0.14.1"
 
 [deps]
 AVSfldIO = "b6189060-daf9-4c28-845a-cc0984b81781"
@@ -34,7 +34,7 @@ ImageTransformations = "0.8"
 Interpolations = "0.12, 0.13"
 LinearMapsAA = "0.6.5"
 MIRTio = "0.3"
-MIRTjim = "0.6"
+MIRTjim = "0.6, 0.7"
 NFFT = "0.6"
 Reexport = "0.2, 1.0"
 SpecialFunctions = "0.10, 1"
