@@ -4,8 +4,26 @@ using MIRT: ImageGeom, image_geom, cbct
 using MIRT: image_geom_ellipse
 using MIRTjim: jim
 using FillArrays: Trues
+using Unitful: m
 
 using Test: @test, @testset, @test_throws, @inferred
+
+
+@testset "construct" begin
+    arg1 = ((2,), (3,), (0,))
+    arg2 = ((2,3), (3m,4.), (0,1))
+    arg3 = ((2,3,4), (3m,4.,1//2), (0,2//3,2.))
+
+    ig1 = @inferred ImageGeom(arg1..., trues(arg1[1]...))
+    ig2 = @inferred ImageGeom(arg2..., trues(arg2[1]...))
+    ig3 = @inferred ImageGeom(arg3..., trues(arg3[1]...))
+    @test ig3 isa ImageGeom
+
+    ig1 = @inferred ImageGeom(arg1...)
+    ig2 = @inferred ImageGeom(arg2...)
+    ig3 = @inferred ImageGeom(arg3...)
+    @test ig3 isa ImageGeom
+end
 
 
 function image_geom_test2(ig::ImageGeom)
@@ -48,8 +66,12 @@ function image_geom_test2(ig::ImageGeom)
 	ig.plot(jim)
 #	isinteractive() && gui()
 	ig.unitv()
-	@inferred ig.down(2)
-	@inferred ig.over(2)
+#= todo-i:
+    @inferred ig.down(2)
+    @inferred ig.over(2)
+=#
+	@test ig.down(2) isa ImageGeom
+	@test ig.over(2) isa ImageGeom
 	image_geom_ellipse(8, 10, 1, 2)
 	true
 end
@@ -96,9 +118,10 @@ end
 
 
 @testset "2d" begin
-	@test all(ImageGeom{1}((2,), (3,), (0,)).mask)
+	@test all(ImageGeom((2,), (3,), (0,)).mask)
 	@test image_geom_test2()
 end
+
 @testset "3d" begin
 	@test image_geom_test3()
 end
