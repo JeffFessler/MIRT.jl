@@ -461,7 +461,10 @@ function Base.show(io::IO, ::MIME"text/plain", ig::ImageGeom)
 	ir_dump(io, ig)
 end
 
-_zero(ig::ImageGeom{D,T}) where {D,T} = zero(T)
+_zero(ig::ImageGeom{D,S}) where {D, S <: NTuple{D,Real}} = zero(Float32)
+_zero(ig::ImageGeom{D,S}) where {D, S <: NTuple{D,Any}} = zero(Int32) # alert!
+_zero(ig::ImageGeom{D,S}) where {D, S <: NTuple{D,T}} where {T <: Number} = zero(T)
+_zero(ig::ImageGeom{D,S}) where {D, S <: NTuple{D,T}} where {T <: Real} = zero(T)
 
 # Extended properties
 

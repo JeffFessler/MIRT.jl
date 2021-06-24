@@ -23,6 +23,13 @@ using Test: @test, @testset, @test_throws, @inferred
     ig2 = @inferred ImageGeom(arg2...)
     ig3 = @inferred ImageGeom(arg3...)
     @test ig3 isa ImageGeom
+
+    # _zero tests
+    @test ig1.dz === zero(Int)
+    @test ig2.dz === zero(Int32) # alert!
+    @test ImageGeom((2,), (3.0,), (0,)).dz === zero(Float64)
+    @test ImageGeom((2,3), (3.0,4.0f0), (0,0)).dz === zero(Float32)
+    @test ImageGeom((2,3), (3.0m,4.0m), (0,0)).dz === zero(0.0m)
 end
 
 
