@@ -60,7 +60,7 @@ function ImageGeom(
     offsets::NTuple{D,Real},
     mask::AbstractArray{Bool,D},
 ) where {D, S <: NTuple{D,Number}}
-   ImageGeom{D,S}(dims, deltas, offsets, mask)
+    ImageGeom{D,S}(dims, deltas, offsets, mask)
 end
 
 function ImageGeom(
@@ -68,8 +68,33 @@ function ImageGeom(
     deltas::S,
     offsets::NTuple{D,Real},
 ) where {D, S <: NTuple{D,Number}}
-   ImageGeom(dims, deltas, offsets, Trues(dims))
+    ImageGeom(dims, deltas, offsets, Trues(dims))
 end
+
+"""
+    ig = ImageGeom( ; nx=128, dims=(nx,nx), deltas=(1,1), offsets=(0,0), mask=Trues(dims))
+Convenience constructor for 2D case.
+"""
+function ImageGeom( ;
+    nx::Int = 128,
+    dims::Dims{2} = (nx,nx),
+    deltas::NTuple{2,Number} = ntuple(i -> 1.0f0, length(dims)),
+    offsets::NTuple{2,Real} = ntuple(i -> 0.0f0, length(dims)),
+    mask::AbstractArray{Bool,2} = Trues(dims),
+)
+    ImageGeom(dims, deltas, offsets, mask)
+end
+
+#=
+function ImageGeom(
+    dims::Dims{D} = (128,128) ;
+    deltas::S = ntuple(i -> 1.0f0, D),
+    offsets::NTuple{D,Real} = ntuple(i -> 0.0f0, D),
+    mask::AbstractArray{Bool,D} = Trues(dims),
+) where {D, S <: NTuple{D,Number}}
+    ImageGeom(dims, deltas, offsets, mask)
+end
+=#
 
 
 """

@@ -10,6 +10,9 @@ using Test: @test, @testset, @test_throws, @inferred
 
 
 @testset "construct" begin
+    ig = @inferred ImageGeom()
+    @test ig isa ImageGeom
+
     arg1 = ((2,), (3,), (0,))
     arg2 = ((2,3), (3m,4.), (0,1))
     arg3 = ((2,3,4), (3m,4.,1//2), (0,2//3,2.))
