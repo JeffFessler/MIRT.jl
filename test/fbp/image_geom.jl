@@ -59,8 +59,9 @@ function image_geom_test2(ig::ImageGeom)
 	ig.vg
 	ig.fg
 	@test ig.shape(vec(ig.ones)) == ig.ones
-	@test ig.embed(ig.ones[ig.mask]) == Float32.(ig.mask)
-	@test ig.maskit(ig.ones) == Float32.(ones(ig.np))
+    # todo: collect due to https://github.com/JuliaArrays/FillArrays.jl/pull/149
+	@test ig.embed(collect(ig.ones)[ig.mask]) == ig.mask
+	@test ig.maskit(ig.ones) == ones(ig.np)
 #	@inferred # todo
 	ig.unitv()
 	ig.unitv(j=4)

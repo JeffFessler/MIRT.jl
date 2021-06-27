@@ -12,7 +12,7 @@ export image_geom_circle
 export image_geom_ellipse
 
 #using MIRT: downsample2, downsample3
-using FillArrays: Trues
+using FillArrays: Trues, Zeros, Ones
 using ImageTransformations: imresize
 #import Unitful # Length
 
@@ -20,27 +20,27 @@ using ImageTransformations: imresize
 """
     ImageGeom{D,S}
 
-- `dims::Dims{D}` image dimensions
-- `deltas::S where S <: NTuple{D,Number}` pixel sizes,
-  where each `Number` is usually `Real` or `Unitful.Length`
-- `offsets::NTuple{D,Float32}` unitless
-- `mask::AbstractArray{Bool,D}` logical mask
+Image geometry struct with essential grid parameters.
 
-Image geometry "struct" with essential parameters
+- `dims::Dims{D}` image dimensions
+- `deltas::S` where `S <: NTuple{D}` pixel sizes,
+  where each Δ is usually `Real` or `Unitful.Length`
+- `offsets::NTuple{D,Float32}` unitless
+- `mask::AbstractArray{Bool,D}` logical mask, often `FillArrays.Trues(dims)`.
 """
-struct ImageGeom{D, S <: NTuple{D,Number}}
+struct ImageGeom{D, S <: NTuple{D,RealU}}
     dims::Dims{D} # image dimensions
     deltas::S # pixel sizes
     offsets::NTuple{D,Float32} # unitless
-    mask::AbstractArray{Bool,D} # logical mask
+    mask::AbstractArray{Bool,D} # logical mask for image support
 
     function ImageGeom{D,S}(
         dims::Dims{D},
         deltas::S,
         offsets::NTuple{D,Real},
         mask::AbstractArray{Bool,D},
-    ) where {D, S <: NTuple{D,Number}} # <: Union{Real,Unitful.Length}
-        any(x -> x <= zero(x), dims) && throw("dims must be positive")
+    ) where {D, S <: NTuple{D,RealU}} # i.e., Union{Real,Unitful.Length}
+        any(<=(zero(Int)), dims) && throw("dims must be positive")
         any(iszero, deltas) && throw("deltas must be nonzero")
         size(mask) == dims ||
             throw(DimensionMismatch("mask size $(size(mask)) vs dims $dims"))
@@ -59,15 +59,15 @@ function ImageGeom(
     deltas::S,
     offsets::NTuple{D,Real},
     mask::AbstractArray{Bool,D},
-) where {D, S <: NTuple{D,Number}}
+) where {D, S <: NTuple{D,RealU}}
     ImageGeom{D,S}(dims, deltas, offsets, mask)
 end
 
 function ImageGeom(
     dims::Dims{D},
-    deltas::S,
+    deltas::NTuple{D,RealU},
     offsets::NTuple{D,Real},
-) where {D, S <: NTuple{D,Number}}
+) where {D}
     ImageGeom(dims, deltas, offsets, Trues(dims))
 end
 
@@ -76,25 +76,13 @@ end
 Convenience constructor for 2D case.
 """
 function ImageGeom( ;
-    nx::Int = 128,
-    dims::Dims{2} = (nx,nx),
-    deltas::NTuple{2,Number} = ntuple(i -> 1.0f0, length(dims)),
-    offsets::NTuple{2,Real} = ntuple(i -> 0.0f0, length(dims)),
-    mask::AbstractArray{Bool,2} = Trues(dims),
-)
-    ImageGeom(dims, deltas, offsets, mask)
-end
-
-#=
-function ImageGeom(
-    dims::Dims{D} = (128,128) ;
-    deltas::S = ntuple(i -> 1.0f0, D),
-    offsets::NTuple{D,Real} = ntuple(i -> 0.0f0, D),
+    dims::Dims{D} = (128,128),
+    deltas::NTuple{D,RealU} = ntuple(i -> 1.0f0, length(dims)),
+    offsets::NTuple{D,Real} = ntuple(i -> 0.0f0, length(dims)),
     mask::AbstractArray{Bool,D} = Trues(dims),
-) where {D, S <: NTuple{D,Number}}
+) where {D}
     ImageGeom(dims, deltas, offsets, mask)
 end
-=#
 
 
 """
@@ -129,8 +117,8 @@ function image_geom_help( ; io::IO = isinteractive() ? stdout : devnull)
 	ug	2D or 3D grid of frequency domain coordinates
 	vg	2D or 3D grid of frequency domain coordinates
 	fg	NamedTuple of 2D or 3D frequency coordinates
-	ones	ones(dim)
-	zeros	zeros(dim)
+	ones	FillArray.Ones(dim)
+	zeros	FillArray.Zeros(dim)
 
 	mask_outline	binary image showing 2D outline of mask
 
@@ -210,14 +198,14 @@ Constructor for `ImageGeom`, where `dx,dy,dz` and `fov` and `fovz` may have unit
 # Arguments
 - `nx::Int = 128`
 - `ny::Int = nx`
-- `dx::Number = ?` (must specify one of `dx` or `fov`)
-- `dy::Number = -dx`
+- `dx::RealU = ?` (must specify one of `dx` or `fov`)
+- `dy::RealU = -dx`
 - `offset_x::Real = 0` (unitless)
 - `offset_y::Real = 0` (unitless)
-- `fov::Number = ?` (if specified, then `nx*dx=ny*dy`)
+- `fov::RealU = ?` (if specified, then `nx*dx=ny*dy`)
 - `nz::Int = 0`
-- `dz::Number = ?` (need one of `dz` or `zfov` if `nz > 0`)
-- `zfov::Number = ?` (if specified, then `nz*dz`)
+- `dz::RealU = ?` (need one of `dz` or `zfov` if `nz > 0`)
+- `zfov::RealU = ?` (if specified, then `nz*dz`)
 - `offset_z::Real = 0` (unitless)
 - `offsets::Symbol = :none` or :dsp
 - `mask::Union{Symbol,AbstractArray{Bool}} = :all` | `:circ` | `:all_but_edge_xy`
@@ -225,14 +213,14 @@ Constructor for `ImageGeom`, where `dx,dy,dz` and `fov` and `fovz` may have unit
 function image_geom( ;
 	nx::Int = 128,
 	ny::Int = nx,
-	dx::Number = NaN,
-	dy::Number = NaN,
+	dx::RealU = NaN,
+	dy::RealU = NaN,
 	offset_x::Real = 0,
 	offset_y::Real = 0,
-	fov::Number = NaN,
+	fov::RealU = NaN,
 	nz::Int = 0,
-	dz::Number = NaN,
-	zfov::Number = NaN,
+	dz::RealU = NaN,
+	zfov::RealU = NaN,
 	offset_z::Real = 0,
 	offsets::Symbol = :none,
 	mask::Union{Symbol,AbstractArray{Bool}}	= :all,
@@ -320,7 +308,7 @@ helper function needed to downsample `image_geom`
 """
 function _down_round(
 	val::NTuple{D,Real},
-	dd::NTuple{D,Number},
+	dd::NTuple{D,RealU},
 	down::NTuple{D,Int},
 ) where {D}
 	# for non-divisors make dim a multiple of 2
@@ -398,10 +386,10 @@ end
 # ellipse that just inscribes the rectangle
 # but keeping a 1 pixel border due to ASPIRE regularization restriction
 function image_geom_ellipse(
-	nx::Int, ny::Int, dx::Number, dy::Number ;
-	rx::Number = min(abs((nx/2-1)*dx), abs((ny/2-1)*dy)),
-	ry::Number = min(abs((nx/2-1)*dx), abs((ny/2-1)*dy)),
-	cx::Number = 0, cy::Number = 0, over::Int=2,
+	nx::Int, ny::Int, dx::RealU, dy::RealU ;
+	rx::RealU = min(abs((nx/2-1)*dx), abs((ny/2-1)*dy)),
+	ry::RealU = min(abs((nx/2-1)*dx), abs((ny/2-1)*dy)),
+	cx::RealU = 0, cy::RealU = 0, over::Int=2,
 )
 	ig = image_geom(nx=nx, ny=ny, dx=dx, dy=dy)
 	circ = ellipse_im(ig, [cx cy rx ry 0 1], oversample=over) .> 0
@@ -412,9 +400,11 @@ end
 # default is a circle that just inscribes the square
 # but keeping a 1 pixel border due to ASPIRE regularization restriction
 function image_geom_circle(
-	nx::Int, ny::Int, dx::Number, dy::Number ;
-	rx::Number = min(abs((nx/2-1)*dx), abs((ny/2-1)*dy)),
-	ry::Number = rx, cx::Number = 0, cy::Number = 0, nz::Int=0, over::Int=2,
+	nx::Int, ny::Int, dx::RealU, dy::RealU ;
+	rx::RealU = min(abs((nx/2-1)*dx), abs((ny/2-1)*dy)),
+	ry::RealU = rx,
+	cx::RealU = zero(dx),
+	cy::RealU = zero(dy), nz::Int=0, over::Int=2,
 )
 	ig = image_geom(nx=nx, ny=ny, dx=dx, dy=dy)
 	circ = ellipse_im(ig, [cx cy rx ry 0 1], oversample=over) .> 0
@@ -444,7 +434,7 @@ function image_geom_add_unitv(
 	c::NTuple{D,Int} = ntuple(i -> 0, D),
 ) where {T <: Number, D}
 
-	out = copy(z)
+	out = collect(z)
 
 	(j < 0 || j > length(z)) && throw("bad j $j")
 	if 1 <= j <= length(z)
@@ -504,8 +494,8 @@ image_geom_fun0 = Dict([
 	(:dim, ig -> ig.dims),
 	(:fovs, ig -> abs.(ig.deltas) .* ig.dims),
 
-	(:zeros, ig -> zeros(Float32, ig.dim)),
-	(:ones, ig -> ones(Float32, ig.dim)),
+	(:zeros, ig -> Zeros{Float32}(ig.dim...)),
+	(:ones, ig -> Ones{Float32}(ig.dim...)),
 
 	(:dx, ig -> ig.deltas[1]),
     (:dy, ig -> ig.ndim >= 2 ? ig.deltas[2] : _zero(ig)),
@@ -551,9 +541,9 @@ image_geom_fun0 = Dict([
 
 	(:plot, ig -> ((how::Function ; kwargs...) ->
 		image_geom_plot(ig, how ; kwargs...))),
-	(:embed, ig -> (x::AbstractArray{<:Number} -> embed(x, ig.mask))),
-	(:maskit, ig -> (x::AbstractArray{<:Number} -> maskit(x, ig.mask))),
-	(:shape, ig -> (x::AbstractArray{<:Number} -> reshape(x, ig.dim))),
+	(:embed, ig -> (x::AbstractArray -> embed(x, ig.mask))),
+	(:maskit, ig -> (x::AbstractArray -> maskit(x, ig.mask))),
+	(:shape, ig -> (x::AbstractArray -> reshape(x, ig.dim))),
 	(:unitv, ig -> (( ; kwargs...) -> image_geom_add_unitv(ig.zeros ; kwargs...))),
 	(:circ, ig -> (( ; kwargs...) ->
 		image_geom_circle(ig.nx, ig.ny, ig.dx, ig.dy, nz=ig.nz ; kwargs...))),

@@ -9,6 +9,7 @@ module MIRT
 
 	@reexport using MIRTio # make I/O routines available
 
+    const RealU = Number # Union{Real, Unitful.Length}
 	include("z-all.jl")
 
 end # module

@@ -28,7 +28,7 @@ option
    * `:lowmem` uses less memory than `:fast` but slower
    * `:slow` default
 - `showmem::Bool`
-- `hu_scale::Real`			use 1000 to scale shepp-logan to HU; default 1
+- `hu_scale::Number` use 1000 to scale shepp-logan to HU; default 1
 - `return_params::Bool`		if true, return both phantom and params
 
 out
@@ -37,17 +37,16 @@ out
 """
 function ellipsoid_im(
 	ig::ImageGeom,
-	params::AbstractMatrix{<:Real} ;
+	params::AbstractMatrix{<:RealU} ;
 	oversample::Int = 1,
 	checkfov::Bool = false,
 	how::Symbol = :slow,
 	showmem::Bool = false,
-	hu_scale::Real = 1,
+	hu_scale::RealU = 1,
 	return_params::Bool = false,
 )
 
 	size(params,2) != 9 && throw("bad cuboid parameter vector size")
-	params[:,9] .*= hu_scale
 
 	if oversample > 1
 		ig = ig.over(oversample)
@@ -55,17 +54,19 @@ function ellipsoid_im(
 
 	args = (ig.nx, ig.ny, ig.nz, params, ig.dx, ig.dy, ig.dz,
 			ig.offset_x, ig.offset_y, ig.offset_z)
-	phantom = zeros(Float32, ig.nx, ig.ny, ig.nz)
 
 	checkfov && !_ellipsoid_im_check_fov(args...) && throw("ellipsoid exceeds FOV")
 
+    T = promote_type(Float32, typeof.(params[:,9])...) # units
+	phantom = zeros(T, ig.dims)
+
 	if how === :slow
-		phantom += ellipsoid_im_slow(args..., showmem)
+        ellipsoid_im_slow!(phantom, args..., hu_scale, showmem)
 #=
 	elseif how === :lowmem
-		phantom += ellipsoid_im_lowmem(args..., showmem)
+        ellipsoid_im_lowmem!(phantom, args..., hu_scale, showmem)
 	elseif how === :fast
-		phantom += ellipsoid_im_fast(args..., showmem)
+        ellipsoid_im_fast!(phantom, args..., hu_scale, showmem)
 =#
 	else
 		throw("bad how $how")
@@ -83,14 +84,12 @@ end
 
 
 """
-    ellipsoid_im_slow()
+    ellipsoid_im_slow!()
 
 brute force fine grid - can use lots of memory
 """
-function ellipsoid_im_slow(nx, ny, nz, params, dx, dy, dz,
-		offset_x, offset_y, offset_z, showmem)
-
-	phantom = zeros(Float32, nx, ny, nz)
+function ellipsoid_im_slow!(phantom, nx, ny, nz, params, dx, dy, dz,
+    offset_x, offset_y, offset_z, hu_scale, showmem)
 
 	wx = (nx - 1)/2 + offset_x
 	wy = (ny - 1)/2 + offset_y
@@ -107,7 +106,7 @@ function ellipsoid_im_slow(nx, ny, nz, params, dx, dy, dz,
 	(xx, yy, zz) = ndgrid(x, y, z)
 
 	#ticker reset
-	np = size(params)[1]
+	np = size(params, 1)
 	for ip in 1:np
 		#ticker(ip, np)
 
@@ -122,9 +121,8 @@ function ellipsoid_im_slow(nx, ny, nz, params, dx, dy, dz,
 		azim = deg2rad(par[7])
 		polar = deg2rad(par[8])
 		(xr, yr, zr) = rot3(xx .- cx, yy .- cy, zz .- cz, azim, polar)
-		tmp = ((xr / rx).^2 + (yr / ry).^2 + (zr / rz).^2) .<= 1
-		value = Float32(par[9])
-		phantom += value * tmp
+		tmp = @. ((xr / rx)^2 + (yr / ry)^2 + (zr / rz)^2) <= 1
+		phantom .+= (par[9] * hu_scale) * tmp
 	end
 	return phantom
 end
@@ -180,8 +178,8 @@ function ellipsoid_im_fast(nx, ny, nz, params, dx, dy, dz,
 		ry = par[5]
 		rz = par[6]
 
-		azim = par[7] * (pi/180)
-		polar = par[8] * (pi/180)
+		azim = deg2rad(par[7])
+		polar = deg2rad(par[8])
 
 		xs = xx .- cx
 		ys = yy .- cy

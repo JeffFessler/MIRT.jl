@@ -1,6 +1,6 @@
 # ellipse_im.jl
 
-using MIRT: ellipse_im, ellipse_im_fast, ellipse_im_params
+using MIRT: ellipse_im, ellipse_im_fast!, ellipse_im_params
 using MIRT: image_geom, disk_phantom_params, shepp_logan_parameters
 using MIRTjim: jim
 
@@ -114,8 +114,9 @@ ig = image_geom(nx=80, dx=1)
 ellipse_im_params(ig, :kak)
 
 params = shepp_logan_parameters(ig.fovs..., case=:brainweb)
-@inferred ellipse_im_fast(ig.nx, ig.ny, params, ig.dx, ig.dy,
-		ig.offset_x, ig.offset_y, 0, 2, false)
+phantom = zeros(Float32, ig.dims)
+@inferred ellipse_im_fast!(phantom, ig.nx, ig.ny, params, ig.dx, ig.dy,
+		ig.offset_x, ig.offset_y, 0, 2, false, 1.)
 ellipse_im(ig, :disks)
 ellipse_im(ig, params, oversample=2)
 ellipse_im(ig, params, how=:fast, replace=true, rot=30)
