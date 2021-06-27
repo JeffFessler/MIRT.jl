@@ -110,8 +110,8 @@ function rect_im_fast(params, nx, ny, dx, dy, offset_x, offset_y, replace)
 		wx = rect[3]
 		cy = rect[2]
 		wy = rect[4]
-		theta = rect[5] * (pi/180)
-		theta != 0 && throw("theta=0 required")
+		theta = deg2rad(rect[5])
+		theta != zero(theta) && throw("theta=0 required")
 		value = Float32(rect[6])
 
 		x = x1 .- cx
@@ -154,7 +154,7 @@ function rect_im_slow(params_in, nx, ny, dx, dy, offset_x, offset_y, replace)
 		wx = rect[3]
 		cy = rect[2]
 		wy = rect[4]
-		theta = rect[5] * (pi/180) # Float64
+		theta = deg2rad(rect[5])
 		value = Float32(rect[6])
 
 		(x,y) = rotate2d(xx .- cx, yy .- cy, theta)
