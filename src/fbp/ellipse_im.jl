@@ -146,8 +146,8 @@ function ellipse_im_fast!(phantom, nx, ny, params_in, dx, dy,
         th = deg2rad(rot)
 		cx = params[:,1]
 		cy = params[:,2]
-		params[:,1] = cx * cos(th) + cy * sin(th)
-		params[:,2] = -cx * sin(th) + cy * cos(th)
+		params[:,1] = cx * cos(th) - cy * sin(th)
+		params[:,2] = cx * sin(th) + cy * cos(th)
 		params[:,5] .+= rot
 	end
 
