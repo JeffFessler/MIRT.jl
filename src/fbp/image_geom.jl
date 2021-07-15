@@ -184,7 +184,7 @@ function cbct(ig::ImageGeom{3,S} ; nthread::Int=1) where {S <: NTuple{3,Real}}
 		Cint(ig.nx), Cint(ig.ny), Cint(ig.nz), Cfloat(ig.dx),
 		Cfloat(ig.dy), Cfloat(ig.dz),
 		Cfloat(ig.offset_x), Cfloat(ig.offset_y), Cfloat(ig.offset_z),
-		pointer(UInt8.(ig.mask_or)),
+		pointer(UInt8.(collect(ig.mask_or))),
 		pointer(Cint.(iy_start)), pointer(Cint.(iy_end)),
 	)
 end
