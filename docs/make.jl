@@ -61,4 +61,6 @@ if isci
         devbranch = "master",
         versions = ["stable" => "v^", "dev" => "dev"],
     )
+else
+    @warn "may need to rm -r src/examples"
 end
