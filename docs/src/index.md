@@ -12,3 +12,9 @@ Trying the
 is a good way to get started.
 
 The documentation is even more still under construction.
+
+Further examples will likely be shared at
+[JuliaImageRecon](https://github.com/JuliaImageRecon);
+see
+[Examples](https://github.com/JuliaImageRecon/Examples)
+there.
