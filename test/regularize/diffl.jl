@@ -10,6 +10,10 @@ using Test: @test, @testset, @test_throws, @inferred
 @testset "1D" begin
 	x = rand(4)
 	@test diffl(x)[2:end] == diff(x)
+
+    g = [9, 5, 2]
+    z = similar(g)
+    @test diffl_adj!(z, g) == diffl_adj!(z, g, 1) == [-5, 3, 2]
 end
 
 @testset "2D" begin

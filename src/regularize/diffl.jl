@@ -20,19 +20,28 @@ using LinearMapsAA: LinearMapAA, LinearMapAM, LinearMapAO
 
 Apply left finite difference operator to input array `x`,
 storing the result "in-place" in pre-allocated output array `g`.
+(The letter `g` is mnemonic for "gradient".)
 
 Arrays `g` and `x` must have the same size, and cannot alias.
-The "first" elements of `g` are zero for dimension `dim`.
+By default, the "first" elements of `g` are zero for dimension `dim`.
 The default is `dim=1`.
 
 Option:
 - `add::Bool = false` use `x[i] + x[i-1]` instead of `x[i] - x[i-1]`
+  (useful for certain diagonal majorizers).
 - `edge::Symbol = :zero` set the first elements of dimension `dim` to 0
+  - Choose `edge=:circ` to use circulant (aka periodic) boundary conditions.
+  - Choose `edge=:none` to leave the first elements untouched.
 
-Choose `edge=:circ` to use circulant (aka periodic) boundary conditions.
-Choose `edge=:none` to leave the first elements untouched.
+# Example
 
-In 1D, if `x = [2, 6, 7]` then `g = [0, 4, 1]` with default options.
+```jldoctest
+julia> x = [2, 6, 7]; g = similar(x); diffl!(g, x)
+3-element Vector{Int64}:
+ 0
+ 4
+ 1
+```
 """
 function diffl!(
     g::AbstractArray{Tg,N},
@@ -113,8 +122,18 @@ diffl(x::AbstractArray ; kwargs...) = diffl(x, 1 ; kwargs...)
 """
     g = diffl(x::AbstractArray, dim::Int ; ...)
 Allocating version of `diffl!` along `dim`
+
+# Example
+
+```jldoctest
+julia> x = [1,2] .+ [10 30 70]; g = diffl(x, 2)
+2×3 Matrix{Int64}:
+ 0  20  40
+ 0  20  40
+```
 """
 diffl(x::AbstractArray, dim::Int ; kwargs...) = diffl!(similar(x), x, dim ; kwargs...)
+
 
 """
     g = diffl(x::AbstractArray, dims::AbstractVector{Int} ; ...)
@@ -129,7 +148,7 @@ diffl(x::AbstractArray, dims::AbstractVector{Int} ; kwargs...) =
 
 Adjoint of left finite difference `diffl!`, in-place.
 Arrays `z` and `g` must be same size.
-See `diffl` for details.
+See `diffl_adj` for details.
 """
 function diffl_adj!(
     z::AbstractArray{Tz,N},
@@ -176,6 +195,11 @@ function diffl_adj!(
 end
 
 
+# 1D case
+diffl_adj!(z::AbstractVector, g::AbstractVector ; kwargs...) =
+    diffl_adj!(z, g, 1 ; kwargs...)
+
+
 """
     diffl_adj!(z::AbstractArray, g::AbstractArray, dims::AbstractVector{Int} ; ...)
 
@@ -202,20 +226,41 @@ end
 
 """
     z = diffl_adj(g::AbstractArray ; ...)
-Allocating version of `diffl!` along `dim=1`
+Allocating version of `diffl_adj!` along `dim=1`.
+
+# Example
+
+```jldoctest
+julia> g = [0, 2, 5]; z = diffl_adj(g)
+3-element Vector{Int64}:
+ -2
+ -3
+  5
+```
 """
 diffl_adj(g::AbstractArray ; kwargs...) = diffl_adj(g, 1 ; kwargs...)
 
+
 """
-    z = diffl(g::AbstractArray, dim::Int ; ...)
-Allocating version of `diffl!` along `dim`
+    z = diffl_adj(g::AbstractArray, dim::Int ; ...)
+Allocating version of `diffl_adj!` along `dim`.
+
+# Example
+
+```jldoctest
+julia> g = ones(Int,2,3); z = diffl_adj(g, 2)
+2×3 Matrix{Int64}:
+ -1  0  1
+ -1  0  1
+```
 """
 diffl_adj(g::AbstractArray, dim::Int ; kwargs...) =
     diffl_adj!(similar(g), g, dim ; reset0=true, kwargs...)
 
+
 """
     z = diffl_adj(g::AbstractArray, dims::AbstractVector{Int} ; ...)
-Allocating version of `diffl!` for `dims`
+Allocating version of `diffl_adj!` for `dims`.
 """
 function diffl_adj(
     g::AbstractArray{T,N},
@@ -253,7 +298,7 @@ function diffl_map(
     kwargs...,
 ) where {D}
 
-    !all(1 .<= dims .<= D) && throw(ArgumentError("dims $dims"))
+    all(1 .<= dims .<= D) || throw(ArgumentError("dims $dims"))
     (edge == :none) && throw("edge=$edge unsupported")
 
     forw!(g,x) = diffl!(g, x, dims ; edge=edge, kwargs...)

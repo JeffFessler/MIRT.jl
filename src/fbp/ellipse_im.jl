@@ -35,19 +35,15 @@ note: `op ellipse` in aspire with `nsub=3` is `oversample=4 = 2^(3-1)` here
 """
 function ellipse_im(
 	ig::ImageGeom,
-	params::AbstractMatrix{<:Real} ;
-	rot::Real = 0,
+	params::AbstractMatrix{<:RealU} ;
+	rot::RealU = 0,
 	oversample::Int = 1,
-	hu_scale::Real = 1,
+	hu_scale::RealU = 1,
 	replace::Bool = false,
 	how::Symbol = :fast, # todo
 )
 
-	if size(params,2) != 6
-		throw("bad ellipse parameter vector size")
-	end
-
-	params[:,6] .*= hu_scale
+    size(params,2) == 6 || throw("bad ellipse parameter vector size")
 
 #=
 	if how === :fast && oversample == 1
@@ -59,13 +55,17 @@ function ellipse_im(
 	if oversample > 1
 		ig = ig.over(oversample)
 	end
+
 	args = (ig.nx, ig.ny, params, ig.dx, ig.dy, ig.offset_x, ig.offset_y,
-		rot, oversample, replace)
+        rot, oversample, replace, hu_scale)
+
+    T = promote_type(Float32, typeof.(params[:,6])...) # in case of units
+    phantom = zeros(T, ig.dims)
 
 	if how === :fast
-		phantom = ellipse_im_fast(args...)
+        ellipse_im_fast!(phantom, args...)
 #	elseif how === :slow
-#		phantom = ellipse_im_slow(args...)
+#       ellipse_im_slow!(phantom, args...)
 	else
 		throw("bad how $how")
 	end
@@ -133,24 +133,23 @@ phantom = downsample2(phantom, over)
 
 
 """
-phantom = ellipse_im_fast()
+phantom = ellipse_im_fast!()
 """
-function ellipse_im_fast(nx, ny, params_in, dx, dy,
-		offset_x, offset_y, rot, over, replace)
+function ellipse_im_fast!(phantom, nx, ny, params_in, dx, dy,
+    offset_x, offset_y, rot, over, replace, hu_scale,
+)
 
-	params = copy(params_in)
+    params = copy(params_in)
 
 	# optional rotation
-	if rot != 0
-		th = rot * 180/pi
+	if rot != zero(rot)
+        th = deg2rad(rot)
 		cx = params[:,1]
 		cy = params[:,2]
-		params[:,1] = cx * cos(th) + cy * sin(th)
-		params[:,2] = -cx * sin(th) + cy * cos(th)
+		params[:,1] = cx * cos(th) - cy * sin(th)
+		params[:,2] = cx * sin(th) + cy * cos(th)
 		params[:,5] .+= rot
 	end
-
-	phantom = zeros(Float32, nx, ny)
 
 	wx = (nx-1)/2 + offset_x
 	wy = (ny-1)/2 + offset_y
@@ -163,11 +162,11 @@ function ellipse_im_fast(nx, ny, params_in, dx, dy,
 
 	for ie = 1:size(params,1)
 
-		ell = Float32.(params[ie, :])
+		ell = params[ie, :]
 		cx = ell[1]; rx = ell[3]
 		cy = ell[2]; ry = ell[4]
-		theta = ell[5] * Float32(pi/180)
-		value = Float32(ell[6])
+		theta = deg2rad(ell[5])
+        value = ell[6] * hu_scale
 
 		xs = xx .- cx # shift per ellipse center
 		ys = yy .- cy
@@ -183,12 +182,11 @@ function ellipse_im_fast(nx, ny, params_in, dx, dy,
 		if replace
 			phantom[is_inside] .= value
 		else
-			phantom += value * is_inside
+            phantom .+= value * is_inside
 		end
 
 	end # ie loop
 
-#@show typeof(phantom)
 	return phantom
 end # ellipse_im_fast()
 
@@ -196,11 +194,11 @@ end # ellipse_im_fast()
 """
     phantom = ellipse_im(nx, dx, params ; kwarg...)
 
-square image of size `nx` by `nx`,
+square image of size `nx × nx`,
 specifying pixel size `dx` and ellipse `params`
 """
-function ellipse_im(nx::Int, dx::Real, params ; kwarg...)
-	ig = image_geom(nx=nx, dx=1)
+function ellipse_im(nx::Int, dx::RealU, params ; kwarg...)
+    ig = image_geom( ; nx, dx)
 	return ellipse_im(ig, params ; kwarg...)
 end
 
@@ -217,13 +215,13 @@ end
 
 
 """
-    phantom = ellipse_im(nx::Int ; ny::Int=nx, dx::Real=1, kwarg...)
+    phantom = ellipse_im(nx::Int ; ny::Int=nx, dx::Number=1, kwarg...)
 
 image of size `nx` by `ny` (default `nx`) with specified `dx` (default 1),
 defaults to `:shepplogan_emis`
 """
-function ellipse_im(nx::Int ; ny::Int=nx, dx::Real=1, kwarg...)
-	ig = image_geom(nx=nx, ny=ny, dx=dx)
+function ellipse_im(nx::Int ; ny::Int=nx, dx::RealU=1, kwarg...)
+    ig = image_geom( ; nx, ny, dx)
 	return ellipse_im(ig, :shepplogan_emis ; kwarg...)
 end
 
@@ -234,7 +232,7 @@ end
 `:shepplogan_emis` of size `nx` by `ny`
 """
 function ellipse_im(nx::Int, ny::Int ; kwarg...)
-	return ellipse_im(nx, ny=ny, dx=1. ; kwarg...)
+    return ellipse_im(nx ; ny, dx=1., kwarg...)
 end
 
 
@@ -283,13 +281,21 @@ end
 
 
 """
-params = shepp_logan_parameters(xfov, yfov ; case::Symbol)
+params = shepp_logan_parameters(xfov, yfov ; case::Symbol ; u::Tuple)
 
-parameters from Kak and Slaney text, p. 255
+Shepp Logan phantom parameters from Kak and Slaney text, p. 255.
 
-the first four columns are unitless "fractions of field of view"
+By default the first four columns are unitless "fractions of field of view",
+so columns 1,3 are scaled by `xfov` and columns 2,4 are scaled by `xfov`.
+The optional 3-tuple `u` specifies scaling and/or units:
+* columns 1-4 (center, radii) are scaled by `u[1]` (e.g., mm),
+* column 5 (angle) is scaled by `u[2]` (e.g., `1` or `°`),
+* column 6 (value) is scaled by `u[3]` (e.g., `1/cm`) for an attenuation map.
 """
-function shepp_logan_parameters(xfov::Real, yfov::Real ; case::Symbol=:kak)
+function shepp_logan_parameters(xfov::RealU, yfov::RealU ;
+    case::Symbol=:kak,
+    u::Tuple{a,b,c} where {a,b,c} = (1,1,1), # unit scaling
+)
 	params = [
 	0		0		0.92	0.69	90	2
 	0		-0.0184	0.874	0.6624	90	-0.98
@@ -313,14 +319,14 @@ function shepp_logan_parameters(xfov::Real, yfov::Real ; case::Symbol=:kak)
 		throw("bad phantom case $case")
 	end
 
-	return Float32.(params)
+    return [params[:,1:4] * u[1] params[:,5] * u[2] params[:,6] * u[3]]
 end
 
 
 """
-param = south_park_parameters( ; fov::Real = 100)
+param = south_park_parameters( ; fov::Number = 100)
 """
-function south_park_parameters( ; fov::Real = 100)
+function south_park_parameters( ; fov::RealU = 100)
 	xell = [
 		0. 0 85 115 0 100
 		0 -60 30 20 0 -80 # mouth
@@ -330,5 +336,5 @@ function south_park_parameters( ; fov::Real = 100)
 		-15 25 7 7 0 -100
 		0 75 60 15 0 -50] # hat
 	xell[:,1:4] .*= fov/256
-	return Float32.(xell)
+	return xell
 end
