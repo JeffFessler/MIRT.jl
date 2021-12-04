@@ -67,16 +67,42 @@ https://gitlab.eecs.umich.edu/michigan-fast-optimization
 For additional reproducible research code, see
 http://web.eecs.umich.edu/~fessler/irt/reproduce/
 
+
 ## Compatibility
 
 Current version is tested with "latest" stable version of Julia
 (currently 1.6.1).
 Older tagged versions should work with older Julia versions.
 
+
+## Related packages
+
+* [JuliaImageRecon](https://github.com/JuliaImageRecon)
+  growing collection of image reconstruction packages
+* [LinearMapsAA](https://github.com/JeffFessler/LinearMapsAA.jl)
+  is central to how imaging system models are used here.
+
+
 ## Deprecations
 
-As of `v0.14`, the following functions are deprecated
-(but still supported for now)
+Early versions of `MIRT.jl`
+attempted to house many methods
+under one roof.
+More recently,
+the methods are being isolated
+into smaller component packages at
+[JuliaImageRecon](https://github.com/JuliaImageRecon).
+
+A similar evolution happened
+with
+[Images/Images.jl](https://github.com/JuliaImages/Images.jl)
+and it is likely
+that MIRT will evolve
+to be an "umbrella package"
+that exports a set of packages
+that are useful for image reconstruction.
+
+As of `v0.15`, the following functions are deprecated:
 | old | new | see |
 | :--- | :--- | :--- |
 | `jim` | `MIRTjim.jim` | [MIRTjim.jl](https://github.com/JeffFessler/MIRTjim.jl) |

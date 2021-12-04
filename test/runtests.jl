@@ -64,7 +64,6 @@ srclist = (
 "io",
 "mri",
 "nufft",
-"plot",
 "regularize",
 "system",
 "utility",

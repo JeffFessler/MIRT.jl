@@ -1,8 +1,8 @@
 [deps]
-DemoCards = "311a05b2-6137-4a5a-b473-18580a3d38b5"
+#DemoCards = "311a05b2-6137-4a5a-b473-18580a3d38b5"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
-LinearMapsAA = "599c1a8e-b958-11e9-0d14-b1e6b2ecea07"
+#LinearMapsAA = "599c1a8e-b958-11e9-0d14-b1e6b2ecea07"
 Literate = "98b081ad-f1c9-55d3-8b20-4c87d4299306"
 MIRT = "7035ae7a-3787-11e9-139a-5545ed3dc201"
-MIRTjim = "170b2178-6dee-4cb0-8729-b3e8b57834cc"
-Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
+#MIRTjim = "170b2178-6dee-4cb0-8729-b3e8b57834cc"
+#Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
