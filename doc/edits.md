@@ -27,5 +27,5 @@ When ready, submit pull request on github.com.
 
 After pull request is approved:
 * `git pull`
-* `git checkout master`
+* `git checkout main`
 * `git pull`

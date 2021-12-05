@@ -21,7 +21,7 @@ nb = false # Set to true to generate the notebooks
 for (root, _, files) in walkdir(lit), file in files
     splitext(file)[2] == ".jl" || continue
     ipath = joinpath(root, file)
-    opath = splitdir(replace(ipath, lit=>src))[1]
+    opath = splitdir(replace(ipath, lit => src))[1]
     Literate.markdown(ipath, opath, documenter = execute)
     nb && Literate.notebook(ipath, notebooks, execute = execute)
 end
@@ -35,7 +35,7 @@ pages(folder) =
 
 format = Documenter.HTML(;
     prettyurls = isci,
-#   edit_link = "master",
+#   edit_link = "main",
 #   assets = [examples_theme],
 )
 
@@ -58,7 +58,7 @@ makedocs(;
 if isci
     deploydocs(;
         repo = "github.com/JeffFessler/MIRT.jl.git",
-        devbranch = "master",
+        devbranch = "main",
         versions = ["stable" => "v^", "dev" => "dev"],
     )
 else
