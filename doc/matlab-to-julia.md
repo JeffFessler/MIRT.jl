@@ -2,7 +2,7 @@
 
 Many of the functions in MIRT.jl were converted from corresponding
 functions in the
-[Matlab version of MIRT](https://github.com/JeffFessler/mirt/tree/master).
+[Matlab version of MIRT](https://github.com/JeffFessler/mirt/tree/main).
 
 Studying them can be helpful
 for planning translations of other Matlab functions.
@@ -60,19 +60,19 @@ Github will then return a list
 
 <!-- URLs -->
 [vararg-search]: https://github.com/JeffFessler/mirt/search?q=vararg_pair
-[vararg-mat]: https://github.com/JeffFessler/mirt/blob/master/utilities/vararg_pair.m
+[vararg-mat]: https://github.com/JeffFessler/mirt/blob/main/utilities/vararg_pair.m
 [fld-read-jl]: https://github.com/JeffFessler/AVSfldIO.jl/blob/main/src/fld-read.jl
-[fld-read-mat]: https://github.com/JeffFessler/mirt/blob/master/utilities/fld_read.m
+[fld-read-mat]: https://github.com/JeffFessler/mirt/blob/main/utilities/fld_read.m
 [fld-write-jl]: https://github.com/JeffFessler/AVSfldIO.jl/blob/main/src/fld-write.jl
-[fld-write-mat]: https://github.com/JeffFessler/mirt/blob/master/utilities/fld_write.m
-[dtft-jl]: https://github.com/JeffFessler/MIRT.jl/blob/master/src/nufft/dtft.jl
-[dtft-mat]: https://github.com/JeffFessler/mirt/blob/master/nufft/dtft.m
-[kspace-jl]: https://github.com/JeffFessler/MIRT.jl/blob/master/src/mri/kspace.jl
-[kspace-mat]: https://github.com/JeffFessler/mirt/blob/master/mri/ir_mri_kspace_ga_radial.m
-[odwt-jl]: https://github.com/JeffFessler/MIRT.jl/blob/master/src/regularize/Aodwt.jl
-[odwt-mat]: https://github.com/JeffFessler/mirt/blob/master/penalty/Godwt1.m
-[sensemap-sim-jl]: https://github.com/JeffFessler/MIRT.jl/blob/master/src/mri/sensemap-sim.jl
-[sensemap-sim-mat]: https://github.com/JeffFessler/mirt/blob/master/mri/mri_sensemap_sim.m
-[mask-jl]: https://github.com/JeffFessler/MIRT.jl/blob/master/src/utility/mask.jl
-[masker-mat]: https://github.com/JeffFessler/mirt/blob/master/utilities/masker.m
-[embed-mat]: https://github.com/JeffFessler/mirt/blob/master/utilities/embed.m
+[fld-write-mat]: https://github.com/JeffFessler/mirt/blob/main/utilities/fld_write.m
+[dtft-jl]: https://github.com/JeffFessler/MIRT.jl/blob/main/src/nufft/dtft.jl
+[dtft-mat]: https://github.com/JeffFessler/mirt/blob/main/nufft/dtft.m
+[kspace-jl]: https://github.com/JeffFessler/MIRT.jl/blob/main/src/mri/kspace.jl
+[kspace-mat]: https://github.com/JeffFessler/mirt/blob/main/mri/ir_mri_kspace_ga_radial.m
+[odwt-jl]: https://github.com/JeffFessler/MIRT.jl/blob/main/src/regularize/Aodwt.jl
+[odwt-mat]: https://github.com/JeffFessler/mirt/blob/main/penalty/Godwt1.m
+[sensemap-sim-jl]: https://github.com/JeffFessler/MIRT.jl/blob/main/src/mri/sensemap-sim.jl
+[sensemap-sim-mat]: https://github.com/JeffFessler/mirt/blob/main/mri/mri_sensemap_sim.m
+[mask-jl]: https://github.com/JeffFessler/MIRT.jl/blob/main/src/utility/mask.jl
+[masker-mat]: https://github.com/JeffFessler/mirt/blob/main/utilities/masker.m
+[embed-mat]: https://github.com/JeffFessler/mirt/blob/main/utilities/embed.m

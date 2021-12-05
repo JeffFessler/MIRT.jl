@@ -33,9 +33,9 @@ with valuable contributions from the Julia community.
 ## Getting started
 
 For detailed installation instructions, see:
-- [doc/start.md](https://github.com/JeffFessler/MIRT.jl/blob/master/doc/start.md)
+- [doc/start.md](https://github.com/JeffFessler/MIRT.jl/blob/main/doc/start.md)
 for conventional Julia
-- [doc/start-pro.md](https://github.com/JeffFessler/MIRT.jl/blob/master/doc/start-pro.md)
+- [doc/start-pro.md](https://github.com/JeffFessler/MIRT.jl/blob/main/doc/start-pro.md)
 for
 [JuliaPro](https://juliacomputing.com/products/juliapro.html)
 
@@ -114,21 +114,17 @@ As of `v0.15`, the following functions are deprecated:
 <!-- URLs -->
 [action-img]: https://github.com/JeffFessler/MIRT.jl/workflows/Unit%20test/badge.svg
 [action-url]: https://github.com/JeffFessler/MIRT.jl/actions
-[build-img]: https://github.com/JeffFessler/MIRT.jl/workflows/CI/badge.svg?branch=master
-[build-url]: https://github.com/JeffFessler/MIRT.jl/actions?query=workflow%3ACI+branch%3Amaster
+[build-img]: https://github.com/JeffFessler/MIRT.jl/workflows/CI/badge.svg?branch=main
+[build-url]: https://github.com/JeffFessler/MIRT.jl/actions?query=workflow%3ACI+branch%3Amain
 [pkgeval-img]: https://juliaci.github.io/NanosoldierReports/pkgeval_badges/M/MIRT.svg
 [pkgeval-url]: https://juliaci.github.io/NanosoldierReports/pkgeval_badges/M/MIRT.html
-[codecov-img]: https://codecov.io/github/JeffFessler/MIRT.jl/coverage.svg?branch=master
-[codecov-url]: https://codecov.io/github/JeffFessler/MIRT.jl?branch=master
-[coveralls-img]: https://coveralls.io/repos/JeffFessler/MIRT.jl/badge.svg?branch=master
-[coveralls-url]: https://coveralls.io/github/JeffFessler/MIRT.jl?branch=master
+[codecov-img]: https://codecov.io/github/JeffFessler/MIRT.jl/coverage.svg?branch=main
+[codecov-url]: https://codecov.io/github/JeffFessler/MIRT.jl?branch=main
+[coveralls-img]: https://coveralls.io/repos/JeffFessler/MIRT.jl/badge.svg?branch=main
+[coveralls-url]: https://coveralls.io/github/JeffFessler/MIRT.jl?branch=main
 [docs-stable-img]: https://img.shields.io/badge/docs-stable-blue.svg
 [docs-stable-url]: https://JeffFessler.github.io/MIRT.jl/stable
 [docs-dev-img]: https://img.shields.io/badge/docs-dev-blue.svg
 [docs-dev-url]: https://JeffFessler.github.io/MIRT.jl/dev
 [license-img]: http://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat
 [license-url]: LICENSE
-<!--
-[travis-img]: https://travis-ci.org/JeffFessler/MIRT.jl.svg?branch=master
-[travis-url]: https://travis-ci.org/JeffFessler/MIRT.jl
--->
