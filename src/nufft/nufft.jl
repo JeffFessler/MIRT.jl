@@ -178,10 +178,9 @@ function nufft_init(
 	T = nufft_eltype(eltype(w))
 	CT = Complex{T}
 	CTa = AbstractArray{Complex{T}}
-	f = convert(Array{T}, w/(2π)) # note: plan_nfft must have correct type
-#	p = plan_nfft(f', N; m = nfft_m, σ = nfft_sigma) # create plan
-#	https://github.com/JuliaMath/NFFT.jl/issues/74 # todo
-	p = plan_nfft(Matrix(f'), N; m = nfft_m, σ = nfft_sigma) # create plan
+#	note transpose per https://github.com/JuliaMath/NFFT.jl/issues/74
+	f = convert(Array{T}, w'/(2π)) # note: plan_nfft must have correct type
+	p = plan_nfft(f, N; m = nfft_m, σ = nfft_sigma) # create plan
 
 	# extra phase here because NFFT.jl always starts from -N/2
 	phasor = convert(CTa, cis.(-w * (collect(N)/2. - n_shift)))
