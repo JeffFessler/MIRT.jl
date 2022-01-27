@@ -14,8 +14,12 @@ seems impossible
 and one must really understand the algorithm
 to do a good conversion.
 
-Here is a list of Julia functions that have direct counter-parts
-in Matlab MIRT directories of the same base name:
+Here is a list of functions
+in the
+[Julia MIRT `fbp/`][fbp-jl] directory
+that have direct counter-parts
+in the Matlab
+[Matlab MIRT `fbp/`][fbp-mat] directory:
 
 * `fbp/cuboid_im.jl`
 * `fbp/ellipse_im.jl`
@@ -25,6 +29,7 @@ in Matlab MIRT directories of the same base name:
 * `fbp/rect_im.jl`
 * `fbp/rect_sino.jl`
 * `fbp/sino_geom.jl`
+
 
 Here are some pairs
 that came from MIRT files in different directories:
@@ -61,6 +66,8 @@ Github will then return a list
 <!-- URLs -->
 [vararg-search]: https://github.com/JeffFessler/mirt/search?q=vararg_pair
 [vararg-mat]: https://github.com/JeffFessler/mirt/blob/main/utilities/vararg_pair.m
+[fbp-jl]: https://github.com/JeffFessler/MIRT.jl/blob/main/src/fbp/
+[fbp-mat]: https://github.com/JeffFessler/mirt/blob/main/fbp/
 [fld-read-jl]: https://github.com/JeffFessler/AVSfldIO.jl/blob/main/src/fld-read.jl
 [fld-read-mat]: https://github.com/JeffFessler/mirt/blob/main/utilities/fld_read.m
 [fld-write-jl]: https://github.com/JeffFessler/AVSfldIO.jl/blob/main/src/fld-write.jl
