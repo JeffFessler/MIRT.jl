@@ -2,3 +2,4 @@
 
 include("dtft.jl")
 include("nufft.jl")
+include("errors.jl")
