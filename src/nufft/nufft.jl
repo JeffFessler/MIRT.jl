@@ -9,7 +9,7 @@ export Anufft, nufft_init
 
 #using MIRT: dtft_init, map_many
 #include("../utility/map_many.jl")
-using NFFT
+using NFFT: plan_nfft, nfft, nfft_adjoint
 using LinearAlgebra: norm
 using LinearMapsAA: LinearMapAA, LinearMapAM, LinearMapAO
 
