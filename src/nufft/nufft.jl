@@ -91,7 +91,7 @@ function nufft_init(
 	CT = Complex{T}
 	CTa = AbstractArray{Complex{T}}
 	f = convert(Array{T}, vec(w)/(2π)) # note: plan_nfft must have correct type
-	p = plan_nfft(f, N, nfft_m, nfft_sigma) # create plan
+	p = plan_nfft(f, N; m = nfft_m, σ = nfft_sigma) # create plan
 	M = length(w)
 	# extra phase here because NFFT always starts from -N/2
 	phasor = convert(CTa, cis.(-vec(w) * (N/2 - n_shift)))
@@ -179,7 +179,9 @@ function nufft_init(
 	CT = Complex{T}
 	CTa = AbstractArray{Complex{T}}
 	f = convert(Array{T}, w/(2π)) # note: plan_nfft must have correct type
-	p = plan_nfft(f', N, nfft_m, nfft_sigma) # create plan
+#	p = plan_nfft(f', N; m = nfft_m, σ = nfft_sigma) # create plan
+#	https://github.com/JuliaMath/NFFT.jl/issues/74 # todo
+	p = plan_nfft(Matrix(f'), N; m = nfft_m, σ = nfft_sigma) # create plan
 
 	# extra phase here because NFFT.jl always starts from -N/2
 	phasor = convert(CTa, cis.(-w * (collect(N)/2. - n_shift)))
