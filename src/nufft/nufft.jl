@@ -7,7 +7,7 @@ todo: open issues: small N, odd N, nufft!, adjoint!
 
 export Anufft, nufft_init
 
-#using MIRT: dtft_init, map_many
+#using MIRT: map_many
 #include("../utility/map_many.jl")
 using NFFT: plan_nfft, nfft, nfft_adjoint
 using LinearAlgebra: norm
@@ -224,23 +224,3 @@ Anufft(w::AbstractArray{<:Real}, N::Int ; kwargs...) =
 	nufft_init(w, N ; kwargs...).A
 Anufft(w::AbstractArray{<:Real}, N::Dims ; kwargs...) =
 	nufft_init(w, N ; kwargs...).A
-
-
-"""
-w, errs = nufft_errors( ; M=?, w=?, N=?, n_shift=?, ...)
-
-Compute worst-case errors for NUFFT (for signal of length N of unit norm)
-"""
-function nufft_errors( ;
-	M::Int = 401,
-	N::Int = 512,
-	w::AbstractArray{<:Real} = LinRange(0, 2π/N, M),
-	n_shift::Real = 0,
-	kwargs...,
-)
-
-	sd = dtft_init(w, N ; n_shift=n_shift)
-	sn = nufft_init(w, N ; n_shift=n_shift, kwargs...)
-	E = Matrix(sn.A - sd.A)
-	return w, vec(mapslices(norm, E, dims=2)) # [M]
-end
