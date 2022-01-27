@@ -7,9 +7,9 @@ todo: open issues: small N, odd N, nufft!, adjoint!
 
 export Anufft, nufft_init
 
-#using MIRT: dtft_init, map_many
+#using MIRT: map_many
 #include("../utility/map_many.jl")
-using NFFT
+using NFFT: plan_nfft, nfft, nfft_adjoint
 using LinearAlgebra: norm
 using LinearMapsAA: LinearMapAA, LinearMapAM, LinearMapAO
 
@@ -91,7 +91,7 @@ function nufft_init(
 	CT = Complex{T}
 	CTa = AbstractArray{Complex{T}}
 	f = convert(Array{T}, vec(w)/(2π)) # note: plan_nfft must have correct type
-	p = plan_nfft(f, N, nfft_m, nfft_sigma) # create plan
+	p = plan_nfft(f, N; m = nfft_m, σ = nfft_sigma) # create plan
 	M = length(w)
 	# extra phase here because NFFT always starts from -N/2
 	phasor = convert(CTa, cis.(-vec(w) * (N/2 - n_shift)))
@@ -178,8 +178,9 @@ function nufft_init(
 	T = nufft_eltype(eltype(w))
 	CT = Complex{T}
 	CTa = AbstractArray{Complex{T}}
-	f = convert(Array{T}, w/(2π)) # note: plan_nfft must have correct type
-	p = plan_nfft(f', N, nfft_m, nfft_sigma) # create plan
+#	note transpose per https://github.com/JuliaMath/NFFT.jl/issues/74
+	f = convert(Array{T}, w'/(2π)) # note: plan_nfft must have correct type
+	p = plan_nfft(f, N; m = nfft_m, σ = nfft_sigma) # create plan
 
 	# extra phase here because NFFT.jl always starts from -N/2
 	phasor = convert(CTa, cis.(-w * (collect(N)/2. - n_shift)))
@@ -224,23 +225,3 @@ Anufft(w::AbstractArray{<:Real}, N::Int ; kwargs...) =
 	nufft_init(w, N ; kwargs...).A
 Anufft(w::AbstractArray{<:Real}, N::Dims ; kwargs...) =
 	nufft_init(w, N ; kwargs...).A
-
-
-"""
-w, errs = nufft_errors( ; M=?, w=?, N=?, n_shift=?, ...)
-
-Compute worst-case errors for NUFFT (for signal of length N of unit norm)
-"""
-function nufft_errors( ;
-	M::Int = 401,
-	N::Int = 512,
-	w::AbstractArray{<:Real} = LinRange(0, 2π/N, M),
-	n_shift::Real = 0,
-	kwargs...,
-)
-
-	sd = dtft_init(w, N ; n_shift=n_shift)
-	sn = nufft_init(w, N ; n_shift=n_shift, kwargs...)
-	E = Matrix(sn.A - sd.A)
-	return w, vec(mapslices(norm, E, dims=2)) # [M]
-end
