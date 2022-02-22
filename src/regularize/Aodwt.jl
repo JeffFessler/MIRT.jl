@@ -21,6 +21,7 @@ option
 - `level::Int` # of levels; default 3
 - `wt` wavelet transform type (see `Wavelets` package); default Haar
 - `operator::Bool=true` default to `LinearMapAO`
+- `T::DataType` : `Float32` by default; use `ComplexF32` if needed
 
 out
 - `A` a `LinearMapAX` object
