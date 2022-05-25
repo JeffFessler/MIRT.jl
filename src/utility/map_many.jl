@@ -25,25 +25,24 @@ then output `y` will have size (3,4,5,7,8)
 where `y[:,:,:,i,j] = fun(x[:,:,i,j])`
 """
 function map_many(fun::Function, x::AbstractArray{<:Any}, idim::Dims)
-	xdim = size(x)
-	D = length(idim)
-	ndims(x) < D && throw(DimensionMismatch("ndims(x) < D=$D)"))
-	xdim[1:D] != idim && throw(DimensionMismatch("size(x) vs idim"))
+    xdim = size(x)
+    D = length(idim)
+    ndims(x) < D && throw(DimensionMismatch("ndims(x) < D=$D)"))
+    xdim[1:D] != idim && throw(DimensionMismatch("size(x) vs idim"))
 
-	if xdim == idim
-		return fun(x)
-	end
+    if xdim == idim
+        return fun(x)
+    end
 
-	ldim = xdim[(D+1):end]
-	L = prod(ldim) # *ldim
-	x = reshape(x, prod(idim), :) # [*idim L]
-	tmp = fun(reshape((@view x[:,1]), idim)) # [odim]
-	odim = size(tmp)
-	T = eltype(tmp)
-	out = Array{T}(undef, prod(odim), L) # [*odim L]
-	out[:,1] = vec(tmp)
-	for l=2:L
-		out[:,l] = vec(fun(reshape((@view x[:,l]), idim)))
-	end
-	return reshape(out, odim..., ldim...) # [odim ldim]
+    ldim = xdim[(D+1):end]
+    L = prod(ldim) # *ldim
+    x = reshape(x, prod(idim), :) # [*idim L]
+    tmp = fun(reshape((@view x[:,1]), idim)) # [odim]
+    odim = size(tmp)
+    out = similar(tmp, prod(odim), L) # [*odim L]
+    out[:,1] = vec(tmp)
+    for l=2:L
+        out[:,l] = vec(fun(reshape((@view x[:,l]), idim)))
+    end
+    return reshape(out, odim..., ldim...) # [odim ldim]
 end
