@@ -109,7 +109,7 @@ function downsample2(
 
     warn && any(odim .* down .!= idim) && @warn("truncating to $odim")
 
-     y = similar(x, T, odim)
+    y = similar(x, T, odim)
     d1 = down[1]
     d2 = down[2]
     for i2=1:odim[2]
