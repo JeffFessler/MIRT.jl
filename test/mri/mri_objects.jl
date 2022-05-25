@@ -2,11 +2,11 @@
 
 using MIRT: mri_objects
 
-using MIRTjim: jim, prompt
+#using MIRTjim: jim, prompt
 using MIRT: image_geom, max_percent_diff
 import MIRT: mri_objects_trap
 using FFTW: fft, fftshift, ifftshift
-using Plots
+#using Plots
 using Test: @test, @test_throws #, @inferred
 
 
@@ -25,7 +25,7 @@ function mri_objects_test2()
                 (:dirac2,[shift' 2])
             )
     ntest = length(tests)
-    pl = Matrix{Plots.Plot}(undef, ntest,3)
+#   pl = Matrix{Plots.Plot}(undef, ntest,3)
 
     for (i,test) = enumerate(tests)
         st = mri_objects(test)
@@ -34,26 +34,29 @@ function mri_objects_test2()
         f2 = st.kspace(ig.fg...)
         isinteractive() && (@show max_percent_diff(f2,s2))
     #   @show round.(maximum.([i2, abs.(f2), abs.(s2)]), digits=2)
-        pl[i,1] = jim(i2, title = "$(test[1])")
-        pl[i,2] = jim(abs.(s2), title = "|fft|")
-        pl[i,3] = jim(abs.(f2), title = "|kspace|")
+    #   pl[i,1] = jim(i2, title = "$(test[1])")
+    #   pl[i,2] = jim(abs.(s2), title = "|fft|")
+    #   pl[i,3] = jim(abs.(f2), title = "|kspace|")
     end
-    plot(pl...)
-    return plot(pl...)
+#   plot(pl...)
+#   return plot(pl...)
+    true
 end
 
 
 function mri_objects_test_case1()
     ig = image_geom(nx = 2^7, ny = 2^7 + 2, dx = 4, offsets = :dsp)
     xt = mri_objects(:case1,unit = :cm).image(ig.xg, ig.yg)
-    jim(xt, title = "case1cm")
+#   jim(xt, title = "case1cm")
+    true
 end
 
 
 function mri_objects_test_case4()
     ig = image_geom(nx = 2^5, ny = 2^5 + 2,nz = 2^5, dx = 1,dz = .5, offsets = :dsp)
     xt = mri_objects(:case4,unit = :cm).image(ig.xg, ig.yg, ig.zg)
-    jim(xt, title = "case4cm")
+#   jim(xt, title = "case4cm")
+    true
 end
 
 
@@ -69,7 +72,7 @@ function mri_objects_test3()
              (:rect3, [shift' sizes' 2]),
              (:dirac3,[shift' 2]))
     ntest = length(tests)
-    pl = Matrix{Plots.Plot}(undef, ntest,3)
+#   pl = Matrix{Plots.Plot}(undef, ntest,3)
     for (i,test) in enumerate(tests)
         st = mri_objects(test)
         i3 = st.image(ig.xg,ig.yg,ig.zg, dx=ig.dx, dy=ig.dy, dz=ig.dz)
@@ -78,13 +81,14 @@ function mri_objects_test3()
         fg = ig.fg
         f3 = st.kspace(fg...)
         isinteractive() && (@show max_percent_diff(f3,s3))
-        pl[i,1] = jim(i3, title = "$(test[1])")
-        pl[i,2] = jim(abs.(s3), title = "fft")
-        pl[i,3] = jim(abs.(f3), title = "kspace")
-        plot(pl[i,:]...)
-        prompt()
+#       pl[i,1] = jim(i3, title = "$(test[1])")
+#       pl[i,2] = jim(abs.(s3), title = "fft")
+#       pl[i,3] = jim(abs.(f3), title = "kspace")
+#       plot(pl[i,:]...)
+#       prompt()
     end
-    return plot(pl...)
+#   return plot(pl...)
+    true
 end
 
 
@@ -95,23 +99,24 @@ function mri_objects_trap_test()
     z = LinRange(-8,8,201)
     trap = mri_objects_trap(z, dz, len)
     trap0 = mri_objects_trap(z, 0, len)
-    plot(z, trap, label="trap")
-    plot!(z, trap0, label="rect")
-    plot!(xtick = [0, -len/2, len/2-dz/2, len/2, len/2+dz/2])
+#   plot(z, trap, label="trap")
+#   plot!(z, trap0, label="rect")
+#   plot!(xtick = [0, -len/2, len/2-dz/2, len/2, len/2+dz/2])
+    true
 end
 
 @test_throws String mri_objects(:bad)
 
-@test mri_objects_trap_test() isa Plots.Plot
-prompt()
+@test mri_objects_trap_test() #isa Plots.Plot
+#prompt()
 
-@test mri_objects_test2() isa Plots.Plot
-prompt()
+@test mri_objects_test2() #isa Plots.Plot
+#prompt()
 
-@test mri_objects_test_case1() isa Plots.Plot
-prompt()
+@test mri_objects_test_case1() #isa Plots.Plot
+#prompt()
 
-@test mri_objects_test3() isa Plots.Plot
+@test mri_objects_test3() #isa Plots.Plot
 
-@test mri_objects_test_case4() isa Plots.Plot
-prompt()
+@test mri_objects_test_case4() #isa Plots.Plot
+#prompt()
