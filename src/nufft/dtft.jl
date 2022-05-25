@@ -149,17 +149,19 @@ in
 
 option
 - `n_shift::Real` often is N/2; default 0
+- `T::DataType` output data type; default `ComplexF64`
 
 out
 - `x::AbstractVector{<:Number}`	signal [N]
 """
 function dtft_adj(w::AbstractVector{<:Real}, X::AbstractVector{<:Number},
 	N::Int ; n_shift::Real = 0,
+	T::DataType = ComplexF64,
 )
 	M = length(w)
-	out = Array{ComplexF64}(undef, N)
+	out = similar(X, T, N)
 	nshift1 = n_shift + 1
-	X = ComplexF64.(X)
+	X = T.(X)
 	for n=1:N # loop over output signal samples
 		out[n] = sum(cis.((n - nshift1) * w) .* X)
 	end
@@ -181,6 +183,7 @@ in
 
 option
 - `n_shift::AbstractVector{<:Real}` often is `N/2`; default `zeros(D)`
+- `T::DataType` default `(eltype(w) == Float64) ? ComplexF64 : ComplexF32`
 
 out
 - `x::AbstractArray{<:Number}` `[(N)]` `D`-dimensional signal
@@ -190,13 +193,13 @@ function dtft_adj(
 	X::AbstractVector{<:Number},
 	N::Dims ;
 	n_shift::AbstractVector{<:Real} = zeros(Int, ndims(x)),
+	T::DataType = (eltype(w) == Float64) ? ComplexF64 : ComplexF32,
 )
 
-	M,D = size(w)
+	M, D = size(w)
 	nshift1 = n_shift .+ 1
 
-	T = (eltype(w) == Float64) ? ComplexF64 : ComplexF32
-	out = Array{T}(undef, N)
+	out = similar(X, T, N)
 
 	for n=1:prod(N)
 		idx = CartesianIndices(N)[n]
@@ -251,12 +254,13 @@ function dtft_loop_m(
 	w::AbstractVector{<:Real},
 	x::AbstractVector{<:Number} ;
 	n_shift::Real = 0,
+    T::DataType = ComplexF64,
 )
 	M = length(w)
 	N = length(x)
-	out = Array{ComplexF64}(undef, M)
+	out = similar(x, T, M)
 	nn = -((0:(N-1)) .- n_shift)
-	x = ComplexF64.(x)
+	x = T.(x)
 	for m=1:M
 		out[m] = sum(cis.(nn * w[m]) .* x)
 	end

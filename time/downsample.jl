@@ -6,11 +6,15 @@ timing tests
 import MIRT
 using BenchmarkTools: @btime
 
-function downsample3_time()
-	x = ones(Float32, 100, 200, 40)
-	@btime MIRT.downsample3_perm($x, (2, 2, 2)) # fastest
-	@btime MIRT.downsample3_loop($x, [2, 2, 2], T=Float32) # 2x slower
-	nothing
+
+function downsample3_time( ; T=Float32, dims=(100,200,40), down=(2,2,2))
+    x = ones(T, dims...)
+    fp(x) = MIRT.downsample3_perm(x, down)
+    fl(x) = MIRT.downsample3_loop(x, down; T)
+    @assert fp(x) == fl(x)
+    @btime $fp($x) # fastest
+    @btime $fl($x) # 2x slower, many more allocations
+    nothing
 end
 
 #= ir28 with 1.4.2
