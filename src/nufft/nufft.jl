@@ -10,7 +10,7 @@ export Anufft, nufft_init
 #using MIRT: map_many
 #include("../utility/map_many.jl")
 using NFFT: plan_nfft, nfft, nfft_adjoint
-using LinearAlgebra: norm
+using LinearAlgebra: mul!
 using LinearMapsAA: LinearMapAA, LinearMapAM, LinearMapAO
 
 
@@ -91,25 +91,25 @@ function nufft_init(
 	CT = Complex{T}
 	CTa = AbstractArray{Complex{T}}
 	f = convert(Array{T}, vec(w)/(2π)) # note: plan_nfft must have correct type
-#@show f N nfft_m nfft_sigma
 	p = plan_nfft(f, N; m = nfft_m, σ = nfft_sigma) # create plan
-@show p
 	M = length(w)
 	# extra phase here because NFFT always starts from -N/2
 	phasor = convert(CTa, cis.(-vec(w) * (N/2 - n_shift)))
 	phasor_conj = conj.(phasor)
-#   forw1 = x -> nfft(p, nufft_typer(CTa, x)) .* phasor
     forw1 = x -> (p * nufft_typer(CTa, x)) .* phasor
-#	forw! = x,y -> nfft!(p, nufft_typer(CTa, x)) .* phasor # todo
-#   back1 = y -> nfft_adjoint(p, nufft_typer(CTa, y .* phasor_conj))
+#   forw1 = x -> (p * x) .* phasor # fails for non-Float inputs
+    forw1!(y,x) = begin
+        mul!(vec(y), p, x)
+        vec(y) .*= phasor
+    end
     back1 = y -> adjoint(p) * (nufft_typer(CTa, y .* phasor_conj))
+    back1!(x,y) = mul!(x, adjoint(p), vec(y) .* phasor_conj)
 
-	prop = (name="nufft1", w=w, N=(N,), n_shift=n_shift,
-			nfft_m=nfft_m, nfft_sigma=nfft_sigma)
-	A = LinearMapAA(forw1, back1, (M, N) ; # no "many" here!
-		prop = prop, T=CT, operator = operator, # effectively "many" if true
-		odim = operator ? size(w) : (length(w),),
-	)
+    prop = (name="nufft1", p, w, N=(N,), n_shift, nfft_m, nfft_sigma)
+    A = LinearMapAA(forw1!, back1!, (M, N) ; # no "many" here!
+        prop, T=CT, operator, # effectively "many" if true
+        odim = operator ? size(w) : (length(w),),
+    )
 
 	if do_many
 		forw = x -> map_many(forw1, x, (N,))
@@ -119,7 +119,7 @@ function nufft_init(
 		back = back1
 	end
 
-	return (nufft=forw, adjoint=back, A=A)
+	return (nufft=forw, adjoint=back, A)
 end
 
 
@@ -184,9 +184,7 @@ function nufft_init(
 	CTa = AbstractArray{Complex{T}}
 #	note transpose per https://github.com/JuliaMath/NFFT.jl/issues/74
 	f = convert(Array{T}, w'/(2π)) # note: plan_nfft must have correct type
-@show f size(f) typeof(f) N nfft_m nfft_sigma
 	p = plan_nfft(f, N; m = nfft_m, σ = nfft_sigma) # create plan
-@show p
 
 	# extra phase here because NFFT.jl always starts from -N/2
 	phasor = convert(CTa, cis.(-w * (collect(N)/2. - n_shift)))
@@ -197,17 +195,16 @@ function nufft_init(
 #   back1 = y -> nfft_adjoint(p, nufft_typer(CTa, y .* phasor_conj))
     back1 = y -> adjoint(p) * (nufft_typer(CTa, y .* phasor_conj))
 
-	prop = (name="nufft$(length(N))", w=w, N=N, n_shift=n_shift,
-			nfft_m=nfft_m, nfft_sigma=nfft_sigma)
+	prop = (name="nufft$(length(N))", w, N, n_shift, nfft_m, nfft_sigma)
 	if operator # LinearMapAO
 		A = LinearMapAA(forw1, back1, (M, prod(N)) ;
-			prop = prop, T = CT,
-			operator = true, odim = odim, idim = N,
+			prop, T = CT,
+			operator = true, odim, idim = N,
 		)
 	else
 		# no "many" for LinearMapAM:
 		A = LinearMapAA(x -> forw1(reshape(x,N)), y -> vec(back1(y)),
-			(M, prod(N)) ; prop = prop, T = CT,
+			(M, prod(N)) ; prop, T = CT,
 		)
 	end
 
@@ -219,7 +216,7 @@ function nufft_init(
 		back = back1
 	end
 
-	return (nufft=forw, adjoint=back, A=A)
+	return (nufft=forw, adjoint=back, A)
 end
 
 

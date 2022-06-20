@@ -7,10 +7,13 @@ import MIRT: nufft_eltype
 #using MIRT: dtft_init, map_many
 #include("../utility/map_many.jl")
 using NFFT
-using Plots
+using Plots # todo: move to docs
 using LinearAlgebra: norm
 using LinearMapsAA: LinearMapAM, LinearMapAO
 using Test: @test, @testset, @test_throws
+
+
+_norminf(a, b) = norm(b - a, Inf) / norm(a, Inf)
 
 
 """
@@ -19,48 +22,57 @@ simple 1D tests
 """
 function nufft_test1( ;
 	M::Int = 30, N::Int = 20, n_shift::Real = 1.7,
-	T::DataType = Float64, tol::Real = 2e-6,
+    T::DataType = Float64, tol::Real = 3e-6,
 )
 
-	w = (rand(M) .- 0.5) * 2 * pi
+    w = (rand(M) .- 0.5) * 2π
 	w = T.(w)
 	x = randn(complex(T), N)
-	sd = dtft_init(w, N ; n_shift=n_shift)
-	sn = nufft_init(w, N ; n_shift=n_shift, operator=false)
-	o0 = sd.dtft(x)
-	y = Complex{T}.(o0 / norm(o0))
-	a0 = sd.adjoint(y)
-	o1 = sn.nufft(x)
-	o2 = sn.A * x
-	a1 = sn.adjoint(y)
-	a2 = sn.A' * y
-	@test norm(o1 - o0, Inf) / norm(o0, Inf) < tol
-	@test isequal(o1, o2)
-	@test norm(a1 - a0, Inf) / norm(a0, Inf) < tol
-	@test isequal(a1, a2)
-	@test Matrix(sn.A)' ≈ Matrix(sn.A') # 1D adjoint test
+    sd = dtft_init(w, N ; n_shift)
+    (nufft, adjoint, A) = nufft_init(w, N ; n_shift, operator=false)
+    o0 = sd.dtft(x)
+    o1 = nufft(x)
+    o2 = A * x
+    y = Complex{T}.(o0 / norm(o0))
+    b0 = sd.adjoint(y)
+    b1 = adjoint(y)
+    b2 = A' * y
+	@test _norminf(o0, o1) < tol
+	@test o2 == o1
+    @test _norminf(b0, b1) < tol
+    @test b2 == b1
+	@test Matrix(A)' ≈ Matrix(A') # 1D adjoint test
 
-	A = sn.A
 	@test A.name == "nufft1"
 	@test A isa LinearMapAM
 
-	sn = nufft_init(w, N, n_shift=n_shift, do_many=false, operator=true)
-	o3 = sn.nufft(x)
-	@test norm(o3 - o0, Inf) / norm(o0, Inf) < tol
+    xint = ones(Int,N)
+    i0 = sd.dtft(xint)
+    i2 = A * xint
+    @test _norminf(i0, i2) < tol
 
-	B = sn.A
-	@test B isa LinearMapAO
+    # operation version
+    (nufft, adjoint, B) = nufft_init(w, N; n_shift, do_many=false, operator=true)
+    @test B isa LinearMapAO
+	o3 = nufft(x)
+    @test o3 == o1
+    b3 = adjoint(y)
+    @test b3 == b1
 
-	A = Anufft(w, N, n_shift=n_shift)
-	@test A isa LinearMapAO
-	@test A * x == o3
+    # Anufft constructor
+    A = Anufft(w, N; n_shift)
+    @test A isa LinearMapAO
+    @test A * x == o3
+    @test A' * y == b3
 
-	A = Anufft(w', N, n_shift=n_shift) # w shape
-	@test A._odim == (1,M)
-	@test A * x == transpose(o3)
+    A = Anufft(w', N; n_shift) # w shape
+    @test A._odim == (1,M)
+    @test A * x == transpose(o3)
+    @test A' * transpose(y) == b3
 
-	sn.nufft(ones(Int,N)) # produce a "conversion" warning
-	true
+    nufft(ones(Int,N)) # produce a "conversion" warning
+#   @test_throws MethodError nufft(ones(Int,N))
+    true
 end
 
 
@@ -80,73 +92,71 @@ function nufft_test2( ;
 #=
 	# fft sampling
 	M = prod(N)
-	w1 = (2*pi) * (0:N[1]-1) / N[1]
-    w2 = (2*pi) * (0:N[2]-1) / N[2]
+	w1 = 2π * (0:N[1]-1) / N[1]
+    w2 = 2π * (0:N[2]-1) / N[2]
     w1 = repeat(w1, 1, N[2])
     w2 = repeat(w2', N[1], 1)
     w = [vec(w1) vec(w2)]
 	n_shift = [0,0]
 =#
 
-	w = (rand(M,2) .- 0.5) * 2 * pi
+	w = (rand(M,2) .- 0.5) * 2π
 
 	w = T.(w)
-	sd = dtft_init(w, N ; n_shift=n_shift)
-	sn = nufft_init(w, N ; n_shift=n_shift, pi_error=false)
+	sd = dtft_init(w, N ; n_shift)
+    (nufft, adjoint, A) = nufft_init(w, N ; n_shift, pi_error=false)
 
 	x = randn(Complex{T}, N)
 	o0 = sd.dtft(x)
-	o1 = sn.nufft(x)
-	@test norm(o1 - o0, Inf) / norm(o0, Inf) < tol
+    o1 = nufft(x)
+    @test _norminf(o0, o1) < tol
 
 #=
 	# fft test only
 	o2 = fft(x)
 	o0 = reshape(o0, N)
 	o1 = reshape(o1, N)
-	@show norm(o2 - o0, Inf) / norm(o0, Inf)
-	@show norm(o1 - o0, Inf) / norm(o0, Inf)
-	@show norm(o2 - o1, Inf) / norm(o0, Inf)
+    @show _norminf(o0, o2)
+    @show _norminf(o0, o1)
+    @show _norminf(o1, o2)
 =#
 
 	y = convert(Array{Complex{T}}, o0 / norm(o0))
-	a0 = sd.adjoint(y)
-	a1 = sn.adjoint(y)
-	@test norm(a1 - a0, Inf) / norm(a0, Inf) < tol
-	o2 = sn.A * x
-	@test isequal(o1, o2)
-	a2 = sn.A' * y
-	@test isequal(a1, a2)
-	@test Matrix(sn.A)' ≈ Matrix(sn.A') # 2D adjoint test
+	b0 = sd.adjoint(y)
+    b1 = adjoint(y)
+	@test _norminf(b0, b1) < tol
+    o2 = A * x
+    @test o2 == o1
+    b2 = A' * y
+    @test b2 == b1
+    @test Matrix(A)' ≈ Matrix(A') # 2D adjoint test
 
-	@test isequal(sn.nufft(cat(dims=4, x, 2x)),
-		cat(dims=3, sn.nufft(x), sn.nufft(2x)))
-	@test isequal(sn.adjoint(cat(dims=3, y, 2y)),
-			cat(dims=4, sn.adjoint(y), sn.adjoint(2y)))
+    @test nufft(cat(dims=4, x, 2x)) == cat(dims=3, nufft(x), nufft(2x))
+    @test adjoint(cat(dims=3, y, 2y)) == cat(dims=4, adjoint(y), adjoint(2y))
 
-	A = sn.A
 	@test A.name == "nufft2"
 	@test A.N == N
 
-	Ao = nufft_init(w, N ; n_shift=n_shift, pi_error=false, operator=true).A
-	Am = nufft_init(w, N ; n_shift=n_shift, pi_error=false, operator=false).A
+	Ao = nufft_init(w, N ; n_shift, pi_error=false, operator=true).A
+	Am = nufft_init(w, N ; n_shift, pi_error=false, operator=false).A
 	@test Ao * x == Am * vec(x)
 	y = Ao * x
 	@test Ao'*y == reshape(Am'*y, N)
 
-	sn = nufft_init(w, N ; n_shift=n_shift, pi_error=false,
+	(nufft, adjoint, A) = nufft_init(w, N ; n_shift, pi_error=false,
 		do_many=false, operator=true)
-	o3 = sn.nufft(x)
-	@test norm(o3 - o0, Inf) / norm(o0, Inf) < tol
+	o3 = nufft(x)
+	@test _norminf(o0, o3) < tol
 
-	A = Anufft(w, N, n_shift=n_shift)
+	A = Anufft(w, N ; n_shift)
 	@test A isa LinearMapAO
 	@test A * x == o3
+# todo: adjoint
 
 	if M == 35
 		odim = (7, 5) # test array output
 		w = reshape(w, odim..., 2)
-		A = Anufft(w, N, n_shift=n_shift)
+		A = Anufft(w, N ; n_shift)
 		@test A._odim == odim
 		@test A * x == reshape(o3, odim)
 	end
@@ -158,7 +168,7 @@ end
 """
 nufft_plot1()
 
-Plot worst-case error over all frequencies w between 0 and 2pi/N for various N.
+Plot worst-case error over all frequencies w between 0 and 2π/N for various N.
 """
 function nufft_plot1()
 	Nlist = 2 .^ (4:9)
@@ -181,7 +191,7 @@ function nufft_plot_error_m(;
 	mlist::AbstractArray{<:Int} = 3:7)
 	worst = zeros(length(mlist))
 	for (jm,nfft_m) = enumerate(mlist)
-		_, errs = nufft_errors( ; nfft_m=nfft_m)
+		_, errs = nufft_errors( ; nfft_m)
 		worst[jm] = maximum(errs)
 	end
 	scatter(mlist, worst, xlabel="m", ylabel="error", label="")
@@ -245,7 +255,7 @@ end
 	# todo: 1d vs 2d
 	M = 4
 	N = (M,1)
-	w = (0:(M-1))/M * 2 * pi
+	w = (0:(M-1))/M * 2π
 	w = [w zeros(M)]
 	sd = dtft_init(w, N)
 	Ad = Matrix(sd.A)
@@ -281,7 +291,7 @@ end
 	display(round.(o1, digits=7))
 	display(round.(o2, digits=7))
 
-#	tmp = nufft_init(x1*2*pi, N1)
+#	tmp = nufft_init(x1*2π, N1)
 =#
 
 
