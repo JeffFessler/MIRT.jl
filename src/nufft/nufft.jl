@@ -91,14 +91,18 @@ function nufft_init(
 	CT = Complex{T}
 	CTa = AbstractArray{Complex{T}}
 	f = convert(Array{T}, vec(w)/(2π)) # note: plan_nfft must have correct type
+#@show f N nfft_m nfft_sigma
 	p = plan_nfft(f, N; m = nfft_m, σ = nfft_sigma) # create plan
+@show p
 	M = length(w)
 	# extra phase here because NFFT always starts from -N/2
 	phasor = convert(CTa, cis.(-vec(w) * (N/2 - n_shift)))
 	phasor_conj = conj.(phasor)
-	forw1 = x -> nfft(p, nufft_typer(CTa, x)) .* phasor
+#   forw1 = x -> nfft(p, nufft_typer(CTa, x)) .* phasor
+    forw1 = x -> (p * nufft_typer(CTa, x)) .* phasor
 #	forw! = x,y -> nfft!(p, nufft_typer(CTa, x)) .* phasor # todo
-	back1 = y -> nfft_adjoint(p, nufft_typer(CTa, y .* phasor_conj))
+#   back1 = y -> nfft_adjoint(p, nufft_typer(CTa, y .* phasor_conj))
+    back1 = y -> adjoint(p) * (nufft_typer(CTa, y .* phasor_conj))
 
 	prop = (name="nufft1", w=w, N=(N,), n_shift=n_shift,
 			nfft_m=nfft_m, nfft_sigma=nfft_sigma)
@@ -180,14 +184,18 @@ function nufft_init(
 	CTa = AbstractArray{Complex{T}}
 #	note transpose per https://github.com/JuliaMath/NFFT.jl/issues/74
 	f = convert(Array{T}, w'/(2π)) # note: plan_nfft must have correct type
+@show f size(f) typeof(f) N nfft_m nfft_sigma
 	p = plan_nfft(f, N; m = nfft_m, σ = nfft_sigma) # create plan
+@show p
 
 	# extra phase here because NFFT.jl always starts from -N/2
 	phasor = convert(CTa, cis.(-w * (collect(N)/2. - n_shift)))
 	phasor_conj = conj.(phasor)
 	# todo: in-place
-	forw1 = x -> nfft(p, nufft_typer(CTa, x)) .* phasor
-	back1 = y -> nfft_adjoint(p, nufft_typer(CTa, y .* phasor_conj))
+#   forw1 = x -> nfft(p, nufft_typer(CTa, x)) .* phasor
+    forw1 = x -> (p * nufft_typer(CTa, x)) .* phasor
+#   back1 = y -> nfft_adjoint(p, nufft_typer(CTa, y .* phasor_conj))
+    back1 = y -> adjoint(p) * (nufft_typer(CTa, y .* phasor_conj))
 
 	prop = (name="nufft$(length(N))", w=w, N=N, n_shift=n_shift,
 			nfft_m=nfft_m, nfft_sigma=nfft_sigma)
