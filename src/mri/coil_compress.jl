@@ -50,8 +50,12 @@ end
 
 """
     snr2sigma(db, yb)
-convert SNR in dB to noise σ for complex gaussian noise
+Convert SNR in dB to noise σ for complex gaussian noise.
+No `sqrt(2)` factors is needed here
+because `randn(Complex{Float})`
+already accounts for that.
+(See `randn` documentation.)
 """
 function snr2sigma(db, yb::AbstractArray{<:Complex})
-    10^(-db/20) * norm(yb) / sqrt(length(yb)) / sqrt(2)
+    return 10^(-db/20) * norm(yb) / sqrt(length(yb))
 end

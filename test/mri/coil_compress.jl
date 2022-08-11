@@ -10,6 +10,15 @@ using Plots: plot, plot!, scatter, scatter!
 using Test: @inferred
 
 
+# snr2sigma test
+yt = rand(ComplexF32, 2^18)
+db = 50
+σ = snr2sigma(db, yt)
+yn = yt + σ * randn(ComplexF32, length(yt))
+snr = 10*log10(sum(abs2, yt) / sum(abs2, yt - yn))
+@test abs(snr - db) < 0.1
+
+
 xtrue = ir_load_brainweb_t1_256()
 (nx, ny) = size(xtrue)
 ncoil = 8
