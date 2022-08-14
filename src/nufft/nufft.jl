@@ -184,10 +184,14 @@ function nufft_init(
 	CTa = AbstractArray{Complex{T}}
 #	note transpose per https://github.com/JuliaMath/NFFT.jl/issues/74
 	f = convert(Array{T}, w'/(2π)) # note: plan_nfft must have correct type
+# @show typeof(f) # todo: needs to be CuArray for cuda?
 	p = plan_nfft(f, N; m = nfft_m, σ = nfft_sigma) # create plan
 
 	# extra phase here because NFFT.jl always starts from -N/2
-	phasor = convert(CTa, cis.(-w * (collect(N)/2. - n_shift)))
+	Nshift = N ./ 2 .- n_shift
+    Nshift = convert(typeof(w), reshape(Nshift, :, 1)) # cuda trick
+#   phasor = convert(CTa, cis.(-w * (collect(N)/2. - n_shift)))
+    phasor = convert(CTa, vec(cis.(-w * Nshift)))
 	phasor_conj = conj.(phasor)
 	# todo: in-place
 #   forw1 = x -> nfft(p, nufft_typer(CTa, x)) .* phasor
@@ -195,7 +199,7 @@ function nufft_init(
 #   back1 = y -> nfft_adjoint(p, nufft_typer(CTa, y .* phasor_conj))
     back1 = y -> adjoint(p) * (nufft_typer(CTa, y .* phasor_conj))
 
-	prop = (name="nufft$(length(N))", w, N, n_shift, nfft_m, nfft_sigma)
+	prop = (name="nufft$(length(N))", p, w, N, n_shift, nfft_m, nfft_sigma)
 	if operator # LinearMapAO
 		A = LinearMapAA(forw1, back1, (M, prod(N)) ;
 			prop, T = CT,
