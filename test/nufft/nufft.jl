@@ -22,7 +22,7 @@ simple 1D tests
 """
 function nufft_test1( ;
 	M::Int = 30, N::Int = 20, n_shift::Real = 1.7,
-    T::DataType = Float64, tol::Real = 3e-6,
+    T::DataType = Float64, tol::Real = 4e-6,
 )
 
     w = (rand(M) .- 0.5) * 2π
