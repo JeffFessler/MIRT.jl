@@ -48,7 +48,7 @@ for computing fast ``O(N \\log N)`` approximation to
 ``X[m] = \\sum_{n=0}^{N-1} x[n] \\exp(-i w[m] (n - n_{shift})), m=1,…,M``
 
 in
-- `w::AbstractArray{<:Real}` `[M]` frequency locations (units radians/sample)
+- `w::AbstractArray{<:Real}` `[M]` frequency locations (aka Ω, units radians/sample)
    + `eltype(w)` determines the `plan_nfft` type; so to save memory use Float32!
    + `size(w)` determines `odim` for `A` if `operator=true`
 - `N::Int` signal length
@@ -84,7 +84,7 @@ function nufft_init(
 
 	N < 6 && throw("NFFT may be erroneous for small N")
 	isodd(N) && throw("NFFT erroneous for odd N")
-	pi_error && any(abs.(w) .> π) &&
+	pi_error && any(>(π) ∘ abs, w) &&
 		throw(ArgumentError("|w| > π is likely an error"))
 
 	T = nufft_eltype(eltype(w))
@@ -96,8 +96,9 @@ function nufft_init(
 	# extra phase here because NFFT always starts from -N/2
 	phasor = convert(CTa, cis.(-vec(w) * (N/2 - n_shift)))
 	phasor_conj = conj.(phasor)
-    forw1 = x -> (p * nufft_typer(CTa, x)) .* phasor
+
 #   forw1 = x -> (p * x) .* phasor # fails for non-Float inputs
+    forw1 = x -> (p * nufft_typer(CTa, x)) .* phasor
     forw1!(y,x) = begin
         mul!(vec(y), p, x)
         vec(y) .*= phasor
@@ -132,7 +133,7 @@ for computing fast ``O(N \\log N)`` approximation to
 ``X[m] = \\sum_{n=0}^{N-1} x[n] \\exp(-i w[m,:] (n - n_{shift})), m=1,…,M``
 
 in
-- `w::AbstractArray{<:Real}` `[M,D]` frequency locations (units radians/sample)
+- `w::AbstractArray{<:Real}` `[M,D]` frequency locations (aka Ω, units radians/sample)
 	+ `eltype(w)` determines the `plan_nfft` type; so to save memory use Float32!
 	+ `size(w)[1:(end-1)]` determines `odim` if `operator=true`
 - `N::Dims{D}` signal dimensions
@@ -169,7 +170,7 @@ function nufft_init(
 
 	any(N .< 6) && throw("NFFT may be erroneous for small N")
 	any(isodd.(N)) && throw("NFFT erroneous for odd N")
-	pi_error && any(abs.(w) .> π) &&
+	pi_error && any(>(π) ∘ abs, w) &&
 		throw(ArgumentError("|w| > π is likely an error"))
 
 	ndims(w) > 1 || throw("ndims(w)==1 invalid")
@@ -193,24 +194,24 @@ function nufft_init(
 #   phasor = convert(CTa, cis.(-w * (collect(N)/2. - n_shift)))
     phasor = convert(CTa, vec(cis.(-w * Nshift)))
 	phasor_conj = conj.(phasor)
-	# todo: in-place
+
 #   forw1 = x -> nfft(p, nufft_typer(CTa, x)) .* phasor
     forw1 = x -> (p * nufft_typer(CTa, x)) .* phasor
 #   back1 = y -> nfft_adjoint(p, nufft_typer(CTa, y .* phasor_conj))
     back1 = y -> adjoint(p) * (nufft_typer(CTa, y .* phasor_conj))
 
+    forw1!(y,x) = begin
+        mul!(vec(y), p, x)
+        vec(y) .*= phasor
+    end
+    # todo: make non-allocating using a work array?
+    back1!(x,y) = mul!(x, adjoint(p), vec(y) .* phasor_conj)
+
 	prop = (name="nufft$(length(N))", p, w, N, n_shift, nfft_m, nfft_sigma)
-	if operator # LinearMapAO
-		A = LinearMapAA(forw1, back1, (M, prod(N)) ;
-			prop, T = CT,
-			operator = true, odim, idim = N,
-		)
-	else
-		# no "many" for LinearMapAM:
-		A = LinearMapAA(x -> forw1(reshape(x,N)), y -> vec(back1(y)),
-			(M, prod(N)) ; prop, T = CT,
-		)
-	end
+    A = LinearMapAA(forw1!, back1!, (M, prod(N)) ; # no "many" here!
+        prop, T = CT, operator, # effectively "many" if true
+        odim = operator ? odim : (M,), idim = N,
+    )
 
 	if do_many
 		forw = x -> map_many(forw1, x, N)
