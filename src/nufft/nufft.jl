@@ -10,7 +10,7 @@ export Anufft, nufft_init
 #using MIRT: map_many
 #include("../utility/map_many.jl")
 using NFFT: plan_nfft, nfft, nfft_adjoint
-using LinearAlgebra: norm
+using LinearAlgebra: mul!
 using LinearMapsAA: LinearMapAA, LinearMapAM, LinearMapAO
 
 
@@ -48,7 +48,7 @@ for computing fast ``O(N \\log N)`` approximation to
 ``X[m] = \\sum_{n=0}^{N-1} x[n] \\exp(-i w[m] (n - n_{shift})), m=1,…,M``
 
 in
-- `w::AbstractArray{<:Real}` `[M]` frequency locations (units radians/sample)
+- `w::AbstractArray{<:Real}` `[M]` frequency locations (aka Ω, units radians/sample)
    + `eltype(w)` determines the `plan_nfft` type; so to save memory use Float32!
    + `size(w)` determines `odim` for `A` if `operator=true`
 - `N::Int` signal length
@@ -84,7 +84,7 @@ function nufft_init(
 
 	N < 6 && throw("NFFT may be erroneous for small N")
 	isodd(N) && throw("NFFT erroneous for odd N")
-	pi_error && any(abs.(w) .> π) &&
+	pi_error && any(>(π) ∘ abs, w) &&
 		throw(ArgumentError("|w| > π is likely an error"))
 
 	T = nufft_eltype(eltype(w))
@@ -96,16 +96,21 @@ function nufft_init(
 	# extra phase here because NFFT always starts from -N/2
 	phasor = convert(CTa, cis.(-vec(w) * (N/2 - n_shift)))
 	phasor_conj = conj.(phasor)
-	forw1 = x -> nfft(p, nufft_typer(CTa, x)) .* phasor
-#	forw! = x,y -> nfft!(p, nufft_typer(CTa, x)) .* phasor # todo
-	back1 = y -> nfft_adjoint(p, nufft_typer(CTa, y .* phasor_conj))
 
-	prop = (name="nufft1", w=w, N=(N,), n_shift=n_shift,
-			nfft_m=nfft_m, nfft_sigma=nfft_sigma)
-	A = LinearMapAA(forw1, back1, (M, N) ; # no "many" here!
-		prop = prop, T=CT, operator = operator, # effectively "many" if true
-		odim = operator ? size(w) : (length(w),),
-	)
+#   forw1 = x -> (p * x) .* phasor # fails for non-Float inputs
+    forw1 = x -> (p * nufft_typer(CTa, x)) .* phasor
+    forw1!(y,x) = begin
+        mul!(vec(y), p, x)
+        vec(y) .*= phasor
+    end
+    back1 = y -> adjoint(p) * (nufft_typer(CTa, y .* phasor_conj))
+    back1!(x,y) = mul!(x, adjoint(p), vec(y) .* phasor_conj)
+
+    prop = (name="nufft1", p, w, N=(N,), n_shift, nfft_m, nfft_sigma)
+    A = LinearMapAA(forw1!, back1!, (M, N) ; # no "many" here!
+        prop, T=CT, operator, # effectively "many" if true
+        odim = operator ? size(w) : (length(w),),
+    )
 
 	if do_many
 		forw = x -> map_many(forw1, x, (N,))
@@ -115,7 +120,7 @@ function nufft_init(
 		back = back1
 	end
 
-	return (nufft=forw, adjoint=back, A=A)
+	return (nufft=forw, adjoint=back, A)
 end
 
 
@@ -128,7 +133,7 @@ for computing fast ``O(N \\log N)`` approximation to
 ``X[m] = \\sum_{n=0}^{N-1} x[n] \\exp(-i w[m,:] (n - n_{shift})), m=1,…,M``
 
 in
-- `w::AbstractArray{<:Real}` `[M,D]` frequency locations (units radians/sample)
+- `w::AbstractArray{<:Real}` `[M,D]` frequency locations (aka Ω, units radians/sample)
 	+ `eltype(w)` determines the `plan_nfft` type; so to save memory use Float32!
 	+ `size(w)[1:(end-1)]` determines `odim` if `operator=true`
 - `N::Dims{D}` signal dimensions
@@ -165,7 +170,7 @@ function nufft_init(
 
 	any(N .< 6) && throw("NFFT may be erroneous for small N")
 	any(isodd.(N)) && throw("NFFT erroneous for odd N")
-	pi_error && any(abs.(w) .> π) &&
+	pi_error && any(>(π) ∘ abs, w) &&
 		throw(ArgumentError("|w| > π is likely an error"))
 
 	ndims(w) > 1 || throw("ndims(w)==1 invalid")
@@ -180,28 +185,33 @@ function nufft_init(
 	CTa = AbstractArray{Complex{T}}
 #	note transpose per https://github.com/JuliaMath/NFFT.jl/issues/74
 	f = convert(Array{T}, w'/(2π)) # note: plan_nfft must have correct type
+# @show typeof(f) # todo: needs to be CuArray for cuda?
 	p = plan_nfft(f, N; m = nfft_m, σ = nfft_sigma) # create plan
 
 	# extra phase here because NFFT.jl always starts from -N/2
-	phasor = convert(CTa, cis.(-w * (collect(N)/2. - n_shift)))
+	Nshift = N ./ 2 .- n_shift
+    Nshift = convert(typeof(w), reshape(Nshift, :, 1)) # cuda trick
+#   phasor = convert(CTa, cis.(-w * (collect(N)/2. - n_shift)))
+    phasor = convert(CTa, vec(cis.(-w * Nshift)))
 	phasor_conj = conj.(phasor)
-	# todo: in-place
-	forw1 = x -> nfft(p, nufft_typer(CTa, x)) .* phasor
-	back1 = y -> nfft_adjoint(p, nufft_typer(CTa, y .* phasor_conj))
 
-	prop = (name="nufft$(length(N))", w=w, N=N, n_shift=n_shift,
-			nfft_m=nfft_m, nfft_sigma=nfft_sigma)
-	if operator # LinearMapAO
-		A = LinearMapAA(forw1, back1, (M, prod(N)) ;
-			prop = prop, T = CT,
-			operator = true, odim = odim, idim = N,
-		)
-	else
-		# no "many" for LinearMapAM:
-		A = LinearMapAA(x -> forw1(reshape(x,N)), y -> vec(back1(y)),
-			(M, prod(N)) ; prop = prop, T = CT,
-		)
-	end
+#   forw1 = x -> nfft(p, nufft_typer(CTa, x)) .* phasor
+    forw1 = x -> (p * nufft_typer(CTa, x)) .* phasor
+#   back1 = y -> nfft_adjoint(p, nufft_typer(CTa, y .* phasor_conj))
+    back1 = y -> adjoint(p) * (nufft_typer(CTa, y .* phasor_conj))
+
+    forw1!(y,x) = begin
+        mul!(vec(y), p, x)
+        vec(y) .*= phasor
+    end
+    # todo: make non-allocating using a work array?
+    back1!(x,y) = mul!(x, adjoint(p), vec(y) .* phasor_conj)
+
+	prop = (name="nufft$(length(N))", p, w, N, n_shift, nfft_m, nfft_sigma)
+    A = LinearMapAA(forw1!, back1!, (M, prod(N)) ; # no "many" here!
+        prop, T = CT, operator, # effectively "many" if true
+        odim = operator ? odim : (M,), idim = N,
+    )
 
 	if do_many
 		forw = x -> map_many(forw1, x, N)
@@ -211,7 +221,7 @@ function nufft_init(
 		back = back1
 	end
 
-	return (nufft=forw, adjoint=back, A=A)
+	return (nufft=forw, adjoint=back, A)
 end
 
 
