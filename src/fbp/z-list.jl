@@ -1,13 +1,8 @@
 # fbp/z-list.jl
 
-include("sino_geom.jl")
 include("sino_plot.jl") # todo: move to democard
 
 include("rotate2d.jl")
-
-include("cuboid_im.jl") # must be after image_geom.jl
-include("ellipsoid_im.jl")
-include("rect_im.jl")
 
 
 # deprecations below here:
@@ -39,10 +34,25 @@ end
 
 export ellipse_sino
 function ellipse_sino(args...; kwargs...)
-    throw("ellipse_sino is deprecated; use ImagePhantoms")
+    throw("ellipse_sino is deprecated; use ImagePhantoms/Sinograms")
+end
+
+export ellipsoid_im
+function ellipsoid_im(args...; kwargs...)
+    throw("ellipsoid_im is deprecated; use ImagePhantoms")
+end
+
+export rect_im
+function rect_im(args...; kwargs...)
+    throw("rect_im is deprecated; use ImagePhantoms")
 end
 
 export rect_sino
 function rect_sino(args...; kwargs...)
-    throw("rect_sino is deprecated; use ImagePhantoms")
+    throw("rect_sino is deprecated; use ImagePhantoms/Sinograms")
+end
+
+export sino_geom
+function sino_geom(args...; kwargs...)
+    throw("sino_geom is deprecated; use Sinograms")
 end
