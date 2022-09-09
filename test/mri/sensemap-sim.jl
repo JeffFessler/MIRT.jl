@@ -2,7 +2,8 @@
 
 using MIRT: ir_mri_sensemap_sim
 using MIRTjim: jim, prompt
-using MIRT: image_geom, ndgrid
+using LazyGrids: ndgrid
+using ImageGeoms: ImageGeom, MaskCircle
 import MIRT: ir_mri_smap_r
 import MIRT: ir_mri_smap1
 
@@ -302,24 +303,23 @@ return plot that illustrates 3D sense maps
 function ir_mri_sensemap_sim_test3( ; chat::Bool=false)
 	nring = 3
 	ncoil = 4 * nring
-	ig = image_geom(nx=16, ny=14, nz=10, fov=200, dz=20, mask=:circ) # 20cm fov
-#	ig = image_geom(nx=72, ny=48, nz=12, fov=22, zfov=10) % michelle
+	ig = ImageGeom(MaskCircle() ; dims=(16, 14,10), deltas=(200/16, 200/14, 20)) # 20cm fov
 
 	(smap,t) = #@inferred # todo-i fails
 		ir_mri_sensemap_sim(
 			Vector{Tuple{Int,Int}}(undef, 0) ;
-			dims=(ig.nx, ig.ny, ig.nz),
-			dx=ig.dx, dz=ig.dz,
+			dims=ig.dims,
+			dx=ig.deltas[1], dz=ig.deltas[3],
 			orbit_start = 1*[0,45,0],
 			rcoil=70, nring=nring, ncoil=ncoil,
 		)
 
 	if true
 		tmp = smap .* repeat(ig.mask, 1,1,1,ncoil)
-		jim(ncol=ig.nz, tmp, abswarn=false)
+		jim(ncol=ig.dims[3], tmp, abswarn=false)
 		chat && prompt()
 		tmp = permutedims(tmp, [1,3,2,4]) # [nx nz ny ncoil] z cuts are smooth
-		jim(ncol=ig.ny, tmp, abswarn=false)
+		jim(ncol=ig.dims[2], tmp, abswarn=false)
 		chat && prompt()
 		jim(ncol=1, tmp[:,:,end÷2,:], abswarn=false)
 		chat && prompt()

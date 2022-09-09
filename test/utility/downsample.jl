@@ -4,7 +4,6 @@ using MIRT: downsample_dim1
 using MIRT: downsample1
 using MIRT: downsample2
 using MIRT: downsample3
-using MIRT: downsample
 import MIRT: downsample3_loop, downsample3_perm
 
 using Test: @test, @testset, @inferred
@@ -13,13 +12,13 @@ using Test: @test, @testset, @inferred
 @testset "downsample_dim1" begin
     @inferred downsample_dim1(1:4, 2)
     x = reshape(2:2:48, 4, 6)
-     y = @inferred downsample_dim1(x, 2)
+    y = @inferred downsample_dim1(x, 2)
     y = downsample_dim1(x, 2)
     @test y == reshape(3:4:47, 2, 6)
 
     # stress test type inference by Int in but Float out
     x = reshape(1:6, 2, 3)
-     y = @inferred downsample_dim1(x, 2)
+    y = @inferred downsample_dim1(x, 2)
     @test y == [1.5 3.5 5.5]
 end
 
