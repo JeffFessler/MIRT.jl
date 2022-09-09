@@ -24,6 +24,6 @@ b[100:200,100:200] .= 0
 #so there's a blot of zeros from 100,100 to 200,200
 b[200:250,300:320] .= 3
 #and a blot of threes over here
-ig1 = image_geom(nx = 300,ny = 400,dx = 1,dy = 1)
+ig1 = ImageGeom(nx = 300,ny = 400,dx = 1,dy = 1)
 @test my_rmse(a,b,ig1) > 20
-=#        
+=#

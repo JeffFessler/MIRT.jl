@@ -23,6 +23,8 @@ x0 = A \ y
 
 @test_throws ArgumentError pogm_restart(x0, Fcost, f_grad, a2; mom=:bad)
 
+_, _ = pogm_restart(x0, Fcost, f_grad, a2; niter=1) # g_prox default
+
 x, _ = pogm_restart(x0, Fcost, f_grad, a2;
 	f_mu=0, mom=:fpgm, niter=100, g_prox=g_prox, fun=fun)
 pogm_restart(x0, Fcost, f_grad, a2;

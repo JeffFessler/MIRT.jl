@@ -1,18 +1,9 @@
 # fbp/z-test.jl
 
-using Test: @testset
+using Test: @testset, @test_throws
+import MIRT
 
 list = [
-"image_geom.jl"
-"sino_geom.jl"
-#
-"cuboid_im.jl"
-"disk-phantom.jl"
-"ellipse_im.jl"
-"ellipsoid_im.jl"
-"ellipse_sino.jl"
-"rect_im.jl"
-"rect_sino.jl"
 "rotate2d.jl"
 ]
 
@@ -20,4 +11,19 @@ for file in list
 	@testset "$file" begin
 		include(file)
 	end
+end
+
+@testset "deprecate" begin
+ @test_throws String MIRT.image_geom()
+ @test_throws String MIRT.image_geom_mri()
+ @test_throws String MIRT.cuboid_im()
+ @test_throws String MIRT.disk_phantom_params()
+ @test_throws String MIRT.ellipse_im()
+ @test_throws String MIRT.ellipse_im_params()
+ @test_throws String MIRT.ellipse_sino()
+ @test_throws String MIRT.ellipsoid_im()
+ @test_throws String MIRT.rect_im()
+ @test_throws String MIRT.rect_sino()
+ @test_throws String MIRT.sino_geom()
+ @test_throws String MIRT.sino_plot()
 end

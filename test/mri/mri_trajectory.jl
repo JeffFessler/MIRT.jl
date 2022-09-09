@@ -1,15 +1,16 @@
 # mri_trajectory.jl
 
 
-using MIRT: mri_trajectory, image_geom_mri
+using MIRT: mri_trajectory
 using MIRTjim: prompt
+using ImageGeoms: ImageGeom, fovs
 
 using Plots
 using Test: @test
 
 
-ig = image_geom_mri(nx = 2^5, ny = 2^5-4, fov = 250) # 250 mm FOV
-N = ig.dim
+ig = ImageGeom( ; dims = (2^5, 2^5-4), deltas = (1,1) .* (250/2^5), offsets=:dsp) # 250 mm FOV
+N = ig.dims
 
 ktype3 = [:cartesian, :spiral3, :radial] # 3D
 for ktype in ktype3 # 3D tests
@@ -36,7 +37,7 @@ for (i,ktype) in enumerate(ktypes)
 			Dict{Symbol,Nothing}()
 
 	kspace, omega, wi = mri_trajectory( ;
-		ktype=ktype, N=N, fov = ig.fovs, args...)
+		ktype=ktype, N=N, fov = fovs(ig), args...)
 	plots[i] = scatter(omega[:,1]/π, omega[:,2]/π, aspect_ratio=1,
 		xlim = [-1,1]*1.1, xtick = -1:1, xlabel = "omega1/π",
 		ylim = [-1,1]*1.1, ytick = -1:1, ylabel = "omega2/π",
