@@ -17,3 +17,5 @@ for file in list
 		include(file)
 	end
 end
+
+@test_throws String MIRT.mri_objects()
