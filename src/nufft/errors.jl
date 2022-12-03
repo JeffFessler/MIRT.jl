@@ -13,10 +13,11 @@ using LinearAlgebra: norm
 
 
 """
-    w, errs = nufft_errors( ; M=?, w=?, N=?, n_shift=?, ...)
+    w, errs = nufft_errors( ; M=401, w=?, N=513, n_shift=0, ...)
 
 Compute NUFFT approximation errors (for signal of length `N` of unit norm),
 for given digital frequency values `w`, i.e., Ω.
+Default `w` is `range(0, 2π/N, M)`.
 """
 function nufft_errors( ;
     M::Int = 401,

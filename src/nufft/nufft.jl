@@ -1,7 +1,7 @@
 #=
 nufft.jl
 Non-uniform FFT (NUFFT), currently a wrapper around NFFT.jl
-todo: open issues: small N, odd N, nufft!, adjoint!
+todo: open issues: small N, nufft!, adjoint!
 2019-06-06, Jeff Fessler, University of Michigan
 =#
 
@@ -12,6 +12,9 @@ export Anufft, nufft_init
 using NFFT: plan_nfft, nfft, nfft_adjoint
 using LinearAlgebra: mul!
 using LinearMapsAA: LinearMapAA, LinearMapAM, LinearMapAO
+
+
+_start = N -> isodd(N) ? (N-1)÷2 : N÷2 # where the NFFT sum starts
 
 
 """
@@ -82,8 +85,7 @@ function nufft_init(
 	operator::Bool = true, # !
 )
 
-	N < 6 && throw("NFFT may be erroneous for small N")
-	isodd(N) && throw("NFFT erroneous for odd N")
+    N < 6 && error("NFFT may be erroneous for small N")
 	pi_error && any(>(π) ∘ abs, w) &&
 		throw(ArgumentError("|w| > π is likely an error"))
 
@@ -93,8 +95,9 @@ function nufft_init(
 	f = convert(Array{T}, vec(w)/(2π)) # note: plan_nfft must have correct type
 	p = plan_nfft(f, N; m = nfft_m, σ = nfft_sigma) # create plan
 	M = length(w)
-	# extra phase here because NFFT always starts from -N/2
-	phasor = convert(CTa, cis.(-vec(w) * (N/2 - n_shift)))
+	# extra phase here because NFFT sum starts from -N÷2 or -(N-1)÷2
+	Nshift = _start(N) - n_shift
+    phasor = convert(CTa, cis.(-vec(w) * Nshift))
 	phasor_conj = conj.(phasor)
 
 #   forw1 = x -> (p * x) .* phasor # fails for non-Float inputs
@@ -168,8 +171,7 @@ function nufft_init(
 	operator::Bool = true, # !
 ) where {D}
 
-	any(N .< 6) && throw("NFFT may be erroneous for small N")
-	any(isodd.(N)) && throw("NFFT erroneous for odd N")
+	any(<(6), N) && throw("NFFT may be erroneous for small N")
 	pi_error && any(>(π) ∘ abs, w) &&
 		throw(ArgumentError("|w| > π is likely an error"))
 
@@ -189,9 +191,8 @@ function nufft_init(
 	p = plan_nfft(f, N; m = nfft_m, σ = nfft_sigma) # create plan
 
 	# extra phase here because NFFT.jl always starts from -N/2
-	Nshift = N ./ 2 .- n_shift
+	Nshift = _start.(N) .- n_shift
     Nshift = convert(typeof(w), reshape(Nshift, :, 1)) # cuda trick
-#   phasor = convert(CTa, cis.(-w * (collect(N)/2. - n_shift)))
     phasor = convert(CTa, vec(cis.(-w * Nshift)))
 	phasor_conj = conj.(phasor)
 
