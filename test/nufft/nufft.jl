@@ -189,10 +189,6 @@ end
 	@test nufft_test2(; T=Float32)
 end
 
-@testset "plots" begin
-	@test nufft_plots() isa Plots.Plot
-end
-
 
 #=
 	# todo: 1d vs 2d
