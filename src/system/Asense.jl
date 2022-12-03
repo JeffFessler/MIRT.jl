@@ -10,19 +10,23 @@ using FFTW: fftshift!, ifftshift!, fft!, bfft!
     Asense(samp, smaps; T)
 
 Construct a MRI encoding matrix model
-for Cartesian sampling pattern `samp`
-and vector of coil sensitivity maps `smaps`.
+for `D`-dimensional Cartesian sampling pattern `samp`
+and coil sensitivity maps `smaps`.
+
+The input `smaps` can either be a `D+1` dimensional array
+of size `(size(samp)..., ncoil)`,
+or a Vector of `ncoil` arrays of size `size(samp)`.
 
 Returns a `LinearMapAO` object.
 """
 function Asense(
     samp::AbstractArray{<:Bool},
-    smaps::Vector{<:Array{<:Number}},
+    smaps::Vector{<:AbstractArray{<:Number}},
     ;
     T::DataType = ComplexF32,
 )
 
-    Base.require_one_based_indexing(samp)
+    Base.require_one_based_indexing(samp, smaps...)
     dims = size(samp)
     ncoil = length(smaps)
     for ic in 1:ncoil
@@ -57,4 +61,16 @@ function Asense(
         odim = (count(samp),ncoil), idim=dims, T,
     )
     return A
+end
+
+
+function Asense(
+    samp::AbstractArray{<:Bool, D},
+    smaps::AbstractArray{<:Number},
+    ;
+    kwargs...
+) where D
+    ndims(smaps) == D+1 || error("dimension mismatch")
+    smapv = [eachslice(smaps, dims = D+1)...]
+    return Asense(samp, smapv; kwargs...)
 end

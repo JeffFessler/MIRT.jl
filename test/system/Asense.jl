@@ -21,7 +21,7 @@ using Test: @test, @testset
     samp = rand(dims...) .< 0.5
     T = ComplexF32
     ncoil = 2
-    smaps = [randn(T, dims), randn(T, dims)]
+    smaps = randn(T, dims..., ncoil)
 	A = Asense(samp, smaps)
     x = randn(T, dims)
     y = randn(T, count(samp), ncoil)
