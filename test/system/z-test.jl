@@ -4,6 +4,7 @@ using Test: @testset
 
 list = [
 "Afft.jl"
+"Asense.jl"
 ]
 
 for file in list
