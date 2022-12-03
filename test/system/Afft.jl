@@ -1,9 +1,9 @@
-# Afft.jl
+# test/Afft.jl
 
 using MIRT: Afft
 
 using LinearMapsAA: LinearMapAM, LinearMapAO
-using Test: @test
+using Test: @test, @testset
 
 
 samp = trues(3,2); samp[2] = false
