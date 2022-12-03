@@ -1,4 +1,4 @@
-# system/z-test.jl
+# test/system/z-test.jl
 
 using Test: @testset
 
