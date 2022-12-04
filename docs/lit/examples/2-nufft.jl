@@ -3,8 +3,9 @@
 #---------------------------------------------------------
 
 #=
-Examples illustrating the `nufft` option in the Julia package
-[`MIRTjim`](https://github.com/JeffFessler/MIRTjim.jl).
+Examples illustrating the `nufft` methods
+in the Julia package
+[`MIRT`](https://github.com/JeffFessler/MIRT.jl).
 
 The `nufft` functions in this package
 are wrappers around
@@ -38,7 +39,7 @@ This page was generated from a single Julia file:
 
 using Plots; default(markerstrokecolor = :auto, label="")
 using MIRTjim: prompt
-using MIRT: nufft_errors
+using MIRT: nufft_init, nufft_errors, dtft
 using InteractiveUtils: versioninfo
 
 # The following line is helpful when running this file as a script;
@@ -46,6 +47,36 @@ using InteractiveUtils: versioninfo
 
 isinteractive() && prompt(:prompt);
 
+
+#=
+## 1D example
+
+This code illustrates how to call the NUFFT.
+=#
+Ω = range(-1,1,301) * π # digital frequencies (radians/sample)
+N = 16 # # of samples
+(nufft, nufft_adjoint, Anufft) = nufft_init(Ω, N)
+x = randn(ComplexF32, N) # random 1D signal
+y1 = nufft(x) # one way to compute NUFFT
+y2 = Anufft * x # another way to compute NUFFT
+@assert y1 == y2
+yd = dtft(Ω, x) # exact (slow) nonuniform discrete Fourier transform
+maximum(abs, yd - y1) # worst error for this 1D signal
+
+# This plot shows that the NUFFT is very close to the exact nonuniform DFT.
+xticks = ([-π,0,π], ["-π", "0", "π"]); xlims = (-π,π); xlabel="Ω"
+p1 = plot(ylabel="Real part"; xlabel, xlims, xticks)
+plot!(Ω, real(y1), label="real(NUFFT)", line=:dash)
+plot!(Ω, real(yd), label="real(DTFT)", line=:dot)
+p2 = plot(ylabel="Imag part"; xlabel, xlims, xticks)
+plot!(Ω, imag(y1), label="imag(NUFFT)", line=:dash)
+plot!(Ω, imag(yd), label="imag(NUFFT)", line=:dot)
+p3 = plot(Ω, real(yd - y1), label="real(Error)"; xlabel, xlims, xticks)
+p4 = plot(Ω, imag(yd - y1), label="imag(Error)"; xlabel, xlims, xticks)
+plot(p1, p2, p3, p4)
+
+#
+prompt()
 
 #=
 ## Plot worst-case errors vs ``N``
