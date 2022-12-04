@@ -7,7 +7,6 @@ import MIRT: nufft_eltype
 #using MIRT: dtft_init, map_many
 #include("../utility/map_many.jl")
 using NFFT
-using Plots # todo: move to docs
 using LinearAlgebra: norm
 using LinearMapsAA: LinearMapAM, LinearMapAO
 using Test: @test, @testset, @test_throws
@@ -17,8 +16,8 @@ _norminf(a, b) = norm(b - a, Inf) / norm(a, Inf)
 
 
 """
-nufft_test1( ; M=30, N=20, n_shift=1.7, T=?, tol=?)
-simple 1D tests
+    nufft_test1( ; M=30, N=20, n_shift=1.7, T=?, tol=?)
+Simple 1D NUFFT tests.
 """
 function nufft_test1( ;
 	M::Int = 30, N::Int = 20, n_shift::Real = 1.7,
@@ -77,8 +76,8 @@ end
 
 
 """
-nufft_test2( ; M=?, N=?, n_shift=?, T=?, tol=?)
-simple 2D test
+    nufft_test2( ; M=?, N=?, n_shift=?, T=?, tol=?)
+Simple 2D NUFFT test.
 """
 function nufft_test2( ;
 	M::Int = 35,
@@ -164,90 +163,30 @@ function nufft_test2( ;
 	true
 end
 
-
-"""
-nufft_plot1()
-
-Plot worst-case error over all frequencies w between 0 and 2π/N for various N.
-"""
-function nufft_plot1()
-	Nlist = 2 .^ (4:9)
-	elist = zeros(length(Nlist))
-	for (ii, N) in enumerate(Nlist)
-		w, errs = nufft_errors( ; N = N)
-	#	plot(w*N/2/π, tmp)
-		elist[ii] = maximum(errs)
-	end
-	scatter(Nlist, elist, xtick=Nlist, label="", xlabel="N", ylabel="error")
+@testset "errors" begin
+    w, errs = nufft_errors( ; N=17)
+    @test w isa AbstractRange
+    @test errs isa Vector
 end
-
-
-"""
-nufft_plot_error_m( ; mlist=?)
-
-Plot error vs NFFT sigma
-"""
-function nufft_plot_error_m(;
-	mlist::AbstractArray{<:Int} = 3:7)
-	worst = zeros(length(mlist))
-	for (jm,nfft_m) = enumerate(mlist)
-		_, errs = nufft_errors( ; nfft_m)
-		worst[jm] = maximum(errs)
-	end
-	scatter(mlist, worst, xlabel="m", ylabel="error", label="")
-end
-
-
-"""
-nufft_plot_error_s( ; slist=?)
-
-Plot error vs NFFT sigma
-"""
-function nufft_plot_error_s( ;
-	slist::AbstractArray{<:Real} = [1.5; 2:6])
-	worst = zeros(length(slist))
-	for (is,σ) in enumerate(slist)
-		_, errs = nufft_errors(; nfft_sigma=σ)
-		worst[is] = maximum(errs)
-	end
-	scatter(slist, worst, xlabel="σ", ylabel="error", label="")
-end
-
-
-"""
-    nufft_plots()
-various NUFFT error plots
-"""
-function nufft_plots()
-	p1 = nufft_plot_error_s()
-	p2 = nufft_plot_error_m()
-	p3 = nufft_plot1()
-	plot(p1, p2, p3)
-end
-
 
 @testset "basics" begin
 	@test nufft_eltype(Bool) === Float32
 	@test nufft_eltype(Float16) === Float32
 	@test nufft_eltype(Float64) === Float64
 	@test_throws String nufft_eltype(BigFloat)
-	@test_throws String nufft_init([0], 2) # small
-	@test_throws String nufft_init([0], 7) # odd
+	@test_throws ErrorException nufft_init([0], 2) # small
 	@test_throws ArgumentError nufft_init([2π], 8) # π
 end
 
 @testset "1D" begin
 	@test nufft_test1()
+    @test nufft_test1(; N=41) # odd
 	@test nufft_test1(; T=Float32)
 end
 
 @testset "2D" begin
 	@test nufft_test2()
 	@test nufft_test2(; T=Float32)
-end
-
-@testset "plots" begin
-	@test nufft_plots() isa Plots.Plot
 end
 
 
@@ -293,7 +232,3 @@ end
 
 #	tmp = nufft_init(x1*2π, N1)
 =#
-
-
-#nufft(:test)
-#nufft_test1(;N=41) # todo: inaccurate

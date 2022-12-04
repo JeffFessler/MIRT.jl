@@ -1,6 +1,8 @@
 # MIRT: The Michigan Image Reconstruction Toolbox
 
-MIRT.jl is a collection of Julia functions for performing image reconstruction
+[MIRT.jl](https://github.com/JeffFessler/MIRT.jl)
+is a collection of Julia functions
+for performing image reconstruction
 and solving related inverse problems.
 
 It is very much still under construction,
@@ -13,7 +15,7 @@ is a good way to get started.
 
 The documentation is even more still under construction.
 
-Further examples will likely be shared at
+More complete examples are at
 [JuliaImageRecon](https://github.com/JuliaImageRecon);
 see
 [Examples](https://github.com/JuliaImageRecon/Examples)

@@ -3,7 +3,6 @@
 [![action status][action-img]][action-url]
 [![pkgeval status][pkgeval-img]][pkgeval-url]
 [![codecov][codecov-img]][codecov-url]
-[![coveralls][coveralls-img]][coveralls-url]
 [![docs stable][docs-stable-img]][docs-stable-url]
 [![docs dev][docs-dev-img]][docs-dev-url]
 [![license][license-img]][license-url]
@@ -120,8 +119,6 @@ As of `v0.15`, the following functions are deprecated:
 [pkgeval-url]: https://juliaci.github.io/NanosoldierReports/pkgeval_badges/M/MIRT.html
 [codecov-img]: https://codecov.io/github/JeffFessler/MIRT.jl/coverage.svg?branch=main
 [codecov-url]: https://codecov.io/github/JeffFessler/MIRT.jl?branch=main
-[coveralls-img]: https://coveralls.io/repos/JeffFessler/MIRT.jl/badge.svg?branch=main
-[coveralls-url]: https://coveralls.io/github/JeffFessler/MIRT.jl?branch=main
 [docs-stable-img]: https://img.shields.io/badge/docs-stable-blue.svg
 [docs-stable-url]: https://JeffFessler.github.io/MIRT.jl/stable
 [docs-dev-img]: https://img.shields.io/badge/docs-dev-blue.svg
