@@ -4,7 +4,7 @@
 
 #=
 The Julia package
-[`MIRT.jl`](https://github.com/JeffFessler/MIRTjim.jl)
+[`MIRT.jl`](https://github.com/JeffFessler/MIRT.jl)
 provides tools for performing image reconstruction
 and solving related inverse problems.
 
