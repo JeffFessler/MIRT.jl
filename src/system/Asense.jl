@@ -42,6 +42,7 @@ function Asense(
             fftshift!(work1, fft!(ifftshift!(work2, work1)))
             y[:,ic] .= work1[samp]
         end
+        return y
     end
     function back!(x, y)
         for ic in 1:ncoil
@@ -55,6 +56,7 @@ function Asense(
                 @. x += work1 * work2
             end
         end
+        return x
     end
     A = LinearMapAA(forw!, back!, (ncoil*count(samp), N);
         prop = (name = "Asense", samp, smaps),
