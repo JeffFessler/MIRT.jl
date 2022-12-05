@@ -65,10 +65,10 @@ grad_sum = zeros(size(x0))
 ti = 1
 thetai = 1
 
-B0 = [B[j] * x for j=1:J]
+B0 = [B[j] * x for j in 1:J]
 Bx = copy(B0)
 By = copy(B0)
-grad = (Bx) -> sum([B[j]' * gradf[j](Bx[j]) for j=1:J])
+grad = (Bx) -> sum([B[j]' * gradf[j](Bx[j]) for j in 1:J])
 
 for iter = 1:niter
 	grad_new = grad(Bx) # gradient of x_{iter-1}
@@ -80,7 +80,7 @@ for iter = 1:niter
 	tt = (iter < niter) ? ti : thetai # use theta_i factor for last iteration
 	yi = (1 - 1/tt) * x + (1/tt) * x0
 
-	for j=1:J # update Bj * yi
+	for j in 1:J # update Bj * yi
 		By[j] = (1 - 1/tt) * Bx[j] + (1/tt) * B0[j]
 	end
 
@@ -88,13 +88,13 @@ for iter = 1:niter
 
 	# MM-based line search for step size alpha
 	# using h(a) = sum_j f_j(By_j + a * Bd_j)
-	Bd = [B[j] * dir for j=1:J]
+	Bd = [B[j] * dir for j in 1:J]
 
 	alf = 0
-	for ii=1:ninner
+	for ii in 1:ninner
 		derh = 0 # derivative of h(a)
 		curv = 0
-		for j=1:J
+		for j in 1:J
 			tmp = By[j] + alf * Bd[j]
 			derh += real(dot(Bd[j], gradf[j](tmp)))
 			curv += sum(curvf[j](tmp) .* abs2.(Bd[j]))
@@ -109,20 +109,20 @@ for iter = 1:niter
 	end
 
 #	# derivative of h(a) = cost(x + a * dir) where \alpha is real
-#	dh = alf -> real(sum([Bd[j]' * gradf[j](By[j] + alf * Bd[j]) for j=1:J]))
-#	Ldh = sum([Lgf[j] * norm(Bd[j])^2 for j=1:J]) # Lipschitz constant for dh
+#	dh = alf -> real(sum([Bd[j]' * gradf[j](By[j] + alf * Bd[j]) for j in 1:J]))
+#	Ldh = sum([Lgf[j] * norm(Bd[j])^2 for j in 1:J]) # Lipschitz constant for dh
 #	(alf, ) = gd(dh, Ldh, 0, niter=ninner) # GD-based line search
 # todo
 
 	x = yi + alf * dir
 
 	if iter < niter
-		for j=1:J # update Bj * x
+		for j in 1:J # update Bj * x
 			Bx[j] = By[j] + alf * Bd[j]
 		end
 	end
 
-#	for j=1:J # recursive update Bj * yi ???
+#	for j in 1:J # recursive update Bj * yi ???
 #		By[j] = (1 - 1/ti) * (By[j] + alf * Bd[j]) + (1/ti) * B0[j]
 #	end
 

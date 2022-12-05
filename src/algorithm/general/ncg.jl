@@ -72,8 +72,8 @@ function ncg(
 	grad_old = []
 	grad_new = []
 
-	Bx = [B[j] * x for j=1:J] # u_j in course notes
-	grad = (Bx) -> sum([B[j]' * gradf[j](Bx[j]) for j=1:J])
+	Bx = [B[j] * x for j in 1:J] # u_j in course notes
+	grad = (Bx) -> sum([B[j]' * gradf[j](Bx[j]) for j in 1:J])
 
 for iter = 1:niter
 	grad_new = grad(Bx) # gradient
@@ -97,14 +97,14 @@ for iter = 1:niter
 
 	# MM-based line search for step size alpha
 	# using h(a) = sum_j f_j(uj + a vj)
-	Bd = [B[j] * dir for j=1:J] # v_j in course notes
+	Bd = [B[j] * dir for j in 1:J] # v_j in course notes
 
 	alf = 0
-	for ii=1:ninner
-	#	derh = alf -> sum([Bd[j]' * gradf[j](Bx[j] + alf * Bd[j]) for j=1:J])
+	for ii in 1:ninner
+	#	derh = alf -> sum([Bd[j]' * gradf[j](Bx[j] + alf * Bd[j]) for j in 1:J])
 		derh = 0 # derivative of h(a)
 		curv = 0
-		for j=1:J
+		for j in 1:J
 			tmp = Bx[j] + alf * Bd[j]
 			derh += real(dot(Bd[j], gradf[j](tmp)))
 			curv += sum(curvf[j](tmp) .* abs2.(Bd[j]))
@@ -119,7 +119,7 @@ for iter = 1:niter
 	end
 
 	x += alf * dir
-	for j=1:J # update Bj * x
+	for j in 1:J # update Bj * x
 		Bx[j] += alf * Bd[j]
 	end
 	out[iter+1] = fun(x, iter)

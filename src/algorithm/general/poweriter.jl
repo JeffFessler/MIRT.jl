@@ -38,7 +38,7 @@ function poweriter(
 
 	x = copy(x0)
 	ratio_old = Inf
-	for iter=1:niter
+	for iter in 1:niter
 		Ax = A * x
 		ratio = norm(Ax) / norm(x)
 		if abs(ratio - ratio_old) / ratio < tol
