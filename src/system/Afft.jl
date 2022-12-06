@@ -60,17 +60,17 @@ function Afft(
     function fun!(y::AbstractArray{Ty}, x, plan, factor::Real,
     ) where {Ty <: Number}
         if Ty == Tw
-            if factor != 1
-                @. y = x * factor
-            else
+            if factor == 1
                 copyto!(y, x)
+            else
+                @. y = x * factor
             end
             mul!(y, plan, y) # no "work" needed in this case
         else
-            if factor != 1
-                @. work = x * factor
-            else
+            if factor == 1
                 copyto!(work, x)
+            else
+                @. work = x * factor
             end
             mul!(work, plan, work)
             copyto!(y, work)

@@ -29,6 +29,7 @@ or a Vector of `ncoil` arrays of size `size(samp)`.
 - `T::DataType = ComplexF32`
 - `dims = 1:D` apply fft/bfft only along these dimensions
 - `fft_forward::Bool = true` Use `false` to have `bfft!` in forward model.
+- `unitary::Bool = false` set to `true` for unitary DFT
 - remaining arguments are passed to `plan_fft`
 
 # Output
@@ -40,13 +41,15 @@ function Asense(
     ;
     dims = 1:D,
     T::DataType = ComplexF32,
-    work1::AbstractArray{S,D} = similar(samp, T),
-    work2::AbstractArray{S,D} = similar(samp, T),
+    work1::AbstractArray{Tw,D} = similar(samp, T),
+    work2::AbstractArray{Tw,D} = similar(samp, T),
+    unitary::Bool = false,
     fft_forward::Bool = true,
     kwargs...
-) where {D, S <: Number}
+) where {D, Tw <: Number}
 
-    promote_type(S, T) == S || error("type S=$S cannot hold T=$T")
+    all(in(1:D), dims) || error("dims $dims")
+    promote_type(Tw, T) == Tw || error("type Tw=$Tw cannot hold T=$T")
     axes(work1) == axes(work2) == axes(samp) || error("axes mismatch: samp work")
     all(==(axes(samp)), axes.(smaps)) || throw("axes mismatch: samp smaps")
 
@@ -59,14 +62,19 @@ function Asense(
         (pf, pb) = (pb, pf)
     end
 
+    factor = unitary ? 1/sqrt(prod(size(samp)[dims])) : 1
+
     function forw!(y, x)
         for ic in 1:ncoil
             @. work1 = x * smaps[ic]
-#           fftshift!(work1, fft!(ifftshift!(work2, work1)))
             ifftshift!(work2, work1)
             mul!(work2, pf, work2)
             fftshift!(work1, work2)
-            y[:,ic] .= work1[samp]
+            if factor == 1
+                y[:,ic] .= work1[samp]
+            else
+                @. y[:,ic] = work1[samp] * factor
+            end
         end
         return y
     end
@@ -74,23 +82,29 @@ function Asense(
     function back!(x, y)
         for ic in 1:ncoil
             embed!(work1, (@view y[:,ic]), samp)
-#           fftshift!(work1, bfft!(ifftshift!(work2, work1)))
             ifftshift!(work2, work1)
             mul!(work2, pb, work2)
             fftshift!(work1, work2)
             copyto!(work2, smaps[ic])
-            conj!(work2)
             if ic == 1
-                @. x = work1 * work2
+                if factor == 1
+                    @. x = work1 * conj(work2)
+                else
+                    @. x = work1 * conj(work2) * factor
+                end
             else
-                @. x += work1 * work2
+                if factor == 1
+                    @. x += work1 * conj(work2)
+                else
+                    @. x += work1 * conj(work2) * factor
+                end
             end
         end
         return x
     end
 
     A = LinearMapAA(forw!, back!, (ncoil*count(samp), prod(sdim));
-        prop = (name = "Asense", samp, smaps),
+        prop = (name = "Asense", samp, smaps, unitary, fft_forward),
         odim = (count(samp),ncoil), idim=sdim, T,
     )
     return A
