@@ -148,7 +148,7 @@ function pogm_restart(
 	ynew = []
 
 # iterations
-for iter=1:niter
+for iter in 1:niter
 
 	# proximal gradient (PGM) update
 	if mom === :pgm && mu != 0
