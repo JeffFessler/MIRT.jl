@@ -9,7 +9,7 @@ using FFTW: fftshift!, ifftshift!, fft!, bfft!
 """
     Asense(samp, smaps; T)
 
-Construct a MRI encoding matrix model
+Construct a MRI encoding operator model
 for `D`-dimensional Cartesian sampling pattern `samp`
 and coil sensitivity maps `smaps`.
 
@@ -17,13 +17,23 @@ The input `smaps` can either be a `D+1` dimensional array
 of size `(size(samp)..., ncoil)`,
 or a Vector of `ncoil` arrays of size `size(samp)`.
 
-Returns a `LinearMapAO` object.
+# Input
+- `samp::AbstractArray{<:Bool}` `D`-dimensional sampling pattern.
+- `smaps::Vector{<:AbstractArray{<:Number}}` or `AbstractArray{<:Number}`
+
+# Option
+- `T::DataType = ComplexF32`
+- `fft_forward::Bool = true` Use `false` to have `bfft!` in forward model.
+
+# Output
+Returns a `LinearMapsAA.LinearMapAO` object.
 """
 function Asense(
     samp::AbstractArray{<:Bool},
     smaps::Vector{<:AbstractArray{<:Number}},
     ;
     T::DataType = ComplexF32,
+    fft_forward::Bool = true,
 )
 
     Base.require_one_based_indexing(samp, smaps...)
@@ -36,18 +46,20 @@ function Asense(
     N = prod(dims)
     work1 = Array{T}(undef, dims)
     work2 = Array{T}(undef, dims)
+    ffun! = fft_forward ? fft! : bfft!
     function forw!(y, x)
         for ic in 1:ncoil
             @. work1 = x * smaps[ic]
-            fftshift!(work1, fft!(ifftshift!(work2, work1)))
+            fftshift!(work1, ffun!(ifftshift!(work2, work1)))
             y[:,ic] .= work1[samp]
         end
         return y
     end
+    bfun! = fft_forward ? bfft! : fft!
     function back!(x, y)
         for ic in 1:ncoil
             embed!(work1, (@view y[:,ic]), samp)
-            fftshift!(work1, bfft!(ifftshift!(work2, work1)))
+            fftshift!(work1, bfun!(ifftshift!(work2, work1)))
             copyto!(work2, smaps[ic])
             conj!(work2)
             if ic == 1
