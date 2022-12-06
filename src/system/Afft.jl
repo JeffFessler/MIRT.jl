@@ -10,7 +10,7 @@ export Afft
 # using MIRT: embed!, getindex!
 using LinearMapsAA: LinearMapAA, LinearMapAM, LinearMapAO
 using LinearAlgebra: mul!
-using FFTW: plan_fft!, plan_bfft! # fft!, bfft!
+using FFTW: plan_fft!, plan_bfft!
 
 
 """
@@ -23,12 +23,16 @@ Especially for compressed sensing MRI with Cartesian sampling.
 Option:
 - `T::DataType = ComplexF32`
 - `dims = 1:D` apply fft/bfft only along these dimensions
+- `fft_forward::Bool = true` Use `false` to have `bfft!` in forward model.
 - `operator::Bool = true` set to `false` to return a `LinearMapAM`
 - `work::AbstractArray` work space for in-place fft operations
 - remaining arguments are passed to `plan_fft`
+
+# Output
+Returns a `LinearMapsAA.LinearMapA[M|O]` object.
 """
 function Afft(
-    samp::AbstractArray{Bool,D},
+    samp::AbstractArray{<:Bool, D},
     ;
     dims = 1:D,
     T::DataType = ComplexF32,
