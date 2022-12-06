@@ -27,9 +27,9 @@ where ``C_j(u)`` is diagonal matrix of curvatures.
 This CG method uses a majorize-minimize (MM) line search.
 
 in
-- `B`		array of ``J`` blocks ``B_1,...,B_J``
-- `gradf`	array of ``J`` functions return gradients of ``f_1,...,f_J``
-- `curvf`	array of ``J`` functions `z -> curv(z)` that return a scalar
+- `B`		vector of ``J`` blocks ``B_1,...,B_J``
+- `gradf`	vector of ``J`` functions return gradients of ``f_1,...,f_J``
+- `curvf`	vector of ``J`` functions `z -> curv(z)` that return a scalar
 or a vector of curvature values for each element of ``z``
 - `x0`	initial guess; need `length(x) == size(B[j],2)` for ``j=1...J``
 
@@ -58,9 +58,11 @@ function ncg(
     niter::Int = 50,
     ninner::Int = 5,
     P = I, # trick: this is an overloaded I (by LinearMapsAA)
-    betahow::Symbol=:dai_yuan,
+    betahow::Symbol = :dai_yuan,
     fun::Function = (x,iter) -> 0,
 )
+
+    Base.require_one_based_indexing(B, gradf, curvf)
 
 	out = Array{Any}(undef, niter+1)
 	out[1] = fun(x0, 0)
@@ -75,7 +77,7 @@ function ncg(
 	Bx = [B[j] * x for j in 1:J] # u_j in course notes
 	grad = (Bx) -> sum([B[j]' * gradf[j](Bx[j]) for j in 1:J])
 
-for iter = 1:niter
+for iter in 1:niter
 	grad_new = grad(Bx) # gradient
 	npgrad = -(P * grad_new)
 	if iter == 1

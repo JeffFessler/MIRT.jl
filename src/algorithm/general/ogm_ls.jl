@@ -24,23 +24,23 @@ where ``C_j(u)`` is diagonal matrix of curvatures.
 
 This OGM method uses a majorize-minimize (MM) line search.
 
-in
-- `B`		array of ``J`` blocks ``B_1,...,B_J``
-- `gradf`	array of ``J`` functions return gradients of ``f_1,...,f_J``
-- `curvf`	array of ``J`` functions `z -> curv(z)` that return a scalar
-or a vector of curvature values for each element of ``z``
-- `x0`	initial guess; need `length(x) == size(B[j],2)` for ``j=1...J``
+# in
+- `B` vector of ``J`` blocks ``B_1,...,B_J``
+- `gradf` vector of ``J`` functions return gradients of ``f_1,...,f_J``
+- `curvf` vector of ``J`` functions `z -> curv(z)` that return a scalar
+  or a vector of curvature values for each element of ``z``
+- `x0` initial guess; need `length(x) == size(B[j],2)` for ``j=1...J``
 
-option
-- `niter`	# number of outer iterations; default 50
-- `ninner`	# number of inner iterations of MM line search; default 5
-- `fun`		User-defined function to be evaluated with two arguments (x,iter).
+# option
+- `niter` # number of outer iterations; default 50
+- `ninner` # number of inner iterations of MM line search; default 5
+- `fun`	 User-defined function to be evaluated with two arguments (x,iter).
  * It is evaluated at (x0,0) and then after each iteration.
 
-output
-- `x`		final iterate
-- `out`		`[niter+1] (fun(x0,0), fun(x1,1), ..., fun(x_niter,niter))`
-  * (all 0 by default). This is an array of length `niter+1`
+# output
+- `x` final iterate
+- `out	(niter+1) (fun(x0,0), fun(x1,1), ..., fun(x_niter,niter))`
+  * (all 0 by default). This is a vector of length `niter+1`.
 """
 function ogm_ls(
     B::AbstractVector{<:Any},
@@ -51,6 +51,8 @@ function ogm_ls(
     ninner::Int = 5,
     fun::Function = (x,iter) -> 0,
 )
+
+    Base.require_one_based_indexing(B, gradf, curvf)
 
 out = Array{Any}(undef, niter+1)
 out[1] = fun(x0, 0)
@@ -70,7 +72,7 @@ Bx = copy(B0)
 By = copy(B0)
 grad = (Bx) -> sum([B[j]' * gradf[j](Bx[j]) for j in 1:J])
 
-for iter = 1:niter
+for iter in 1:niter
 	grad_new = grad(Bx) # gradient of x_{iter-1}
 	grad_sum += ti * grad_new # sum_{j=0}^{iter-1} t_j * gradient_j
 
@@ -136,10 +138,11 @@ end
 """
     (x,out) = ogm_ls(grad, curv, x0, ...)
 
-special case of `ogm_ls` (OGM with line search) for minimizing a cost function
+Special case of `ogm_ls` (OGM with line search)
+for minimizing a cost function
 whose gradient is `grad(x)`
 and that has a quadratic majorizer with diagonal Hessian given by `curv(x)`.
-Typically `curv = (x) -> L` where `L` is the Lipschitz constant of `grad`
+Typically `curv = (x) -> L` where `L` is the Lipschitz constant of `grad`.
 """
 function ogm_ls(
     grad::Function,
