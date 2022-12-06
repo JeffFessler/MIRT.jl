@@ -39,16 +39,17 @@ end
     dims = [1, 3]
     sqrtN = sqrt(prod(sdim[dims]))
     for unitary in (false, true)
-	    A = Asense(samp, smaps; dims, fft_forward=true, unitary)
+	    A = Asense(samp, smaps; dims, fft_forward=false, unitary)
         factor = unitary ? 1/sqrtN : 1
 	    @test Matrix(A)' ≈ Matrix(A')
 
-        forw(x, smap) = fftshift(fft(ifftshift(x .* smap), dims))[samp] * T(factor)
+        # note bfft here because fft_forward = false, for code coverage
+        forw(x, smap) = fftshift(bfft(ifftshift(x .* smap), dims))[samp] * T(factor)
         x = randn(T, sdim)
         y = [forw(x, smaps[1]) forw(x, smaps[2])]
         @test A * x ≈ y
 
-        back(z, smap) = fftshift(bfft(ifftshift(z), dims)) .* conj(smap) * T(factor)
+        back(z, smap) = fftshift(fft(ifftshift(z), dims)) .* conj(smap) * T(factor)
         b = back(embed(y[:,1], samp), smaps[1]) +
             back(embed(y[:,2], samp), smaps[2])
         @test A' * y ≈ b
