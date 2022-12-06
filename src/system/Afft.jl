@@ -14,6 +14,83 @@ using FFTW: plan_fft!, plan_bfft!
 
 
 """
+    A = Afft(xdim::Dims, fdim ; T, operator, work, ...)
+Make a `LinearMapAO` operator object
+for FFT of size `xdim` along dimensions `fdim`, of type `T`.
+
+In:
+- `xdim::Dims{D}` dimensions of signal
+- `fdim = 1:D` apply fft/bfft only along these dimensions
+
+Option:
+- `T::DataType = ComplexF32`
+- `operator::Bool = true` set to `false` to return a `LinearMapAM`
+- `work::AbstractArray` work space for in-place fft operations
+- remaining arguments are passed to `plan_fft`
+
+# Output
+Returns a `LinearMapsAA.LinearMapA[M|O]` object.
+"""
+function Afft(
+    xdim::Dims{D},
+    fdim = 1:D,
+    ;
+    T::DataType = ComplexF32,
+    operator::Bool = true, # !
+    unitary::Bool = false,
+    work::AbstractArray{S,D} = Array{T,D}(undef, xdim),
+    kwargs...
+) where {D}
+
+    promote_type(S, T) == S || error("type S=$S cannot hold T=$T")
+    size(work) == xdim || error("mismatch: work xdim")
+
+    pf = plan_fft!(work, fdim; kwargs...)
+    pb = plan_bfft!(work, fdim; kwargs...)
+    if !fft_forward
+        (pf, pb) = (pb, pf)
+    end
+
+    sqrtN = sqrt(prod(xdim))
+    function forw!(y, x::AbstractArray{<:Real})
+        @. work = complex(x)
+        mul!(y, pf, work)
+        unitary && y ./= sqrtN
+        return y
+    end
+    function forw!(y, x)
+        copyto!(y, x)
+        mul!(y, pf, y)
+        unitary && y ./= sqrtN
+        return y
+    end
+
+    function back!(x, y)
+        copyto!(x, y)
+        unitary && x .*= sqrtN # todo merge copyto!
+        mul!(x, pb, x)
+        return x
+    end
+
+    prop = (; name="fft", fdim)
+
+    if operator
+        return LinearMapAA(forw!, back!,
+            (1, 1) .* prod(dim), prop ; T,
+            idim = xdim, odim = xdim,
+            operator,
+        )
+    end
+
+    return LinearMapAA(
+        (y,x) -> forw!(y, reshape(x,xdim)), # fft(reshape(x,dim))
+        (x,y) -> vec(back!(reshape(x,xdim),y)), # vec(bfft(y))
+        (sum(samp), prod(dim)), prop ; T,
+    )
+end
+
+
+"""
     A = Afft(samp::AbstractArray{Bool} ; T, dims, operator, work, ...)
 Make a `LinearMapAO` operator object
 for (under-sampled) FFT, of type `T`,
@@ -56,6 +133,7 @@ function Afft(
         @. work = complex(x)
         mul!(work, pf, work)
         getindex!(y, work, samp)
+        return y
     end
     function forw!(y, x)
         copyto!(work, x)
