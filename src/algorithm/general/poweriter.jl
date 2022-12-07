@@ -36,18 +36,18 @@ function poweriter(
     chat::Bool = true,
 )
 
-	x = copy(x0)
-	ratio_old = Inf
-	for iter in 1:niter
-		Ax = A * x
-		ratio = norm(Ax) / norm(x)
-		if abs(ratio - ratio_old) / ratio < tol
-			chat && @info "done at iter $iter"
-			break
-		end
-		ratio_old = ratio
-		x = A' * Ax
-		x /= norm(x)
-	end
-	return x, norm(A * x) / norm(x)
+    x = copy(x0)
+    ratio_old = Inf
+    for iter in 1:niter
+        Ax = A * x
+        ratio = norm(Ax) / norm(x)
+        if abs(ratio - ratio_old) / ratio < tol
+            chat && @info "done at iter $iter"
+            break
+        end
+        ratio_old = ratio
+        x = A' * Ax
+        x /= norm(x)
+    end
+    return x, norm(A * x) / norm(x)
 end
