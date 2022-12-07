@@ -1,4 +1,4 @@
-# fbp/z-test.jl
+# test/fbp/z-test.jl
 
 using Test: @testset, @test_throws
 import MIRT
@@ -8,9 +8,9 @@ list = [
 ]
 
 for file in list
-	@testset "$file" begin
-		include(file)
-	end
+    @testset "$file" begin
+        include(file)
+    end
 end
 
 @testset "deprecate" begin

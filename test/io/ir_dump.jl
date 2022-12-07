@@ -1,4 +1,4 @@
-# ir_dump.jl
+# test/io/ir_dump.jl
 
 using MIRT: ir_dump
 

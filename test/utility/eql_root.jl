@@ -1,4 +1,4 @@
-# eql_root.jl
+# test/utility/eql_root.jl
 
 using MIRT: eql_root
 

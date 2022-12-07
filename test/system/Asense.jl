@@ -1,4 +1,4 @@
-# test/Asense.jl
+# test/system/Asense.jl
 
 using MIRT: Asense, embed
 using LinearMapsAA: LinearMapAO
@@ -13,18 +13,18 @@ using Test: @test, @testset
     T = ComplexF32
     smaps = [randn(T, dims), randn(T, dims)]
 
-	A = Asense(samp, smaps)
-	@test A isa LinearMapAO
-	@test Matrix(A)' ≈ Matrix(A')
-	@test A.name == "Asense"
-	@test eltype(A) == ComplexF32
+    A = Asense(samp, smaps)
+    @test A isa LinearMapAO
+    @test Matrix(A)' ≈ Matrix(A')
+    @test A.name == "Asense"
+    @test eltype(A) == ComplexF32
 
     dims = (30,20)
     samp = rand(dims...) .< 0.5
     T = ComplexF32
     ncoil = 2
     smaps = randn(T, dims..., ncoil)
-	A = Asense(samp, smaps)
+    A = Asense(samp, smaps)
     x = randn(T, dims)
     y = randn(T, count(samp), ncoil)
     @test isapprox(dot(y, A * x), dot(A' * y, x))
@@ -39,9 +39,9 @@ end
     dims = [1, 3]
     sqrtN = sqrt(prod(sdim[dims]))
     for unitary in (false, true)
-	    A = Asense(samp, smaps; dims, fft_forward=false, unitary)
+        A = Asense(samp, smaps; dims, fft_forward=false, unitary)
         factor = unitary ? 1/sqrtN : 1
-	    @test Matrix(A)' ≈ Matrix(A')
+        @test Matrix(A)' ≈ Matrix(A')
 
         # note bfft here because fft_forward = false, for code coverage
         forw(x, smap) = fftshift(bfft(ifftshift(x .* smap), dims))[samp] * T(factor)

@@ -1,4 +1,4 @@
-# ogm_ls.jl
+# test/algorithm/general/ogm_ls.jl
 
 using MIRT: ogm_ls
 

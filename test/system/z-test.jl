@@ -8,7 +8,7 @@ list = [
 ]
 
 for file in list
-	@testset "$file" begin
-		include(file)
-	end
+    @testset "$file" begin
+        include(file)
+    end
 end

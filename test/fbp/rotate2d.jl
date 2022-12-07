@@ -1,4 +1,4 @@
-# rotate2d.jl
+# test/fbp/rotate2d.jl
 
 using MIRT: rotate2d
 using Test: @test

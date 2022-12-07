@@ -1,4 +1,4 @@
-# downsample.jl
+# test/utility/downsample.jl
 
 using MIRT: downsample_dim1
 using MIRT: downsample1

@@ -1,4 +1,4 @@
-# algorithm/z-test.jl
+# test/algorithm/z-test.jl
 
 using Test: @testset
 
@@ -10,7 +10,7 @@ list = [
 ]
 
 for file in list
-	@testset "$file" begin
-		include(file)
-	end
+    @testset "$file" begin
+        include(file)
+    end
 end

@@ -1,4 +1,4 @@
-# max_percent_diff.jl
+# test/utility/max_percent_diff.jl
 
 using MIRT: max_percent_diff
 

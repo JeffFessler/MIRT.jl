@@ -15,27 +15,29 @@ export ndgrid
 
 
 """
-`(xx,yy) = ndgrid(x::AbstractVector{<:Any}, y::AbstractVector{<:Any})`
+    (xx,yy) = ndgrid(x::AbstractVector{<:Any}, y::AbstractVector{<:Any})
 todo - improve?
 """
 function ndgrid(
-		x::AbstractVector{<:Any},
-		y::AbstractVector{<:Any})
+    x::AbstractVector{<:Any},
+    y::AbstractVector{<:Any},
+)
 
-	tmp = Iterators.product(x, y)
-	return [p[1] for p in tmp], [p[2] for p in tmp]
+    tmp = Iterators.product(x, y)
+    return [p[1] for p in tmp], [p[2] for p in tmp]
 end
 
 
 """
-`(xx,yy,zz) = ndgrid(x::AbstractVector{<:Any}, y::..., z::...)`
+    (xx,yy,zz) = ndgrid(x::AbstractVector{<:Any}, y::..., z::...)
 todo - improve?
 """
 function ndgrid(
-		x::AbstractVector{<:Any},
-		y::AbstractVector{<:Any},
-		z::AbstractVector{<:Any})
+    x::AbstractVector{<:Any},
+    y::AbstractVector{<:Any},
+    z::AbstractVector{<:Any},
+)
 
-	tmp = Iterators.product(x, y, z)
-	return [p[1] for p in tmp], [p[2] for p in tmp], [p[3] for p in tmp]
+    tmp = Iterators.product(x, y, z)
+    return [p[1] for p in tmp], [p[2] for p in tmp], [p[3] for p in tmp]
 end
