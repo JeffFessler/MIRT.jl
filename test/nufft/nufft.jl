@@ -16,12 +16,12 @@ _norminf(a, b) = norm(b - a, Inf) / norm(a, Inf)
 
 
 """
-    nufft_test1( ; M=30, N=20, n_shift=1.7, T=?, tol=?)
+    nufft_test1( ; M=30, N=20, n_shift=1.7, T=Float64, tol=7e-6)
 Simple 1D NUFFT tests.
 """
 function nufft_test1( ;
 	M::Int = 30, N::Int = 20, n_shift::Real = 1.7,
-    T::DataType = Float64, tol::Real = 4e-6,
+    T::DataType = Float64, tol::Real = 7e-6,
 )
 
     w = (rand(M) .- 0.5) * 2π
