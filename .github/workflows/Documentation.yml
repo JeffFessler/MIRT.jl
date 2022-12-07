@@ -2,7 +2,11 @@ name: Documentation
 
 on:
   pull_request:
+    paths-ignore:
+      - 'README.md'
   push:
+    paths-ignore:
+      - 'README.md'
     branches:
       - 'main'
       - 'release-'
@@ -10,18 +14,13 @@ on:
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        julia-version: ["1"]
-        julia-arch: [x86]
-        os: [ubuntu-latest]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: julia-actions/setup-julia@latest
         with:
-          version: ${{ matrix.julia-version }}
-      - name: Cache artifacts
+          version: '1'
+      - name: CacheArtifacts
         uses: actions/cache@v3
         env:
           cache-name: cache-artifacts
@@ -32,17 +31,16 @@ jobs:
             ${{ runner.os }}-test-${{ env.cache-name }}-
             ${{ runner.os }}-test-
             ${{ runner.os }}-
-      - run: julia --color=yes -e 'using Pkg; VERSION >= v"1.5-" && !isdir(joinpath(DEPOT_PATH[1], "registries", "General")) && Pkg.Registry.add("General")'
-        shell: bash
+      - name: InstallDependencies
+        run: |
+          julia --project=docs/ -e '
+            ENV["JULIA_PKG_SERVER"] = ""
+            using Pkg
+            Pkg.develop(PackageSpec(path=pwd()))
+            Pkg.instantiate()'
+      - name: BuildAndDeploy
         env:
-          # We set `JULIA_PKG_SERVER` only for this step to enforce
-          # `Pkg.Registry.add` to use Git.  This way, Pkg.jl can send
-          # the request metadata to pkg.julialang.org when installing
-          # packages via `Pkg.test`.
-          JULIA_PKG_SERVER: ""
-      - name: Install dependencies
-        run: julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
-      - name: Build and deploy
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ssh: ${{ secrets.DOCUMENTER_KEY }}
+          DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
         run: julia --project=docs/ docs/make.jl
