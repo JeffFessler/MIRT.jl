@@ -142,7 +142,7 @@ function genkspace(
     phi = 2*π/nint
     if nint > 1
         phi = 2*π/nint
-        for ii = 1:(nint-1)
+        for ii in 1:(nint-1)
             kx[:,ii+1] = kxop*cos(ii*phi) - kyop*sin(ii*phi)
             ky[:,ii+1] = kyop*cos(ii*phi) + kxop*sin(ii*phi)
             gx[:,ii+1] = gxop*cos(ii*phi) - gyop*sin(ii*phi)

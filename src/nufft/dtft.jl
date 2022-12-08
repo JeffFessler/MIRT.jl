@@ -162,7 +162,7 @@ function dtft_adj(w::AbstractVector{<:Real}, X::AbstractVector{<:Number},
     out = similar(X, T, N)
     nshift1 = n_shift + 1
     X = T.(X)
-    for n=1:N # loop over output signal samples
+    for n in 1:N # loop over output signal samples
         out[n] = sum(cis.((n - nshift1) * w) .* X)
     end
     return out
@@ -201,7 +201,7 @@ function dtft_adj(
 
     out = similar(X, T, N)
 
-    for n=1:prod(N)
+    for n in 1:prod(N)
         idx = CartesianIndices(N)[n]
         tmp = cis.(w * (collect(Tuple(idx)) - nshift1))
         tmp = transpose(cis.(w * (collect(Tuple(idx)) - nshift1))) * X
@@ -218,7 +218,7 @@ function dtft_loop_n(w::AbstractVector{<:Real}, x::AbstractVector{<:Number}
     N = length(x)
     out = fill(ComplexF64(0), size(w))
     nshift1 = n_shift + 1
-    for n=1:N # tried @simd but not faster
+    for n in 1:N # tried @simd but not faster
         out .+= x[n] * cis.(-(n-nshift1) * w)
     end
     return out
@@ -312,7 +312,7 @@ function dtft_dist_m(
     out = SharedArray{ComplexF64}(M)
     nn = -((0:(N-1)) .- n_shift)
     x = ComplexF64.(x)
-    @sync @distributed for m=1:M
+    @sync @distributed for m in 1:M
         out[m] = sum(cis.(nn * w[m]) .* x)
     end
     return sdata(out)

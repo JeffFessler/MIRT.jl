@@ -71,7 +71,7 @@ function Aodwt(
     mfun, A = mfunA(level)
 
     scales = zeros(dims)
-    for il=1:level
+    for il in 1:level
         _,Al = mfunA(il)
         tmp = mfun(Al, ones(dims)) .== 0
         scales += il * (tmp .& (scales .== 0))

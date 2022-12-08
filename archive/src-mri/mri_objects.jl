@@ -75,7 +75,7 @@ function mri_objects_image_gauss3(data::RealArray, x::RealArray, y::RealArray,
         z ; kwargs...)
     size(data,2) != 7 && throw(DomainError(data,"gauss3 requires 7 parameters"))
     out = zeros(size(x))
-    for i=1:size(data,1)
+    for i in 1:size(data,1)
         par = data[i,:]
         xc = par[1]
         yc = par[2]
@@ -103,7 +103,7 @@ function mri_objects_image_cyl3(data::RealArray, x::RealArray, y::RealArray,
         z ; dx::Real=0, dy::Real=0, dz::Real=0)
     size(data,2) != 6 && throw(DomainError(data,"cyl3 requires 6 parameters"))
     out = zeros(size(x))
-    for i = 1:size(data,1)
+    for i in 1:size(data,1)
         par = data[i,:]
         xc = par[1]
         yc = par[2]
@@ -127,7 +127,7 @@ end
 function mri_objects_image_rect3(data::RealArray, x::RealArray, y::RealArray,
         z ; dx::Real=0, dy::Real=0, dz::Real=0)
     out = zeros(size(x))
-    for i=1:size(data,1)
+    for i in 1:size(data,1)
         par = data[i,:]
         xc = par[1]
         yc = par[2]
@@ -155,7 +155,7 @@ function mri_objects_image_dirac3(data::RealArray, x::RealArray, y::RealArray,
         z ; kwargs...)
     size(data,2) != 4 && throw(DomainError(data,"dirac3 requires 4 parameters"))
     out = zeros(size(x))
-    for i=1:size(data,1)
+    for i in 1:size(data,1)
         out += data[i,4] .* ((x .== data[i,1]) .* (y .== data[i,2]) .* (z .== data[i,3]))
     end
 #TODO: what does out(out != 0) = inf, warn do? Ask fess. todo: test
@@ -175,7 +175,7 @@ end
 function mri_objects_kspace_gauss3(data::RealArray, u::RealArray, v::RealArray, w)
     size(data,2) != 7 && throw(DomainError(data,"gauss3 requires 7 parameters"))
     out = 0
-    for ii=1:size(data,1)
+    for ii in 1:size(data,1)
         par = data[ii,:]
         xc = par[1]
         yc = par[2]
@@ -202,7 +202,7 @@ end
 function mri_objects_kspace_cyl3(data::RealArray, u::RealArray, v::RealArray, w)
     size(data,2) != 6 && throw(DomainError(data,"cyl3 requires 6 parameters"))
     out = zeros(size(u))
-    for i = 1:size(data,1)
+    for i in 1:size(data,1)
         par = data[i,:]
         xc = par[1]
         yc = par[2]
@@ -226,7 +226,7 @@ end
 function mri_objects_kspace_rect3(data::RealArray, u::RealArray, v::RealArray, w)
     size(data,2) != 7 && throw(DomainError(data,"rect3 requires 7 parameters"))
     out = 0
-    for ii=1:size(data,1)
+    for ii in 1:size(data,1)
         par = data[ii,:]
         xc = par[1]
         yc = par[2]
@@ -250,7 +250,7 @@ end
 function mri_objects_kspace_dirac3(data::RealArray, u::RealArray, v::RealArray, w)
     size(data,2) != 4 && throw(DomainError(data,"dirac3 requires 4 parameters"))
     out = zeros(size(u))
-    for i=1:size(data,1)
+    for i in 1:size(data,1)
         out += data[i,4] * exp.(-2im * pi * (u .* data[i,1] .+ v .* data[i,2] .+ w .* data[i,3]))
     end
     return out

@@ -164,7 +164,7 @@ function mri_trajectory( ;
 
     # convert to physical units
     kspace = zeros(Float32, size(omega))
-    for id = 1:length(N)
+    for id in 1:length(N)
         dx = fov[id] / N[id]
         kspace[:,id] = omega[:,id] / (2π) / dx
     end
@@ -239,7 +239,7 @@ function mri_trajectory_gads(
 
     kmax_frac = (0, kmax_frac...)
     omega = zeros(0,2)
-    for ir=1:Nring
+    for ir in 1:Nring
         #todo: not sure here
         kspace = ir_mri_kspace_ga_radial(Nspoke = nspoke[ir],
             Nro = Nro, delta_ro = delta_ro, shift = shift, start = start[ir])
@@ -321,7 +321,7 @@ function mri_trajectory_rosette3(N, fov ;
     ky = omax * sin.(p1) .* sin.(p2) .* cos.(p3)
     kz = omax * sin.(p1) .* sin.(p3)
     omega = [kx ky kz]
-    for is = 1:nshot-1 # n-shot, rotate kx,ky by 2π / N
+    for is in 1:nshot-1 # n-shot, rotate kx,ky by 2π / N
         ang = is * 2π / nshot
         c = cos(ang)
         s = sin(ang)

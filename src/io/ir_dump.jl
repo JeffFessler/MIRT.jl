@@ -34,7 +34,7 @@ function ir_dump(y::Any ; io::IO = stdout, ntuplemax::Int = 3)
                 print(io, " ", tmp)
             else
                 print(io, " (")
-                for it = 1:ntuplemax
+                for it in 1:ntuplemax
                     print(io, tmp[it], ", ")
                 end
                 print(io, "…)")

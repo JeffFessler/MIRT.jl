@@ -164,15 +164,13 @@ function ir_mri_sensemap_sim_do(
     # cylindrical coil configuration, like abdominal coils
     alist = deg2rad.(orbit) * (0:(ncoilpr-1)) / ncoilpr # coil angles [radians]
     z_ring = ((1:nring) .- (nring+1)/2) * dz_coil
-    for ir = 1:nring
-        for ic = 1:ncoilpr
-            phi = alist[ic] + deg2rad(orbit_start[ir])
-            Rad = max(nx/2 * dx, ny/2 * dy) * coil_distance
-            plist[ic,ir,:] = [Rad * [cos(phi), sin(phi)]; z_ring[ir]]
-            nlist[ic,ir,:] = -[cos(phi), sin(phi), 0*z_ring[ir]] # cylinder
-            olist[ic,ir,:] = [-sin(phi), cos(phi), 0]
-            ulist[ic,ir,:] .= [0, 0, 1]
-        end
+    for ir in 1:nring, ic in 1:ncoilpr
+        phi = alist[ic] + deg2rad(orbit_start[ir])
+        Rad = max(nx/2 * dx, ny/2 * dy) * coil_distance
+        plist[ic,ir,:] = [Rad * [cos(phi), sin(phi)]; z_ring[ir]]
+        nlist[ic,ir,:] = -[cos(phi), sin(phi), 0*z_ring[ir]] # cylinder
+        olist[ic,ir,:] = [-sin(phi), cos(phi), 0]
+        ulist[ic,ir,:] .= [0, 0, 1]
     end
 
     # object coordinates
@@ -184,32 +182,30 @@ function ir_mri_sensemap_sim_do(
     data_per_coil = Array{Any}(undef, nring, ncoilpr)
 
     smap = zeros(Complex{T}, nx, ny, max(nz,1), ncoilpr, nring)
-    for ir = 1:nring
-        for ic=1:ncoilpr
-            # rotate coordinates to correspond to coil orientation
-            zr =    (xx .- plist[ic,ir,1]) .* nlist[ic,ir,1] +
-                    (yy .- plist[ic,ir,2]) .* nlist[ic,ir,2] +
-                    (zz .- plist[ic,ir,3]) .* nlist[ic,ir,3]
-            xr = xx .* nlist[ic,ir,2] - yy .* nlist[ic,ir,1]
-            yr = zz .- plist[ic,ir,3] # translate along object z axis
+    for ir in 1:nring, ic in 1:ncoilpr
+        # rotate coordinates to correspond to coil orientation
+        zr =    (xx .- plist[ic,ir,1]) .* nlist[ic,ir,1] +
+                (yy .- plist[ic,ir,2]) .* nlist[ic,ir,2] +
+                (zz .- plist[ic,ir,3]) .* nlist[ic,ir,3]
+        xr = xx .* nlist[ic,ir,2] - yy .* nlist[ic,ir,1]
+        yr = zz .- plist[ic,ir,3] # translate along object z axis
 
-            # compute sensitivity vectors in coil coordinates
-            tmp = ir_mri_smap1.(xr, yr, zr, rlist[ic,ir])
-            sx = [p[1] for p in tmp]
-            sy = [p[2] for p in tmp]
-            sz = [p[3] for p in tmp]
+        # compute sensitivity vectors in coil coordinates
+        tmp = ir_mri_smap1.(xr, yr, zr, rlist[ic,ir])
+        sx = [p[1] for p in tmp]
+        sy = [p[2] for p in tmp]
+        sz = [p[3] for p in tmp]
 
-            # coil response depends on transverse magnetization only?
-            # todo: unsure if this should depend on sy and ulist in 3D
-                bx = sz * nlist[ic,ir,1] + sx * olist[ic,ir,1]
-                by = sz * nlist[ic,ir,2] + sx * olist[ic,ir,2]
-            #    bz = sz * nlist[ic,ir,3] + sx * olist[ic,ir,3]
-            smap[:,:,:,ic,ir] = complex.(bx, by)
+        # coil response depends on transverse magnetization only?
+        # todo: unsure if this should depend on sy and ulist in 3D
+            bx = sz * nlist[ic,ir,1] + sx * olist[ic,ir,1]
+            by = sz * nlist[ic,ir,2] + sx * olist[ic,ir,2]
+        #    bz = sz * nlist[ic,ir,3] + sx * olist[ic,ir,3]
+        smap[:,:,:,ic,ir] = complex.(bx, by)
 
-            if (ir,ic) ∈ ir_ic_pair # save data for plotting
-                data_per_coil[ir, ic] =
-                    (xr=xr, yr=yr, zr=zr, sx=sx, sy=sy, sz=sz, bx=bx, by=by)
-            end
+        if (ir,ic) ∈ ir_ic_pair # save data for plotting
+            data_per_coil[ir, ic] =
+                (xr=xr, yr=yr, zr=zr, sx=sx, sy=sy, sz=sz, bx=bx, by=by)
         end
     end
 

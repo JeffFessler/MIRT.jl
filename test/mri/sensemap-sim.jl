@@ -26,41 +26,39 @@ function sensemap_test()
     down2 = a -> vec(a[1:3:end,1:3:end])
     down3 = a -> vec(a[1:3:end,1:3:end,1:3:end])
 
-    for ir = 1:info.nring
-        for ic = 1:info.ncoilpr
-            pc = data[ir,ic]
-            xr = pc.xr
-            zr = pc.zr
+    for ir in 1:info.nring, ic in 1:info.ncoilpr
+        pc = data[ir,ic]
+        xr = pc.xr
+        zr = pc.zr
 
-            p = Array{Any}(undef, 7)
+        p = Array{Any}(undef, 7)
 
-            # coordinates
-            p[1] = jim(x, y, xr, xlabel="x", ylabel="y", "xr")
-            p[2] = jim(x, y, zr, "zr")
+        # coordinates
+        p[1] = jim(x, y, xr, xlabel="x", ylabel="y", "xr")
+        p[2] = jim(x, y, zr, "zr")
 
-            sx = pc.sx
-            sy = pc.sy
-            sz = pc.sz
-            tmp = sqrt.(sx.^2 + sz.^2)
-            (xx,yy) = ndgrid(x,y)
+        sx = pc.sx
+        sy = pc.sy
+        sz = pc.sz
+        tmp = sqrt.(sx.^2 + sz.^2)
+        (xx,yy) = ndgrid(x,y)
 
-            p[3] = jim(x, y, sx, "sx")
-            p[4] = jim(x, y, sy, "sy")
-            p[5] = jim(x, y, sz, "sz")
-            p[6] = quiver(down2(xx), down2(yy), title="(sx,sy)",
-                    quiver=(down2(sx./tmp), down2(sz./tmp)))
+        p[3] = jim(x, y, sx, "sx")
+        p[4] = jim(x, y, sy, "sy")
+        p[5] = jim(x, y, sz, "sz")
+        p[6] = quiver(down2(xx), down2(yy), title="(sx,sy)",
+                quiver=(down2(sx./tmp), down2(sz./tmp)))
 
-            # see final field components vs phase (for nz=0)
-            (xx,yy) = ndgrid(x,y)
-            bx = pc.bx
-            by = pc.by
-            bb = sqrt.(bx.^2 + by.^2)
-            p[7] = jim(x, y, angle.(smap[:,:,1,ic,1]), "phase", color=:hsv)
-            quiver!(down2(xx), down2(yy), title="(bx,by)",
-                    quiver=(down3((bx./bb)), down3((by./bb))))
-            plot(p...)
-            prompt()
-        end
+        # see final field components vs phase (for nz=0)
+        (xx,yy) = ndgrid(x,y)
+        bx = pc.bx
+        by = pc.by
+        bb = sqrt.(bx.^2 + by.^2)
+        p[7] = jim(x, y, angle.(smap[:,:,1,ic,1]), "phase", color=:hsv)
+        quiver!(down2(xx), down2(yy), title="(bx,by)",
+                quiver=(down3((bx./bb)), down3((by./bb))))
+        plot(p...)
+        prompt()
     end
 
 end
@@ -126,7 +124,7 @@ function ir_mri_sensemap_sim_test1_show(smap, x, y, zlist, title)
     clim = (-20,20)
     nz = length(zlist)
     pl = Array{Any}(undef, nz)
-    for iz = 1:nz
+    for iz in 1:nz
         pl[iz] = jim(x, y, smap[:,:,iz],
             title=title, clim=clim, xtick=[-2,2], ytick=[-2,2])
         blim = (zlist[iz] < 0.5) ? [7,12,19] : [1,3,5]
@@ -157,7 +155,7 @@ function ir_mri_sensemap_sim_show2(smap, x, y, dx, dy, nlist, plist, rlist)
     clim = (0, maximum(abs.(smap)))
     xmax = maximum(abs.([vec(x); vec(y); vec(plist[:,:,[1,2]])]))
     ymax = xmax
-    for ic=1:ncoil
+    for ic in 1:ncoil
         tmp = smap[:,:,ic]
         p = jim(x, y, abs.(tmp), clim=clim, "Magn. $ic")
         plot!(p, xlim=[-1,1]*1.1*xmax, xtick=(-1:1) * nx/2 * dx)
@@ -281,15 +279,13 @@ function ir_mri_sensemap_sim_show3(smap, x, y, z, dx, dy, dz,
 =#
 
     if true # coils
-        for ir = 1:nring
-            for ic = 1:ncoilpr
-                tmp = LinRange(0, 2*pi, 50)
-                tmp = cos.(tmp) * olist[ic,ir,:]' + sin.(tmp) * ulist[ic,ir,:]'
-                tmp = repeat(plist[ic,ir,:]', size(tmp,1), 1) + rcoil * tmp
-                plot!(tmp[:,1], tmp[:,2], tmp[:,3], label="")
-            #    patch(tmp[:,1], tmp[:,2], tmp[:,3], pcolor(ir),
-            #        edgecolor=:none, facealpha=0.5)
-            end
+        for ir in 1:nring, ic in 1:ncoilpr
+            tmp = LinRange(0, 2*pi, 50)
+            tmp = cos.(tmp) * olist[ic,ir,:]' + sin.(tmp) * ulist[ic,ir,:]'
+            tmp = repeat(plist[ic,ir,:]', size(tmp,1), 1) + rcoil * tmp
+            plot!(tmp[:,1], tmp[:,2], tmp[:,3], label="")
+        #    patch(tmp[:,1], tmp[:,2], tmp[:,3], pcolor(ir),
+        #        edgecolor=:none, facealpha=0.5)
         end
     end
     plot!()

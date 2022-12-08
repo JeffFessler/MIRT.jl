@@ -49,7 +49,7 @@ end
 @testset "downsample3" begin
     x = [6, 5, 2]
     x = reshape(2*(1:prod(x)), x...)
-    for down = 1:2
+    for down in 1:2
          y = @inferred downsample3(x, down)
         if down == 1
             @test y == x

@@ -96,7 +96,7 @@ Out:
 function embed(x::AbstractMatrix{<:Number}, mask::AbstractArray{Bool})
     L = size(x,2)
     out = zeros(eltype(x), prod(size(mask)), L)
-    for l=1:L
+    for l in 1:L
         out[:,l] = vec(embed(x[:,l], mask))
     end
     reshape(out, size(mask)..., L)

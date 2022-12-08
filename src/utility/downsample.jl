@@ -114,11 +114,9 @@ function downsample2(
     y = similar(x, T, odim)
     d1 = down[1]
     d2 = down[2]
-    for i2=1:odim[2]
-        for i1=1:odim[1]
-            y[i1,i2] =
-                sum(@view x[(i1-1)*d1 .+ (1:d1), (i2-1)*d2 .+ (1:d2)]) / d1 / d2
-        end
+    for i2 in 1:odim[2], i1 in 1:odim[1]
+        y[i1,i2] =
+            sum(@view x[(i1-1)*d1 .+ (1:d1), (i2-1)*d2 .+ (1:d2)]) / d1 / d2
     end
 
     fun = (x, d) -> downsample_dim1(x, d, warn=warn)
@@ -190,13 +188,9 @@ function downsample3_loop(
     d3 = down[3]
     d123 = d1 * d2 * d3
 
-    for i3=1:odim[3]
-        for i2=1:odim[2]
-            for i1=1:odim[1]
-                y[i1,i2,i3] = sum(@view x[(i1-1)*d1 .+ (1:d1),
-                    (i2-1)*d2 .+ (1:d2), (i3-1)*d3 .+ (1:d3)]) / d123
-            end
-        end
+    for i3 in 1:odim[3], i2 in 1:odim[2], i1 in 1:odim[1]
+        y[i1,i2,i3] = sum(@view x[(i1-1)*d1 .+ (1:d1),
+            (i2-1)*d2 .+ (1:d2), (i3-1)*d3 .+ (1:d3)]) / d123
     end
     return y
 end

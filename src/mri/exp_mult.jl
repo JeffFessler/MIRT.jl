@@ -39,7 +39,7 @@ function exp_mult(A, u::AbstractVector{<:Number}, v::AbstractVector{<:Number}
     T = promote_type(eltype(u), eltype(v), ComplexF32)
     D = zeros(T, L, M)
 
-    for m = 1:M
+    for m in 1:M
         col = exp.(-u * v[m]) # [N] mth column of N × M matrix B = exp(-u * v^T)
         D[:,m] = A' * col
     end

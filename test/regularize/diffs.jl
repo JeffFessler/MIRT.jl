@@ -36,7 +36,7 @@ if true # test old 2D versions
     N = (3,5)
     x = rand(N...)
     @test diff2d_forw(x) == diff_forw(x)
-    d = rand(sum(diff_length(N,dim) for dim=1:2))
+    d = rand(sum(diff_length(N,dim) for dim in 1:2))
     @test diff2d_adj(d, N... ; out2d=false) == vec(diff_adj(d, N))
     @test diff2d_adj(d, N... ; out2d=true) == diff_adj(d, N)
     @test Matrix(diff2d_map(N...)) == Matrix(diff_map(N))

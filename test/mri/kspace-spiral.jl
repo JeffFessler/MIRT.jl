@@ -25,7 +25,7 @@ p4 = plot(g5l[:,1,:], label="")
 plot!(g5l[:,2,:], label="")
 
 p3 = plot(xlabel="kx", ylabel="ky", aspect_ratio=1, title="5-shot spiral")
-for ii=1:5
+for ii in 1:5
     scatter!(k5l[:,1,ii], k5l[:,2,ii], label="")
 end
 
