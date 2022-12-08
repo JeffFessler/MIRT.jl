@@ -26,7 +26,7 @@ where ``C_j(u)`` is diagonal matrix of curvatures.
 
 This CG method uses a majorize-minimize (MM) line search.
 
-in
+# in
 - `B` vector of ``J`` blocks ``B_1,…,B_J``
 - `gradf` vector of ``J`` functions return gradients of ``f_1,…,f_J``
 - `curvf` vector of ``J`` functions `z -> curv(z)` that return a scalar
@@ -37,7 +37,7 @@ Usually `x0` is a `Vector` but it can be an `Array`
 if each `B_j` is a linear operator (e.g., `LinearMapAO`)
 of suitable "dimensions".
 
-option
+# option
 - `niter` # number of outer iterations; default 50
 - `ninner` # number of inner iterations of MM line search; default 5
 - `P` # preconditioner; default `I`
@@ -45,7 +45,7 @@ option
 - `fun` User-defined function to be evaluated with two arguments (x,iter).
    * It is evaluated at `(x0,0)` and then after each iteration.
 
-output
+# output
 - `x` final iterate
 - `out` `[niter+1] (fun(x0,0), fun(x1,1), ..., fun(x_niter,niter))`
    * (all 0 by default). This is an array of length `niter+1`

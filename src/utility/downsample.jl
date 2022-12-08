@@ -17,14 +17,14 @@ export downsample
 
 Down-sample `x` by factor `down` along first dimension by averaging.
 
-in
+# in
 - `x [n1 (Nd)]`
 - `down::Int` downsampling factor
 
-option
+# option
 - `warn::Bool` warn if non-integer multiple; default `isinteractive()`
 
-out
+# out
 - `y [n1÷down (Nd)]`
 """
 function downsample_dim1(
@@ -50,16 +50,17 @@ end
 
 """
     y = downsample1(x, down ; warn=true)
-downsample 1D vector by factor `down`
 
-in
+Downsample 1D vector by factor `down`.
+
+# in
 - `x [n1]`
 - `down::Int` downsampling factor
 
-option
+# option
 - `warn::Bool` warn if noninteger multiple; default `isinteractive()`
 
-out
+# out
 - `y [n1/down]`
 """
 function downsample1(
@@ -85,16 +86,17 @@ end
 """
     y = downsample2(x, down ; warn=true, T)
 
-downsample by averaging by integer factors
-in
+Downsample by averaging by integer factors.
+
+# in
 - `x [nx ny]`
 - `down` can be a scalar (same factor for both dimensions) or a `NTuple{2,Int}`
 
-option
+# option
 - `warn::Bool` warn if noninteger multiple; default `isinteractive()`
 - `T::DataType` specify output eltype; default `eltype(x[1] / down[1])`
 
-out
+# out
 - `y [nx/down ny/down]`
 """
 function downsample2(
@@ -141,17 +143,18 @@ downsample2(x::AbstractArray{<:Number,2}, down::Int ; args...) =
 """
     y = downsample3(x, down ; warn=true, T)
 
-downsample by averaging by integer factors
-in
-- `x [nx ny nz]`
+Downsample by averaging by integer factors.
+
+# in
+- `x (nx,ny,nz)`
 - `down` can be a scalar (same factor for all dimensions) or a `NTuple{3,Int}`
 
-option
+# option
 - `warn::Bool` warn if noninteger multiple; default true
 - `T::DataType` specify output eltype; default `eltype(x[1] / down[1])`
 
-out
-- `y [nx/down ny/down nz/down]`
+# out
+- `y (nx/down,ny/down,nz/down)`
 """
 function downsample3(
     x::AbstractArray{<:Number,3},

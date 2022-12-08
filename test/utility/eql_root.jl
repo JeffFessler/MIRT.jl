@@ -16,6 +16,6 @@ tests = [
 
 predicted = [-1, 1, 0, 3, 1/2]
 results = eql_root(tests[:,1], tests[:,2], tests[:,3])
-  
+
 @test results == predicted
 @test eql_root(1, 1, -1) == -1

@@ -317,10 +317,10 @@ These functions are useful for simple "idealized" MRI simulations
 where the data is modeled as analytical Fourier samples,
 i.e., no field inhomogeneity and no relaxation effects.
 
-in
+# in
 - `[(type, params), ...]` e.g. `[(:rect2, params), (:gauss3, params), ...]`
 
-type, params:
+# type, params:
 - `:dirac2 [N 3] [xcent ycent value]`
 - `:dirac3 [N 4] [xcent ycent zcent value]`
 - `:rect2 [N 5] [xcent ycent xwidth ywidth value]`
@@ -332,7 +332,7 @@ type, params:
 
 All types must be 2D or 3D, not mixed.
 
-out
+# out
 - `st` struct
 * `st.image(x,y)`  returns 2D image-domain (sampled) picture
 * `st.image(x,y,z)` same but 3D
@@ -416,8 +416,8 @@ key choices:
 """
 function mri_objects(key::Symbol ; fov::Real=22, unit::Symbol=:mm)
     key == :case1 &&
-		(return mri_objects(mri_objects_case1( ; unit=unit)))
+        (return mri_objects(mri_objects_case1( ; unit=unit)))
     key == :case4 &&
-		(return mri_objects(mri_objects_case4([fov,fov,fov] ; unit=unit)))
+        (return mri_objects(mri_objects_case4([fov,fov,fov] ; unit=unit)))
     throw("bad key $key")
 end

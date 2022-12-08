@@ -16,13 +16,13 @@ export exp_mult
 Memory efficient and fast implementation of `D = A' * exp(-u * v^T)`
 that is useful for B0-field-corrected MRI image reconstruction.
 
-in:
+# in
 * `A [N L]` matrix
 * `u [N]` vector
 * `v [M]` vector
 * `warnboth` warn if both `u` and `v` are complex; default: true
 
-out:
+# out
 * `D [L M]` complex vector: `D = A' * exp(-u * v^T)`
 `D_lm = sum_n A_nl^* exp(-u_n v_m)`
 """

@@ -46,14 +46,14 @@ multi-dimensional DTFT (DSFT)
 ``X[m] = \\sum_{n=0}^{N-1} x[n] \\exp(-i w[m,:] (n - n_{shift})), m=1,…,M``
 where here `n` is a `CartesianIndex`
 
-in
+# in
 - `w::AbstractMatrix{<:Real} (M,D)` frequency locations ("units" radians/sample)
 - `x::AbstractArray{<:Number} [(Nd)]` D-dimensional signal
 
-option
+# option
 - `n_shift::AbstractVector{<:Real}` often is N/2; default zeros(D)
 
-out
+# out
 - `X::AbstractVector{ComplexF64} (M)` DTFT
 """
 function dtft(w::AbstractMatrix{<:Real}, x::AbstractMatrix{<:Number}

@@ -5,17 +5,18 @@ export eql_root
 
 """
     x = eql_root(a,b,c)
-    Numerically stable method for computing the positive root
-    of the quadratic polynomial `-ax^2 - 2bx + c, a >= 0`.
-    Assumes solvable equations; will throw otherwise.
 
-in
-- `a` : The negative of the `x^2` term. Must be positive.
-- `b` : Half the negative of the `x` term.
-- `c` : The constant term.
+Numerically stable method for computing the positive root
+of the quadratic polynomial `-ax^2 - 2bx + c, a >= 0`.
+Assumes solvable equations; will throw otherwise.
 
-out
-- `x` : The positive root that satisfies `0 = -ax^2 - 2bx + c`.
+# in
+- `a` The negative of the `x^2` term. Must be positive.
+- `b` Half the negative of the `x` term.
+- `c` The constant term.
+
+# out
+- `x` The positive root that satisfies `0 = -ax^2 - 2bx + c`.
 """
 function eql_root(a::Real, b::Real, c::Real)
     (a < 0) && throw(DomainError(a, "a must be enonnegative"))

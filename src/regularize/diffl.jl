@@ -278,14 +278,14 @@ end
     T = diffl_map(N::Dims{D}, dims::AbstractVector{Int} ; kwargs...)
     T = diffl_map(N::Dims{D}, dim::Int ; kwargs...)
 
-in
+# in
 - `N::Dims` image size
 
-options: see `diffl!`
+# options: see `diffl!`
 - `T::Type` for `LinearMapAA`, default `Float32`
 - `operator::Bool = true` use `false` for `LinearMapAM`
 
-out
+# out
 - `T` `LinearMapAA` object for computing finite differences via `T*x`
 using `diffl!` and `diffl_adj!`
 """

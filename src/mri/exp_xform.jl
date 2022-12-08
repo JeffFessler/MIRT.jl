@@ -14,13 +14,13 @@ export exp_xform
 """
     exp_xform(x, u, v ; mode::Symbol = :matrix)
 
-in:
+# in
 * `x [N L]` possibly complex vector(s)
 * `u [D N]` possibly complex vectors
 * `v [D M]` possibly complex vectors
 * `mode::Symbol` `:matrix` (default) | `:element` | `:row` | `:column`
 
-out:
+# out
 * `y [M L]` typically complex vector
  `y[m,l] = sum_n x[n,l] exp(-sum(u[:,n] .* v[:,m]))`
 

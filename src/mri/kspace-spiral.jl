@@ -161,10 +161,11 @@ This is translation of C code from scanner:
 exactly what is played out
 to gradients at 4us.
 
-multi-shot spiral design
+Multi-shot spiral design
 uses Duyn's approximate slewrate limited design
 augmented with archimedian `gmax` limit
-in [args]
+
+# in [args]
 * `D` = FOV; cm
 * `N` = matrix size()
 
@@ -172,13 +173,13 @@ in [args]
 * `dts` = output sample spacing; s
 * `gtype` = trajectory type()
 
-option [CVs]
+# option [CVs]
 * `nl` = number of interleaves
 * `gamp` = design grad max; G/cm
 * `gslew` = design slew rate; mT/m/ms
 * `nramp` = number of rampdown points; default 0
 
-out
+# out
 * `Gx; Gy`
 
 time is in sec()

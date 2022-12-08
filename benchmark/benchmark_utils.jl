@@ -10,11 +10,11 @@ and ``\\otimes`` denotes the Kronecker product,
 but does it efficiently
 without using `spdiagm` (or any `SparseArrays` function).
 
-in
+# in
 - `X` `M × N` array (typically a 2D image).
 It cannot be a Vector! (But it can be a `M×1` or `1×N` 2D array.)
 
-out
+# out
 - `d` vector of length `N*(M-1) + (N-1)*M`
 """
 function diff2d_forw_old(x::AbstractMatrix{<:Number})
@@ -32,14 +32,14 @@ where `D_N` denotes the `N-1 × N` 1D finite difference matrix
 and `\\otimes` denotes the Kronecker product, but does it efficiently
 without using `spdiagm` (or any `SparseArrays` function).
 
-in
+# in
 - `d` vector of length `N*(M-1) + (N-1)*M`
 - `M,N` desired output size
 
-option
+# option
 - `out2d` if true then return `M × N` array, else `M*N` vector
 
-out
+# out
 - `z` `M*N` vector or `M × N` array (typically a 2D image)
 
 """

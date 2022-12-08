@@ -211,7 +211,7 @@ end
     omega, wi = mri_trajectory_gads(N, fov ; ...)
 Emulate 2D golden angle radial sampling with data sharing
 
-# option:
+# option
 * `Nro` # of samples in each readout/spoke
 * `shift` shift along read-out due to gradient delays (stress)
 * `kmax_frac` fractions of maximum krad (0.5) for rings (annuli)
@@ -258,7 +258,7 @@ end
 """
     mri_trajectory_radial()
 
-# option:
+# option
 * `na_nr` default ensures proper sampling at edge of k-space
 * `na` angular spokes; default: na_nr * nr
 * `nr` radial samples per spoke
@@ -296,7 +296,7 @@ end
     mri_trajectory_rosette3(N, fov ; ...)
 3d rosette, with default parameters from bucholz:08:miw
 
-# option:
+# option
 * `omax` maximum omega
 * `nt` time samples (65.536 ms for 4 usec dt)
 * `dt` time sample spacing (4 usec)

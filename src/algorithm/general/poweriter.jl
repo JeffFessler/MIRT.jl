@@ -15,16 +15,16 @@ Determine first right singular vector `v1`
 and first singular value `σ1` of `A`
 by applying power iteration to `A'A`
 
-in
+# in
 - `A` M × N matrix
 
-option
+# option
 - `niter` default 200
 - `x0` initial guess of `v1`
 - `tol` stopping tolerance for s1, default 1e-6
 - `chat::Bool` verbose? default false
 
-out
+# out
 - `v1` `[N]` principal right singular vector
 - `σ1` spectral norm of `A`
 """

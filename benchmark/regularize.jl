@@ -12,7 +12,7 @@ let sz=(2^7, 2^7+1)
     SUITE["diff_map"]["diff_forward"]["MIRT"] = @benchmarkable $Tnd * $x
 
     SUITE["diff_map"]["diff_adjoint"] = BenchmarkGroup()
-    SUITE["diff_map"]["diff_adjoint"]["baseline"] = @benchmarkable $T2d' * $d 
+    SUITE["diff_map"]["diff_adjoint"]["baseline"] = @benchmarkable $T2d' * $d
     SUITE["diff_map"]["diff_adjoint"]["MIRT"] = @benchmarkable $Tnd' * $d
 end
 
