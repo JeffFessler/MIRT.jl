@@ -9,14 +9,14 @@ export map_many
 """
     y = map_many(fun::Function, x::AbstractArray{<:Any}, idim::Dims)
 
-apply a function `fun` to leading slices of input `x`;
+Apply a function `fun` to leading slices of input `x`;
 cousin of `mapslices`
 
-in
+# in
 - `fun::Function` maps input of size `idim` to output of some size `odim`
 - `x [idim ldim]`
 
-out
+# out
 - `y [odim ldim]`
 
 Example: if `fun` maps array of size (1,2) to array of size (3,4,5)

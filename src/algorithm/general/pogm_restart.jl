@@ -9,15 +9,15 @@ using LinearAlgebra: norm
 
 
 function gr_restart(Fgrad, ynew_yold, restart_cutoff)
-	return sum(Float64, real(-Fgrad .* ynew_yold)) <=
-		restart_cutoff * norm(Fgrad) * norm(ynew_yold)
+    return sum(Float64, real(-Fgrad .* ynew_yold)) <=
+        restart_cutoff * norm(Fgrad) * norm(ynew_yold)
 end
 
 
 """
     x, out = pogm_restart(x0, Fcost, f_grad, f_L ;
-	f_mu=0, mom=:pogm, restart=:gr, restart_cutoff=0.,
-	bsig=1, niter=10, g_prox=(z,c)->z, fun=...)
+    f_mu=0, mom=:pogm, restart=:gr, restart_cutoff=0.,
+    bsig=1, niter=10, g_prox=(z,c)->z, fun=...)
 
 Iterative proximal algorithms (PGM=ISTA, FPGM=FISTA, POGM) with restart.
 
@@ -33,7 +33,7 @@ Iterative proximal algorithms (PGM=ISTA, FPGM=FISTA, POGM) with restart.
   - if `f_mu > 0`, ``(\\alpha, \\beta_k, \\gamma_k)`` is chosen by Table 1 in [KF18]
 - `g_prox` function `g_prox(z,c)` for the proximal operator for ``g(x)``
   - `g_prox(z,c)` computes ``argmin_x 1/2 \\|z-x\\|^2 + c \\, g(x)``
-- `mom`	momentum option
+- `mom` momentum option
   - `:pogm` POGM (fastest); default!
   - `:fpgm` (FISTA), ``\\gamma_k = 0``
   - `:pgm` PGM (ISTA), ``\\beta_k = \\gamma_k = 0``
@@ -45,10 +45,13 @@ Iterative proximal algorithms (PGM=ISTA, FPGM=FISTA, POGM) with restart.
 - `bsig` gradient "gamma" decrease option (value within [0 1]); default 1
   - see ``\\bar{\\sigma}`` in [KF18]
 - `niter` number of iterations; default 10
-- `fun` function`(iter, xk, yk, is_restart)` user-defined function evaluated each `iter` with secondary `xk`, primary `yk`, and boolean `is_restart` indicating whether this iteration was a restart
+- `fun` function`(iter, xk, yk, is_restart)`
+  user-defined function evaluated each `iter`
+  with secondary `xk`, primary `yk`,
+  and boolean `is_restart` indicating whether this iteration was a restart
 
 # out
-- `x`	final iterate
+- `x` final iterate
   - for PGM (ISTA): ``x_N = y_N``
   - for FPGM (FISTA): primary iterate ``y_N``
   - for POGM: secondary iterate ``x_N``, see [KF18]
@@ -115,149 +118,149 @@ function pogm_restart(
     fun::Function = (iter::Int, xk, yk, is_restart::Bool) -> undef,
 )
 
-	!in(mom, (:pgm, :fpgm, :pogm)) && throw(ArgumentError("mom $mom"))
-	!in(restart, (:none, :gr, :fr)) && throw(ArgumentError("restart $restart"))
-	f_L < 0 && throw(ArgumentError("f_L=$f_L < 0"))
-	f_mu < 0 && throw(ArgumentError("f_mu=$f_mu < 0"))
-	bsig < 0 && throw(ArgumentError("bsig=$bsig < 0"))
-	!((-1 < restart_cutoff) && (restart_cutoff < 1)) &&
-		throw(ArgumentError("restart_cutoff=$restart_cutoff"))
+    !in(mom, (:pgm, :fpgm, :pogm)) && throw(ArgumentError("mom $mom"))
+    !in(restart, (:none, :gr, :fr)) && throw(ArgumentError("restart $restart"))
+    f_L < 0 && throw(ArgumentError("f_L=$f_L < 0"))
+    f_mu < 0 && throw(ArgumentError("f_mu=$f_mu < 0"))
+    bsig < 0 && throw(ArgumentError("bsig=$bsig < 0"))
+    !((-1 < restart_cutoff) && (restart_cutoff < 1)) &&
+        throw(ArgumentError("restart_cutoff=$restart_cutoff"))
 
-	L = f_L
-	mu = f_mu
-	q = mu/L
+    L = f_L
+    mu = f_mu
+    q = mu/L
 
-	# initialize parameters
-	told = 1
-	sig = 1
-	zetaold = 1 # dummy
+    # initialize parameters
+    told = 1
+    sig = 1
+    zetaold = 1 # dummy
 
-	# initialize x
-	xold = x0
-	yold = x0
-	uold = x0
-	zold = x0
-	Fcostold = Fcost(x0)
-	Fgradold = zeros(size(x0)) # dummy
+    # initialize x
+    xold = x0
+    yold = x0
+    uold = x0
+    zold = x0
+    Fcostold = Fcost(x0)
+    Fgradold = zeros(size(x0)) # dummy
 
-	# save initial
-	out = Array{Any}(undef, niter+1)
-	out[1] = fun(0, x0, x0, false)
+    # save initial
+    out = Array{Any}(undef, niter+1)
+    out[1] = fun(0, x0, x0, false)
 
-	xnew = []
-	ynew = []
+    xnew = []
+    ynew = []
 
-# iterations
-for iter in 1:niter
+    # iterations
+    for iter in 1:niter
 
-	# proximal gradient (PGM) update
-	if mom === :pgm && mu != 0
-		alpha = 2. / (L+mu)
-	else
-		alpha = 1. / L
-	end
+        # proximal gradient (PGM) update
+        if mom === :pgm && mu != 0
+            alpha = 2. / (L+mu)
+        else
+            alpha = 1. / L
+        end
 
-	fgrad = f_grad(xold)
+        fgrad = f_grad(xold)
 
-	is_restart = false
+        is_restart = false
 
-	if mom === :pgm || mom === :fpgm
-		ynew = g_prox(xold - alpha * fgrad, alpha) # standard PG update
-		Fgrad = -(1. / alpha) * (ynew - xold) # standard composite gradient mapping
-		Fcostnew = Fcost(ynew)
+        if mom === :pgm || mom === :fpgm
+            ynew = g_prox(xold - alpha * fgrad, alpha) # standard PG update
+            Fgrad = -(1. / alpha) * (ynew - xold) # standard composite gradient mapping
+            Fcostnew = Fcost(ynew)
 
-		# restart condition
-		if restart != :none
-			# function/gradient restart
-			if ((restart === :fr && Fcostnew > Fcostold)
-			|| (restart === :gr && gr_restart(Fgrad, ynew-yold, restart_cutoff)))
-				told = 1
-				is_restart = true
-			end
-			Fcostold = Fcostnew
-		end
+            # restart condition
+            if restart != :none
+                # function/gradient restart
+                if ((restart === :fr && Fcostnew > Fcostold)
+                || (restart === :gr && gr_restart(Fgrad, ynew-yold, restart_cutoff)))
+                    told = 1
+                    is_restart = true
+                end
+                Fcostold = Fcostnew
+            end
 
-	elseif mom === :pogm # POGM
-		# gradient update for POGM [see KF18]
-		unew = xold - alpha * fgrad
-		# restart + "gamma" decrease conditions checked later for POGM,
-		# unlike PGM, FPGM above
+        elseif mom === :pogm # POGM
+            # gradient update for POGM [see KF18]
+            unew = xold - alpha * fgrad
+            # restart + "gamma" decrease conditions checked later for POGM,
+            # unlike PGM, FPGM above
 
-#	else
-#		throw("bad mom $mom")
-	end
+    #    else
+    #        throw("bad mom $mom")
+        end
 
-	# momentum coefficient "beta"
-	if mom === :fpgm && mu != 0 # known μ > 0
-		beta = (1 - sqrt(q)) / (1 + sqrt(q))
-	elseif mom === :pogm && mu != 0
-		beta = (2 + q - sqrt(q^2+8*q))^2 / 4. / (1-q)
-	# for "mu" = 0 or for unknown "mu"
-	elseif mom != :pgm
-		if mom === :pogm && iter == niter # && restart == 0
-			tnew = 0.5 * (1 + sqrt(1 + 8 * told^2))
-		else
-			tnew = 0.5 * (1 + sqrt(1 + 4 * told^2))
-		end
+        # momentum coefficient "beta"
+        if mom === :fpgm && mu != 0 # known μ > 0
+            beta = (1 - sqrt(q)) / (1 + sqrt(q))
+        elseif mom === :pogm && mu != 0
+            beta = (2 + q - sqrt(q^2+8*q))^2 / 4. / (1-q)
+        # for "mu" = 0 or for unknown "mu"
+        elseif mom != :pgm
+            if mom === :pogm && iter == niter # && restart == 0
+                tnew = 0.5 * (1 + sqrt(1 + 8 * told^2))
+            else
+                tnew = 0.5 * (1 + sqrt(1 + 4 * told^2))
+            end
 
-		beta = (told - 1) / tnew
-	end
+            beta = (told - 1) / tnew
+        end
 
-	# momentum update
-	if mom === :pgm
-		xnew = ynew
-	elseif mom === :fpgm
-		xnew = ynew + beta * (ynew - yold)
-	elseif mom === :pogm # see [KF18]
-		# momentum coefficient "gamma"
-		if mu != 0
-			gamma = (2 + q - sqrt(q^2+8*q)) / 2.
-		else
-			gamma = sig * told / tnew
-		end
+        # momentum update
+        if mom === :pgm
+            xnew = ynew
+        elseif mom === :fpgm
+            xnew = ynew + beta * (ynew - yold)
+        elseif mom === :pogm # see [KF18]
+            # momentum coefficient "gamma"
+            if mu != 0
+                gamma = (2 + q - sqrt(q^2+8*q)) / 2.
+            else
+                gamma = sig * told / tnew
+            end
 
-		znew = (unew + beta * (unew - uold) + gamma * (unew - xold)
-				- beta * alpha / zetaold * (xold - zold))
-		zetanew = alpha * (1 + beta + gamma)
-		xnew = g_prox(znew, zetanew) # non-standard PG update for POGM
+            znew = (unew + beta * (unew - uold) + gamma * (unew - xold)
+                    - beta * alpha / zetaold * (xold - zold))
+            zetanew = alpha * (1 + beta + gamma)
+            xnew = g_prox(znew, zetanew) # non-standard PG update for POGM
 
-		# non-standard composite gradient mapping for POGM:
-		Fgrad = fgrad - 1/zetanew * (xnew - znew)
-		ynew = xold - alpha * Fgrad
-		Fcostnew = Fcost(xnew)
+            # non-standard composite gradient mapping for POGM:
+            Fgrad = fgrad - 1/zetanew * (xnew - znew)
+            ynew = xold - alpha * Fgrad
+            Fcostnew = Fcost(xnew)
 
-		# restart + "gamma" decrease conditions for POGM
-		if restart != :none
-			# function/gradient restart
-			if ((restart === :fr && Fcostnew > Fcostold)
-			|| (restart === :gr && gr_restart(Fgrad, ynew-yold, restart_cutoff)))
-				tnew = 1
-				sig = 1
-				is_restart = true
+            # restart + "gamma" decrease conditions for POGM
+            if restart != :none
+                # function/gradient restart
+                if ((restart === :fr && Fcostnew > Fcostold)
+                || (restart === :gr && gr_restart(Fgrad, ynew-yold, restart_cutoff)))
+                    tnew = 1
+                    sig = 1
+                    is_restart = true
 
-			# gradient "gamma" decrease
-			elseif sum(Float64, real(Fgrad .* Fgradold)) < 0
-				sig = bsig * sig
-			end
+                # gradient "gamma" decrease
+                elseif sum(Float64, real(Fgrad .* Fgradold)) < 0
+                    sig = bsig * sig
+                end
 
-			Fcostold = Fcostnew
-			Fgradold = Fgrad
-		end
+                Fcostold = Fcostnew
+                Fgradold = Fgrad
+            end
 
-		uold = unew
-		zold = znew
-		zetaold = zetanew
-	end
+            uold = unew
+            zold = znew
+            zetaold = zetanew
+        end
 
-	out[iter+1] = fun(iter, xnew, ynew, is_restart) # save
+        out[iter+1] = fun(iter, xnew, ynew, is_restart) # save
 
-	xold = xnew
-	yold = ynew
+        xold = xnew
+        yold = ynew
 
-	if mom != :pgm && mu == 0
-		told = tnew
-	end
-end # for iter
+        if mom != :pgm && mu == 0
+            told = tnew
+        end
+    end # for iter
 
-	return ((mom === :pogm) ? xnew : ynew), out
+    return ((mom === :pogm) ? xnew : ynew), out
 end # pogm_restart()

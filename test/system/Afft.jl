@@ -1,4 +1,4 @@
-# test/Afft.jl
+# test/system/Afft.jl
 
 using MIRT: Afft, embed
 

@@ -1,4 +1,4 @@
-# mri/z-test.jl
+# test/mri/z-test.jl
 
 using Test: @testset
 
@@ -13,9 +13,9 @@ list = [
 ]
 
 for file in list
-	@testset "$file" begin
-		include(file)
-	end
+    @testset "$file" begin
+        include(file)
+    end
 end
 
 @test_throws String MIRT.mri_objects()

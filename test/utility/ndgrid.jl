@@ -1,4 +1,4 @@
-# ndgrid.jl
+# test/utility/ndgrid.jl
 
 using MIRT: ndgrid
 

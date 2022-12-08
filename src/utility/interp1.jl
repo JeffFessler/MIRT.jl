@@ -25,13 +25,14 @@ other options from Interpolations.jl are `Line()` `Periodic()` `Reflect()` `Thro
 Output is same size as input `xi`
 """
 function interp1(x::AbstractVector{<:Real}, y::AbstractVector{<:Number}, xi ;
-		how::Interpolations.InterpolationType = Gridded(Linear()),
-		extrap::Any = 0)
-#		extrap::Union{<:Interpolations.BoundaryCondition, <:Number} = 0 # fails?
+    how::Interpolations.InterpolationType = Gridded(Linear()),
+    extrap::Any = 0,
+#   extrap::Union{<:Interpolations.BoundaryCondition, <:Number} = 0 # fails?
+)
 
-	fun = interpolate((x,), y, how)
-	if !isnothing(extrap)
-		fun = extrapolate(fun, extrap)
-	end
-	fun.(xi)
+    fun = interpolate((x,), y, how)
+    if !isnothing(extrap)
+        fun = extrapolate(fun, extrap)
+    end
+    fun.(xi)
 end

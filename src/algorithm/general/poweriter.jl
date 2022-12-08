@@ -15,16 +15,16 @@ Determine first right singular vector `v1`
 and first singular value `σ1` of `A`
 by applying power iteration to `A'A`
 
-in
+# in
 - `A` M × N matrix
 
-option
+# option
 - `niter` default 200
 - `x0` initial guess of `v1`
 - `tol` stopping tolerance for s1, default 1e-6
 - `chat::Bool` verbose? default false
 
-out
+# out
 - `v1` `[N]` principal right singular vector
 - `σ1` spectral norm of `A`
 """
@@ -36,18 +36,18 @@ function poweriter(
     chat::Bool = true,
 )
 
-	x = copy(x0)
-	ratio_old = Inf
-	for iter in 1:niter
-		Ax = A * x
-		ratio = norm(Ax) / norm(x)
-		if abs(ratio - ratio_old) / ratio < tol
-			chat && @info "done at iter $iter"
-			break
-		end
-		ratio_old = ratio
-		x = A' * Ax
-		x /= norm(x)
-	end
-	return x, norm(A * x) / norm(x)
+    x = copy(x0)
+    ratio_old = Inf
+    for iter in 1:niter
+        Ax = A * x
+        ratio = norm(Ax) / norm(x)
+        if abs(ratio - ratio_old) / ratio < tol
+            chat && @info "done at iter $iter"
+            break
+        end
+        ratio_old = ratio
+        x = A' * Ax
+        x /= norm(x)
+    end
+    return x, norm(A * x) / norm(x)
 end

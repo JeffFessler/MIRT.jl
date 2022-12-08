@@ -1,6 +1,4 @@
-#=
-rect.jl
-=#
+# test/utility/rect.jl
 
 using MIRT: rect
 

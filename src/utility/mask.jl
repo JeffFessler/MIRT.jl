@@ -41,7 +41,7 @@ compress 3D mask to 2D by logical `or` along `z` direction
 """
 @inline mask_or(mask::AbstractArray{Bool,2}) = mask
 mask_or(mask::AbstractArray{Bool,3}) =
-	dropdims(sum(mask, dims=3) .> 0, dims=3)
+    dropdims(sum(mask, dims=3) .> 0, dims=3)
 mask_or(mask::AbstractArray{Bool}) = throw("ndims(mask) = $(ndims(mask))")
 
 
@@ -51,9 +51,9 @@ mask_or(mask::AbstractArray{Bool}) = throw("ndims(mask) = $(ndims(mask))")
 return outer boundary of 2D mask (or mask_or for 3D)
 """
 function mask_outline(mask::AbstractMatrix{Bool})
-	tmp = imfilter(mask, centered(ones(Int32,3,3))) # dilate
-#	tmp = tmp[2:end-1,2:end-1] # 'same'
-	return (tmp .> 1) .& (.! mask)
+    tmp = imfilter(mask, centered(ones(Int32,3,3))) # dilate
+#   tmp = tmp[2:end-1,2:end-1] # 'same'
+    return (tmp .> 1) .& (.! mask)
 end
 mask_outline(mask::AbstractArray{Bool,3}) = mask_outline(mask_or(mask))
 
@@ -68,7 +68,7 @@ setting the remaining elements to `filler` (default 0).
 embed!(array::AbstractArray{T,D}, v::AbstractVector{<:Number},
     mask::AbstractArray{Bool,D} ; filler::T = zero(T)
 ) where {T, D} =
-	setindex!(fill!(array, filler), v, mask)
+    setindex!(fill!(array, filler), v, mask)
 
 
 """
@@ -78,8 +78,8 @@ embed vector `v` of length `sum(mask)`
 into elements of an array where `mask` is `true`; see `embed!`.
 """
 embed(v::AbstractVector{T}, mask::AbstractArray{Bool} ;
-	filler::Number = zero(T)) where {T <: Number} =
-	embed!(fill(filler, size(mask)), v, mask)
+    filler::Number = zero(T)) where {T <: Number} =
+    embed!(fill(filler, size(mask)), v, mask)
 
 
 """
@@ -94,12 +94,12 @@ Out:
 * `array [(N) L]`
 """
 function embed(x::AbstractMatrix{<:Number}, mask::AbstractArray{Bool})
-	L = size(x,2)
-	out = zeros(eltype(x), prod(size(mask)), L)
-	for l=1:L
-		out[:,l] = vec(embed(x[:,l], mask))
-	end
-	reshape(out, size(mask)..., L)
+    L = size(x,2)
+    out = zeros(eltype(x), prod(size(mask)), L)
+    for l in 1:L
+        out[:,l] = vec(embed(x[:,l], mask))
+    end
+    reshape(out, size(mask)..., L)
 end
 
 
@@ -109,12 +109,14 @@ this is needed only for "unpacking" sparse system matrices so ignore for now
 # image_geom_embed_sparse
 # called by image_geom_embed
 # function _embed_sparse(x::Array{T}) where {T <: Number}
-function embed(x::AbstractSparseVector{<:Number},
-				mask::AbstractArray{Bool,N} where N)
-	i, v = findnz(x)
-	ind = findall(mask)
-	j = ind(j)
-	return sparsevec(i, j, a, size(x,1), length(mask))
+function embed(
+    x::AbstractSparseVector{<:Number},
+    mask::AbstractArray{Bool,N} where N,
+)
+    i, v = findnz(x)
+    ind = findall(mask)
+    j = ind(j)
+    return sparsevec(i, j, a, size(x,1), length(mask))
 end
 =#
 
@@ -125,12 +127,12 @@ end
 opposite of embed
 """
 function maskit(x::AbstractArray{<:Number}, mask::AbstractArray{Bool})
-	dim = size(x)
-	((ndims(x) >= ndims(mask)) && (size(x)[1:ndims(mask)] == size(mask))) ||
-		throw(DimensionMismatch("size x $(size(x)) vs mask $(size(mask))"))
-	x = reshape(x, length(mask), :)
-	x = x[vec(mask),:] # reshape(mask, prod(_dim()))]
-	return length(dim) == ndims(mask) ?
-		dropdims(x, dims=2) : # squeeze
-		reshape(x, :, dim[(1+ndims(mask)):end]...)
+    dim = size(x)
+    ((ndims(x) >= ndims(mask)) && (size(x)[1:ndims(mask)] == size(mask))) ||
+        throw(DimensionMismatch("size x $(size(x)) vs mask $(size(mask))"))
+    x = reshape(x, length(mask), :)
+    x = x[vec(mask),:] # reshape(mask, prod(_dim()))]
+    return length(dim) == ndims(mask) ?
+        dropdims(x, dims=2) : # squeeze
+        reshape(x, :, dim[(1+ndims(mask)):end]...)
 end

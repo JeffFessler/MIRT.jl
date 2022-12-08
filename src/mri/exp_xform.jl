@@ -14,13 +14,13 @@ export exp_xform
 """
     exp_xform(x, u, v ; mode::Symbol = :matrix)
 
-in:
+# in
 * `x [N L]` possibly complex vector(s)
 * `u [D N]` possibly complex vectors
 * `v [D M]` possibly complex vectors
 * `mode::Symbol` `:matrix` (default) | `:element` | `:row` | `:column`
 
-out:
+# out
 * `y [M L]` typically complex vector
  `y[m,l] = sum_n x[n,l] exp(-sum(u[:,n] .* v[:,m]))`
 
@@ -47,8 +47,8 @@ function exp_xform(x::AbstractMatrix{<:Number},
     elseif (mode === :element)
         # avoid generating intermediate steps by iterating thru N and M
         # dot the columns
-        for n = 1:N
-            for m = 1:M
+        for n in 1:N
+            for m in 1:M
                 t = transpose(u[:,n]) * v[:,m] #calculate one spot in the array
                 out[m,:] .+= (exp.(-t) .* x[n,:])
             end
@@ -56,7 +56,7 @@ function exp_xform(x::AbstractMatrix{<:Number},
         return out
 
     elseif (mode === :row) # iterate through rows of the large matrix
-        for m = 1:M
+        for m in 1:M
             t = transpose(v[:,m]) * u # [1 D] * [D N] -> [1 N]
             # m == 1 && @show size(t), size(exp.(-t) * x)
             # product is a 2d matrix (row), but should be a column vector:
@@ -65,7 +65,7 @@ function exp_xform(x::AbstractMatrix{<:Number},
         return out
 
     elseif (mode === :column)
-        for n = 1:N
+        for n in 1:N
             t = transpose(v) * u[:,n] # [M D] * [D .] -> [M]
             # n == 1 && @show size(t), size(x[n,:])
             out .+= (exp.(-t) * transpose(x[n,:])) # outer product [M 1] * [1 L]

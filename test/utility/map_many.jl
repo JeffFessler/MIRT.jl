@@ -1,4 +1,4 @@
-# map_many.jl
+# test/utility/map_many.jl
 
 using MIRT: map_many
 

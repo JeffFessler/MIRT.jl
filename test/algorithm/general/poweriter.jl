@@ -1,4 +1,4 @@
-# poweriter.jl
+# test/algorithm/general/poweriter.jl
 
 using MIRT: poweriter
 

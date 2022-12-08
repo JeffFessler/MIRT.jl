@@ -1,4 +1,4 @@
-# coil_compress.jl
+# test/mri/coil_compress.jl
 
 using MIRT: ir_mri_coil_compress
 using MIRTjim: jim, prompt
@@ -29,8 +29,8 @@ idata = idata + σ * randn(ComplexF32, size(idata))
 nkeep = 4
 #@inferred ir_mri_coil_compress(idata, ncoil = nkeep) # todo: fails
 (odata, σ, _) = ir_mri_coil_compress(idata, ncoil = nkeep)
-for iz=1:nkeep # normalize for display
-	odata[:,:,iz] = odata[:,:,iz] / maximum(abs.(odata[:,:,iz]))
+for iz in 1:nkeep # normalize for display
+    odata[:,:,iz] = odata[:,:,iz] / maximum(abs.(odata[:,:,iz]))
 end
 p = scatter(1:nkeep, σ[1:nkeep], marker=:circle, label="")
 scatter!(p, (nkeep+1):ncoil, σ[nkeep+1:ncoil], marker=:x, label="")

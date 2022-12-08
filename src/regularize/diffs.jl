@@ -46,14 +46,14 @@ without using `spdiagm` (or any `SparseArrays` function).
 
 Input dimension `N` must exceed `1` for each dimension specified by `dims`.
 
-in
+# in
 - `X` `N_1 × ... × N_d` array (typically an N-D image).
 
-option
+# option
 - `dims` dimension(s) for performing finite differences; default `1:ndims(X)`
 must have unique elements and be a nonempty subset of `1:ndims(X)`
 
-out
+# out
 - `d` vector of default length `N_d*...*(N_1-1) + ... + (N_d-1)*...*N_1`
 """
 function diff_forw(x::AbstractArray{<:Number,D} ; dims = 1:D) where {D}
@@ -72,14 +72,14 @@ where `D_N` denotes the `N-1 × N` 1D finite difference matrix
 and `⊗` denotes the Kronecker product,
 but does it efficiently without using `spdiagm` (or any `SparseArrays` function).
 
-in
+# in
 - `dx` vector of typical length `N_d*...*(N_1-1) + ... + (N_d-1)*...*N_1`
 - `N::Dims` desired output size
 
-option
+# option
 - `dims` dimension(s) for performing adjoint finite differences; default `1:ndims(X)`
 
-out
+# out
 - `Z` `N_1 × ... × N_d` array by default
 
 """
@@ -129,10 +129,10 @@ end
 """
     T = diff_map(N::Dims{D} ; dims = 1:D)
 
-in
+# in
 - `N::Dims` image size
 
-out
+# out
 - `T` `LinearMapAA` object for computing finite differences via `T*x`
 """
 function diff_map(N::Dims{D} ; dims = 1:D) where {D}

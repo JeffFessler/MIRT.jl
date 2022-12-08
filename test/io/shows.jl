@@ -1,4 +1,4 @@
-# shows.jl
+# test/io/shows.jl
 
 using MIRT: @shows
 using Test: @test

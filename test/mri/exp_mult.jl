@@ -1,4 +1,4 @@
-# exp_mult.jl
+# test/mri/exp_mult.jl
 
 using MIRT: exp_mult
 using MIRT: exp_xform

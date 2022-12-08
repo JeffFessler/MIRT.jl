@@ -1,4 +1,4 @@
-# exp_xform.jl
+# test/mri/exp_xform.jl
 
 using MIRT: exp_xform
 using Test: @test, @test_throws, @inferred
@@ -45,5 +45,5 @@ end
 @test_throws String exp_xform(ones(2,2), ones(2,2), ones(2,2) ; mode=:bad)
 
 # for T in (ComplexF32, ComplexF64)
-	@test exp_xform_test() # T=T
+    @test exp_xform_test() # T=T
 # end

@@ -1,4 +1,4 @@
-# interp1.jl
+# test/utility/interp1.jl
 
 using MIRT: interp1
 

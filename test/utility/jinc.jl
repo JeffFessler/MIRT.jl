@@ -1,4 +1,4 @@
-# jinc.jl
+# test/utility/jinc.jl
 
 using MIRT: jinc
 
