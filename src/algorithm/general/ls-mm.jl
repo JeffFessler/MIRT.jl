@@ -8,8 +8,13 @@ export line_search_mm
 
 using LinearAlgebra: dot
 
+_dot_gradf(∇f::Function) = (v,z) -> dot(v, ∇f(z))
+_dot_curvf(cf::Function) = (v,z) -> dot(abs2.(v), cf(z))
+
+
 # this will fail (as it should) if the units of uj and vj are incompatible
-_ls_mm_worktype(uj, vj, α::Real) = typeof(oneunit(eltype(uj)) + α * oneunit(eltype(uj)))
+_ls_mm_worktype(uj, vj, α::Real) =
+    typeof(oneunit(eltype(uj)) + α * oneunit(eltype(vj)))
 #=
     promote_type(
         eltype(u[j]),
@@ -78,7 +83,6 @@ mutable struct LineSearchMMState{
         vv::Tv,
         dot_gradf::Tg,
         dot_curvf::Tc,
-        ;
         α::Tα = 0f0,
         work::Tw = LineSearchMMWork(uu, vv, α),
     ) where {
@@ -107,7 +111,7 @@ end
 # MM-based line search for step size α
 # using h(α) = sum_j f_j(uj + α vj)
 # \dot{h}(α) = sum_j v_j' * ∇f_j(u_j + α v_j)
-function _update(state::LineSearchMMState)
+function _update!(state::LineSearchMMState)
     uu = state.uu
     vv = state.vv
     zz = state.work.zz
@@ -118,8 +122,8 @@ function _update(state::LineSearchMMState)
     for j in eachindex(zz) # todo: parfor
         @. zz[j] = uu[j] + α * vv[j]
     end
-    derh = sum(j -> real(dot_gradf(vv[j], zz[j])), eachindex(zz))
-    curv = sum(j -> dot_curvf(vv[j], zz[j]), eachindex(zz))
+    derh = sum(j -> real(dot_gradf[j](vv[j], zz[j])), eachindex(zz))
+    curv = sum(j -> dot_curvf[j](vv[j], zz[j]), eachindex(zz))
     curv < 0 && error("bug: curv=$curv < 0")
     if curv > 0
         state.α -= derh / curv
@@ -161,7 +165,7 @@ but we allow more general domains.
 - `out::Union{Nothing,Vector{Any}} = nothing`
   optional place to store result of `fun`:
   `fun(state,0), fun(state,1), ..., fun(state,ninner))`.
-   (All `missing by default.) This is a vector of length `niter+1`.
+   (All `missing by default.) This is a vector of length `ninner+1`.
 - `work = LineSearchMMWork(u, v, α)` pre-allocated work space for ``u_j+α v_j``
 
 # output
@@ -176,28 +180,26 @@ function line_search_mm(
     curvf::AbstractVector{<:Function}, # ignored if dot_curvf provided
     ;
     α0::Real = 0f0,
-    work::Tw = LineSearchMMWork(u, v, α),
+    work::Tw = LineSearchMMWork(uu, vv, α0),
     out::Union{Nothing,Vector{Any}} = nothing,
     ninner::Int = 5,
     fun::Function = (state,iter) -> missing,
 # todo docs for these
 # default is allocating!
 # todo: first time called, allocate work space then reuse
-    dot_gradf::AbstractVector{<:Function} =
-        [(v,z) -> dot(v, gradf[j](z)) for j in eachindex(gradf)],
-    dot_curvf::AbstractVector{<:Function} =
-        [(v,z) -> dot(abs2.(v), curvf[j](z)) for j in eachindex(curvf)],
+    dot_gradf::AbstractVector{<:Function} = _dot_gradf.(gradf),
+    dot_curvf::AbstractVector{<:Function} = _dot_curvf.(curvf),
 ) where {Tw <: LineSearchMMWork}
 
     !isnothing(out) && length(out) < ninner+1 && throw("length(out) < $(ninner+1)")
 
-    state = LineSearchMMState(uu, vv, dot_gradf, curvf, work, α0)
+    state = LineSearchMMState(uu, vv, dot_gradf, dot_curvf, α0, work)
     if !isnothing(out)
         out[1] = fun(state, 0)
     end
 
     for iter in 1:ninner
-        _update(state)
+        _update!(state)
         if !isnothing(out)
              out[iter+1] = fun(state, iter)
         end
