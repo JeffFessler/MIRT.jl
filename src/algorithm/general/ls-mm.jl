@@ -4,11 +4,49 @@ Line-search based on majorize-minimize (MM) approach
 =#
 
 export line_search_mm
-# todo: compare to LineSearches: ls HagerZhang MoreThuente BackTracking StrongWolfe Static
 
 using LinearAlgebra: dot
 
-_dot_gradf(∇f::Function) = (v,z) -> dot(v, ∇f(z))
+#_ismutating(f) = first(methods(f)).nargs == 3
+
+"""
+    _dot_gradf(g!::Function, x::Tg; g::Tg = )
+Given an in-place gradient function `g!(g, x)`
+that returns the gradient `g` of type `Tg`,
+return a function
+`(v, z) -> dot(v, g!(g, z))`
+used in line-search methods.
+
+# in
+- `g!` a two-argument function of the form `g!(g, x)`
+  that computes the gradient of some real-valued function `f`
+  and stores the result in `g`
+- `x` an array whose `size` and `eltype` is used to allocate `g`
+
+# option
+- `g = similar(x)` work space for gradient calculation
+
+# out
+- `(v, z) -> dot(v, g!(g, z))`
+
+If `g!` is not a mutating function,
+then it returns the (allocating) version
+`(v, z) -> dot(v, g!(z))`.
+"""
+function _dot_gradf(g!::Function, x; g = similar(x))
+    narg = first(methods(g!)).nargs
+    narg == 3 || error("g! needs '(g,x)' arguments for mutating version!")
+    return (v, z) -> dot(v, g!(g, z))
+end
+
+function _dot_gradf(∇f::Function)
+    narg = first(methods(∇f)).nargs
+    narg == 3 && error("need 'x' argument for mutating version!")
+    narg == 2 || error("∇f needs one argument")
+    return (v, z) -> dot(v, ∇f(z))
+end
+
+#_dot_gradf(∇f::Function) = (v,z) -> dot(v, ∇f(z))
 _dot_curvf(cf::Function) = (v,z) -> dot(abs2.(v), cf(z))
 
 
