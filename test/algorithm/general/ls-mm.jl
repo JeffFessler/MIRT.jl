@@ -37,14 +37,14 @@ end
     ddims = [(3,2), (5,4)]
     Tf = Float32
     Tc = complex(Tf)
-    u2 = [randn(Tf, d) for d in ddims]
+    uu = [randn(Tf, d) for d in ddims]
     vv = [randn(Tc, d) for d in ddims]
 
     yy = Any[randn(Tc, ddims[1]), Tf(7)]
     aa = Tc[1+2im, 9]
     ff = [
-        u -> 0.5 * sum(abs2, aa[1] * u .- yy[1]),
-        u -> 0.5 * sum(abs2, aa[2] * u .- yy[2]),
+        u -> 0.5f0 * sum(abs2, aa[1] * u .- yy[1]),
+        u -> 0.5f0 * sum(abs2, aa[2] * u .- yy[2]),
     ]
     cost(α) = sum(j -> ff[j](uu[j] + α * vv[j]), eachindex(uu))
     gradf = [u -> aa[1]' * (aa[1] * u .- yy[1]),

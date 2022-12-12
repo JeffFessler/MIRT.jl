@@ -7,47 +7,86 @@ export line_search_mm
 
 using LinearAlgebra: dot
 
-#_ismutating(f) = first(methods(f)).nargs == 3
 
 """
-    _dot_gradf(g!::Function, x::Tg; g::Tg = )
-Given an in-place gradient function `g!(g, x)`
-that returns the gradient `g` of type `Tg`,
-return a function
-`(v, z) -> dot(v, g!(g, z))`
-used in line-search methods.
+    _dot_gradf(grad::Function, x = nothing; g = similar(x))
+
+Return a function for computing
+a dot product between an array
+and the gradient of some real-valued function,
+typically for use in a line-search method.
+
+- For a single-argument gradient function `grad(x)`,
+  this returns the (allocating) version
+  `(v, z) -> dot(v, grad(z))`.
+
+- For a two-argument in-place gradient function `grad!(g, x)`,
+  this returns a function
+  `(v, z) -> dot(v, grad!(g, z))`
+   using `g` as the work space.
 
 # in
-- `g!` a two-argument function of the form `g!(g, x)`
-  that computes the gradient of some real-valued function `f`
-  and stores the result in `g`
+- `grad::Function` see above
 - `x` an array whose `size` and `eltype` is used to allocate `g`
 
 # option
 - `g = similar(x)` work space for gradient calculation
 
 # out
-- `(v, z) -> dot(v, g!(g, z))`
-
-If `g!` is not a mutating function,
-then it returns the (allocating) version
-`(v, z) -> dot(v, g!(z))`.
+- `(v, z) -> dot(v, grad([g,] z))`
 """
 function _dot_gradf(g!::Function, x; g = similar(x))
-    narg = first(methods(g!)).nargs
-    narg == 3 || error("g! needs '(g,x)' arguments for mutating version!")
+    narg = first(methods(g!)).nargs - 1
+    narg == 2 || error("g! needs '(g,x)' arguments for mutating version!")
     return (v, z) -> dot(v, g!(g, z))
 end
 
 function _dot_gradf(∇f::Function)
-    narg = first(methods(∇f)).nargs
-    narg == 3 && error("need 'x' argument for mutating version!")
-    narg == 2 || error("∇f needs one argument")
+    narg = first(methods(∇f)).nargs - 1
+    narg == 2 && error("need 'x' argument for mutating version!")
+    narg == 1 || error("∇f needs one argument")
+# todo: would `g .= grad(f)` always allocate?
     return (v, z) -> dot(v, ∇f(z))
 end
 
-#_dot_gradf(∇f::Function) = (v,z) -> dot(v, ∇f(z))
-_dot_curvf(cf::Function) = (v,z) -> dot(abs2.(v), cf(z))
+# _dot_curvf(cf::Function) = (v,z) -> dot(abs2.(v), cf(z))
+
+# todo: handle the case where cf returns a constant: cf(x) * sum(abs2, v)
+
+"""
+    _dot_curvf(cf!::Function, x; c = similar(x))
+todo
+"""
+function _dot_curvf(cf!::Function, x; c = similar(x))
+    narg = first(methods(cf!)).nargs - 1
+    narg == 2 || error("need cf! needs '(c,x)' arguments for mutating version!")
+    return (v, z) -> dot(v, cf!(c, z))
+end
+
+function _dot_curvf(cf::Function)
+    narg = first(methods(cf)).nargs - 1
+    narg == 2 && error("need 'x' argument for mutating version!")
+    narg == 1 || error("cf needs one argument")
+# todo: would `c .= cf(f)` always allocate?
+    return (v,z) -> dot(abs2.(v), cf(z))
+end
+
+#=
+type inference issues:
+function _dot_gradf(
+    grad::Function,
+    x = nothing,
+    ;
+    g = isnothing(x) ? nothing : similar(x),
+)
+    narg = first(methods(grad)).nargs - 1
+    narg ∈ (1,2) || error("bad narg=$narg")
+    narg == 1 && (!isnothing(x) || !isnothing(g)) && @warn("ignoring x,g")
+    narg == 2 && (isnothing(x) || isnothing(g) || axes(x) != axes(g) || eltype(x) != eltype(g)) &&
+        error("grad!(g,f) requires 'x' argument")
+    return narg == 1 ? (v, z) -> dot(v, grad(z)) : (v, z) -> dot(v, grad(g, z))
+end
+=#
 
 
 # this will fail (as it should) if the units of uj and vj are incompatible
@@ -62,7 +101,7 @@ _ls_mm_worktype(uj, vj, α::Real) =
 =#
 
 
-""" 
+"""
     LineSearchMMWork{Tz <: AbstractVector{<:AbstractArray}}
 
 Workspace for storing ``z_j = u_j + α v_j`` in MM-based line search.
@@ -74,7 +113,7 @@ But for Unitful data they could have different eltypes and sizes,
 which would require a lot of ``reinterpret`` and ``reshape`` to handle.
 So for now it is easier
 to just allocate separate work arrays for each `j`.
-""" 
+"""
 mutable struct LineSearchMMWork{Tz <: AbstractVector{<:AbstractArray}}
     zz::AbstractVector{<:AbstractArray}
 
@@ -95,11 +134,11 @@ mutable struct LineSearchMMWork{Tz <: AbstractVector{<:AbstractArray}}
 end
 
 
-""" 
+"""
     LineSearchMMState{...}
 
 Mutable struct for MM-based line searches.
-""" 
+"""
 mutable struct LineSearchMMState{
     Tu <: AbstractVector{<:AbstractArray},
     Tv <: AbstractVector{<:AbstractArray},
