@@ -9,33 +9,48 @@ using LinearAlgebra: dot
 
 
 """
-    _dot_gradf(grad::Function, x = nothing; g = similar(x))
+    _dot_gradf(grad::Function, x = nothing; g = similar(x), Tf::DataType)
 
 Return a function for computing
 a dot product between an array
-and the gradient of some real-valued function,
+and the gradient of some real-valued function `f(x)`,
 typically for use in a line-search method.
 
 - For a single-argument gradient function `grad(x)`,
   this returns the (allocating) version
   `(v, z) -> dot(v, grad(z))`.
 
-- For a two-argument in-place gradient function `grad!(g, x)`,
+- For a two-argument mutating gradient function `grad!(g, x)`,
   this returns a function
   `(v, z) -> dot(v, grad!(g, z))`
-   using `g` as the work space.
+   using `g` as the work array.
+
+If `f(x)` maps an Array `x`
+of elements with units `X`
+into real numbers with units `F`,
+then the gradient `g` has units `F/X`.
+Those units are relevant to defining the work array `g`.
 
 # in
 - `grad::Function` see above
 - `x` an array whose `size` and `eltype` is used to allocate `g`
 
 # option
-- `g = similar(x)` work space for gradient calculation
+- `Tf::DataType = typeof(one(eltype(x)))`
+  Specify `eltype` of function `f(x)`, defaulting to unitless.
+- `g = similar(x,  typeof(oneunit(Tf) / oneunit(eltype(x))))`
+  work space for gradient calculation, with appropriate units (if needed).
 
 # out
 - `(v, z) -> dot(v, grad([g,] z))`
 """
-function _dot_gradf(g!::Function, x; g = similar(x))
+function _dot_gradf(
+    g!::Function,
+    x,
+    ;
+    Tf::DataType = typeof(one(eltype(x))),
+    g = similar(x, typeof(oneunit(Tf) / oneunit(eltype(x)))),
+)
     narg = first(methods(g!)).nargs - 1
     narg == 2 || error("g! needs '(g,x)' arguments for mutating version!")
     return (v, z) -> dot(v, g!(g, z))
@@ -45,7 +60,6 @@ function _dot_gradf(∇f::Function)
     narg = first(methods(∇f)).nargs - 1
     narg == 2 && error("need 'x' argument for mutating version!")
     narg == 1 || error("∇f needs one argument")
-# todo: would `g .= grad(f)` always allocate?
     return (v, z) -> dot(v, ∇f(z))
 end
 
