@@ -1,7 +1,8 @@
 # test/algorithm/general/ls-mm.jl
 
 using MIRT: line_search_mm
-using MIRT: LineSearchMMWork, LineSearchMMState, _dot_gradf, _dot_curvf
+using MIRT: make_dot_gradf, make_dot_curvf
+using MIRT: LineSearchMMWork, LineSearchMMState
 using LinearAlgebra: norm, dot
 using Unitful: m
 using Test: @test, @testset, @test_throws, @inferred
@@ -25,10 +26,10 @@ end
 
     gradf = [identity, identity]
     curvf = [z -> ones(size(z)), z -> zeros(size(z))]
-    @inferred _dot_gradf(gradf[1])
-    @inferred _dot_curvf(curvf[1])
+    @inferred make_dot_gradf(gradf[1])
+    @inferred make_dot_curvf(curvf[1])
     state = @inferred LineSearchMMState(
-        uu, vv, _dot_gradf.(gradf), _dot_curvf.(curvf),
+        uu, vv, make_dot_gradf.(gradf), make_dot_curvf.(curvf),
     )
 end
 
