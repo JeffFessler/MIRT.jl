@@ -9,6 +9,7 @@ using LinearAlgebra: dot
 
 _narg(fun::Function) = first(methods(fun)).nargs - 1
 
+Vcurv = AbstractVector{<:Any} # think Union{Function,RealU}
 
 # this will fail (as it should) if the units of uj and vj are incompatible
 _ls_mm_worktype(uj, vj, α::Real) =
@@ -64,7 +65,7 @@ mutable struct LineSearchMMState{
     Tu <: AbstractVector{<:AbstractArray},
     Tv <: AbstractVector{<:AbstractArray},
     Tg <: AbstractVector{<:Function},
-    Tc <: AbstractVector{<:Union{Function,RealU}},
+    Tc <: AbstractVector{<:Any},
 #   Tw <: AbstractVector{<:AbstractArray},
     Tw <: LineSearchMMWork,
     Tα <: Real,
@@ -87,7 +88,7 @@ mutable struct LineSearchMMState{
         Tu <: AbstractVector{<:AbstractArray},
         Tv <: AbstractVector{<:AbstractArray},
         Tg <: AbstractVector{<:Function},
-        Tc <: AbstractVector{<:Union{Function,RealU}},
+        Tc <: AbstractVector{<:Any},
         Tw <: LineSearchMMWork,
         Tα <: Real,
     }
@@ -99,7 +100,8 @@ mutable struct LineSearchMMState{
         all(j -> _ls_mm_worktype(uu[j], vv[j], α) == eltype(work.zz[j]), eachindex(uu)) ||
             error("incompatible work type")
 
-        new{Tu, Tv, Tg, Tc, Tw, Tα}(uu, vv, dot_gradf, dot_curvf, work, α)
+        Tαp = promote_type(Tα, typeof(one(Float32)*oneunit(Tα)))
+        new{Tu, Tv, Tg, Tc, Tw, Tαp}(uu, vv, dot_gradf, dot_curvf, work, α)
     end
 end
 
@@ -179,7 +181,7 @@ function line_search_mm(
     uu::AbstractVector{<:Any},
     vv::AbstractVector{<:Any},
     gradf::AbstractVector{<:Function}, # ignored if dot_gradf provided
-    curvf::AbstractVector{<:Union{Function,Number}}, # ignored if dot_curvf provided
+    curvf::AbstractVector{<:Any}, # ignored if dot_curvf provided
     ;
     α0::Real = 0f0,
     work::Tw = LineSearchMMWork(uu, vv, α0),
