@@ -226,6 +226,16 @@ pa = plot(h, xlabel="α", ylabel="h(α)", xlims=(-1, 3), ylims=(0,100))
 gradf = [u -> u - y, u -> β * dψ.(u)] # key ingredients!
 curvf = [1, u -> β * ωψ.(u)]
 
+# faster? version of key ingredients! todo time
+gradf = [
+    u -> Iterators.map(Base.splat(-), zip(u,y)), # u - y
+    u -> Iterators.map(Base.Fix1(*,β) ∘ dψ, u), # β * dψ.(u)
+]
+curvf = [
+    1,
+    u -> Iterators.map(Base.Fix1(*,β) ∘ ωψ, u), # β * ωψ.(u)
+]
+
 uu = [A * x, x]
 vv = [A * d, d]
 fun(state, iter) = state.α
