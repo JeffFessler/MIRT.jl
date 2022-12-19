@@ -30,8 +30,8 @@ This page was generated from a single Julia file:
 
 using Plots; default(markerstrokecolor = :auto, label="")
 using MIRTjim: prompt
-using MIRT: line_search_mm
-using LinearAlgebra: norm
+using MIRT: line_search_mm, LineSearchMMWork
+using LinearAlgebra: norm, dot
 using Random: seed!; seed!(0)
 using InteractiveUtils: versioninfo
 
@@ -204,43 +204,63 @@ and
 Set up an example and plot ``h(α)``.
 =#
 
-M, N = 20, 10
+using BenchmarkTools: @btime # todo ndgrid
+
+# Fair potential, its derivative and Huber weighting function
+function fair_pot()
+    fpot(z,δ) = δ^2 * (abs(z/δ) - log(1 + abs(z/δ)))
+    dpot(z,δ) = z / (1 + abs(z/δ))
+    wpot(z,δ) = 1 / (1 + abs(z/δ))
+    return fpot, dpot, wpot
+end
+
+M, N = 8000, 1000
 A = randn(M,N)
 x0 = randn(N) .* (rand(N) .< 0.4) # sparse vector
 y = A * x0 + 0.001 * randn(M)
 β = 5
 δ = 0.1
-ψ(z) = δ^2 * (abs(z/δ) - log(1 + abs(z/δ)))
-dψ(z) = z / (1 + abs(z/δ))
-ωψ(z) = 1 / (1 + abs(z/δ))
-f(x) = 0.5 * norm(A * x - y)^2 + β * sum(ψ, x)
-∇f(x) = A' * (A * x - y) + β * dψ.(x)
+#ψ, dψ, ωψ = ((d) -> fair_pot(d))(δ) # dirty trick!?
+#ψ, dψ, ωψ = Base.Fix2.(fair_pot(), δ)
+fpot, dpot, wpot = Base.Fix2.(fair_pot(), δ)
+#@code_warntype wpot(5.)
+#throw()
+
+#ψ(z) = δ^2 * (abs(z/δ) - log(1 + abs(z/δ)))
+#dψ(z) = z / (1 + abs(z/δ))
+#ωψ(z) = 1 / (1 + abs(z/δ))
+#ψ1 = (z) -> ψ2(z, δ)
+#dψ1 = (z) -> dψ2(z, δ)
+#ωψ1 = (z) -> ωψ2(z, δ)
+
+#ψ2(z,δ) = δ^2 * (abs(z/δ) - log(1 + abs(z/δ)))
+dψ2(z,δ) = z / (1 + abs(z/δ))
+#ωψ2(z,δ) = 1 / (1 + abs(z/δ))
+
+f(x) = 0.5 * norm(A * x - y)^2 + β * sum(fpot, x)
+∇f(x) = A' * (A * x - y) + β * dpot.(x)
 x = randn(N) # random point
 d = -∇f(x)/40 # some search direction
 h(α) = f(x + α * d)
 dh(α) = d' * ∇f(x + α * d)
-pa = plot(h, xlabel="α", ylabel="h(α)", xlims=(-1, 3), ylims=(0,100))
+pa = plot(h, xlabel="α", ylabel="h(α)", xlims=(-1, 2))
 
 
 # Apply MM-based line search: simple version
-gradf = [u -> u - y, u -> β * dψ.(u)] # key ingredients!
-curvf = [1, u -> β * ωψ.(u)]
-
-# faster? version of key ingredients! todo time
-gradf = [
-    u -> Iterators.map(Base.splat(-), zip(u,y)), # u - y
-    u -> Iterators.map(Base.Fix1(*,β) ∘ dψ, u), # β * dψ.(u)
+gradf = [ # key ingredients!
+    u -> u - y,
+    u -> β * dpot.(u), # slower
+#   u -> β * dψ2.(u, δ), # faster!?
 ]
-curvf = [
-    1,
-    u -> Iterators.map(Base.Fix1(*,β) ∘ ωψ, u), # β * ωψ.(u)
-]
+curvf = [1, u -> β * wpot.(u)] # slower
+#curvf = [1, u -> β * ωψ2.(u,δ)] # faster!
 
 uu = [A * x, x]
 vv = [A * d, d]
 fun(state, iter) = state.α
 ninner = 7
 out = Vector{Any}(undef, ninner+1)
+out .= 0 # todo
 α0 = 0
 αstar = line_search_mm(uu, vv, gradf, curvf; ninner, out, fun, α0)
 scatter!([αstar], [h(αstar)], marker=:star, color=:red)
@@ -255,7 +275,71 @@ plot(pa, ps, pd)
 # Thanks to Huber's curvatures,
 # the ``α`` sequence converges very quickly.
 
+work = LineSearchMMWork(uu, vv, α0) # pre-allocate
+function lsmm(gradf, curvf)
+    return line_search_mm(uu, vv, gradf, curvf;
+        ninner, out, fun, α0, work)
+end
+gradn = [() -> nothing, () -> nothing]
+function lsmm2(dot_gradf, dot_curvf)
+    return line_search_mm(uu, vv, gradn, gradn;
+        ninner, out, fun, α0, work, dot_gradf, dot_curvf)
+end
+
+precompile(dpot, (Float64,))
+
+# faster? version of key ingredients! todo time
+gradz = [
+    z -> Iterators.map(-, z, y), # z - y
+    z -> Iterators.map((z, β, δ) -> β * dψ2(z, δ), z, # β * dψ.(z)
+        Iterators.cycle(β),
+        Iterators.cycle(δ))
+#   z -> Iterators.map((z, β) -> β * dpot(z), z, # β * dψ.(z)
+#       Iterators.cycle(β))
+]
+curvz = [
+    1,
+#   z -> Iterators.map((z, β, δ) -> β * ωψ2(z, δ), z, # β * ωψ.(z)
+#       Iterators.cycle(β),
+#       Iterators.cycle(δ))
+    z -> Iterators.map((z, β) -> β * wpot(z), z, # β * ωψ.(z)
+        Iterators.cycle(β))
+]
+
+sum_map(f::Function, args...) = sum(Iterators.map(f, args...))
+dot_gradz = [
+    (v,z) -> sum_map((v,z,y) -> dot(v, z - y), v, z, y), # v'(z - y)
+    (v,z) -> β * sum_map((v,z,d) -> dot(v, dψ2(z, d)), v, z,
+        Iterators.cycle(δ)), # β * (v'dψ.(z))
+#   (v,z) -> β * sum_map((v,z) -> dot(v, dpot(z)), v, z), # β * (v'dψ.(z))
+]
+dot_curvz = [
+    (v,z) -> norm(v)^2,
+    (v,z) -> β * sum_map((v,z,d) -> abs2(v) * ωψ2(z, d), v, z,
+        Iterators.cycle(δ)), # β * (abs2.(v)'ωψ.(z))
+#   (v,z) -> β * sum_map((v,z) -> abs2(v) * wpot(z), v, z), # β * (abs2.(v)'ωψ.(z))
+]
+
+# @btime dψ(4,$δ) # 2.928 ns (0 allocations: 0 bytes)
+# @btime dψ(4) # 66.980 ns (4 allocations: 64 bytes) todo why?  closure?
+#tmp = dot_gradz2(vv[2], uu[2]) # warm-up
+@btime dot_gradz[1]($(vv[1]), $(uu[1])) # 2.6 μs (7 allocations: 160 bytes)
+@btime dot_gradz[2]($(vv[2]), $(uu[2])) # 2.6 μs (7 allocations: 160 bytes)
+
+@btime dot_curvz[1]($(vv[1]), $(uu[1]))
+@btime dot_curvz[2]($(vv[2]), $(uu[2])) # 2.8 μs (9 allocations: 208 bytes)
+throw()
+
+a1 = lsmm(gradf, curvf)
+a2 = lsmm(gradz, curvz)
+a3 = lsmm2(dot_gradz, dot_curvz)
+@assert a1 ≈ a2 ≈ a3
+#throw()
+
 # todo timing comparisons, fancier use
+@btime a1 = lsmm($gradf, $curvf)
+@btime a2 = lsmm($gradz, $curvz)
+@btime a3 = lsmm2($dot_gradz, $dot_curvz)
 
 #αplot =
 #
@@ -271,3 +355,65 @@ plot(pa, ps, pd)
 # And with the following package versions
 
 # import Pkg; Pkg.status() # todo
+
+
+#=
+#junk
+
+#d1(v,z,y) = v * (z - y) # need conj in complex case
+#d2(v,z) = v * dψ(z)
+#d2 = (v,z) -> v * dψ1(z)
+#d2(v,z) = v * dψ(z,0.1) # fast
+#d2(v,z) = v * dψ(z,copy(δ))
+#d2(v,z) = v * dψ(z,eval(:δ)) # slow
+#d2(v,z,δ) = v * dψ(z,δ) # todo try?
+#make_d2(d) = (v,z) -> v * dψ(z, d) # fast
+#maker_d2 = (d) -> (v,z) -> v * dψ(z, d) # fast
+#maker_d2 = (v,z) -> v * dψ(z) # slow
+#maker_d2 = () -> (v,z) -> v * dψ(z) # slow
+#maker_d2 = () -> (v,z) -> v * dψ(z,δ) # slow
+#d2 = maker_d2()
+#d2 = ((d) -> (v,z) -> v * dψ2(z, d))(δ) # fast - a dirty trick!?
+#d2 = (() -> (v,z) -> v * dψ(z))() # slow
+
+function mydot1(v, z) # slow with big allocations - why?
+     total = zero(v[1] * (z[1] - y[1]))
+     for i in eachindex(v)
+         total += v[i] * (z[i] - y[i])
+     end
+     return total
+end
+
+function mydot2(v, z)
+     total = zero(v[1] * dψ(z[1]))
+     for i in eachindex(v)
+         total += v[i] * dψ(z[i])
+     end
+     return β * total
+end
+=#
+
+#=
+
+function fair_pot(δ)
+    ψ = (z) -> δ^2 * (abs(z/δ) - log(1 + abs(z/δ)))
+    dψ = (z) -> z / (1 + abs(z/δ))
+    ωψ = (z) -> 1 / (1 + abs(z/δ))
+
+    ψ = (z,d) -> d^2 * (abs(z/d) - log(1 + abs(z/d)))
+    dψ = (z,d) -> z / (1 + abs(z/d))
+    ωψ = (z,d) -> 1 / (1 + abs(z/d))
+
+    dψ = ((d) -> ((z) -> dψ(z,d)))(δ)
+
+    ψ(z) = δ^2 * (abs(z/δ) - log(1 + abs(z/δ)))
+    dψ(z) = z / (1 + abs(z/δ))
+    ωψ(z) = 1 / (1 + abs(z/δ))
+
+    return ψ, dψ, ωψ
+end
+
+ψ, dψ, ωψ = fair_pot(δ)
+ψ, dψ, ωψ = fair_pot(0.1)
+ψ2, dψ2old, ωψ2old = fair_pot()
+=#
