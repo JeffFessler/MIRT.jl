@@ -9,7 +9,7 @@ using LinearAlgebra: dot
 
 _narg(fun::Function) = first(methods(fun)).nargs - 1
 
-Vcurv = AbstractVector{<:Any} # think Union{Function,RealU}
+Vcurv = AbstractVector{<:Any} # think Vector{<:Union{Function,RealU}}
 
 # this will fail (as it should) if the units of uj and vj are incompatible
 _ls_mm_worktype(uj, vj, α::Real) =
@@ -122,10 +122,11 @@ function _update!(state::LineSearchMMState)
     for j in eachindex(zz) # todo: parfor
         @. zz[j] = uu[j] + α * vv[j]
     end
+
     derh = sum(j -> real(dot_gradf[j](vv[j], zz[j])), eachindex(zz))
     curv = sum(j -> dot_curvf[j](vv[j], zz[j]), eachindex(zz))
-    curv < 0 && error("bug: curv=$curv < 0")
-    if curv > 0
+    curv < zero(curv) && error("bug: curv=$curv < 0")
+    if curv > zero(curv)
         state.α -= derh / curv
     end
 end
