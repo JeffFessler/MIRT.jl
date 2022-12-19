@@ -235,7 +235,7 @@ fpot, dpot, wpot = Base.Fix2.(fair_pot(), δ)
 
 #ψ2(z,δ) = δ^2 * (abs(z/δ) - log(1 + abs(z/δ)))
 dψ2(z,δ) = z / (1 + abs(z/δ))
-#ωψ2(z,δ) = 1 / (1 + abs(z/δ))
+ωψ2(z,δ) = 1 / (1 + abs(z/δ))
 
 f(x) = 0.5 * norm(A * x - y)^2 + β * sum(fpot, x)
 ∇f(x) = A' * (A * x - y) + β * dpot.(x)
