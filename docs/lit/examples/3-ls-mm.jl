@@ -214,64 +214,40 @@ function fair_pot()
     return fpot, dpot, wpot
 end
 
-M, N = 8000, 1000
+M, N = 1000, 2000
 A = randn(M,N)
 x0 = randn(N) .* (rand(N) .< 0.4) # sparse vector
 y = A * x0 + 0.001 * randn(M)
-β = 5
+β = 95
 δ = 0.1
-#ψ, dψ, ωψ = ((d) -> fair_pot(d))(δ) # dirty trick!?
-#ψ, dψ, ωψ = Base.Fix2.(fair_pot(), δ)
-#fpot2, dpot2, wpot2 = fair_pot()
 fpot, dpot, wpot = Base.Fix2.(fair_pot(), δ)
-#@code_warntype wpot(5.)
-#throw()
-
-#ψ(z) = δ^2 * (abs(z/δ) - log(1 + abs(z/δ)))
-#dψ(z) = z / (1 + abs(z/δ))
-#ωψ(z) = 1 / (1 + abs(z/δ))
-#ψ1 = (z) -> ψ2(z, δ)
-#dψ1 = (z) -> dψ2(z, δ)
-#ωψ1 = (z) -> ωψ2(z, δ)
-
-#=
-function make1(f2, d0)
-    f1 = let d = d0
-        z -> f2(z, d)
-    end
-    return f1
-end
-dpot1 = make1(dpot2, δ)
-
-#ψ2(z,δ) = δ^2 * (abs(z/δ) - log(1 + abs(z/δ)))
-dψ2(z,δ) = z / (1 + abs(z/δ))
-ωψ2(z,δ) = 1 / (1 + abs(z/δ))
-=#
 
 f(x) = 0.5 * norm(A * x - y)^2 + β * sum(fpot, x)
 ∇f(x) = A' * (A * x - y) + β * dpot.(x)
 x = randn(N) # random point
-d = -∇f(x)/40 # some search direction
+d = -∇f(x)/M # some search direction
 h(α) = f(x + α * d)
 dh(α) = d' * ∇f(x + α * d)
 pa = plot(h, xlabel="α", ylabel="h(α)", xlims=(-1, 2))
 
 
-# Apply MM-based line search: simple version
-gradf = [ # key ingredients!
-    u -> u - y,
-    u -> β * dpot.(u), # slower
-#   u -> β * dψ2.(u, δ), # faster!?
+# Apply MM-based line search: simple version.
+# The key inputs are the gradient and curvature functions:
+gradf = [
+    u -> u - y, # ∇f₁ for data-fit term
+    u -> β * dpot.(u), # ∇f₂ for regularizer
 ]
-curvf = [1, u -> β * wpot.(u)] # slower
-#curvf = [1, u -> β * ωψ2.(u,δ)] # faster!
+curvf = [
+    1, # curvature for data-fit term
+    u -> β * wpot.(u), # Huber curvature for regularizer
+]
 
-uu = [A * x, x]
-vv = [A * d, d]
-fun(state, iter) = state.α
+uu = [A * x, x] # [u₁ u₂]
+vv = [A * d, d] # [v₁ v₂]
+fun(state, iter) = state.α # log this
 ninner = 7
 out = Vector{Any}(undef, ninner+1)
-out .= 0 # todo
+#out .= 0 # todo
 α0 = 0
 αstar = line_search_mm(uu, vv, gradf, curvf; ninner, out, fun, α0)
 scatter!([αstar], [h(αstar)], marker=:star, color=:red)
@@ -281,7 +257,10 @@ ps = plot(0:ninner, out, marker=:circle, xlabel="iteration", ylabel="α",
 pd = plot(0:ninner, abs.(dh.(out)), marker=:diamond,
     yaxis = :log, color=:red,
     xlabel="iteration", ylabel="|dh(α)|")
-plot(pa, ps, pd)
+pu = plot(1:ninner, log10.(max.(abs.(diff(out)), 1e-16)), marker=:square,
+    color=:blue, xlabel="iteration", ylabel="log10(|α_k - α_{k-1}|)")
+plot(pa, ps, pd, pu)
+# gui(); throw()
 
 # Thanks to Huber's curvatures,
 # the ``α`` sequence converges very quickly.
@@ -297,85 +276,35 @@ function lsmm2(dot_gradf, dot_curvf)
         ninner, out, fun, α0, work, dot_gradf, dot_curvf)
 end
 
-#precompile(dpot, (Float64,))
-#precompile(dpot2, (Float64,Float64))
-#@code_warntype dpot(1f0)
-#throw()
-
 # The `let` statements here are a performance trick from
 # https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-captured-1
 # faster? version of key ingredients! todo time
 gradz = [
     let y=y; z -> Iterators.map(-, z, y); end, # z - y
-#   z -> Iterators.map(-, z, y), # z - y
     let β=β, dpot=dpot; z -> Iterators.map(z -> β * dpot(z), z); end, # β * dψ.(z)
-#   z -> Iterators.map((z, β, δ) -> β * dψ2(z, δ), z, # β * dψ.(z)
-#       Iterators.cycle(β),
-#       Iterators.cycle(δ))
-#   z -> Iterators.map((z, β) -> β * dpot(z), z, # β * dψ.(z)
-#       Iterators.cycle(β))
 ]
 curvz = [
     1,
-#   z -> Iterators.map((z, β, δ) -> β * ωψ2(z, δ), z, # β * ωψ.(z)
-#       Iterators.cycle(β),
-#       Iterators.cycle(δ))
     let β=β, wpot=wpot; z -> Iterators.map(z -> β * wpot(z), z); end, # β * ωψ.(z)
-#   z -> Iterators.map((z, β) -> β * wpot(z), z, # β * ωψ.(z)
-#       Iterators.cycle(β))
 ]
 
-#@code_warntype gradz[2](uu[2])
-#@code_warntype curvz[2](uu[2]) # ok with let!
-
 sum_map(f::Function, args...) = sum(Iterators.map(f, args...))
-function make_dotz2()
-    dotz2 = let d = δ
-        (v,z) -> β * sum_map((v,z) -> dot(v, dpot2(z, d)), v, z) # β * (v'dψ.(z))
-#       (v,z) -> β * sum(Iterators.map((v,z) -> dot(v, dpot2(z, d)), v, z)) # β * (v'dψ.(z))
-    end
-    return dotz2
-end
-
-#dotz2(v,z) = β * sum_map((v,z) -> dot(v, dpot(z)), v, z) # β * (v'dψ.(z))
-#dotz2(v,z) = β * sum_map((v,z,d) -> dot(v, dψ2(z, d)), v, z,
-#       Iterators.cycle(δ)) # β * (v'dψ.(z))
-#dotz2 = make_dotz2()
-# dotz2(v,z) = β * sum_map((v,z) -> dot(v, dpot1(z)), v, z) # β * (v'dψ.(z))
-# dotz2(v,z) = β * sum_map((v,z) -> dot(v, dψ2(z, δ)), v, z) # β * (v'dψ.(z))
-#dotz1 = (v,z) -> sum_map((v,z,y) -> dot(v, z - y), v, z, y) # v'(z - y)
-#@code_warntype dotz1(vv[1], uu[1]) # not type stable!?
-#@code_warntype dotz2(vv[2], uu[2])
-
 dot_gradz = [
     let y=y; (v,z) -> sum_map((v,z,y) -> dot(v, z - y), v, z, y); end, # v'(z - y)
-#   (v,z) -> sum_map((v,z,y) -> dot(v, z - y), v, z, y), # v'(z - y)
     let β=β, dpot=dpot; (v,z) -> β * sum_map((v,z) -> dot(v, dpot(z)), v, z); end, # β * (v'dψ.(z))
-#   (v,z) -> β * sum_map((v,z) -> dot(v, dpot(z)), v, z), # β * (v'dψ.(z))
-#   (v,z) -> β * sum_map((v,z,d) -> dot(v, dψ2(z, d)), v, z,
-#       Iterators.cycle(δ)), # β * (v'dψ.(z))
-#   dotz2,
 ]
 dot_curvz = [
     (v,z) -> norm(v)^2,
     let β=β, wpot=wpot; (v,z) -> β * sum_map((v,z) -> abs2(v) * wpot(z), v, z); end, # β * (abs2.(v)'ωψ.(z))
-#   (v,z) -> β * sum_map((v,z) -> abs2(v) * wpot(z), v, z), # β * (abs2.(v)'ωψ.(z))
-#   (v,z) -> β * sum_map((v,z,d) -> abs2(v) * ωψ2(z, d), v, z,
-#       Iterators.cycle(δ)), # β * (abs2.(v)'ωψ.(z))
 ]
 #@code_warntype dot_gradz[1](vv[1], uu[1]) # stable with let
 #@code_warntype dot_gradz[2](vv[2], uu[2]) # stable with let
 #@code_warntype dot_curvz[2](vv[2], uu[2]) # stable with let
 
-# @btime dψ(4,$δ) # 2.928 ns (0 allocations: 0 bytes)
-# @btime dψ(4) # 66.980 ns (4 allocations: 64 bytes) todo why?  closure?
-#tmp = dot_gradz2(vv[2], uu[2]) # warm-up
 #@btime dot_gradz[1]($(vv[1]), $(uu[1])) # 7 μs (1 allocation: 16 bytes)
 #@btime dot_gradz[2]($(vv[2]), $(uu[2])) # 1.9 μs (1 allocation: 16 bytes)
-
 #@btime dot_curvz[1]($(vv[1]), $(uu[1])) # 2. μs (1 allocation: 16 bytes)
 #@btime dot_curvz[2]($(vv[2]), $(uu[2])) # 1.9 μs (1 allocation: 16 bytes)
-#throw()
 
 a1 = lsmm1(gradf, curvf)
 a2 = lsmm1(gradz, curvz)
@@ -388,12 +317,14 @@ a3 = lsmm2(dot_gradz, dot_curvz)
 @btime a3 = lsmm2($dot_gradz, $dot_curvz)
 
 #=
-164 μs (389 allocations: 669.20 KiB)
-145 μs (316 allocations: 8.81 KiB)
-141 μs (233 allocations: 5.06 KiB)
+Timing results on my mac:
+127.552 μs (382 allocations: 505.69 KiB)
+103.408 μs (316 allocations: 8.81 KiB)
+92.245 μs (233 allocations: 5.06 KiB)
 =#
 
 
+# todo: compare with LS package
 
 
 #αplot =
