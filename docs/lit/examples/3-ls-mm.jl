@@ -278,7 +278,8 @@ end
 
 # The `let` statements here are a performance trick from
 # https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-captured-1
-# faster? version of key ingredients! todo time
+# Using `Iterators.map` avoids allocating arrays like `z - y`
+# and does not even require any work space
 gradz = [
     let y=y; z -> Iterators.map(-, z, y); end, # z - y
     let β=β, dpot=dpot; z -> Iterators.map(z -> β * dpot(z), z); end, # β * dψ.(z)
@@ -287,6 +288,71 @@ curvz = [
     1,
     let β=β, wpot=wpot; z -> Iterators.map(z -> β * wpot(z), z); end, # β * ωψ.(z)
 ]
+
+#=
+ww = similar.(uu)
+function grad1c(z,y)
+    w = ww[1]
+    @. w = z - y
+    return w
+end
+
+function grad2c(z,β,dpot)
+    w = ww[2]
+    @. w = β * dpot(z)
+    return w
+end
+
+function curv2c(z,β,wpot)
+    w = ww[2]
+    @. w = β * wpot(z)
+    return w
+end
+=#
+
+function make_grad1c()
+    w = similar(uu[1]) # work-space
+    let w=w, y=y
+        function grad1c(z)
+            @. w = z - y
+            return w
+        end
+    end
+end
+
+function make_grad2c()
+    w = similar(uu[2]) # work-space
+    let w=w, β=β, dpot=dpot
+        function grad2c(z)
+            @. w = β * dpot(z)
+            return w
+        end
+    end
+end
+
+function make_curv2c()
+    w = similar(uu[2]) # work-space
+    let w=w, β=β, wpot=wpot
+        function curv2c(z)
+            @. w = β * wpot(z) # β * ωψ.(z)
+            return w
+        end
+    end
+end
+
+gradc = [ # capture version
+#   let y=y; z -> grad1c(z, y); end, # z - y
+    make_grad1c(), # z - y
+    make_grad2c(), # β * dψ.(z)
+#   let β=β, dpot=dpot; z -> grad2c(z, β, dpot); end, # β * dψ.(z)
+]
+curvc = [
+    1,
+#   let β=β, wpot=wpot; z -> curv2c(z, β, wpot); end, # β * ωψ.(z)
+    make_curv2c(), # β * ωψ.(z)
+]
+#@code_warntype curvc[2](vv[2]) # stable
+#@code_warntype gradc[1](vv[1]) # stable
 
 sum_map(f::Function, args...) = sum(Iterators.map(f, args...))
 dot_gradz = [
@@ -307,22 +373,26 @@ dot_curvz = [
 #@btime dot_curvz[2]($(vv[2]), $(uu[2])) # 1.9 μs (1 allocation: 16 bytes)
 
 a1 = lsmm1(gradf, curvf)
+a1c = lsmm1(gradc, curvc)
 a2 = lsmm1(gradz, curvz)
 a3 = lsmm2(dot_gradz, dot_curvz)
-@assert a1 ≈ a2 ≈ a3
+@assert a1 ≈ a2 ≈ a3 ≈ a1c
 
-# todo timing comparisons, fancier use
 @btime a1 = lsmm1($gradf, $curvf)
+@btime a1c = lsmm1($gradc, $curvc)
 @btime a2 = lsmm1($gradz, $curvz)
 @btime a3 = lsmm2($dot_gradz, $dot_curvz)
 
 #=
 Timing results on my mac:
 127.552 μs (382 allocations: 505.69 KiB)
+117.703 μs (421 allocations: 11.66 KiB) # 1c before using using make_
+ 89.720 μs (319 allocations: 9.41 KiB) # 1c after using make_ !!
 103.408 μs (316 allocations: 8.81 KiB)
 92.245 μs (233 allocations: 5.06 KiB)
 =#
 
+# todo use "let" within make_dot_ constructors!
 
 # todo: compare with LS package
 
