@@ -31,8 +31,10 @@ This page was generated from a single Julia file:
 using Plots; default(markerstrokecolor = :auto, label="")
 using MIRTjim: prompt
 using MIRT: line_search_mm, LineSearchMMWork
+using LineSearches: BackTracking, HagerZhang, MoreThuente
 using LinearAlgebra: norm, dot
 using Random: seed!; seed!(0)
+using BenchmarkTools: @btime, @benchmark
 using InteractiveUtils: versioninfo
 
 # The following line is helpful when running this file as a script;
@@ -96,7 +98,7 @@ of the form
 f_j(x) ≤ q_j(x,z) = f_j(z) + \text{real}(⟨ ∇f_j(z), x - z ⟩)
 + \frac{1}{2} (x - z)' D_j(z) (x - z),
 ```
-where ``D_j(z)`` is a positive definite matrix
+where ``D_j(z)`` is a positive semidefinite matrix
 that typically is diagonal.
 Often it is a constant times the identity matrix,
 e.g.,
@@ -192,28 +194,28 @@ This smooth LASSO cost function has the general form above
 with ``J=2``,
 ``B_1 = A``,
 ``B_2 = I``,
-``f_1(u) = \frac{1}{2} \| u - y \|_2^2``,
-``f_2(u) = β 1' ψ.(u)``,
+``f_1(u) = \frac{1}{2} \| u - y \|_2^2,``
+``f_2(u) = β 1' ψ.(u),``
 for which
-``∇f_1(u) = u - y``,
-``∇f_2(u) = β ψ.(u)``,
+``∇f_1(u) = u - y,``
+``∇f_2(u) = β ψ.(u),``
 and
-``∇^2 f_1(u) = I``,
-``∇^2 f_2(u) \succeq β \text{diag}(ω_{ψ}(u))``.
+``∇^2 f_1(u) = I,``
+``∇^2 f_2(u) \succeq β \, \text{diag}(ω_{ψ}(u)).``
 
 Set up an example and plot ``h(α)``.
 =#
 
-using BenchmarkTools: @btime # todo ndgrid
 
-# Fair potential, its derivative and Huber weighting function
+# Fair potential, its derivative and Huber weighting function:
 function fair_pot()
     fpot(z,δ) = δ^2 * (abs(z/δ) - log(1 + abs(z/δ)))
     dpot(z,δ) = z / (1 + abs(z/δ))
     wpot(z,δ) = 1 / (1 + abs(z/δ))
     return fpot, dpot, wpot
-end
+end;
 
+# Data, cost function and gradients for smooth LASSO problem:
 M, N = 1000, 2000
 A = randn(M,N)
 x0 = randn(N) .* (rand(N) .< 0.4) # sparse vector
@@ -247,10 +249,10 @@ vv = [A * d, d] # [v₁ v₂]
 fun(state, iter) = state.α # log this
 ninner = 7
 out = Vector{Any}(undef, ninner+1)
-#out .= 0 # todo
 α0 = 0
 αstar = line_search_mm(uu, vv, gradf, curvf; ninner, out, fun, α0)
-scatter!([αstar], [h(αstar)], marker=:star, color=:red)
+hmin = h(αstar)
+scatter!([αstar], [hmin], marker=:star, color=:red)
 scatter!([α0], [h(α0)], marker=:circle, color=:green)
 ps = plot(0:ninner, out, marker=:circle, xlabel="iteration", ylabel="α",
     color = :green)
@@ -260,10 +262,14 @@ pd = plot(0:ninner, abs.(dh.(out)), marker=:diamond,
 pu = plot(1:ninner, log10.(max.(abs.(diff(out)), 1e-16)), marker=:square,
     color=:blue, xlabel="iteration", ylabel="log10(|α_k - α_{k-1}|)")
 plot(pa, ps, pd, pu)
-# gui(); throw()
 
-# Thanks to Huber's curvatures,
-# the ``α`` sequence converges very quickly.
+#=
+Thanks to Huber's curvatures,
+the ``α_t`` sequence converges very quickly.
+
+Now explore a fancier version
+that needs less heap memory.
+=#
 
 work = LineSearchMMWork(uu, vv, α0) # pre-allocate
 function lsmm1(gradf, curvf)
@@ -274,12 +280,14 @@ function lsmm2(dot_gradf, dot_curvf)
     gradn = [() -> nothing, () -> nothing]
     return line_search_mm(uu, vv, gradn, gradn;
         ninner, out, fun, α0, work, dot_gradf, dot_curvf)
-end
+end;
 
-# The `let` statements here are a performance trick from
-# https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-captured-1
-# Using `Iterators.map` avoids allocating arrays like `z - y`
-# and does not even require any work space
+#=
+The `let` statements below are a performance trick from the
+[Julia manual](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-captured-1).
+Using `Iterators.map` avoids allocating arrays like `z - y`
+and does not even require any work space.
+=#
 gradz = [
     let y=y; z -> Iterators.map(-, z, y); end, # z - y
     let β=β, dpot=dpot; z -> Iterators.map(z -> β * dpot(z), z); end, # β * dψ.(z)
@@ -288,27 +296,6 @@ curvz = [
     1,
     let β=β, wpot=wpot; z -> Iterators.map(z -> β * wpot(z), z); end, # β * ωψ.(z)
 ]
-
-#=
-ww = similar.(uu)
-function grad1c(z,y)
-    w = ww[1]
-    @. w = z - y
-    return w
-end
-
-function grad2c(z,β,dpot)
-    w = ww[2]
-    @. w = β * dpot(z)
-    return w
-end
-
-function curv2c(z,β,wpot)
-    w = ww[2]
-    @. w = β * wpot(z)
-    return w
-end
-=#
 
 function make_grad1c()
     w = similar(uu[1]) # work-space
@@ -341,18 +328,15 @@ function make_curv2c()
 end
 
 gradc = [ # capture version
-#   let y=y; z -> grad1c(z, y); end, # z - y
     make_grad1c(), # z - y
     make_grad2c(), # β * dψ.(z)
-#   let β=β, dpot=dpot; z -> grad2c(z, β, dpot); end, # β * dψ.(z)
 ]
 curvc = [
     1,
-#   let β=β, wpot=wpot; z -> curv2c(z, β, wpot); end, # β * ωψ.(z)
     make_curv2c(), # β * ωψ.(z)
 ]
-#@code_warntype curvc[2](vv[2]) # stable
-#@code_warntype gradc[1](vv[1]) # stable
+#src @code_warntype curvc[2](vv[2]) # stable
+#src @code_warntype gradc[1](vv[1]) # stable
 
 sum_map(f::Function, args...) = sum(Iterators.map(f, args...))
 dot_gradz = [
@@ -363,14 +347,14 @@ dot_curvz = [
     (v,z) -> norm(v)^2,
     let β=β, wpot=wpot; (v,z) -> β * sum_map((v,z) -> abs2(v) * wpot(z), v, z); end, # β * (abs2.(v)'ωψ.(z))
 ]
-#@code_warntype dot_gradz[1](vv[1], uu[1]) # stable with let
-#@code_warntype dot_gradz[2](vv[2], uu[2]) # stable with let
-#@code_warntype dot_curvz[2](vv[2], uu[2]) # stable with let
+#src @code_warntype dot_gradz[1](vv[1], uu[1]) # stable with let
+#src @code_warntype dot_gradz[2](vv[2], uu[2]) # stable with let
+#src @code_warntype dot_curvz[2](vv[2], uu[2]) # stable with let
 
-#@btime dot_gradz[1]($(vv[1]), $(uu[1])) # 7 μs (1 allocation: 16 bytes)
-#@btime dot_gradz[2]($(vv[2]), $(uu[2])) # 1.9 μs (1 allocation: 16 bytes)
-#@btime dot_curvz[1]($(vv[1]), $(uu[1])) # 2. μs (1 allocation: 16 bytes)
-#@btime dot_curvz[2]($(vv[2]), $(uu[2])) # 1.9 μs (1 allocation: 16 bytes)
+#src @btime dot_gradz[1]($(vv[1]), $(uu[1])) # 7 μs (1 allocation: 16 bytes)
+#src @btime dot_gradz[2]($(vv[2]), $(uu[2])) # 1.9 μs (1 allocation: 16 bytes)
+#src @btime dot_curvz[1]($(vv[1]), $(uu[1])) # 2. μs (1 allocation: 16 bytes)
+#src @btime dot_curvz[2]($(vv[2]), $(uu[2])) # 1.9 μs (1 allocation: 16 bytes)
 
 a1 = lsmm1(gradf, curvf)
 a1c = lsmm1(gradc, curvc)
@@ -378,98 +362,121 @@ a2 = lsmm1(gradz, curvz)
 a3 = lsmm2(dot_gradz, dot_curvz)
 @assert a1 ≈ a2 ≈ a3 ≈ a1c
 
-@btime a1 = lsmm1($gradf, $curvf)
-@btime a1c = lsmm1($gradc, $curvc)
-@btime a2 = lsmm1($gradz, $curvz)
-@btime a3 = lsmm2($dot_gradz, $dot_curvz)
+b1 = @benchmark a1 = lsmm1($gradf, $curvf)
+
+#
+bc = @benchmark a1c = lsmm1($gradc, $curvc)
+
+#
+b2 = @benchmark a2 = lsmm1($gradz, $curvz)
+
+#
+b3 = @benchmark a3 = lsmm2($dot_gradz, $dot_curvz)
 
 #=
 Timing results on my mac:
-127.552 μs (382 allocations: 505.69 KiB)
-117.703 μs (421 allocations: 11.66 KiB) # 1c before using using make_
- 89.720 μs (319 allocations: 9.41 KiB) # 1c after using make_ !!
-103.408 μs (316 allocations: 8.81 KiB)
-92.245 μs (233 allocations: 5.06 KiB)
+- 127 μs (382 allocations: 505.69 KiB)
+- 117 μs (421 allocations: 11.66 KiB) # 1c before using using `make_` (not shown)
+-  89 μs (319 allocations: 9.41 KiB) # 1c after using `make_` !!
+- 103 μs (316 allocations: 8.81 KiB)
+-  92 μs (233 allocations: 5.06 KiB)
+
+The version using `gradc`
+with its "properly captured" variables
+is the fastest.
+But all the versions here are pretty similar
+so even using the simplest version
+seems likely to be fine.
 =#
 
-# todo use "let" within make_dot_ constructors!
 
-# todo: compare with LS package
+#=
+## Compare with LineSearches.jl
 
+Was all this specialized effort useful?
+Let's compare to the general line search methods in
+[LineSearches.jl](https://github.com/JuliaNLSolvers/LineSearches.jl).
 
-#αplot =
+It seems that some of those methods do not allow ``α₀ = 0``
+so we use 1.0 instead.
+We use the default arguments for all the solvers,
+which means some of them might terminate
+before `ninner` iterations,
+giving them a potential speed advantage.
+=#
+
+a0 = 1.0 # α0
+hdh(α) = h(α), dh(α)
+h0 = h(0)
+dh0 = dh(0);
+function ls_ls(linesearch)
+    a1, fx = linesearch(h, dh, hdh, a0, h0, dh0)
+    return a1
+end;
+
+solvers = [
+    BackTracking( ; iterations = ninner),
+    HagerZhang( ; linesearchmax = ninner),
+    MoreThuente( ; maxfev = ninner),
+]
+for ls in solvers # check that they work properly
+    als = ls_ls(ls)
+    @assert isapprox(als, αstar; atol=1e-3)
+end;
+
+# 
+bbt = @benchmark ls_ls($(solvers[1]))
+
 #
-# prompt()
+bhz = @benchmark ls_ls($(solvers[2]))
+
+#
+bmt = @benchmark ls_ls($(solvers[3]))
+
+#=
+On my Mac the timings are all much longer
+compared to `line_search_mm`:
+- 840 μs `BackTracking`
+- 2.6 ms `HagerZhang`
+- 3.9 ms `MoreThuente`
+
+This comparison illustrates
+the benefit of the "special purpose" line search.
+
+
+The fastest version seems to be `BackTracking`,
+so plot its iterates:
+=#
+
+alpha_bt = zeros(ninner + 1)
+alpha_bt[1] = a0
+for iter in 1:ninner
+    tmp = BackTracking( ; iterations = iter)
+    alpha_bt[iter+1] = ls_ls(tmp)
+end
+plot(0:ninner, alpha_bt, marker=:square, color=:blue,
+    xlabel="Iteration", ylabel="BackTracking α")
+plot!([0, ninner], [1,1] * αstar, color=:red)
+
+#=
+Unexpectedly,
+`BackTracking` seems to terminate at the first iteration.
+But even just that single iteration is slower than 7 iterations
+of `line_search_mm`.
+=#
+
+
+#
+prompt()
+
 
 # ### Reproducibility
 
 # This page was generated with the following version of Julia:
 
-# io = IOBuffer(); versioninfo(io); split(String(take!(io)), '\n')
+io = IOBuffer(); versioninfo(io); split(String(take!(io)), '\n')
 
 
 # And with the following package versions
 
-# import Pkg; Pkg.status() # todo
-
-
-#=
-#junk
-
-#d1(v,z,y) = v * (z - y) # need conj in complex case
-#d2(v,z) = v * dψ(z)
-#d2 = (v,z) -> v * dψ1(z)
-#d2(v,z) = v * dψ(z,0.1) # fast
-#d2(v,z) = v * dψ(z,copy(δ))
-#d2(v,z) = v * dψ(z,eval(:δ)) # slow
-#d2(v,z,δ) = v * dψ(z,δ) # todo try?
-#make_d2(d) = (v,z) -> v * dψ(z, d) # fast
-#maker_d2 = (d) -> (v,z) -> v * dψ(z, d) # fast
-#maker_d2 = (v,z) -> v * dψ(z) # slow
-#maker_d2 = () -> (v,z) -> v * dψ(z) # slow
-#maker_d2 = () -> (v,z) -> v * dψ(z,δ) # slow
-#d2 = maker_d2()
-#d2 = ((d) -> (v,z) -> v * dψ2(z, d))(δ) # fast - a dirty trick!?
-#d2 = (() -> (v,z) -> v * dψ(z))() # slow
-
-function mydot1(v, z) # slow with big allocations - why?
-     total = zero(v[1] * (z[1] - y[1]))
-     for i in eachindex(v)
-         total += v[i] * (z[i] - y[i])
-     end
-     return total
-end
-
-function mydot2(v, z)
-     total = zero(v[1] * dψ(z[1]))
-     for i in eachindex(v)
-         total += v[i] * dψ(z[i])
-     end
-     return β * total
-end
-=#
-
-#=
-
-function fair_pot(δ)
-    ψ = (z) -> δ^2 * (abs(z/δ) - log(1 + abs(z/δ)))
-    dψ = (z) -> z / (1 + abs(z/δ))
-    ωψ = (z) -> 1 / (1 + abs(z/δ))
-
-    ψ = (z,d) -> d^2 * (abs(z/d) - log(1 + abs(z/d)))
-    dψ = (z,d) -> z / (1 + abs(z/d))
-    ωψ = (z,d) -> 1 / (1 + abs(z/d))
-
-    dψ = ((d) -> ((z) -> dψ(z,d)))(δ)
-
-    ψ(z) = δ^2 * (abs(z/δ) - log(1 + abs(z/δ)))
-    dψ(z) = z / (1 + abs(z/δ))
-    ωψ(z) = 1 / (1 + abs(z/δ))
-
-    return ψ, dψ, ωψ
-end
-
-ψ, dψ, ωψ = fair_pot(δ)
-ψ, dψ, ωψ = fair_pot(0.1)
-ψ2, dψ2old, ωψ2old = fair_pot()
-=#
+import Pkg; Pkg.status()
