@@ -39,7 +39,7 @@ typically for use in a line-search method.
 
 - If `curv` is simply a real number (a Lipschitz constant),
   possibly with units,
-  then this returns
+  then this returns the function
   `(v, x) -> curv * sum(abs2, v)`.
 
 If `f(x)` maps an Array `x`
@@ -72,8 +72,9 @@ function make_dot_curvf(
     axes(x) == axes(w) || error("w,x axes mismatch")
     promote_type(Tw, _curv_type(Tf, Tx)) == Tw ||
         error("w type Tw=$Tw vs $(_curv_type(Tf, Tx))")
-#   return (v, x) -> dot(v, cf!(w, x))
-    return (v, x) -> sum(vc -> abs2(vc[1]) * vc[2], zip(v, cf!(w, x)))
+    let w = w, cf! = cf!
+        (v, x) -> sum(vc -> abs2(vc[1]) * vc[2], zip(v, cf!(w, x)))
+    end
 end
 
 
@@ -82,9 +83,13 @@ function make_dot_curvf(cf::Function)
     narg == 2 && error("need 'x' argument for mutating version!")
     narg == 1 || error("cf needs one argument")
 #   return (v, x) -> dot(abs2.(v), cf(x))
-    return (v, x) -> sum(vc -> abs2(vc[1]) * vc[2], zip(v, cf(x)))
+    return let cf = cf
+        (v, x) -> sum(vc -> abs2(vc[1]) * vc[2], zip(v, cf(x)))
+    end
 end
 
 
-# handle the case where cf returns a constant
-make_dot_curvf(curv::RealU) = (v, x) -> curv * sum(abs2, v)
+# case where cf returns a constant
+make_dot_curvf(curv::RealU) = let curv = curv
+    (v, x) -> curv * sum(abs2, v)
+end
