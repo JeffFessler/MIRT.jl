@@ -70,7 +70,7 @@ http://web.eecs.umich.edu/~fessler/irt/reproduce/
 ## Compatibility
 
 Current version is tested with "latest" stable version of Julia
-(currently 1.6.1).
+(currently 1.8.3).
 Older tagged versions should work with older Julia versions.
 
 

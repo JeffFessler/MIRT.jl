@@ -23,32 +23,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: ['1.6', '1', 'nightly']
+        version: ['1', 'nightly']
         os: [ubuntu-latest, windows-latest, macOS-latest]
     steps:
       - uses: actions/checkout@v3
-
 #     - name: "Set up Julia"
       - uses: julia-actions/setup-julia@latest
         with:
           version: ${{ matrix.version }}
-
-#     - name: Cache artifacts
-        uses: actions/cache@v3
-        env:
-          cache-name: cache-artifacts
-        with:
-          path: ~/.julia/artifacts 
-          key: ${{ runner.os }}-test-${{ env.cache-name }}-${{ hashFiles('**/Project.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-test-${{ env.cache-name }}-
-            ${{ runner.os }}-test-
-            ${{ runner.os }}-
-
 #     - name: "Unit Test"
       - uses: julia-actions/julia-buildpkg@latest
       - uses: julia-actions/julia-runtest@latest
-
 #     - name: "Cover"
       - uses: julia-actions/julia-processcoverage@v1
       - uses: codecov/codecov-action@v3
