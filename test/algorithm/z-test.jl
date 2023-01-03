@@ -3,9 +3,12 @@
 using Test: @testset
 
 list = [
-"general/pogm_restart.jl"
+"general/dot-grad.jl"
+"general/dot-curv.jl"
+"general/ls-mm.jl"
 "general/ncg.jl"
 "general/ogm_ls.jl"
+"general/pogm_restart.jl"
 "general/poweriter.jl"
 ]
 

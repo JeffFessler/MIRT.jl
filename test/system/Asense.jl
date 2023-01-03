@@ -31,7 +31,6 @@ using Test: @test, @testset
 end
 
 @testset "Asense-opt" begin
-end
     sdim = (3,4,2)
     samp = trues(sdim); samp[2] = false
     T = ComplexF32
@@ -54,3 +53,4 @@ end
             back(embed(y[:,2], samp), smaps[2])
         @test A' * y ≈ b
     end
+end

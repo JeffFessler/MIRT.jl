@@ -54,18 +54,23 @@ function ncg(
     B::AbstractVector{<:Any},
     gradf::AbstractVector{<:Function},
     curvf::AbstractVector{<:Function},
-    x0::AbstractArray{<:Number} ; # usually a Vector
+    x0::AbstractArray{<:Number}, # usually a Vector
+    ;
+#   out::Union{Nothing,Vector{Any}} = nothing,
     niter::Int = 50,
     ninner::Int = 5,
     P = I, # trick: this is an overloaded I (by LinearMapsAA)
     betahow::Symbol = :dai_yuan,
-    fun::Function = (x,iter) -> 0,
+    fun::Function = (x,iter) -> 0, # todo: missing
 )
 
     Base.require_one_based_indexing(B, gradf, curvf)
 
     out = Array{Any}(undef, niter+1)
-    out[1] = fun(x0, 0)
+    !isnothing(out) && length(out) < niter && throw("length(out) < $niter")
+    if !isnothing(out)
+        out[1] = fun(x0, 0) # todo: state
+    end
 
     J = length(B)
 
@@ -77,55 +82,57 @@ function ncg(
     Bx = [B[j] * x for j in 1:J] # u_j in course notes
     grad = (Bx) -> sum([B[j]' * gradf[j](Bx[j]) for j in 1:J])
 
-for iter in 1:niter
-    grad_new = grad(Bx) # gradient
-    npgrad = -(P * grad_new)
-    if iter == 1
-        dir = npgrad
-    else
-        if betahow === :dai_yuan
-            denom =    dot(grad_new - grad_old, dir)
-            if denom == 0
-                betaval = 0
-            else
-                betaval = dot(grad_new, P * grad_new) / denom
-            end
+    for iter in 1:niter
+        grad_new = grad(Bx) # gradient
+        npgrad = -(P * grad_new)
+        if iter == 1
+            dir = npgrad
         else
-            throw(ArgumentError("unknown beta choice: $betahow"))
+            if betahow === :dai_yuan
+                denom =    dot(grad_new - grad_old, dir)
+                if denom == 0
+                    betaval = 0
+                else
+                    betaval = dot(grad_new, P * grad_new) / denom
+                end
+            else
+                throw(ArgumentError("unknown beta choice: $betahow"))
+            end
+            dir = npgrad + betaval * dir # search direction
         end
-        dir = npgrad + betaval * dir # search direction
-    end
-    grad_old = grad_new
+        grad_old = grad_new
 
-    # MM-based line search for step size alpha
-    # using h(a) = sum_j f_j(uj + a vj)
-    Bd = [B[j] * dir for j in 1:J] # v_j in course notes
+        # MM-based line search for step size alpha
+        # using h(a) = sum_j f_j(uj + a vj)
+        Bd = [B[j] * dir for j in 1:J] # v_j in course notes
 
-    alf = 0
-    for ii in 1:ninner
-    #    derh = alf -> sum([Bd[j]' * gradf[j](Bx[j] + alf * Bd[j]) for j in 1:J])
-        derh = 0 # derivative of h(a)
-        curv = 0
-        for j in 1:J
-            tmp = Bx[j] + alf * Bd[j]
-            derh += real(dot(Bd[j], gradf[j](tmp)))
-            curv += sum(curvf[j](tmp) .* abs2.(Bd[j]))
+        alf = 0
+        for ii in 1:ninner
+        #   derh = alf -> sum([Bd[j]' * gradf[j](Bx[j] + alf * Bd[j]) for j in 1:J])
+            derh = 0 # derivative of h(a)
+            curv = 0
+            for j in 1:J
+                tmp = Bx[j] + alf * Bd[j]
+                derh += real(dot(Bd[j], gradf[j](tmp)))
+                curv += sum(curvf[j](tmp) .* abs2.(Bd[j]))
+            end
+            curv < 0 && throw("bug: curv < 0")
+            if curv > 0
+                alf = alf - derh / curv
+            end
+            if alf == 0
+                break
+            end
         end
-        curv < 0 && throw("bug: curv < 0")
-        if curv > 0
-            alf = alf - derh / curv
+
+        x += alf * dir
+        for j in 1:J # update Bj * x
+            Bx[j] += alf * Bd[j]
         end
-        if alf == 0
-            break
+        if !isnothing(out)
+            out[iter+1] = fun(x, iter) # todo: state
         end
     end
-
-    x += alf * dir
-    for j in 1:J # update Bj * x
-        Bx[j] += alf * Bd[j]
-    end
-    out[iter+1] = fun(x, iter)
-end
 
     return x, out
 #   return eltype(x0).(x), out # todo

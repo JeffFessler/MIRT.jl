@@ -49,3 +49,23 @@ macro shows(ex)
 =#
     return blk
 end
+
+
+_unit_precision(::T) where {T <: Number} = T
+
+"""
+    _show_struct(io::IO, ::MIME"text/plain", st::Any)
+Informative way to show fields of a struct (composite type).
+"""
+function _show_struct(io::IO, ::MIME"text/plain", st::Any)
+    println(io, "$(typeof(st)) :")
+    for f in fieldnames(typeof(st))
+        p = getfield(st, f)
+        t = (p isa Number) ? _unit_precision(p) : typeof(p)
+        println(io, " ", f, "::", t, " ",
+            p isa Number ? p :
+            p isa AbstractArray ? size(p) :
+            "",
+        )
+    end
+end
