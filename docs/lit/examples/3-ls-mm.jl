@@ -246,11 +246,11 @@ curvf = [
 
 uu = [A * x, x] # [u₁ u₂]
 vv = [A * d, d] # [v₁ v₂]
-fun(state, iter) = state.α # log this
+fun(state) = state.α # log this
 ninner = 7
 out = Vector{Any}(undef, ninner+1)
 α0 = 0
-αstar = line_search_mm(uu, vv, gradf, curvf; ninner, out, fun, α0)
+αstar = line_search_mm(gradf, curvf, uu, vv; ninner, out, fun, α0)
 hmin = h(αstar)
 scatter!([αstar], [hmin], marker=:star, color=:red)
 scatter!([α0], [h(α0)], marker=:circle, color=:green)
@@ -273,13 +273,13 @@ that needs less heap memory.
 
 work = LineSearchMMWork(uu, vv, α0) # pre-allocate
 function lsmm1(gradf, curvf)
-    return line_search_mm(uu, vv, gradf, curvf;
+    return line_search_mm(gradf, curvf, uu, vv;
         ninner, out, fun, α0, work)
 end
 function lsmm2(dot_gradf, dot_curvf)
     gradn = [() -> nothing, () -> nothing]
-    return line_search_mm(uu, vv, gradn, gradn;
-        ninner, out, fun, α0, work, dot_gradf, dot_curvf)
+    return line_search_mm(uu, vv, dot_gradf, dot_curvf;
+        ninner, out, fun, α0, work)
 end;
 
 #=

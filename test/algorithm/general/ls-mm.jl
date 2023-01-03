@@ -2,11 +2,10 @@
 
 using MIRT: line_search_mm
 using MIRT: make_dot_gradf, make_dot_curvf
-using MIRT: LineSearchMMWork, LineSearchMMState
+using MIRT: LineSearchMMWork, LineSearchMM
 using LinearAlgebra: norm, dot
 using Unitful: m
 using Test: @test, @testset, @test_throws, @inferred
-# todo: compare to LineSearches: ls HagerZhang MoreThuente BackTracking StrongWolfe Static
 
 
 @testset "lsmm-work" begin
@@ -25,12 +24,34 @@ end
     vv = [randn(ComplexF16, d) for d in ddims]
 
     gradf = [identity, identity]
-    curvf = [z -> ones(size(z)), z -> zeros(size(z))]
+    curvf = [z -> ones(size(z)), z -> 0]
     @inferred make_dot_gradf(gradf[1])
     @inferred make_dot_curvf(curvf[1])
-    state = @inferred LineSearchMMState(
-        uu, vv, make_dot_gradf.(gradf), make_dot_curvf.(curvf),
-    )
+    ninner = 4
+
+    # Test both outer constructors
+    state = LineSearchMM(gradf, curvf, uu, vv ; ninner) # NOTinferred
+
+    counter = 0
+    for item in state
+        @test state.α isa Float32
+        counter += 1
+    end
+    @test counter == state.iter == ninner
+
+    dot_gradf = make_dot_gradf.(gradf)
+    dot_curvf = make_dot_curvf.(curvf)
+    state = @inferred LineSearchMM(uu, vv, dot_gradf, dot_curvf ; ninner)
+
+    counter = 0
+    for item in state
+        @test state.α isa Float32
+        counter += 1
+    end
+    @test counter == state.iter == ninner
+
+    show(isinteractive() ? stdout : devnull, MIME("text/plain"), state)
+    show(isinteractive() ? stdout : devnull, MIME("text/plain"), state.work)
 end
 
 
@@ -56,17 +77,15 @@ end
     aden = sum(j -> norm(aa[j] * vv[j])^2, 1:2)
     ahat = real(anum) / aden
 
+#   @inferred LineSearchMM(gradf, curvf, uu, vv; ninner) # NOTinferred
+
     ninner = 3 # should converge in 1 iteration since quadratic!
     out = Vector{Any}(undef, ninner+1)
-    fun = (state, iter) -> (state.α)
-    amm = @inferred line_search_mm(uu, vv, gradf, curvf; ninner, out, fun)
+    fun = state -> state.α
+    amm = @inferred line_search_mm(gradf, curvf, uu, vv; ninner, out, fun)
     @test amm ≈ ahat
     costs = cost.(out)
     @test cost(ahat) ≈ costs[2] ≈ costs[3] ≈ costs[4]
-#   @test all(≤(0), diff(costs)) # todo
+    @test all(≤(0), diff(costs))
+    @test all(a -> isa(a, Float32), out)
 end
-
-
-#=
-todo: special case of a single function
-=#
