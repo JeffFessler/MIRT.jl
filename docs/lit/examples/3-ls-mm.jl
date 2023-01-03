@@ -374,16 +374,15 @@ b2 = @benchmark a2 = lsmm1($gradz, $curvz)
 b3 = @benchmark a3 = lsmm2($dot_gradz, $dot_curvz)
 
 #=
-Timing results on my mac:
-- 127 μs (382 allocations: 505.69 KiB)
-- 117 μs (421 allocations: 11.66 KiB) # 1c before using using `make_` (not shown)
--  89 μs (319 allocations: 9.41 KiB) # 1c after using `make_` !!
-- 103 μs (316 allocations: 8.81 KiB)
--  92 μs (233 allocations: 5.06 KiB)
+Timing results on my Mac:
+- 95 μs
+- 65 μs # 1c after using `make_`
+- 80 μs
+- 69 μs (and lowest memory)
 
-The version using `gradc`
-with its "properly captured" variables
-is the fastest.
+The versions using `gradc` and `dot_gradz`
+with their "properly captured" variables
+are the fastest.
 But all the versions here are pretty similar
 so even using the simplest version
 seems likely to be fine.
