@@ -52,6 +52,9 @@ end
 
     show(isinteractive() ? stdout : devnull, MIME("text/plain"), state)
     show(isinteractive() ? stdout : devnull, MIME("text/plain"), state.work)
+
+    @test Base.IteratorSize(state) == Base.SizeUnknown()
+    @test Base.IteratorEltype(state) == Base.EltypeUnknown()
 end
 
 
