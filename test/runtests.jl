@@ -1,6 +1,6 @@
 # test/runtests.jl
 
-using MIRT
+import MIRT
 using Plots: default, plot
 using Test: @testset, detect_ambiguities
 
@@ -57,8 +57,7 @@ for root in otherlist
 end
 
 
-# new way:
-srclist = (
+srclist = [
 "algorithm",
 "fbp",
 "io",
@@ -67,7 +66,7 @@ srclist = (
 "regularize",
 "system",
 "utility",
-)
+]
 
 for root in srclist
     tmp = joinpath(root, "z-test.jl")

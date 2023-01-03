@@ -147,8 +147,8 @@ We require `axes(u_j) == axes(v_j)` for all ``j=1,…,J``.
 - `work = LineSearchMMWork(u, v, α)` pre-allocated work space for ``u_j+α v_j``
 """
 function LineSearchMM(
-    uu::AbstractVector{<:Any},
-    vv::AbstractVector{<:Any},
+    uu::AbstractVector{<:AbstractArray},
+    vv::AbstractVector{<:AbstractArray},
     dot_gradf::AbstractVector{<:Function},
     dot_curvf::AbstractVector{<:Function},
     ;
@@ -165,8 +165,8 @@ end
 function LineSearchMM(
     gradf::AbstractVector{<:Function},
     curvf::AbstractVector{<:Any},
-    uu::AbstractVector{<:Any},
-    vv::AbstractVector{<:Any},
+    uu::AbstractVector{<:AbstractArray},
+    vv::AbstractVector{<:AbstractArray},
     ; kwargs...
 )
     dot_gradf = make_dot_gradf.(gradf)

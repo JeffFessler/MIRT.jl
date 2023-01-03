@@ -9,7 +9,6 @@ export downsample_dim1
 export downsample1
 export downsample2
 export downsample3
-export downsample
 
 
 """
