@@ -6,7 +6,6 @@ using LinearMapsAA: LinearMapAM, LinearMapAO
 using Test: @test, @testset, @test_throws, @inferred
 
 
-
 @testset "1D" begin
     x = rand(4)
     @test diffl(x)[2:end] == diff(x)
@@ -19,10 +18,10 @@ end
 @testset "2D" begin
     x = [2 4; 6 16]
     g = @inferred diffl(x, 1)
-    @test all(g[1,:] .== 0)
+    @test all(iszero, g[1,:])
     @test g[2:end,:] == diff(x, dims=1)
     g = @inferred diffl(x, 2)
-    @test all(g[:,1] .== 0)
+    @test all(iszero, g[:,1])
     @test g[:,2:end] == diff(x, dims=2)
 
     g = @inferred diffl(x, 1 ; edge=:none)
@@ -41,8 +40,8 @@ end
 @testset "stack" begin
     x = reshape((1:(2*3*4)).^2, 2, 3, 4)
     g = diffl(x, [3, 1])
-    @test all(g[:,:,1,1] .== 0)
-    @test all(g[1,:,:,2] .== 0)
+    @test all(iszero, g[:,:,1,1])
+    @test all(iszero, g[1,:,:,2])
     @test g[:,:,2:end,1] == diff(x, dims=3)
     @test g[2:end,:,:,2] == diff(x, dims=1)
 end

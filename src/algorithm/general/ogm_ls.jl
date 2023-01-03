@@ -106,9 +106,7 @@ function ogm_ls(
             if curv > 0
                 alf = alf - derh / curv
             end
-            if alf == 0
-                break
-            end
+            iszero(alf) && break
         end
 
 #    # derivative of h(a) = cost(x + a * dir) where \alpha is real

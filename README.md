@@ -108,6 +108,12 @@ As of `v0.15`, the following functions are deprecated:
 | `prompt` | `MIRTjim.prompt` | |
 | `fld_read` | `FileIO.load` | [AVSfldIO.jl](https://github.com/JeffFessler/AVSfldIO.jl) |
 | `fld_write` | `FileIO.save` | [FileIO.jl](https://github.com/JuliaIO/FileIO.jl) |
+| `ndgrid` | `LazyGrids.ndgrid` | [LazyGrids.jl](https://github.com/JuliaArrays/LazyGrids.jl) |
+| `image_geom` | `ImageGeoms.ImageGeom` | [ImageGeoms.jl](https://github.com/JuliaImageRecon/ImageGeoms.jl) |
+| `ellipse_im` | `ImagePhantoms.phantom` | [ImagePhantoms.jl](https://github.com/JuliaImageRecon/ImagePhantoms.jl) |
+| `ellipse_sino` | `ImagePhantoms.radon` | [ImagePhantoms.jl](https://github.com/JuliaImageRecon/ImagePhantoms.jl) |
+| `mri_objects` | `ImagePhantoms.spectrum` | [ImagePhantoms.jl](https://github.com/JuliaImageRecon/ImagePhantoms.jl) |
+| `sino_geom` | `Sinograms.RayGeom` | [Sinograms.jl](https://github.com/JuliaImageRecon/Sinograms.jl) |
 
 
 <!-- URLs -->

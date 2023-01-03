@@ -22,7 +22,7 @@ using Test: @test, @testset, @test_throws, @inferred
         @. w = cos(x) # closure
         return w
     end
-    
+
     x = randn(Tx, dims)
     v = randn(Tx, dims)
 
@@ -53,7 +53,7 @@ end
         @. w = wt * x # closure
         return w
     end
-    
+
     x = randn(Tx, dims)
     v = randn(Tx, dims)
 

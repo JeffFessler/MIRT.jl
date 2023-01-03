@@ -423,7 +423,7 @@ for ls in solvers # check that they work properly
     @assert isapprox(als, αstar; atol=1e-3)
 end;
 
-# 
+#
 bbt = @benchmark ls_ls($(solvers[1]))
 
 #

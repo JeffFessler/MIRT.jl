@@ -5,7 +5,7 @@ dot-grad.jl
 using LinearAlgebra: dot
 
 # type (considering units) for gradient df/dx
-_grad_type(Tf::Type{<:RealU}, Tx::Type{<:Number}) = 
+_grad_type(Tf::Type{<:RealU}, Tx::Type{<:Number}) =
     typeof(oneunit(Tf) / oneunit(Tx))
 
 
