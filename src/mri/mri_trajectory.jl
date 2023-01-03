@@ -10,6 +10,7 @@ using MIRT: ndgrid, mri_kspace_spiral, ir_mri_kspace_ga_radial
 export mri_trajectory
 
 using Random: seed!
+using LazyGrids: ndgrid
 
 
 """

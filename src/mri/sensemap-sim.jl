@@ -14,8 +14,7 @@ Matlab notes:
 export ir_mri_sensemap_sim
 
 using SpecialFunctions: ellipk, ellipe
-
-#using MIRT: ndgrid
+using LazyGrids: ndgrid
 
 
 """
@@ -177,17 +176,17 @@ function ir_mri_sensemap_sim_do(
     x = T.(((1:nx) .- (nx+1)/2) * dx)
     y = T.(((1:ny) .- (ny+1)/2) * dy)
     z = (nz > 0) ? T.(((1:nz) .- (nz+1)/2) * dz) : [0]
-    (xx, yy, zz) = ndgrid(x,y,z)
+    (xx, yy, zz) = ndgrid(x, y, z)
 
     data_per_coil = Array{Any}(undef, nring, ncoilpr)
 
     smap = zeros(Complex{T}, nx, ny, max(nz,1), ncoilpr, nring)
     for ir in 1:nring, ic in 1:ncoilpr
         # rotate coordinates to correspond to coil orientation
-        zr =    (xx .- plist[ic,ir,1]) .* nlist[ic,ir,1] +
-                (yy .- plist[ic,ir,2]) .* nlist[ic,ir,2] +
-                (zz .- plist[ic,ir,3]) .* nlist[ic,ir,3]
-        xr = xx .* nlist[ic,ir,2] - yy .* nlist[ic,ir,1]
+        zr = @. (xx - plist[ic,ir,1]) * nlist[ic,ir,1] +
+                (yy - plist[ic,ir,2]) * nlist[ic,ir,2] +
+                (zz - plist[ic,ir,3]) * nlist[ic,ir,3]
+        xr = @. xx * nlist[ic,ir,2] - yy * nlist[ic,ir,1]
         yr = zz .- plist[ic,ir,3] # translate along object z axis
 
         # compute sensitivity vectors in coil coordinates

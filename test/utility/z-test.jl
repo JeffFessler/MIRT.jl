@@ -10,7 +10,6 @@ list = [
 "map_many.jl"
 "mask.jl"
 "max_percent_diff.jl"
-"ndgrid.jl"
 "rect.jl"
 "reverser.jl"
 "rmsd100.jl"
