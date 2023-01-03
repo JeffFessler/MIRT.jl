@@ -5,7 +5,7 @@ dot-curv.jl
 using LinearAlgebra: dot
 
 # type (considering units) for curvature df/dx^2
-_curv_type(Tf::Type{<:RealU}, Tx::Type{<:Number}) = 
+_curv_type(Tf::Type{<:RealU}, Tx::Type{<:Number}) =
     typeof(oneunit(Tf) / oneunit(Tx)^2)
 
 

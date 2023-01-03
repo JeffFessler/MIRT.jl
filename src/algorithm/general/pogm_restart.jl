@@ -197,7 +197,7 @@ function pogm_restart(
             beta = (2 + q - sqrt(q^2+8*q))^2 / 4. / (1-q)
         # for "mu" = 0 or for unknown "mu"
         elseif mom != :pgm
-            if mom === :pogm && iter == niter # && restart == 0
+            if mom === :pogm && iter == niter # && iszero(restart)
                 tnew = 0.5 * (1 + sqrt(1 + 8 * told^2))
             else
                 tnew = 0.5 * (1 + sqrt(1 + 4 * told^2))
@@ -257,7 +257,7 @@ function pogm_restart(
         xold = xnew
         yold = ynew
 
-        if mom != :pgm && mu == 0
+        if mom != :pgm && iszero(mu)
             told = tnew
         end
     end # for iter

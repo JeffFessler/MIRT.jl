@@ -24,7 +24,7 @@ using Test: @test, @testset, @test_throws, @inferred
         @. w = wt
         return w
     end
-    
+
     x = randn(Tx, dims)
     v = randn(Tx, dims)
 

@@ -60,8 +60,8 @@ mutable struct LineSearchMM{
     Tα <: Real,
     Tw <: LineSearchMMWork,
 }
-    uu::Tu # vector of B_j x	
-    vv::Tv # vector of B_j d	
+    uu::Tu # vector of B_j x
+    vv::Tv # vector of B_j d
     dot_gradf::Tg # vector of <z, ∇f> functions
     dot_curvf::Tc # vector of <|z|², ω_f> functions
     α::Tα
@@ -211,7 +211,7 @@ Base.IteratorSize(::LineSearchMM) = Base.SizeUnknown()
 Base.IteratorEltype(::LineSearchMM) = Base.EltypeUnknown()
 
 Base.iterate(state::LineSearchMM, arg=nothing) =
-    (state.iter ≥ state.ninner) || (state.iter > 0 && state.α == 0) ? nothing :
+    (state.iter ≥ state.ninner) || (state.iter > 0 && iszero(state.α)) ? nothing :
     (_update!(state), nothing)
 
 

@@ -90,7 +90,7 @@ function ncg(
         else
             if betahow === :dai_yuan
                 denom =    dot(grad_new - grad_old, dir)
-                if denom == 0
+                if iszero(denom)
                     betaval = 0
                 else
                     betaval = dot(grad_new, P * grad_new) / denom
@@ -120,9 +120,7 @@ function ncg(
             if curv > 0
                 alf = alf - derh / curv
             end
-            if alf == 0
-                break
-            end
+            iszero(alf) && break
         end
 
         x += alf * dir
