@@ -115,7 +115,7 @@ for a general family of 1D cost functions of the form
 ``h(α) = \\sum_{j=1}^J f_j(u_j + α v_j)``
 where each function ``f_j(t)`` has a quadratic majorizer of the form
 ```math
-q_j(t;s) = f_j(t) + \\nabla f_j(s) (t - s) + 1/2 \\|t - s\\|^2_{C_j(s)}
+q_j(t;s) = f_j(s) + ∇f_j(s) (t - s) + 1/2 ‖t - s‖^2_{C_j(s)}
 ```
 where ``C_j(⋅)`` is diagonal matrix of curvatures.
 (It suffices for each ``f_j`` to have a Lipschitz smooth gradient.)

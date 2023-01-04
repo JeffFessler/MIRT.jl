@@ -17,11 +17,11 @@ using LinearAlgebra: I, norm, dot
 Nonlinear preconditioned conjugate gradient algorithm
 to minimize a general "inverse problem" cost function of the form
 ``\\Psi(x) = \\sum_{j=1}^J f_j(B_j x)``
-where each function ``f_j(v)`` has a quadratic majorizer of the form
+where each function ``f_j(t)`` has a quadratic majorizer of the form
 ```math
-q_j(v;u) = f_j(u) + \\nabla f_j(u) (v - u) + 1/2 \\|v - u\\|^2_{C_j(u)}
+q_j(t;s) = f_j(s) + ∇f_j(s) (t - s) + 1/2 ‖t - s‖^2_{C_j(s)}
 ```
-where ``C_j(u)`` is diagonal matrix of curvatures.
+where ``C_j(⋅)`` is diagonal matrix of curvatures.
 (It suffices for each ``f_j`` to have a Lipschitz smooth gradient.)
 
 This CG method uses a majorize-minimize (MM) line search.
@@ -38,10 +38,10 @@ if each `B_j` is a linear operator (e.g., `LinearMapAO`)
 of suitable "dimensions".
 
 # option
-- `niter` # number of outer iterations; default 50
-- `ninner` # number of inner iterations of MM line search; default 5
-- `P` # preconditioner; default `I`
-- `betahow` "beta" method for the search direction; default `:dai_yuan`
+- `niter = 50` # number of outer iterations
+- `ninner = 5` # number of inner iterations of MM line search
+- `P = I` # preconditioner
+- `betahow = :dai_yuan` "beta" method for the search direction
 - `fun` User-defined function to be evaluated with two arguments (x,iter).
    * It is evaluated at `(x0,0)` and then after each iteration.
 
