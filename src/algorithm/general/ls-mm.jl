@@ -3,7 +3,7 @@ ls-mm.jl
 Line-search based on majorize-minimize (MM) approach
 =#
 
-export line_search_mm
+export line_search_mm, LineSearchMM
 
 using LinearAlgebra: dot
 
