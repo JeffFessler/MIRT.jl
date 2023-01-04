@@ -4,8 +4,8 @@ Line-search based on majorize-minimize (MM) approach
 =#
 
 export line_search_mm, LineSearchMM
+#using MIRT: make_dot_gradf, make_dot_curvf, _show_struct
 
-using LinearAlgebra: dot
 
 _narg(fun::Function) = first(methods(fun)).nargs - 1
 

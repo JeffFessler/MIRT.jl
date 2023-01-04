@@ -1,47 +1,13 @@
 #=
-ncg.jl
-Nonlinear CG optimization
-2019-03-16, Jeff Fessler, University of Michigan
+ncg2.jl
+Nonlinear CG optimization (mutating version)
+2023-01-03, Jeff Fessler, University of Michigan
 =#
 
 export ncg2
 
-using LinearAlgebra: I, norm, dot
-
-
-"""
-    NCGWork{...}
-
-Workspace for storing working arrays in nonlinear CG.
-
-If all of those ``z_j`` arrays had the same `eltype`,
-then we could save memory
-by allocating just the longest vector needed.
-But for Unitful data they could have different `eltype`s and `size`s,
-which would require a lot of `reinterpret` and `reshape` to handle.
-So we just allocate separate work arrays for each ``j``.
-"""
-mutable struct NCGWork{
-    Tb <: AbstractVector{<:AbstractArray},
-}
-    Bz::Tb # B[j] * z
-
-    function NCGWork(
-        B::AbstractVector{<:Any},
-#       vv::AbstractVector{<:AbstractArray},
-#       α::Real,
-    )
-
-#       axes(uu) == axes(vv) || error("incompatible u,v axes")
-#       all(j -> axes(uu[j]) == axes(vv[j]), eachindex(uu)) ||
-#           error("incompatible uj,vj axes")
-
-#       zz = [similar(uu[j], _ls_mm_worktype(uu[j], vv[j], α))
-#           for j in eachindex(uu)]
-        Tz = typeof(zz)
-        return new{Tz}(zz)
-    end
-end
+using LinearAlgebra: I, dot
+# using MIRT: line_search_mm, _show_struct
 
 
 """
@@ -140,7 +106,7 @@ of suitable "dimensions".
 - `out` `[niter+1] (fun(x0,0), fun(x1,1), ..., fun(x_niter,niter))`
    * (all 0 by default). This is an array of length `niter+1`
 """
-function ncg(
+function ncg2(
     B::AbstractVector{<:Any},
     gradf::AbstractVector{<:Function},
     curvf::AbstractVector{<:Function},
@@ -162,9 +128,10 @@ function ncg(
         out[1] = fun(x0, 0) # todo: state
     end
 
+    for item in state
     end
 
-    return x, out
+    return state.x #, out (todo)
 #   return eltype(x0).(x), out # todo
 end
 
@@ -229,3 +196,6 @@ Base.IteratorEltype(::NCG) = Base.EltypeUnknown()
 Base.iterate(state::NCG, arg=nothing) =
     (state.iter ≥ state.niiter) ? nothing :
     (_update!(state), nothing)
+
+Base.show(io::IO, ::MIME"text/plain", src::NCG) =
+    _show_struct(io, MIME("text/plain"), src)
