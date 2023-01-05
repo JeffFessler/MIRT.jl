@@ -17,50 +17,64 @@ Mutable struct for nonlinear CG.
 """
 mutable struct NCG{
     Tb <: AbstractVector{<:Any},
-    Tg <: AbstractVector{<:Function},
-    Tc <: AbstractVector{<:Any},
+    Tgf <: AbstractVector{<:Function},
+    Tcf <: AbstractVector{<:Any},
     Tx <: AbstractArray{<:Number},
     Tp <: Any,
     Tu <: AbstractVector{<:Any},
+    Tg <: AbstractVector{<:Any},
 }
     B::Tb
-    gradf::Tg
-    curvf::Tc
+    gradf::Tgf
+    curvf::Tcf
     x::Tx # usually a Vector
+    dir::Tx
     P::Tp
     Bx::Tu
     Bd::Tu
+    grad_old::Tg
+    grad_new::Tg
+    npgrad::Tg
     niter::Int
-#   ninner::Int
+    ninner::Int
 
     function NCG(
         B::Tb,
-        gradf::Tg
-        curvf::Tc,
-        x0::Tx # usually a Vector
+        gradf::Tgf,
+        curvf::Tcf,
+        x::AbstractArray{<:Number}, # usually a Vector
         ;
-        niter::Int = 50,
-#       ninner::Int = 5,
+        niter::Int = 10,
+        ninner::Int = 5,
         P::Tp = I, # trick: this is an overloaded I (by LinearMapsAA)
         betahow::Symbol = :dai_yuan,
     ) where {
         Tb <: AbstractVector{<:Any},
-        Tg <: AbstractVector{<:Function},
-        Tc <: AbstractVector{<:Any},
-        Tx <: AbstractArray{<:Number},
+        Tgf <: AbstractVector{<:Function},
+        Tcf <: AbstractVector{<:Any},
         Tp <: Any,
     }
 
-        Bx = [B[j] * x for j in 1:J]
+        x = 1f0x # ensure >= Float32
+        Tx = typeof(x)
+        Bx = [Bj * x for Bj in B]
+
+        # Gradients of each f_j must have same units.
+        # The Tg line will fail (as it should) if units are incompatible.
+        tmp = [gfj(Bxj) for (gfj, Bxj) in zip(gradf, Bx)]
+        Tg = promote_type(eltype.(tmp)...)
 
         axes(B) == axes(gradf) || axes(curvf) ||
             error("incompatible axes")
-        new{Tb, Tg, Tc, Tx, Tp, Tu}(
-            B, gradf, curvf, x0, P, Bx, deepcopy(Bx), niter,
+        new{Tb, Tgf, Tcf, Tx, Tp, Tu, Tg}(
+            B, gradf, curvf, x0, deepcopy(x0), # dir
+            P, Bx, deepcopy(Bx), # Bd
+            similar(x0, Tg), grad_old,
+            similar(x0, Tg), grad_new,
+            similar(x0, Tg), npgrad,
+            niter, ninner,
         )
-
     end
-
 end
 
 
@@ -68,9 +82,10 @@ end
 
 
 """
-    (x,out) = ncg(B, gradf, curvf, x0 ; ...)
+    NCG(B, gradf, curvf, x0 ; out, ...)
 
-Nonlinear preconditioned conjugate gradient algorithm
+Constructor for iterable
+nonlinear preconditioned conjugate gradient algorithm
 to minimize a general "inverse problem" cost function of the form
 ``\\Psi(x) = \\sum_{j=1}^J f_j(B_j x)``
 where each function ``f_j(t)`` has a quadratic majorizer of the form
@@ -98,48 +113,84 @@ of suitable "dimensions".
 - `ninner = 5` # number of inner iterations of MM line search
 - `P = I` # preconditioner
 - `betahow = :dai_yuan` "beta" method for the search direction
-- `fun` User-defined function to be evaluated with two arguments (x,iter).
-   * It is evaluated at `(x0,0)` and then after each iteration.
-
-# output
-- `x` final iterate
-- `out` `[niter+1] (fun(x0,0), fun(x1,1), ..., fun(x_niter,niter))`
-   * (all 0 by default). This is an array of length `niter+1`
 """
-function ncg2(
+function NCG(
     B::AbstractVector{<:Any},
     gradf::AbstractVector{<:Function},
     curvf::AbstractVector{<:Function},
     x0::AbstractArray{<:Number}, # usually a Vector
     ;
-#   out::Union{Nothing,Vector{Any}} = nothing,
-    niter::Int = 50,
-    ninner::Int = 5,
-    P = I, # trick: this is an overloaded I (by LinearMapsAA)
-    betahow::Symbol = :dai_yuan,
-    fun::Function = (x,iter) -> 0, # todo: missing
+    kwargs...,
+#   niter::Int = 50,
+#   ninner::Int = 5,
+#   P = I, # trick: this is an overloaded I (by LinearMapsAA)
+#   betahow::Symbol = :dai_yuan,
 )
 
-    Base.require_one_based_indexing(B, gradf, curvf)
+    return NCG(B, gradf, curvf, x0; kwargs...)
+end
 
+
+
+"""
+    ncg(args...; fun, out, kwargs...)
+
+Convenience method for
+nonlinear preconditioned conjugate gradient (NCG) algorithm.
+See `NCG` documentation.
+
+# option
+- `fun(state)` User-defined function to be evaluated at each iteration.
+- `out (niter+1) [fun(state), …, fun(state)]`
+   * (all 0 by default). This is a Vector of length `niter+1`
+
+# output
+- `x` final iterate
+"""
+
+function ncg2(
+    args...
+#   B::AbstractVector{<:Any},
+#   gradf::AbstractVector{<:Function},
+#   curvf::AbstractVector{<:Function},
+#   x0::AbstractArray{<:Number}, # usually a Vector
+    ;
+#   niter::Int = 50,
+#   ninner::Int = 5,
+#   P = I, # trick: this is an overloaded I (by LinearMapsAA)
+#   betahow::Symbol = :dai_yuan,
+    fun::Function = state -> 0, # todo: missing
+    out::Union{Nothing,Vector{Any}} = nothing,
+    kwargs...
+)
+
+    state = NCG(args... ; kwargs...)
+    niter = state.niter
+ 
     out = Array{Any}(undef, niter+1)
-    !isnothing(out) && length(out) < niter && throw("length(out) < $niter")
+    !isnothing(out) && length(out) < niter+1 && throw("length(out) < $niter+1")
     if !isnothing(out)
-        out[1] = fun(x0, 0) # todo: state
+        out[1] = fun(state)
     end
 
     for item in state
+        if !isnothing(out)
+            out[state.iter+1] = fun(state)
+        end
     end
 
-    return state.x #, out (todo)
-#   return eltype(x0).(x), out # todo
+    return state.x
 end
 
 
 function _update!(state::NCG)
+    ninner = state.ninner
     B = state.B
+    gradf = state.gradf
+    curvf = state.curvf
     Bd = state.Bd
     Bx = state.Bx
+    x = state.x
     grad_old = state.grad_old
     grad_new = state.grad_new
     npgrad = state.npgrad
@@ -147,13 +198,12 @@ function _update!(state::NCG)
 
     J = length(B)
 
-    dir = []
-    grad_new = []
+    # todo: constructor
+    grad = (Bx) -> sum([Bj' * gjf(Bjx) for (Bj, gjf, Bjx) in zip(B, gradf, Bx)])
+    grad_new .= grad(Bx) # gradient: todo in place using Bd space
 
-    grad = (Bx) -> sum([B[j]' * gradf[j](Bx[j]) for j in 1:J]) # todo: constructor
-
-    grad_new .= grad(Bx) # gradient: todo in place
     mul!(npgrad, -P, grad_new)
+
     if state.iter == 0
         dir = npgrad
     else
@@ -174,15 +224,15 @@ function _update!(state::NCG)
 
     # MM-based line search for step size alpha
     # using h(a) = sum_j f_j(uj + a vj)
-    for j in 1:J
-        mul!(Bd[j], @view B[j], dir) # v_j in course notes, todo: view?
+    for (Bdj, Bj) in zip(Bd, B)
+        mul!(Bdj, Bj, dir) # v_j in course notes
     end
-    alf = line_search_mm(gradf, curvf, Bx, Bd; state.ninner) # todo: work
-#   ls = LineSearchMM(
+    alf = line_search_mm(gradf, curvf, Bx, Bd; ninner) # todo: work
+#   ls = LineSearchMM
 
     @. x += alf * dir # update x
-    for j in 1:J # update Bj * x
-        @. Bx[j] += alf * Bd[j]
+    for (Bxj, Bdj) in zip(Bx, Bd) # update Bj * x
+        @. Bxj += alf * Bdj
     end
 
     return state
