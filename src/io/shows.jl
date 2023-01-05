@@ -64,6 +64,8 @@ function _show_struct(io::IO, ::MIME"text/plain", st::Any)
         t = (p isa Number) ? _unit_precision(p) : typeof(p)
         println(io, " ", f, "::", t, " ",
             p isa Number ? p :
+            p isa Symbol ? ":$p" :
+            p isa String ? p :
             p isa AbstractArray ? size(p) :
             "",
         )

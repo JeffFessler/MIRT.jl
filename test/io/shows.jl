@@ -10,9 +10,10 @@ struct Tester
     a
     b
     c
+    d
 end
 
 Base.show(io::IO, ::MIME"text/plain", src::Tester) =
    _show_struct(io, MIME("text/plain"), src)
-tmp = Tester(5, 1:3, :test)
+tmp = Tester(5, 1:3, :symbol, "string")
 show(isinteractive() ? stdout : devnull, MIME("text/plain"), tmp)
