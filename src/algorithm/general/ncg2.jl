@@ -21,8 +21,8 @@ mutable struct NCG{
     Tcf <: AbstractVector{<:Any},
     Tx <: AbstractArray{<:Number},
     Tp <: Any,
-    Tu <: AbstractVector{<:Any},
-    Tg <: AbstractVector{<:Any},
+    Tu <: AbstractVector{<:AbstractArray},
+    Tg <: AbstractArray{<:Number},
 }
     B::Tb
     gradf::Tgf
@@ -35,14 +35,16 @@ mutable struct NCG{
     grad_old::Tg
     grad_new::Tg
     npgrad::Tg
+    betahow::Symbol
+    iter::Int
     niter::Int
     ninner::Int
 
     function NCG(
-        B::Tb,
         gradf::Tgf,
         curvf::Tcf,
-        x::AbstractArray{<:Number}, # usually a Vector
+        B::Tb,
+        x::AbstractArray{<:Number,D}, # usually a Vector
         ;
         niter::Int = 10,
         ninner::Int = 5,
@@ -53,26 +55,30 @@ mutable struct NCG{
         Tgf <: AbstractVector{<:Function},
         Tcf <: AbstractVector{<:Any},
         Tp <: Any,
+        D
     }
 
         x = 1f0x # ensure >= Float32
         Tx = typeof(x)
         Bx = [Bj * x for Bj in B]
+        Tu = typeof(Bx)
 
         # Gradients of each f_j must have same units.
         # The Tg line will fail (as it should) if units are incompatible.
         tmp = [gfj(Bxj) for (gfj, Bxj) in zip(gradf, Bx)]
-        Tg = promote_type(eltype.(tmp)...)
+        Tge = promote_type(eltype.(tmp)...) # cannot type infer tmp
+# todo: force user to supply Tge?
+        Tg = Array{Tge, D}
 
         axes(B) == axes(gradf) || axes(curvf) ||
             error("incompatible axes")
         new{Tb, Tgf, Tcf, Tx, Tp, Tu, Tg}(
-            B, gradf, curvf, x0, deepcopy(x0), # dir
+            B, gradf, curvf, x, deepcopy(x), # dir
             P, Bx, deepcopy(Bx), # Bd
-            similar(x0, Tg), grad_old,
-            similar(x0, Tg), grad_new,
-            similar(x0, Tg), npgrad,
-            niter, ninner,
+            similar(x, Tge), # grad_old
+            similar(x, Tge), # grad_new
+            similar(x, Tge), # npgrad
+            betahow, 0, niter, ninner,
         )
     end
 end
@@ -127,7 +133,7 @@ function NCG(
 #   betahow::Symbol = :dai_yuan,
 )
 
-    return NCG(B, gradf, curvf, x0; kwargs...)
+    return NCG(gradf, curvf, B, x0; kwargs...)
 end
 
 
@@ -190,6 +196,7 @@ function _update!(state::NCG)
     curvf = state.curvf
     Bd = state.Bd
     Bx = state.Bx
+    P = state.P
     x = state.x
     grad_old = state.grad_old
     grad_new = state.grad_new
@@ -207,7 +214,7 @@ function _update!(state::NCG)
     if state.iter == 0
         dir = npgrad
     else
-        if betahow === :dai_yuan
+        if state.betahow === :dai_yuan
             denom = dot(grad_new, dir) - dot(grad_old, dir)
             if iszero(denom)
                 betaval = 0
@@ -235,6 +242,8 @@ function _update!(state::NCG)
         @. Bxj += alf * Bdj
     end
 
+    state.iter += 1
+
     return state
 end
 
@@ -244,7 +253,7 @@ Base.IteratorSize(::NCG) = Base.SizeUnknown()
 Base.IteratorEltype(::NCG) = Base.EltypeUnknown()
 
 Base.iterate(state::NCG, arg=nothing) =
-    (state.iter ≥ state.niiter) ? nothing :
+    (state.iter ≥ state.niter) ? nothing :
     (_update!(state), nothing)
 
 Base.show(io::IO, ::MIME"text/plain", src::NCG) =

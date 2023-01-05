@@ -1,6 +1,7 @@
 # test/algorithm/general/ncg.jl
 
-using MIRT: ncg
+using MIRT: ncg, NCG
+using MIRT: ncg2 # todo
 
 using LinearAlgebra: I, norm, opnorm
 using Plots: Plot
@@ -41,8 +42,8 @@ curvf = [v -> 1, v -> reg]
 
 niter = 40
 x0 = zeros(size(xh))
-x1, out1 = ncg(   grad1, curv1, x0, niter=niter, fun=fun)
-x2, out2 = ncg(B, gradf, curvf, x0, niter=niter, fun=fun)
+x1, out1 = ncg(   grad1, curv1, x0; niter, fun)
+x2, out2 = ncg(B, gradf, curvf, x0; niter, fun)
 @test x1 ≈ xh
 @test x2 ≈ xh
 
@@ -55,7 +56,7 @@ allk = out -> (costk(out), errk(out))
 cost1, err1 = allk(out1)
 cost2, err2 = allk(out2)
 
-if isinteractive()
+if isinteractive() && false # todo
     k = 0:niter
     plot(xlabel="k", ylabel=L"\log(\Psi(x_k) - \Psi(x_*))")
     scatter!(k, cost1, color=:blue, label="cost1")
@@ -69,6 +70,14 @@ if isinteractive()
     plot(p1, p2)
     gui()
 end
+
+
+    ninner = 4
+    niter = 6
+#   state = @inferred NCG(B, gradf, curvf, x0; niter, ninner) # todo
+    state = NCG(B, gradf, curvf, x0; niter, ninner)
+
+    iterate(state)
 
 
 #=
