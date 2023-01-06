@@ -18,7 +18,7 @@ Mutable struct for nonlinear CG.
 mutable struct NCG{
     Tb <: AbstractVector{<:Any},
     Tgf <: AbstractVector{<:Function},
-    Tcf <: AbstractVector{<:Any},
+    Tcf <: AbstractVector{<:Any}, # think Union{Function,RealU}
     Tx <: AbstractArray{<:Number},
     Tp <: Any,
     Tu <: AbstractVector{<:AbstractArray},
@@ -40,10 +40,13 @@ mutable struct NCG{
     niter::Int
     ninner::Int
 
+    """
+todo
+    """
     function NCG(
+        B::Tb,
         gradf::Tgf,
         curvf::Tcf,
-        B::Tb,
         x::AbstractArray{<:Number,D}, # usually a Vector
         ;
         niter::Int = 10,
@@ -120,10 +123,11 @@ of suitable "dimensions".
 - `P = I` # preconditioner
 - `betahow = :dai_yuan` "beta" method for the search direction
 """
+#=
 function NCG(
     B::AbstractVector{<:Any},
     gradf::AbstractVector{<:Function},
-    curvf::AbstractVector{<:Function},
+    curvf::AbstractVector{<:Any},
     x0::AbstractArray{<:Number}, # usually a Vector
     ;
     kwargs...,
@@ -135,62 +139,13 @@ function NCG(
 
     return NCG(gradf, curvf, B, x0; kwargs...)
 end
+=#
 
 
-
-"""
-    ncg(args...; fun, out, kwargs...)
-
-Convenience method for
-nonlinear preconditioned conjugate gradient (NCG) algorithm.
-See `NCG` documentation.
-
-# option
-- `fun(state)` User-defined function to be evaluated at each iteration.
-- `out (niter+1) [fun(state), …, fun(state)]`
-   * (all 0 by default). This is a Vector of length `niter+1`
-
-# output
-- `x` final iterate
-"""
-
-function ncg2(
-    args...
-#   B::AbstractVector{<:Any},
-#   gradf::AbstractVector{<:Function},
-#   curvf::AbstractVector{<:Function},
-#   x0::AbstractArray{<:Number}, # usually a Vector
-    ;
-#   niter::Int = 50,
-#   ninner::Int = 5,
-#   P = I, # trick: this is an overloaded I (by LinearMapsAA)
-#   betahow::Symbol = :dai_yuan,
-    fun::Function = state -> 0, # todo: missing
-    out::Union{Nothing,Vector{Any}} = nothing,
-    kwargs...
-)
-
-    state = NCG(args... ; kwargs...)
-    niter = state.niter
- 
-    out = Array{Any}(undef, niter+1)
-    !isnothing(out) && length(out) < niter+1 && throw("length(out) < $niter+1")
-    if !isnothing(out)
-        out[1] = fun(state)
-    end
-
-    for item in state
-        if !isnothing(out)
-            out[state.iter+1] = fun(state)
-        end
-    end
-
-    return state.x
-end
+# Mutating update
 
 
 function _update!(state::NCG)
-    ninner = state.ninner
     B = state.B
     gradf = state.gradf
     curvf = state.curvf
@@ -209,12 +164,14 @@ function _update!(state::NCG)
     grad = (Bx) -> sum([Bj' * gjf(Bjx) for (Bj, gjf, Bjx) in zip(B, gradf, Bx)])
     grad_new .= grad(Bx) # gradient: todo in place using Bd space
 
-    mul!(npgrad, -P, grad_new)
+    mul!(npgrad, -P, grad_new) # todo "-"
 
     if state.iter == 0
         dir = npgrad
     else
-        if state.betahow === :dai_yuan
+        if state.betahow === :zero # GD
+            betaval = 0
+        elseif state.betahow === :dai_yuan
             denom = dot(grad_new, dir) - dot(grad_old, dir)
             if iszero(denom)
                 betaval = 0
@@ -234,8 +191,9 @@ function _update!(state::NCG)
     for (Bdj, Bj) in zip(Bd, B)
         mul!(Bdj, Bj, dir) # v_j in course notes
     end
-    alf = line_search_mm(gradf, curvf, Bx, Bd; ninner) # todo: work
-#   ls = LineSearchMM
+
+    alf = line_search_mm(gradf, curvf, Bx, Bd; state.ninner) # todo: work
+#   ls = LineSearchMM(gradf, curvf, Bx, Bd; state.ninner) # todo: work
 
     @. x += alf * dir # update x
     for (Bxj, Bdj) in zip(Bx, Bd) # update Bj * x
@@ -255,6 +213,47 @@ Base.IteratorEltype(::NCG) = Base.EltypeUnknown()
 Base.iterate(state::NCG, arg=nothing) =
     (state.iter ≥ state.niter) ? nothing :
     (_update!(state), nothing)
+
+
+"""
+    ncg(args...; fun, out, kwargs...)
+
+Convenience method for
+nonlinear preconditioned conjugate gradient (NCG) algorithm.
+See `NCG` documentation.
+
+# option
+- `fun(state)` User-defined function to be evaluated at each iteration.
+- `out (niter+1) [fun(state), …, fun(state)]`
+   * (all 0 by default). This is a Vector of length `niter+1`
+
+# output
+- `x` final iterate
+"""
+function ncg2( # todo
+    args...
+    ;
+    fun::Function = state -> 0, # todo: missing
+    out::Union{Nothing,Vector{Any}} = nothing,
+    kwargs...
+)
+
+    state = NCG(args... ; kwargs...)
+    niter = state.niter
+
+    !isnothing(out) && length(out) < niter+1 && throw("length(out) < $niter+1")
+    if !isnothing(out)
+        out[1] = fun(state)
+    end
+
+    for item in state
+        if !isnothing(out)
+            out[state.iter+1] = fun(state)
+        end
+    end
+
+    return state.x
+end
 
 Base.show(io::IO, ::MIME"text/plain", src::NCG) =
     _show_struct(io, MIME("text/plain"), src)

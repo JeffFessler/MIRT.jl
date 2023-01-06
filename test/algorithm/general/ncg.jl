@@ -35,15 +35,15 @@ B = [A, I] # matrix blocks
 gradf = [u -> u - y, v -> reg * v] # f functions gradients
 curvf = [v -> 1, v -> reg]
 
-#    todo-i: these next two fail:
-#    @inferred ncg([ones(3,3)], [x -> x], [v -> 1], zeros(Float32, 3), niter=2)
-#    @inferred ncg(x -> x, v -> 1, zeros(Float32, 3), niter=2)
-#    error("todo")
+# todo-i: these next two fail:
+# @inferred ncg([ones(3,3)], [x -> x], [v -> 1], zeros(Float32, 3), niter=2)
+# @inferred ncg(x -> x, v -> 1, zeros(Float32, 3), niter=2)
 
 niter = 40
+ninner = 5
 x0 = zeros(size(xh))
-x1, out1 = ncg(   grad1, curv1, x0; niter, fun)
-x2, out2 = ncg(B, gradf, curvf, x0; niter, fun)
+x1, out1 = ncg(   grad1, curv1, x0; niter, ninner, fun)
+x2, out2 = ncg(B, gradf, curvf, x0; niter, ninner, fun)
 @test x1 ≈ xh
 @test x2 ≈ xh
 
@@ -72,13 +72,15 @@ if isinteractive() && false # todo
 end
 
 
-    ninner = 4
-    niter = 6
-#   state = @inferred NCG(B, gradf, curvf, x0; niter, ninner) # todo
-    state = NCG(B, gradf, curvf, x0; niter, ninner)
+#   state = @inferred NCG(B, gradf, curvf, x0; niter=3, ninner=2) # todo
+    state = NCG(B, gradf, curvf, x0; niter=3, ninner=2, betahow=:zero)
+    iterate(state) # not inferred
 
-    iterate(state)
-
+    cost3 = Vector{Any}(undef, niter+1)
+    fun = state -> cost(state.x) - cost(xh)
+    tmp = @inferred ncg2(B, gradf, curvf, x0;
+        niter, ninner, fun, out = cost3)
+    @test tmp ≈ x1
 
 #=
 todo
