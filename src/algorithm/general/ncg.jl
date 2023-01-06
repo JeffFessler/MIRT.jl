@@ -85,11 +85,14 @@ function ncg(
     for iter in 1:niter
         grad_new = grad(Bx) # gradient
         npgrad = -(P * grad_new)
+
         if iter == 1
             dir = npgrad
         else
-            if betahow === :dai_yuan
-                denom =    dot(grad_new - grad_old, dir)
+            if betahow === :zero
+                betaval = 0
+            elseif betahow === :dai_yuan
+                denom = dot(grad_new - grad_old, dir)
                 if iszero(denom)
                     betaval = 0
                 else
