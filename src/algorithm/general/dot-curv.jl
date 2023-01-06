@@ -9,6 +9,15 @@ _curv_type(Tf::Type{<:RealU}, Tx::Type{<:Number}) =
     typeof(oneunit(Tf) / oneunit(Tx)^2)
 
 
+#=
+Trick: when `curfv` is `[v -> c]` where `c` is a constant,
+this version of `zip` "repeats" that constant:
+=#
+zip1(x::AbstractArray, c::Number) = zip(x, Iterators.cycle(c))
+zip1(x::AbstractArray, y::Any) = zip(x, y) # otherwise use zip
+
+
+
 """
     make_dot_curvf(curv::Function, [x, Tf::DataType; w = similar(x)])
 
@@ -73,7 +82,7 @@ function make_dot_curvf(
     promote_type(Tw, _curv_type(Tf, Tx)) == Tw ||
         error("w type Tw=$Tw vs $(_curv_type(Tf, Tx))")
     let w = w, cf! = cf!
-        (v, x) -> sum(vc -> abs2(vc[1]) * vc[2], zip(v, cf!(w, x)))
+        (v, x) -> sum(vc -> abs2(vc[1]) * vc[2], zip1(v, cf!(w, x)))
     end
 end
 
@@ -84,7 +93,7 @@ function make_dot_curvf(cf::Function)
     narg == 1 || error("cf needs one argument")
 #   return (v, x) -> dot(abs2.(v), cf(x))
     return let cf = cf
-        (v, x) -> sum(vc -> abs2(vc[1]) * vc[2], zip(v, cf(x)))
+        (v, x) -> sum(vc -> abs2(vc[1]) * vc[2], zip1(v, cf(x)))
     end
 end
 

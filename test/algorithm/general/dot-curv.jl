@@ -80,3 +80,21 @@ end
     dc4 = @inferred make_dot_curvf(c4)
     @test dc4(v,x) ≈ c4 * sum(abs2, v)
 end
+
+
+@testset "dot-curv-zip1" begin
+    curvf = [
+        x -> 2ones(Int, size(x)),
+        x -> 2,
+        2,
+        x -> Iterators.map(x -> 2, x),
+    ]
+    dot_curvf = make_dot_curvf.(curvf)
+
+    dims = (3,4)
+    Tx = ComplexF32
+    x = rand(Tx, dims)
+    v = rand(Tx, dims)
+    tmp = map(dots -> dots(x, v), dot_curvf)
+    @test all(==(tmp[1]), tmp)
+end
