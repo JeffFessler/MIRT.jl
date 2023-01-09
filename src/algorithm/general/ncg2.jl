@@ -19,14 +19,19 @@ mutable struct NCG{
     Tb <: AbstractVector{<:Any},
     Tgf <: AbstractVector{<:Function},
     Tcf <: AbstractVector{<:Any}, # think Union{Function,RealU}
+    Tdg <: AbstractVector{<:Function}, # dot_gradf
+    Tdc <: AbstractVector{<:Function}, # dot_curvf
     Tx <: AbstractArray{<:Number},
     Tp <: Any,
     Tu <: AbstractVector{<:AbstractArray},
     Tg <: AbstractArray{<:Number},
+    Tl <: LineSearchMMWork,
 }
     B::Tb
     gradf::Tgf
     curvf::Tcf
+    dot_gradf::Tdg
+    dot_curvf::Tdc
     x::Tx # usually a Vector
     dir::Tx
     P::Tp
@@ -35,6 +40,7 @@ mutable struct NCG{
     grad_old::Tg
     grad_new::Tg
     npgrad::Tg
+    ls_work::Tl
     betahow::Symbol
     iter::Int
     niter::Int
@@ -73,14 +79,24 @@ todo
 # todo: force user to supply Tge?
         Tg = Array{Tge, D}
 
+        dot_gradf = make_dot_gradf.(gradf)
+        dot_curvf = make_dot_curvf.(curvf)
+        Tdg = typeof(dot_gradf)
+        Tdc = typeof(dot_curvf)
+
+        ls_work = LineSearchMMWork(Bx, Bx, 0f0)
+        Tl = typeof(ls_work)
+
         axes(B) == axes(gradf) || axes(curvf) ||
             error("incompatible axes")
-        new{Tb, Tgf, Tcf, Tx, Tp, Tu, Tg}(
-            B, gradf, curvf, x, deepcopy(x), # dir
+        new{Tb, Tgf, Tcf, Tdg, Tdc, Tx, Tp, Tu, Tg, Tl}(
+            B, gradf, curvf, dot_gradf, dot_curvf,
+            x, deepcopy(x), # dir
             P, Bx, deepcopy(Bx), # Bd
             similar(x, Tge), # grad_old
             similar(x, Tge), # grad_new
             similar(x, Tge), # npgrad
+            ls_work,
             betahow, 0, niter, ninner,
         )
     end
@@ -195,8 +211,12 @@ function _update!(state::NCG)
         mul!(Bdj, Bj, dir) # v_j in course notes
     end
 
-    alf = line_search_mm(gradf, curvf, Bx, Bd; state.ninner) # todo: work
-#   ls = LineSearchMM(gradf, curvf, Bx, Bd; state.ninner) # todo: work
+    alf = line_search_mm(
+        Bx, Bd,
+        state.dot_gradf, state.dot_curvf;
+        state.ninner, work = state.ls_work,
+    )
+#   ls = LineSearchMM(gradf, curvf, Bx, Bd; ...)
 
     @. x += alf * dir # update x
     for (Bxj, Bdj) in zip(Bx, Bd) # update Bj * x
