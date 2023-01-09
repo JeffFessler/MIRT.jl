@@ -89,13 +89,13 @@ end
 
 # Outer constructors
 
-
-"""
+tmp =
+"
     NCG(B, gradf, curvf, x0 ; out, ...)
 
 Constructor for iterable
 nonlinear preconditioned conjugate gradient algorithm
-to minimize a general "inverse problem" cost function of the form
+to minimize a general 'inverse problem' cost function of the form
 ``\\Psi(x) = \\sum_{j=1}^J f_j(B_j x)``
 where each function ``f_j(t)`` has a quadratic majorizer of the form
 ```math
@@ -115,14 +115,17 @@ This CG method uses a majorize-minimize (MM) line search.
 
 Usually `x0` is a `Vector` but it can be an `Array`
 if each `B_j` is a linear operator (e.g., `LinearMapAO`)
-of suitable "dimensions".
+of suitable 'dimensions'.
 
 # option
 - `niter = 50` # number of outer iterations
 - `ninner = 5` # number of inner iterations of MM line search
 - `P = I` # preconditioner
-- `betahow = :dai_yuan` "beta" method for the search direction
-"""
+- `betahow = :dai_yuan` 'beta' method for the search direction
+"
+
+@doc tmp NCG
+
 #=
 function NCG(
     B::AbstractVector{<:Any},
@@ -167,7 +170,7 @@ function _update!(state::NCG)
     mul!(npgrad, -P, grad_new) # todo "-"
 
     if state.iter == 0
-        dir = npgrad
+        dir .= npgrad
     else
         if state.betahow === :zero # GD
             betaval = 0
