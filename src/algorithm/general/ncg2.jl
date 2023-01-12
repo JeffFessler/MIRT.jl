@@ -7,7 +7,9 @@ Nonlinear CG optimization (mutating version)
 export ncg2
 
 using LinearAlgebra: I, dot
-# using MIRT: line_search_mm, _show_struct
+# using MIRT: line_search_mm, LineSearchMMWork, _show_struct
+
+Base.allequal(f::Function, itr) = allequal(f.(itr))
 
 
 """
@@ -18,20 +20,21 @@ Mutable struct for nonlinear CG.
 mutable struct NCG{
     Tb <: AbstractVector{<:Any},
     Tgf <: AbstractVector{<:Function},
-    Tcf <: AbstractVector{<:Any}, # think Union{Function,RealU}
     Tdg <: AbstractVector{<:Function}, # dot_gradf
     Tdc <: AbstractVector{<:Function}, # dot_curvf
+    Tg! <: Function, # grad!
     Tx <: AbstractArray{<:Number},
     Tp <: Any,
     Tu <: AbstractVector{<:AbstractArray},
     Tg <: AbstractArray{<:Number},
-    Tl <: LineSearchMMWork,
+#   Tl <: LineSearchMMWork,
+    Tl <: LineSearchMM,
 }
     B::Tb
     gradf::Tgf
-    curvf::Tcf
     dot_gradf::Tdg
     dot_curvf::Tdc
+    grad!::Tg!
     x::Tx # usually a Vector
     dir::Tx
     P::Tp
@@ -40,11 +43,11 @@ mutable struct NCG{
     grad_old::Tg
     grad_new::Tg
     npgrad::Tg
-    ls_work::Tl
+#   ls_work::Tl
+    lsmm::Tl
     betahow::Symbol
     iter::Int
     niter::Int
-    ninner::Int
 
     """
 todo
@@ -52,20 +55,27 @@ todo
     function NCG(
         B::Tb,
         gradf::Tgf,
-        curvf::Tcf,
+        curvf::Tcf, # used only for dot_curvf
         x::AbstractArray{<:Number,D}, # usually a Vector
         ;
         niter::Int = 10,
         ninner::Int = 5,
         P::Tp = I, # trick: this is an overloaded I (by LinearMapsAA)
         betahow::Symbol = :dai_yuan,
+        dot_gradf::Tdg = make_dot_gradf.(gradf),
+        dot_curvf::Tdc = make_dot_curvf.(curvf),
     ) where {
         Tb <: AbstractVector{<:Any},
         Tgf <: AbstractVector{<:Function},
-        Tcf <: AbstractVector{<:Any},
+        Tcf <: AbstractVector{<:Any}, # think Union{Function,RealU}
+        Tdg <: AbstractVector{<:Function},
+        Tdc <: AbstractVector{<:Function},
         Tp <: Any,
         D
     }
+
+        allequal(axes, [gradf, curvf, dot_gradf, dot_curvf]) ||
+            error("incompatible axes")
 
         x = 1f0x # ensure >= Float32
         Tx = typeof(x)
@@ -79,25 +89,33 @@ todo
 # todo: force user to supply Tge?
         Tg = Array{Tge, D}
 
-        dot_gradf = make_dot_gradf.(gradf)
-        dot_curvf = make_dot_curvf.(curvf)
-        Tdg = typeof(dot_gradf)
-        Tdc = typeof(dot_curvf)
+        Bd = deepcopy(Bx)
+        lsmm = LineSearchMM(Bx, Bd, dot_gradf, dot_curvf; ninner)
+        # @show Base.summarysize(lsmm) / 1024^2
+        # lsmm.work also allocates something the size of Bx
+        # so all together there are 3 such arrays.
 
-        ls_work = LineSearchMMWork(Bx, Bx, 0f0)
-        Tl = typeof(ls_work)
+        dir = similar(x)
+        npgrad = similar(x, Tge)
+        # trick: use "dir" as space for grad, npgrad as work
+#       grad! = _fsum_make_grad(dir, npgrad, gradf, B)
+#grad! = _fsum_make_grad(similar(x), similar(x), gradf, B)
+grad! = _fsum_make_grad(gradf, B)
+        Tg! = typeof(grad!)
 
-        axes(B) == axes(gradf) || axes(curvf) ||
-            error("incompatible axes")
-        new{Tb, Tgf, Tcf, Tdg, Tdc, Tx, Tp, Tu, Tg, Tl}(
-            B, gradf, curvf, dot_gradf, dot_curvf,
-            x, deepcopy(x), # dir
-            P, Bx, deepcopy(Bx), # Bd
+#       ls_work = LineSearchMMWork(Bx, Bx, 0f0)
+#       Tl = typeof(ls_work)
+        Tl = typeof(lsmm)
+
+        new{Tb, Tgf, Tdg, Tdc, Tg!, Tx, Tp, Tu, Tg, Tl}(
+            B, gradf, dot_gradf, dot_curvf,
+            grad!, x, dir, P, Bx, Bd,
             similar(x, Tge), # grad_old
-            similar(x, Tge), # grad_new
-            similar(x, Tge), # npgrad
-            ls_work,
-            betahow, 0, niter, ninner,
+            similar(x, Tge), # grad_new # todo: use with grad?
+            npgrad,
+#           ls_work,
+            lsmm,
+            betahow, 0, niter,
         )
     end
 end
@@ -166,24 +184,22 @@ end
 
 function _update!(state::NCG)
     B = state.B
-    gradf = state.gradf
-    curvf = state.curvf
     Bd = state.Bd
     Bx = state.Bx
-    P = state.P
     x = state.x
     grad_old = state.grad_old
     grad_new = state.grad_new
     npgrad = state.npgrad
     dir = state.dir
 
-    J = length(B)
+    state.grad!(grad_new, npgrad, Bx) # trick: use npgrad as work
 
-    # todo: constructor
-    grad = (Bx) -> sum([Bj' * gjf(Bjx) for (Bj, gjf, Bjx) in zip(B, gradf, Bx)])
-    grad_new .= grad(Bx) # gradient: todo in place using Bd space
-
-    mul!(npgrad, -P, grad_new) # todo "-"
+    if state.P === I
+        @. npgrad = grad_new
+    else
+        mul!(npgrad, state.P, grad_new)
+        @. npgrad = -npgrad # -P * grad_new
+    end
 
     if state.iter == 0
         dir .= npgrad
@@ -195,7 +211,6 @@ function _update!(state::NCG)
             if iszero(denom)
                 betaval = 0
             else
-#               betaval = dot(grad_new, P * grad_new) / denom
                 betaval = -dot(grad_new, npgrad) / denom
             end
         else
@@ -208,15 +223,21 @@ function _update!(state::NCG)
     # MM-based line search for step size alpha
     # using h(a) = sum_j f_j(uj + a vj)
     for (Bdj, Bj) in zip(Bd, B)
-        mul!(Bdj, Bj, dir) # v_j in course notes
+        mul!(Bdj, Bj, dir) # (B_j * dir)
     end
 
+    state.lsmm.iter = 0
+    state.lsmm.α = 0 # uu=Bx and vv=Bd already set up!
+    for _ in state.lsmm # run LS-MM
+    end
+    alf = state.lsmm.α
+#=
     alf = line_search_mm(
         Bx, Bd,
         state.dot_gradf, state.dot_curvf;
         state.ninner, work = state.ls_work,
     )
-#   ls = LineSearchMM(gradf, curvf, Bx, Bd; ...)
+=#
 
     @. x += alf * dir # update x
     for (Bxj, Bdj) in zip(Bx, Bd) # update Bj * x
@@ -233,7 +254,7 @@ end
 Base.IteratorSize(::NCG) = Base.SizeUnknown()
 Base.IteratorEltype(::NCG) = Base.EltypeUnknown()
 
-Base.iterate(state::NCG, arg=nothing) =
+Base.iterate(state::NCG, arg = nothing) =
     (state.iter ≥ state.niter) ? nothing :
     (_update!(state), nothing)
 
@@ -256,7 +277,7 @@ See `NCG` documentation.
 function ncg2( # todo
     args...
     ;
-    fun::Function = state -> 0, # todo: missing
+    fun::Function = isnothing,
     out::Union{Nothing,Vector{Any}} = nothing,
     kwargs...
 )
@@ -265,11 +286,12 @@ function ncg2( # todo
     niter = state.niter
 
     !isnothing(out) && length(out) < niter+1 && throw("length(out) < $niter+1")
+    !isnothing(out) && fun == isnothing && throw("`out` requires `fun`")
     if !isnothing(out)
         out[1] = fun(state)
     end
 
-    for item in state
+    for _ in state
         if !isnothing(out)
             out[state.iter+1] = fun(state)
         end

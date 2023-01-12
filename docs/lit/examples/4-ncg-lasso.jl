@@ -170,6 +170,25 @@ curvf = [
     u -> 1, # curvature for data-fit term
     u -> β * wpot.(u), # Huber curvature for regularizer
 ]
+gradf = [
+#   let y=y; z -> Iterators.map(-, z, y); end, # z - y
+    let y=y, work=similar(y); z -> (@. work = z - y); end, # z - y
+    let β=β, dpot=dpot, work=similar(xtrue); z -> (@. work = β * dpot(z)); end, # β * dψ.(z)
+]
+curvf = [
+    u -> 1, # todo only needed for old ncg
+#   let β=β, wpot=wpot, work=similar(xtrue); z -> (@. work = β * wpot(z)); end, # β * ωψ.(z)
+    let β=β, wpot=wpot; z -> Iterators.map(z -> β * wpot(z), z); end, # β * ωψ.(z)
+]
+
+#=
+import MIRT
+@time MIRT._update!(state);
+0.002177 seconds (76 allocations : 253.438 KiB)
+0.002279 seconds (56 allocations: 95.500 KiB) # after gradf let
+0.002242 seconds (35 allocations: 592 bytes) # after curvf let
+=#
+
 
 niter = 20
 ninner = 3

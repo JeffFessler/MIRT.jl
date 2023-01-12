@@ -87,7 +87,7 @@ mutable struct LineSearchMM{
         Tw <: LineSearchMMWork,
     }
 
-        all(==(axes(work.zz)), axes.((uu, vv, dot_gradf, dot_curvf))) ||
+        allequal(axes, [work.zz, uu, vv, dot_gradf, dot_curvf]) ||
             error("incompatible axes")
         all(j -> axes(uu[j]) == axes(vv[j]), eachindex(uu)) ||
             error("incompatible u,v axes")
@@ -253,7 +253,7 @@ function line_search_mm(
         out[1] = fun(state)
     end
 
-    for item in state
+    for _ in state
         if !isnothing(out)
              out[state.iter+1] = fun(state)
         end
