@@ -33,7 +33,7 @@ using MIRTjim: prompt
 using MIRT: NCG, ncg
 # using LineSearches: BackTracking, HagerZhang, MoreThuente
 # using Optim: cg? todo
-using LinearAlgebra: norm, dot, I
+using LinearAlgebra: norm, dot, I, mul!
 using Random: seed!; seed!(0)
 using SparseArrays: sprandn
 using BenchmarkTools: @btime, @benchmark
@@ -240,6 +240,25 @@ plot(px, pv)
 plot(pc)
 
 @assert Float32.(xcg2) ≈ Float32.(xcg1)
+
+using Optim: ConjugateGradient, optimize
+
+# recycle stuff from `state`
+function g!(grad, x)
+    for (Bxj, Bj) in zip(state.Bx, state.B)
+        mul!(Bxj, Bj, x)
+    end
+    state.grad!(grad, state.npgrad, state.Bx)
+    return grad
+end
+
+tmp = similar(x0)
+@assert g!(state.grad_new, tmp) ≈ ∇f(tmp)
+
+opt = optimize(f, g!, x0, ConjugateGradient())
+xopt = opt.minimizer
+@assert Float32.(xopt) ≈ Float32.(xcg1)
+
 gui(); throw() # xx
 
 
