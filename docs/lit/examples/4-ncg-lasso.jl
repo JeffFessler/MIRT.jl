@@ -28,6 +28,7 @@ This page was generated from a single Julia file:
 # Packages needed here.
 
 using Plots; default(markerstrokecolor = :auto, label="")
+using LaTeXStrings
 using MIRTjim: prompt
 #using MIRT: line_search_mm, LineSearchMMWork # todo
 using MIRT: NCG, ncg
@@ -190,13 +191,17 @@ import MIRT
 =#
 
 
-niter = 20
+niter = 40
 ninner = 3
-fun = (x, iter) -> f(x) # log this
+fun = (x, iter) -> [f(x), norm(∇f(x),Inf)] # log this
 xcg1, out1 = ncg(B, gradf, curvf, x0; niter, ninner, fun)
 
-pc = plot(0:niter, out1, marker=:circle, label="ncg",
+cost1 = [o[1] for o in out1]
+grad1 = [o[2] for o in out1]
+pc = plot(0:niter, cost1, marker=:circle, label="ncg",
    xlabel="Iteration", ylabel="Cost f(x)")
+pg = plot(0:niter, grad1, marker=:circle, label="ncg",
+   xlabel="Iteration", ylabel=L"‖ ∇f(x) ‖_{∞}")
 
 px = plot(xtrue, label="xtrue")
 scatter!(px, xcg1, label="xcg1")
@@ -221,9 +226,9 @@ Now compare to `NCG`.
 state = NCG(B, gradf, curvf, x0; niter, ninner)
 
 out2 = similar(out1)
-out2[1] = f(x0)
-for item in state
-    out2[state.iter+1] = f(state.x)
+out2[1] = fun(x0, 0)
+for _ in state
+    out2[state.iter+1] = fun(state.x, 0)
 end
 xcg2 = state.x
 
@@ -231,7 +236,10 @@ xcg2 = state.x
 # They take slightly different paths, for unknown reasons.
 # But the final estimates are quite similar.
 
-plot!(pc, 0:niter, out2, label="NCG", marker=:square)
+cost2 = [o[1] for o in out2]
+grad2 = [o[2] for o in out2]
+plot!(pc, 0:niter, cost2, label="NCG", marker=:square)
+plot!(pg, 0:niter, grad2, label="NCG", marker=:square)
 plot!(pv, xtrue, xcg2, label="xNCG")
 scatter!(px, xcg2, label="xNCG")
 # scatter(xcg1, xcg2)
@@ -242,6 +250,7 @@ plot(pc)
 @assert Float32.(xcg2) ≈ Float32.(xcg1)
 
 using Optim: ConjugateGradient, optimize
+import Optim
 
 # recycle stuff from `state`
 function g!(grad, x)
@@ -252,12 +261,49 @@ function g!(grad, x)
     return grad
 end
 
-tmp = similar(x0)
+tmp = randn(size(x0))
 @assert g!(state.grad_new, tmp) ≈ ∇f(tmp)
 
-opt = optimize(f, g!, x0, ConjugateGradient())
+option = Optim.Options(iterations = niter+1, store_trace = true)
+opt = optimize(f, g!, x0, ConjugateGradient(), option)
 xopt = opt.minimizer
-@assert Float32.(xopt) ≈ Float32.(xcg1)
+
+costo = [opt.trace[i+1].value for i in 0:niter]
+grado = [opt.trace[i+1].g_norm for i in 0:niter]
+plot!(pc, 0:niter, costo, label="Optim:CG", color=:cyan, marker=:star)
+plot!(pg, 0:niter, grado, label="Optim:CG", color=:cyan, marker=:star)
+
+# @assert Float32.(xopt) ≈ Float32.(xcg1)
+
+
+#=
+Now compare the times
+=#
+
+function call_ncg(x0)
+    xcg1, _ = ncg(B, gradf, curvf, x0; niter, ninner, fun)
+    return xcg1
+end
+
+function call_NCG(x0)
+    tmp = NCG(B, gradf, curvf, x0; niter, ninner)
+    for _ in tmp; end # iterate!
+    return tmp.x
+end
+
+function call_optim(x0)
+    tmp = optimize(f, g!, x0, ConjugateGradient(),
+        Optim.Options(iterations = niter+1, store_trace = false),
+    )
+    return tmp.minimizer
+end
+
+@assert call_ncg(x0) ≈ call_NCG(x0) # ≈ call_optim(x0) # not quite
+scatter(call_optim(x0), call_ncg(x0)) # quite close
+
+@benchmark call_ncg($x0) # 115 ms, 24 MB
+@benchmark call_NCG($x0) # 43 ms, 183 KB
+@benchmark call_optim($x0) # 85 ms, 2.8 MB
 
 gui(); throw() # xx
 
