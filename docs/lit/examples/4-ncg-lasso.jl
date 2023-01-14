@@ -261,6 +261,8 @@ function g!(grad, x)
     return grad
 end
 
+# todo: define f(x) to also use `state` stuff
+
 tmp = randn(size(x0))
 @assert g!(state.grad_new, tmp) ≈ ∇f(tmp)
 
