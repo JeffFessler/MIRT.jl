@@ -89,7 +89,7 @@ and use the proximal operater
 - [KF18] D. Kim, J.A. Fessler,
  "Adaptive restart of the optimized gradient method for convex optimization," 2018
  Arxiv:1703.04641,
- [http://doi.org/10.1007/s10957-018-1287-4]
+ [https://doi.org/10.1007/s10957-018-1287-4]
 - [BT09] A. Beck, M. Teboulle:
  "A fast iterative shrinkage-thresholding algorithm for linear inverse problems,"
  SIAM J. Imaging Sci., 2009.
@@ -97,7 +97,7 @@ and use the proximal operater
  "Exact worst-case performance of first-order algorithms
  for composite convex optimization," Arxiv:1512.07516, 2015,
  SIAM J. Opt. 2017
- [http://doi.org/10.1137/16m108104x]
+ [https://doi.org/10.1137/16m108104x]
 
 Copyright 2017-3-31, Donghwan Kim and Jeff Fessler, University of Michigan
 2018-08-13 Julia 0.7.0

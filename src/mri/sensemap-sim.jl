@@ -22,7 +22,7 @@ using LazyGrids: ndgrid
 
 Simulate 2D or 3D sensitivity maps for sensitivity-encoded MRI
 based on
-[grivich:00:tmf](http://doi.org/10.1119/1.19461).
+[grivich:00:tmf](https://doi.org/10.1119/1.19461).
 
 This code makes maps for multiple coils,
 but does not model coupling between coils,

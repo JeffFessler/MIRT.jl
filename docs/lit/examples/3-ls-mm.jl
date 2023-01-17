@@ -18,7 +18,7 @@ This page was generated from a single Julia file:
 #md # using the "Edit on GitHub" link in the top right.
 
 #md # The corresponding notebook can be viewed in
-#md # [nbviewer](http://nbviewer.jupyter.org/) here:
+#md # [nbviewer](https://nbviewer.org/) here:
 #md # [`3-ls-mm.ipynb`](@__NBVIEWER_ROOT_URL__/3-ls-mm.ipynb),
 #md # and opened in [binder](https://mybinder.org/) here:
 #md # [`3-ls-mm.ipynb`](@__BINDER_ROOT_URL__/3-ls-mm.ipynb).
@@ -137,7 +137,7 @@ it is guaranteed to decrease
 ``h(α)`` every update.
 For an early exposition of this approach,
 see
-[Fessler & Booth, 1999](http://doi.org/10.1109/83.760336).
+[Fessler & Booth, 1999](https://doi.org/10.1109/83.760336).
 
 From the above derivation,
 the main ingredients needed are

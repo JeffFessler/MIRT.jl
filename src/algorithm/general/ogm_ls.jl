@@ -13,7 +13,7 @@ using LinearAlgebra: I, norm, dot
     (x,out) = ogm_ls(B, gradf, curvf, x0; niter=?, ninner=?, fun=?)
 
 OGM with a line search
-[Drori&Taylor](http://doi.org/10.1007/s10107-019-01410-2)
+[Drori&Taylor](https://doi.org/10.1007/s10107-019-01410-2)
 to minimize a general "inverse problem" cost function of the form
 ``\\Psi(x) = \\sum_{j=1}^J f_j(B_j x)``
 where each function ``f_j(v)`` has a quadratic majorizer of the form

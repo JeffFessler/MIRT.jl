@@ -17,7 +17,7 @@ This page was generated from a single Julia file:
 #md # using the "Edit on GitHub" link in the top right.
 
 #md # The corresponding notebook can be viewed in
-#md # [nbviewer](http://nbviewer.jupyter.org/) here:
+#md # [nbviewer](https://nbviewer.org/) here:
 #md # [`4-ncg-lasso.ipynb`](@__NBVIEWER_ROOT_URL__/4-ncg-lasso.ipynb),
 #md # and opened in [binder](https://mybinder.org/) here:
 #md # [`4-ncg-lasso.ipynb`](@__BINDER_ROOT_URL__/4-ncg-lasso.ipynb).
