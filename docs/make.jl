@@ -19,25 +19,51 @@ src = joinpath(@__DIR__, "src")
 gen = joinpath(@__DIR__, "src/generated")
 
 base = "$org/$reps.jl"
-repo_root_url =
-    "https://github.com/$base/blob/main/docs/lit/examples"
+repo_root_url = "https://github.com/$base/blob/main"
 nbviewer_root_url =
-    "https://nbviewer.org/github/$base/tree/gh-pages/dev/generated/examples"
+    "https://nbviewer.org/github/$base/tree/gh-pages/dev/generated"
 binder_root_url =
-    "https://mybinder.org/v2/gh/$base/gh-pages?filepath=dev/generated/examples"
+    "https://mybinder.org/v2/gh/$base/gh-pages?filepath=dev/generated"
 
 
 repo = eval(:($reps))
 DocMeta.setdocmeta!(repo, :DocTestSetup, :(using $reps); recursive=true)
 
+# preprocessing
+inc1 = "include(\"../../../inc/reproduce.jl\")"
+
+function prep_markdown(str, root, file)
+    inc_read(file) = read(joinpath("docs/inc", file), String)
+    repro = inc_read("reproduce.jl")
+    str = replace(str, inc1 => repro)
+    urls = inc_read("urls.jl")
+    file = joinpath(splitpath(root)[end], splitext(file)[1])
+    tmp = splitpath(root)[end-2:end] # docs lit examples
+    urls = replace(urls,
+        "xxxrepo" => joinpath(repo_root_url, tmp...),
+        "xxxnb" => joinpath(nbviewer_root_url, tmp[end]),
+        "xxxbinder" => joinpath(binder_root_url, tmp[end]),
+    )
+    str = replace(str, "#srcURL" => urls)
+end
+
+function prep_notebook(str)
+    str = replace(str, inc1 => "", "#srcURL" => "")
+end
+
 for (root, _, files) in walkdir(lit), file in files
     splitext(file)[2] == ".jl" || continue # process .jl files only
     ipath = joinpath(root, file)
     opath = splitdir(replace(ipath, lit => gen))[1]
-    Literate.markdown(ipath, opath; documenter = execute, # run examples
-        repo_root_url, nbviewer_root_url, binder_root_url)
-    Literate.notebook(ipath, opath; execute = false, # no-run notebooks
-        repo_root_url, nbviewer_root_url, binder_root_url)
+    Literate.markdown(ipath, opath;
+        repo_root_url,
+        preprocess = str -> prep_markdown(str, root, file),
+        documenter = execute, # run examples
+    )
+    Literate.notebook(ipath, opath;
+        preprocess = prep_notebook,
+        execute = false, # no-run notebooks
+    )
 end
 
 
@@ -76,7 +102,7 @@ if isci
         devurl = "dev",
         versions = ["stable" => "v^", "dev" => "dev"],
         forcepush = true,
-#       push_preview = true,
+        push_preview = true,
         # see https://$org.github.io/$repo.jl/previews/PR##
     )
 end

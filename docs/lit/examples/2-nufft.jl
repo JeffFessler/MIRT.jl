@@ -1,8 +1,6 @@
-#---------------------------------------------------------
-# # [NUFFT](@id 2-nufft)
-#---------------------------------------------------------
-
 #=
+# [NUFFT](@id 2-nufft)
+
 Examples illustrating the `nufft` methods
 in the Julia package
 [`MIRT`](https://github.com/JeffFessler/MIRT.jl).
@@ -17,21 +15,9 @@ about of the approximation error
 for that package
 and they help verify the correctness
 of the wrapper.
-
-This page was generated from a single Julia file:
-[2-nufft.jl](@__REPO_ROOT_URL__/2-nufft.jl).
 =#
 
-#md # In any such Julia documentation,
-#md # you can access the source code
-#md # using the "Edit on GitHub" link in the top right.
-
-#md # The corresponding notebook can be viewed in
-#md # [nbviewer](http://nbviewer.jupyter.org/) here:
-#md # [`2-nufft.ipynb`](@__NBVIEWER_ROOT_URL__/2-nufft.ipynb),
-#md # and opened in [binder](https://mybinder.org/) here:
-#md # [`2-nufft.ipynb`](@__BINDER_ROOT_URL__/2-nufft.ipynb).
-
+#srcURL
 
 # ### Setup
 
@@ -130,13 +116,4 @@ ps = scatter(slist, worst_s,
 prompt()
 
 
-# ### Reproducibility
-
-# This page was generated with the following version of Julia:
-
-io = IOBuffer(); versioninfo(io); split(String(take!(io)), '\n')
-
-
-# And with the following package versions
-
-import Pkg; Pkg.status()
+include("../../../inc/reproduce.jl")

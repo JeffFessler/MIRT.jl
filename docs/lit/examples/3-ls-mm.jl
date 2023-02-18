@@ -8,20 +8,9 @@ in the Julia package
 [`MIRT`](https://github.com/JeffFessler/MIRT.jl).
 This method is probably most useful
 for algorithm developers.
-
-This page was generated from a single Julia file:
-[3-ls-mm.jl](@__REPO_ROOT_URL__/3-ls-mm.jl).
 =#
 
-#md # In any such Julia documentation,
-#md # you can access the source code
-#md # using the "Edit on GitHub" link in the top right.
-
-#md # The corresponding notebook can be viewed in
-#md # [nbviewer](http://nbviewer.jupyter.org/) here:
-#md # [`3-ls-mm.ipynb`](@__NBVIEWER_ROOT_URL__/3-ls-mm.ipynb),
-#md # and opened in [binder](https://mybinder.org/) here:
-#md # [`3-ls-mm.ipynb`](@__BINDER_ROOT_URL__/3-ls-mm.ipynb).
+#srcURL
 
 
 # ### Setup
@@ -469,13 +458,4 @@ of `line_search_mm`.
 prompt()
 
 
-# ### Reproducibility
-
-# This page was generated with the following version of Julia:
-
-io = IOBuffer(); versioninfo(io); split(String(take!(io)), '\n')
-
-
-# And with the following package versions
-
-import Pkg; Pkg.status()
+include("../../../inc/reproduce.jl")
