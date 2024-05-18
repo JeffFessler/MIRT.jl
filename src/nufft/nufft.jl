@@ -18,7 +18,7 @@ _start = N -> isodd(N) ? (N-1)÷2 : N÷2 # where the NFFT sum starts
 
 
 """
-    nufft_eltype(::DataType)
+    nufft_eltype(::Type)
 ensure plan_nfft eltype is Float32 or Float64
 """
 nufft_eltype(::Type{<:Integer}) = Float32
@@ -31,7 +31,7 @@ nufft_eltype(T::DataType) = throw("unknown type $T")
 # see https://github.com/tknopp/NFFT.jl/pull/33
 # todo: may be unnecessary with future version of nfft()
 """
-    nufft_typer(T::DataType, x::AbstractArray{<:Real} ; warn::Bool=true)
+    nufft_typer(T::Type, x::AbstractArray{<:Real} ; warn::Bool=true)
 type conversion wrapper for `nfft()`
 """
 nufft_typer(::Type{T}, x::T ; warn::Bool=true) where {T} = x # cf convert()

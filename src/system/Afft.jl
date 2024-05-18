@@ -25,7 +25,7 @@ In:
 - `fdim = 1:D` apply fft/bfft only along these dimensions
 
 Option:
-- `T::DataType = ComplexF32`
+- `T::Type = ComplexF32`
 - `operator::Bool = true` return a `LinearMapAO`
   set to `false` to return a `LinearMapAM`
 - `unitary::Bool = false` set to `true` for unitary DFT
@@ -39,7 +39,7 @@ function Afft(
     xdim::Dims{D},
     fdim = 1:D,
     ;
-    T::DataType = ComplexF32,
+    T::Type{<:Complex{<:AbstractFloat}} = ComplexF32,
     operator::Bool = true, # !
     unitary::Bool = false,
     work::AbstractArray{Tw,D} = Array{T,D}(undef, xdim),
@@ -109,7 +109,7 @@ using given sampling pattern `samp`.
 Especially for compressed sensing MRI with Cartesian sampling.
 
 Option:
-- `T::DataType = ComplexF32`
+- `T::Type = ComplexF32`
 - `dims = 1:D` apply fft/bfft only along these dimensions
 - `fft_forward::Bool = true` Use `false` to have `bfft!` in forward model.
 - `operator::Bool = true` set to `false` to return a `LinearMapAM`
@@ -123,7 +123,7 @@ function Afft(
     samp::AbstractArray{<:Bool, D},
     ;
     dims = 1:D,
-    T::DataType = ComplexF32,
+    T::Type{<:Complex{<:AbstractFloat}} = ComplexF32,
     operator::Bool = true, # !
     work::AbstractArray{Tw,D} = similar(samp, T),
     fft_forward::Bool = true,

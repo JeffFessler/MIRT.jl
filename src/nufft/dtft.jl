@@ -11,7 +11,6 @@ see also MIRT/time/dtft.jl
 
 export dtft_init, dtft, dtft_adj
 
-#using LinearAlgebra: norm
 using Distributed: @sync, @distributed, pmap
 using SharedArrays: SharedArray, sdata
 using LinearMapsAA: LinearMapAA, LinearMapAO
@@ -35,7 +34,7 @@ using LinearMapsAA: LinearMapAA, LinearMapAO
 """
 function dtft(w::AbstractVector{<:Real}, x::AbstractVector{<:Number}
         ; n_shift::Real = 0)
-    return dtft_loop_n(w, x ; n_shift=n_shift)
+    return dtft_loop_n(w, x ; n_shift)
 end
 
 
@@ -59,7 +58,7 @@ where here `n` is a `CartesianIndex`
 function dtft(w::AbstractMatrix{<:Real}, x::AbstractMatrix{<:Number}
     ; n_shift::AbstractVector{<:Real} = zeros(Int, ndims(x)),
 )
-    return dtft_loop_n(w, x ; n_shift=n_shift)
+    return dtft_loop_n(w, x ; n_shift)
 end
 
 
@@ -74,7 +73,7 @@ For 1D DTFT
 
 # option
 - `n_shift::Real` often is N/2; default 0
-- `T::DataType` default `ComplexF64` for testing NUFFT accuracy
+- `T::Type` default `ComplexF64` for testing NUFFT accuracy
 
 # out
 - `d::NamedTuple` with fields
@@ -84,17 +83,17 @@ function dtft_init(
     w::AbstractVector{<:Real},
     N::Int ;
     n_shift::Real = 0,
-    T::DataType = ComplexF64,
+    T::Type{<:Complex{<:AbstractFloat}} = ComplexF64,
 )
 
     M = length(w)
-    forw = x -> dtft(w, x ; n_shift=n_shift)
-    back = y -> dtft_adj(w, y, N ; n_shift=n_shift)
+    forw = x -> dtft(w, x ; n_shift)
+    back = y -> dtft_adj(w, y, N ; n_shift)
     A = LinearMapAA(forw, back, (M, N),
-        (name="dtft1", N=(N,)) ; T = ComplexF64,
+        (name = "dtft1", N = (N,)) ; T = ComplexF64,
         operator = true,
     )
-    return (dtft=forw, adjoint=back, A=A)
+    return (dtft=forw, adjoint=back, A)
 end
 
 
@@ -108,7 +107,7 @@ for multi-dimensional DTFT (DSFT)
 
 # option
 - `n_shift::AbstractVector{<:Real}` often is N/2; default zeros(D)
-- `T::DataType` default `ComplexF64` for testing NUFFT accuracy
+- `T::Type` default `ComplexF64` for testing NUFFT accuracy
 
 # out
 - `d::NamedTuple` with fields
@@ -124,13 +123,13 @@ function dtft_init(
     length(N) != D && throw(DimensionMismatch("length(N) vs D=$D"))
     length(n_shift) != D && throw(DimensionMismatch("length(n_shift) vs D=$D"))
     M = size(w,1)
-    forw = x -> dtft(w, x ; n_shift=n_shift)
-    back = y -> dtft_adj(w, y, N ; n_shift=n_shift)
+    forw = x -> dtft(w, x ; n_shift)
+    back = y -> dtft_adj(w, y, N ; n_shift)
     A = LinearMapAA(forw, back, (M, prod(N)),
-        (name="dtft$(length(N))", N=N) ; T = ComplexF64,
+        (name = "dtft$(length(N))", N) ; T = ComplexF64,
         operator = true, idim = N,
     )
-    return (dtft=forw, adjoint=back, A=A)
+    return (dtft=forw, adjoint=back, A)
 end
 
 
@@ -149,14 +148,14 @@ This is the *adjoint* (transpose) of `dtft`, not an *inverse* DTFT.
 
 # option
 - `n_shift::Real` often is N/2; default 0
-- `T::DataType` output data type; default `ComplexF64`
+- `T::Type` output data type; default `ComplexF64`
 
 # out
 - `x::AbstractVector{<:Number} (N)` signal
 """
 function dtft_adj(w::AbstractVector{<:Real}, X::AbstractVector{<:Number},
     N::Int ; n_shift::Real = 0,
-    T::DataType = ComplexF64,
+    T::Type{<:Complex{<:AbstractFloat}} = ComplexF64,
 )
     M = length(w)
     out = similar(X, T, N)
@@ -183,7 +182,7 @@ where here `n` is a `CartesianIndex`
 
 # option
 - `n_shift::AbstractVector{<:Real}` often is `N/2`; default `zeros(D)`
-- `T::DataType` default `(eltype(w) == Float64) ? ComplexF64 : ComplexF32`
+- `T::Type` default `(eltype(w) == Float64) ? ComplexF64 : ComplexF32`
 
 # out
 - `x::AbstractArray{<:Number} [(N)]` `D`-dimensional signal
@@ -193,7 +192,8 @@ function dtft_adj(
     X::AbstractVector{<:Number},
     N::Dims ;
     n_shift::AbstractVector{<:Real} = zeros(Int, ndims(x)),
-    T::DataType = (eltype(w) == Float64) ? ComplexF64 : ComplexF32,
+    T::Type{<:Complex{<:AbstractFloat}} =
+        (eltype(w) == Float64) ? ComplexF64 : ComplexF32,
 )
 
     M, D = size(w)
@@ -203,8 +203,6 @@ function dtft_adj(
 
     for n in 1:prod(N)
         idx = CartesianIndices(N)[n]
-        tmp = cis.(w * (collect(Tuple(idx)) - nshift1))
-        tmp = transpose(cis.(w * (collect(Tuple(idx)) - nshift1))) * X
         out[idx] = cis.(-w * (collect(Tuple(idx)) - nshift1))' * X
     end
     return out
@@ -254,7 +252,7 @@ function dtft_loop_m(
     w::AbstractVector{<:Real},
     x::AbstractVector{<:Number} ;
     n_shift::Real = 0,
-    T::DataType = ComplexF64,
+    T::Type{<:Complex{<:AbstractFloat}} = ComplexF64,
 )
     M = length(w)
     N = length(x)
@@ -296,7 +294,7 @@ function dtft_pmap_m(
     x::AbstractVector{<:Number}
     ; n_shift::Real = 0,
 )
-    tmp = w -> dtft_one_w(w, x ; n_shift=n_shift)
+    tmp = w -> dtft_one_w(w, x ; n_shift)
     return pmap(tmp, w)
 end
 

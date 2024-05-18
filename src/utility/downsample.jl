@@ -93,7 +93,7 @@ Downsample by averaging by integer factors.
 
 # option
 - `warn::Bool` warn if noninteger multiple; default `isinteractive()`
-- `T::DataType` specify output eltype; default `eltype(x[1] / down[1])`
+- `T::Type` specify output eltype; default `eltype(x[1] / down[1])`
 
 # out
 - `y [nx/down ny/down]`
@@ -102,7 +102,7 @@ function downsample2(
     x::AbstractMatrix{<:Number},
     down::NTuple{2,Int} ;
     warn::Bool = isinteractive(),
-    T::DataType = eltype(x[1] / down[1])
+    T::Type{<:Number} = eltype(x[1] / down[1])
 )
 
     idim = size(x)
@@ -148,7 +148,7 @@ Downsample by averaging by integer factors.
 
 # option
 - `warn::Bool` warn if noninteger multiple; default true
-- `T::DataType` specify output eltype; default `eltype(x[1] / down[1])`
+- `T::Type` specify output eltype; default `eltype(x[1] / down[1])`
 
 # out
 - `y (nx/down,ny/down,nz/down)`
@@ -157,7 +157,7 @@ function downsample3(
     x::AbstractArray{<:Number,3},
     down::NTuple{3,Int} ;
     warn::Bool = isinteractive(),
-    T::DataType = eltype(x[1] / down[1]),
+    T::Type{<:Number} = eltype(x[1] / down[1]),
 )
 
     idim = size(x)
@@ -176,7 +176,7 @@ downsample3(x::AbstractArray{<:Number,3}, down::Int ; args...) =
 function downsample3_loop(
     x::AbstractArray{<:Number,3},
     down::NTuple{3,Int} ;
-    T::DataType = eltype(x[1] / down[1]),
+    T::Type{<:Number} = eltype(x[1] / down[1]),
 )
 
     odim = size(x) .÷ down
