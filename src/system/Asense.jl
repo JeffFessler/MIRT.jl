@@ -26,7 +26,7 @@ or a Vector of `ncoil` arrays of size `size(samp)`.
 - `smaps::Vector{<:AbstractArray{<:Number}}` or `AbstractArray{<:Number}`
 
 # Option
-- `T::DataType = ComplexF32`
+- `T::Type = ComplexF32`
 - `dims = 1:D` apply fft/bfft only along these dimensions
 - `fft_forward::Bool = true` Use `false` to have `bfft!` in forward model.
 - `unitary::Bool = false` set to `true` for unitary DFT
@@ -40,7 +40,7 @@ function Asense(
     smaps::Vector{<:AbstractArray{<:Number}},
     ;
     dims = 1:D,
-    T::DataType = ComplexF32,
+    T::Type{<:Complex{<:AbstractFloat}} = ComplexF32,
     work1::AbstractArray{Tw,D} = similar(samp, T),
     work2::AbstractArray{Tw,D} = similar(samp, T),
     unitary::Bool = false,

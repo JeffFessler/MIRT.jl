@@ -1,0 +1,9 @@
+[default]
+extend-ignore-identifiers-re = [
+    "allk",
+    "als",
+    "Nd",
+    "iy",
+    "pn",
+    "MIRTio",
+]

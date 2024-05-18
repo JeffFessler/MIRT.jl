@@ -21,7 +21,7 @@ Create orthogonal discrete wavelet transform (ODWT) `LinearMapAA`
 - `level::Int` # of levels; default 3
 - `wt` wavelet transform type (see `Wavelets` package); default Haar
 - `operator::Bool=true` default to `LinearMapAO`
-- `T::DataType` : `Float32` by default; use `ComplexF32` if needed
+- `T::Type` : `Float32` by default; use `ComplexF32` if needed
 
 # out
 - `A` a `LinearMapAX` object
@@ -33,7 +33,7 @@ which is useful when imposing scale-dependent regularization
 """
 function Aodwt(
     dims::Dims ;
-    T::DataType = Float32,
+    T::Type{<:Complex{<:AbstractFloat}} = ComplexF32,
     level::Int = 3,
     wt = wavelet(WT.haar),
     operator::Bool = true, # !

@@ -17,7 +17,7 @@ using Interpolations
 Make k-space spiral trajectory based on GE 3T scanner constraints
 
 Option:
-- `N` dimention of reconstructed image
+- `N` dimension of reconstructed image
 - `Nt` # of time points
 - `fov` field of view in cm
 - `dt` time sampling interval out; default `5e-6` sec
@@ -163,7 +163,7 @@ to gradients at 4us.
 
 Multi-shot spiral design
 uses Duyn's approximate slewrate limited design
-augmented with archimedian `gmax` limit
+augmented with archimedean `gmax` limit
 
 # in [args]
 * `D` = FOV; cm

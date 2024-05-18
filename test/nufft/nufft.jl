@@ -19,7 +19,8 @@ Simple 1D NUFFT tests.
 """
 function nufft_test1( ;
     M::Int = 30, N::Int = 20, n_shift::Real = 1.7,
-    T::DataType = Float64, tol::Real = 7e-6,
+    T::Type{<:Number} = Float64,
+    tol::Real = 7e-6,
 )
 
     w = (rand(M) .- 0.5) * 2π
@@ -81,7 +82,8 @@ function nufft_test2( ;
     M::Int = 35,
     N::Dims = (10,8),
     n_shift::AbstractVector{<:Real} = [4,3],
-    T::DataType = Float64, tol::Real = 2e-6,
+    T::Type{<:Number} = Float64,
+    tol::Real = 2e-6,
 )
 
     w = []

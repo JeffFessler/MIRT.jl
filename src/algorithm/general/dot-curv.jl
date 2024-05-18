@@ -10,7 +10,7 @@ _curv_type(Tf::Type{<:RealU}, Tx::Type{<:Number}) =
 
 
 """
-    make_dot_curvf(curv::Function, [x, Tf::DataType; w = similar(x)])
+    make_dot_curvf(curv::Function, [x, Tf::Type; w = similar(x)])
 
 Make a function with arguments `(v, x)`
 that computes the dot product between
@@ -53,7 +53,7 @@ Those units are relevant to defining the work array `w`.
 - `x` an array whose `size` and `eltype` is used to allocate `w`
 
 # option
-- `Tf::DataType = typeof(one(eltype(x)))`
+- `Tf::Type = typeof(one(eltype(x)))`
   Specify `eltype` of function `f(x)`, defaulting to unitless.
 - `w = similar(x,  typeof(oneunit(Tf) / oneunit(eltype(x))^2))`
   work space for gradient calculation, with appropriate units (if needed).

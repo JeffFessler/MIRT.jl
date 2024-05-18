@@ -5,7 +5,7 @@ using Test: @test, @test_throws, @inferred
 
 
 # test for given data type
-function exp_xform_test( ; T::DataType = ComplexF32)
+function exp_xform_test( ; T::Type{<:Complex{<:AbstractFloat}} = ComplexF32)
 
     modes = (:element, :row, :column)
 

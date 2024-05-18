@@ -10,7 +10,7 @@ _grad_type(Tf::Type{<:RealU}, Tx::Type{<:Number}) =
 
 
 """
-    make_dot_gradf(grad::Function, [x, Tf::DataType; w = similar(x)])
+    make_dot_gradf(grad::Function, [x, Tf::Type; w = similar(x)])
 
 Make a function with arguments `(v, x)`
 that computes the dot product between
@@ -44,7 +44,7 @@ Those units are relevant to defining the work array `w`.
 # in
 - `grad::Function` see above
 - `x` an array whose `size` and `eltype` is used to allocate `w`
-- `Tf::DataType = typeof(one(eltype(x)))`
+- `Tf::Type = typeof(one(eltype(x)))`
   Specify `eltype` of function `f(x)`, defaulting to unitless.
 
 # option

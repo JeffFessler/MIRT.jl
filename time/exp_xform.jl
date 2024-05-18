@@ -8,7 +8,7 @@ using BenchmarkTools: @btime
 
 
 # timing test
-function exp_xform_time( ; T::DataType = ComplexF32)
+function exp_xform_time( ; T::Type{<:Complex{<:AbstractFloat}} = ComplexF32)
 
     modes = (:element, :row, :column)
 
