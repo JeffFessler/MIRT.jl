@@ -43,7 +43,7 @@ jim(x, title="test")
 * This test should produce a grayscale image of the famous
 [Shepp-Logan phantom](https://en.wikipedia.org/wiki/Shepp%E2%80%93Logan_phantom) in the Plots tab of Atom.
 * To learn about the jiffy image display function `jim`, type `?jim` at the REPL.
-* Juno and Atom have lots of online documention.
+* Juno and Atom have lots of online documentation.
 I use the `vim-mode-plus` key bindings, installed using Atom preferences.
 
 * To start a Jupyter notebook for Julia, type at the REPL:

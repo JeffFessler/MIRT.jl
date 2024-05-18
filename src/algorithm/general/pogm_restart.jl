@@ -71,7 +71,7 @@ iterate as below for given coefficients ``(\\alpha, \\beta_k, \\gamma_k)``
   - ``x_{k+1} = y_{k+1} + \\beta_k  (y_{k+1} - y_k) + \\gamma_k  (y_{k+1} - x_k)`` : momentum update
 
 Proximal versions of the above for ``g(x) \\neq 0`` are in the below references,
-and use the proximal operater
+and use the proximal operator
 ``prox_g(z) = argmin_x {1/2\\|z-x\\|^2 + g(x)}``.
 
 - Proximal Gradient method (PGM or ISTA) - ``\\beta_k = \\gamma_k = 0``. [BT09]

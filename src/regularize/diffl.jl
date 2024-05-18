@@ -1,6 +1,6 @@
 #=
 diffl.jl
-Left finite differences "in-place" (pre-allocated outpus)
+Left finite differences "in-place" (pre-allocated outputs)
 
 Could use StaticKernels.jl for this; see timing test in ../../time.
 
