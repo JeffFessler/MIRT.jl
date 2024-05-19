@@ -6,6 +6,9 @@
 [![docs stable][docs-stable-img]][docs-stable-url]
 [![docs dev][docs-dev-img]][docs-dev-url]
 [![license][license-img]][license-url]
+[![deps](https://juliahub.com/docs/MIRT/deps.svg)](https://juliahub.com/ui/Packages/MIRT)
+[![version](https://juliahub.com/docs/MIRT/version.svg)](https://juliahub.com/ui/Packages/MIRT)
+[![pkgeval](https://juliahub.com/docs/MIRT/pkgeval.svg)](https://juliahub.com/ui/Packages/MIRT)
 <img src="deps/mirt-logo.svg" alt="MIRTlogo" width="150"/>
 
 https://github.com/JeffFessler/MIRT.jl
@@ -64,7 +67,7 @@ This package includes some tools from
 https://gitlab.eecs.umich.edu/michigan-fast-optimization
 
 For additional reproducible research code, see
-http://web.eecs.umich.edu/~fessler/irt/reproduce/
+http://web.eecs.umich.edu/~fessler/irt/reproduce
 
 
 ## Compatibility
@@ -117,7 +120,7 @@ As of `v0.15`, the following functions are deprecated:
 
 
 <!-- URLs -->
-[action-img]: https://github.com/JeffFessler/MIRT.jl/workflows/Unit%20test/badge.svg
+[action-img]: https://github.com/JeffFessler/MIRT.jl/workflows/CI/badge.svg
 [action-url]: https://github.com/JeffFessler/MIRT.jl/actions
 [build-img]: https://github.com/JeffFessler/MIRT.jl/workflows/CI/badge.svg?branch=main
 [build-url]: https://github.com/JeffFessler/MIRT.jl/actions?query=workflow%3ACI+branch%3Amain

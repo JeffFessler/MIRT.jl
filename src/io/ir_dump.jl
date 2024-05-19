@@ -46,7 +46,6 @@ function ir_dump(y::Any ; io::IO = stdout, ntuplemax::Int = 3)
         end
     end
     println(io)
-    nothing
 end
 
 
