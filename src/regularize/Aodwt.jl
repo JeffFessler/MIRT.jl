@@ -33,7 +33,7 @@ which is useful when imposing scale-dependent regularization
 """
 function Aodwt(
     dims::Dims ;
-    T::Type{<:Complex{<:AbstractFloat}} = ComplexF32,
+    T::Type{<:Union{AbstractFloat,Complex{<:AbstractFloat}}} = Float32,
     level::Int = 3,
     wt = wavelet(WT.haar),
     operator::Bool = true, # !
@@ -52,7 +52,7 @@ function Aodwt(
             mfun = (A, x) -> A * x
             return mfun, LinearMapAA(forw!, back!,
                 (prod(dims), prod(dims)) ;
-                prop = (wt=wt, level=lev), T=T,
+                prop = (wt, level=lev), T,
                 operator = true, idim=dims, odim=dims,
             )
         else
@@ -63,7 +63,7 @@ function Aodwt(
             #    x -> vec(dwt(reshape(x, dims), wt, level)),
             #    y -> vec(idwt(reshape(y, dims), wt, level)),
                 (prod(dims), prod(dims)) ;
-                prop = (wt=wt, level=lev), T=T,
+                prop = (wt, level=lev), T,
             )
         end
     end
@@ -72,7 +72,7 @@ function Aodwt(
 
     scales = zeros(dims)
     for il in 1:level
-        _,Al = mfunA(il)
+        _, Al = mfunA(il)
         tmp = mfun(Al, ones(dims)) .== 0
         scales += il * (tmp .& (scales .== 0))
     end
