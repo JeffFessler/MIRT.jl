@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Line search MM · MIRT.jl</title><meta name="title" content="Line search MM · MIRT.jl"/><meta property="og:title" content="Line search MM · MIRT.jl"/><meta property="twitter:title" content="Line search MM · MIRT.jl"/><meta name="description" content="Documentation for MIRT.jl."/><meta property="og:description" content="Documentation for MIRT.jl."/><meta property="twitter:description" content="Documentation for MIRT.jl."/><meta property="og:url" content="https://JeffFessler.github.io/MIRT.jl/stable/generated/examples/3-ls-mm/"/><meta property="twitter:url" content="https://JeffFessler.github.io/MIRT.jl/stable/generated/examples/3-ls-mm/"/><link rel="canonical" href="https://JeffFessler.github.io/MIRT.jl/stable/generated/examples/3-ls-mm/"/><script data-outdated-warner src="../../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../../assets/documenter.js"></script><script src="../../../search_index.js"></script><script src="../../../siteinfo.js"></script><script src="../../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../../assets/themeswap.js"></script><link href="../../../assets/custom.css" rel="stylesheet" type="text/css"/></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../../"><img src="../../../assets/logo.png" alt="MIRT.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../../../">MIRT.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../../">Home</a></li><li><a class="tocitem" href="../../../methods/">Methods</a></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../1-mirt/">MIRT overview</a></li><li><a class="tocitem" href="../2-nufft/">NUFFT</a></li><li class="is-active"><a class="tocitem" href>Line search MM</a><ul class="internal"><li class="toplevel"><a class="tocitem" href="#Theory"><span>Theory</span></a></li><li class="toplevel"><a class="tocitem" href="#Smooth-LASSO-problem"><span>Smooth LASSO problem</span></a></li><li><a class="tocitem" href="#Compare-with-LineSearches.jl"><span>Compare with LineSearches.jl</span></a></li></ul></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li class="is-active"><a href>Line search MM</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Line search MM</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/JeffFessler/MIRT.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/JeffFessler/MIRT.jl/blob/main/docs/lit/examples/3-ls-mm.jl" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="3-ls-mm"><a class="docs-heading-anchor" href="#3-ls-mm">Line search MM</a><a id="3-ls-mm-1"></a><a class="docs-heading-anchor-permalink" href="#3-ls-mm" title="Permalink"></a></h1><p>Examples illustrating the line-search method based on majorize-minimize (MM) principles in the Julia package <a href="https://github.com/JeffFessler/MIRT.jl"><code>MIRT</code></a>. This method is probably most useful for algorithm developers.</p><p>This page comes from a single Julia file: <a href="https://github.com/JeffFessler/MIRT.jl/blob/main/docs/lit/examples/3-ls-mm.jl"><code>3-ls-mm.jl</code></a>.</p><p>You can access the source code for such Julia documentation using the &#39;Edit on GitHub&#39; link in the top right. You can view the corresponding notebook in <a href="https://nbviewer.org/">nbviewer</a> here: <a href="https://nbviewer.org/github/JeffFessler/MIRT.jl/tree/gh-pages/dev/generated/examples/3-ls-mm.ipynb"><code>3-ls-mm.ipynb</code></a>, or open it in <a href="https://mybinder.org/">binder</a> here: <a href="https://mybinder.org/v2/gh/JeffFessler/MIRT.jl/gh-pages?filepath=dev/generated/examples/3-ls-mm.ipynb"><code>3-ls-mm.ipynb</code></a>.</p><h3 id="Setup"><a class="docs-heading-anchor" href="#Setup">Setup</a><a id="Setup-1"></a><a class="docs-heading-anchor-permalink" href="#Setup" title="Permalink"></a></h3><p>Packages needed here.</p><pre><code class="language-julia hljs">using Plots; default(markerstrokecolor = :auto, label=&quot;&quot;)
+using MIRTjim: prompt
+using MIRT: line_search_mm, LineSearchMMWork
+using LineSearches: BackTracking, HagerZhang, MoreThuente
+using LinearAlgebra: norm, dot
+using Random: seed!; seed!(0)
+using BenchmarkTools: @btime, @benchmark
+using InteractiveUtils: versioninfo</code></pre><p>The following line is helpful when running this file as a script; this way it will prompt user to hit a key after each figure is displayed.</p><pre><code class="language-julia hljs">isinteractive() &amp;&amp; prompt(:prompt);</code></pre><h1 id="Theory"><a class="docs-heading-anchor" href="#Theory">Theory</a><a id="Theory-1"></a><a class="docs-heading-anchor-permalink" href="#Theory" title="Permalink"></a></h1><p>Many methods for solving inverse problems involve optimization problems of the form</p><p class="math-container">\[\hat{x} = \arg\min_{x ∈ \mathbb{F}^N} f(x)
+,\qquad
+f(x) = \sum_{j=1}^J f_j(B_j x)\]</p><p>where <span>$\mathbb{F}$</span> denotes the field of real or complex numbers, matrix <span>$B_j$</span> has size <span>$M_j × N$</span>, and <span>$f_j : \mathbb{F}^{M_j} ↦ \mathbb{R}$</span>.</p><p>One could apply general-purpose optimization methods here, like those in <a href="https://github.com/JuliaNLSolvers/Optim.jl">Optim.jl</a>, but often we can obtain faster results by exploiting the specific (yet still fairly general) structure, particularly when the problem dimension <span>$N$</span> is large.</p><p>Many algorithms for solving such problems require an inner 1D optimization problem called a <a href="https://en.wikipedia.org/wiki/Line_search">line search</a> of the form</p><p class="math-container">\[α_* = \arg\min_{α ∈ \mathbb{R}} h(α)
+,\qquad
+h(α) = f(x + α d),\]</p><p>for some search direction <span>$d$</span>. There are general purpose line search algorithms in <a href="https://github.com/JuliaNLSolvers/LineSearches.jl">LineSearches.jl</a>, but here we focus on the specific form of <span>$f$</span> given above.</p><p>For that form we see that we have the special structure</p><p class="math-container">\[h(α) = \sum_{j=1}^J f_j(u_j + α v_j)
+,\qquad
+u_j = B_j x
+,\quad
+v_j = B_j d.\]</p><p>Here we focus further on the case where each function <span>$f_j(⋅)$</span> has a quadratic majorizer of the form</p><p class="math-container">\[f_j(x) ≤ q_j(x,z) = f_j(z) + \text{real}(⟨ ∇f_j(z), x - z ⟩)
++ \frac{1}{2} (x - z)&#39; D_j(z) (x - z),\]</p><p>where <span>$D_j(z)$</span> is a positive semidefinite matrix that typically is diagonal. Often it is a constant times the identity matrix, e.g., a Lipschitz constant for <span>$∇f_j$</span>, but often there are sharper majorizers.</p><p>Such quadratic majorizers induce a quadratic majorizer for <span>$h(α)$</span> as well:</p><p class="math-container">\[h(α) ≤ q(α; α_t) =
+\sum_{j=1}^J q_j(u_j + α v_j; u_j + α_t v_j)
+= h(α_t) + c_1(α_t) (α - α_t)
++ \frac{1}{2} c_2(α_t) (α - α_t)^2\]</p><p>where</p><p class="math-container">\[c_1(α_t) = \sum_{j=1}^J \text{real}(⟨ ∇f_j(u_j + α_t v_j), v_j ⟩)
+,\qquad
+c_2(α_t) = \sum_{j=1}^J v_j&#39; D_j(u_j + α_t v_j) v_j.\]</p><p>The <code>line_search_mm</code> function in this package uses this quadratic majorizer to update <span>$α$</span> using the iteration</p><p class="math-container">\[α_{t+1}
+= \arg\min_{α} q(α;α_t)
+= α_t - c_1(α_t) / c_2(α_t).\]</p><p>Being an MM algorithm, it is guaranteed to decrease <span>$h(α)$</span> every update. For an early exposition of this approach, see <a href="http://doi.org/10.1109/83.760336">Fessler &amp; Booth, 1999</a>.</p><p>From the above derivation, the main ingredients needed are functions for computing the dot products <span>$⟨ ∇f_j(u_j + α_t v_j), v_j ⟩$</span> and <span>$v_j&#39; D_j(u_j + α_t v_j) v_j$</span>.</p><p>The <code>line_search_mm</code> function can construct such functions given input gradient functions <span>$[∇f_1,…,∇f_J]$</span> and curvature functions <span>$[ω_1,…,ω_J]$</span> where <span>$D_j(z) = \text{Diag}(ω_j(z))$</span>.</p><p>Alternatively, the user can provide functions for computing the dot products.</p><p>All of this is best illustrated by an example.</p><h1 id="Smooth-LASSO-problem"><a class="docs-heading-anchor" href="#Smooth-LASSO-problem">Smooth LASSO problem</a><a id="Smooth-LASSO-problem-1"></a><a class="docs-heading-anchor-permalink" href="#Smooth-LASSO-problem" title="Permalink"></a></h1><p>The usual LASSO optimization problem uses the cost function</p><p class="math-container">\[f(x) = \frac{1}{2} \| A x - y \|_2^2 + β R(x)
+,\qquad
+R(x) = \| x \|_1 = \sum_{n=1}^N |x_n| = 1&#39; \text{abs.}(x).\]</p><p>The 1-norm is just a relaxation of the 0-norm so here we further &quot;relax&quot; it by considering the &quot;corner rounded&quot; version using the Fair potential function</p><p class="math-container">\[R(x) = \sum_{n=1}^N ψ(x_n) = 1&#39; ψ.(x),
+\qquad
+ψ(z) = δ^2 |z/δ| - \log(1 + |z/δ|)\]</p><p>for a small value of <span>$δ$</span>.</p><p>The derivative of this potential function is <span>$\dot{ψ}(z) = z / (1 + |z / δ|)$</span> and Huber&#39;s curvature <span>$ω_{ψ}(z) = 1 / (1 + |z / δ|)$</span> provides a suitable majorizer.</p><p>This smooth LASSO cost function has the general form above with <span>$J=2$</span>, <span>$B_1 = A$</span>, <span>$B_2 = I$</span>, <span>$f_1(u) = \frac{1}{2} \| u - y \|_2^2,$</span> <span>$f_2(u) = β 1&#39; ψ.(u),$</span> for which <span>$∇f_1(u) = u - y,$</span> <span>$∇f_2(u) = β ψ.(u),$</span> and <span>$∇^2 f_1(u) = I,$</span> <span>$∇^2 f_2(u) \succeq β \, \text{diag}(ω_{ψ}(u)).$</span></p><p>Set up an example and plot <span>$h(α)$</span>.</p><p>Fair potential, its derivative and Huber weighting function:</p><pre><code class="language-julia hljs">function fair_pot()
+    fpot(z,δ) = δ^2 * (abs(z/δ) - log(1 + abs(z/δ)))
+    dpot(z,δ) = z / (1 + abs(z/δ))
+    wpot(z,δ) = 1 / (1 + abs(z/δ))
+    return fpot, dpot, wpot
+end;</code></pre><p>Data, cost function and gradients for smooth LASSO problem:</p><pre><code class="language-julia hljs">M, N = 1000, 2000
+A = randn(M,N)
+x0 = randn(N) .* (rand(N) .&lt; 0.4) # sparse vector
+y = A * x0 + 0.001 * randn(M)
+β = 95
+δ = 0.1
+fpot, dpot, wpot = Base.Fix2.(fair_pot(), δ)
+
+f(x) = 0.5 * norm(A * x - y)^2 + β * sum(fpot, x)
+∇f(x) = A&#39; * (A * x - y) + β * dpot.(x)
+x = randn(N) # random point
+d = -∇f(x)/M # some search direction
+h(α) = f(x + α * d)
+dh(α) = d&#39; * ∇f(x + α * d)
+pa = plot(h, xlabel=&quot;α&quot;, ylabel=&quot;h(α)&quot;, xlims=(-1, 2))</code></pre><img src="a9e3e224.svg" alt="Example block output"/><p>Apply MM-based line search: simple version. The key inputs are the gradient and curvature functions:</p><pre><code class="language-julia hljs">gradf = [
+    u -&gt; u - y, # ∇f₁ for data-fit term
+    u -&gt; β * dpot.(u), # ∇f₂ for regularizer
+]
+curvf = [
+    1, # curvature for data-fit term
+    u -&gt; β * wpot.(u), # Huber curvature for regularizer
+]
+
+uu = [A * x, x] # [u₁ u₂]
+vv = [A * d, d] # [v₁ v₂]
+fun(state) = state.α # log this
+ninner = 7
+out = Vector{Any}(undef, ninner+1)
+α0 = 0
+αstar = line_search_mm(gradf, curvf, uu, vv; ninner, out, fun, α0)
+hmin = h(αstar)
+scatter!([αstar], [hmin], marker=:star, color=:red)
+scatter!([α0], [h(α0)], marker=:circle, color=:green)
+ps = plot(0:ninner, out, marker=:circle, xlabel=&quot;iteration&quot;, ylabel=&quot;α&quot;,
+    color = :green)
+pd = plot(0:ninner, abs.(dh.(out)), marker=:diamond,
+    yaxis = :log, color=:red,
+    xlabel=&quot;iteration&quot;, ylabel=&quot;|dh(α)|&quot;)
+pu = plot(1:ninner, log10.(max.(abs.(diff(out)), 1e-16)), marker=:square,
+    color=:blue, xlabel=&quot;iteration&quot;, ylabel=&quot;log10(|α_k - α_{k-1}|)&quot;)
+plot(pa, ps, pd, pu)</code></pre><img src="7d803469.svg" alt="Example block output"/><p>Thanks to Huber&#39;s curvatures, the <span>$α_t$</span> sequence converges very quickly.</p><p>Now explore a fancier version that needs less heap memory.</p><pre><code class="language-julia hljs">work = LineSearchMMWork(uu, vv, α0) # pre-allocate
+function lsmm1(gradf, curvf)
+    return line_search_mm(gradf, curvf, uu, vv;
+        ninner, out, fun, α0, work)
+end
+function lsmm2(dot_gradf, dot_curvf)
+    gradn = [() -&gt; nothing, () -&gt; nothing]
+    return line_search_mm(uu, vv, dot_gradf, dot_curvf;
+        ninner, out, fun, α0, work)
+end;</code></pre><p>The <code>let</code> statements below are a performance trick from the <a href="https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-captured-1">Julia manual</a>. Using <code>Iterators.map</code> avoids allocating arrays like <code>z - y</code> and does not even require any work space.</p><pre><code class="language-julia hljs">gradz = [
+    let y=y; z -&gt; Iterators.map(-, z, y); end, # z - y
+    let β=β, dpot=dpot; z -&gt; Iterators.map(z -&gt; β * dpot(z), z); end, # β * dψ.(z)
+]
+curvz = [
+    1,
+    let β=β, wpot=wpot; z -&gt; Iterators.map(z -&gt; β * wpot(z), z); end, # β * ωψ.(z)
+]
+
+function make_grad1c()
+    w = similar(uu[1]) # work-space
+    let w=w, y=y
+        function grad1c(z)
+            @. w = z - y
+            return w
+        end
+    end
+end
+
+function make_grad2c()
+    w = similar(uu[2]) # work-space
+    let w=w, β=β, dpot=dpot
+        function grad2c(z)
+            @. w = β * dpot(z)
+            return w
+        end
+    end
+end
+
+function make_curv2c()
+    w = similar(uu[2]) # work-space
+    let w=w, β=β, wpot=wpot
+        function curv2c(z)
+            @. w = β * wpot(z) # β * ωψ.(z)
+            return w
+        end
+    end
+end
+
+gradc = [ # capture version
+    make_grad1c(), # z - y
+    make_grad2c(), # β * dψ.(z)
+]
+curvc = [
+    1,
+    make_curv2c(), # β * ωψ.(z)
+]
+
+sum_map(f::Function, args...) = sum(Iterators.map(f, args...))
+dot_gradz = [
+    let y=y; (v,z) -&gt; sum_map((v,z,y) -&gt; dot(v, z - y), v, z, y); end, # v&#39;(z - y)
+    let β=β, dpot=dpot; (v,z) -&gt; β * sum_map((v,z) -&gt; dot(v, dpot(z)), v, z); end, # β * (v&#39;dψ.(z))
+]
+dot_curvz = [
+    (v,z) -&gt; norm(v)^2,
+    let β=β, wpot=wpot; (v,z) -&gt; β * sum_map((v,z) -&gt; abs2(v) * wpot(z), v, z); end, # β * (abs2.(v)&#39;ωψ.(z))
+]
+
+
+a1 = lsmm1(gradf, curvf)
+a1c = lsmm1(gradc, curvc)
+a2 = lsmm1(gradz, curvz)
+a3 = lsmm2(dot_gradz, dot_curvz)
+@assert a1 ≈ a2 ≈ a3 ≈ a1c
+
+b1 = @benchmark a1 = lsmm1($gradf, $curvf)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">BenchmarkTools.Trial: 10000 samples with 1 evaluation.
+ Range <span class="sgr90">(</span><span class="sgr36"><span class="sgr1">min</span></span> … <span class="sgr35">max</span><span class="sgr90">):  </span><span class="sgr36"><span class="sgr1"> 82.463 μs</span></span> … <span class="sgr35">194.676 ms</span>  <span class="sgr90">┊</span> GC <span class="sgr90">(</span>min … max<span class="sgr90">): </span> 0.00% … 99.81%
+ Time  <span class="sgr90">(</span><span class="sgr34"><span class="sgr1">median</span></span><span class="sgr90">):     </span><span class="sgr34"><span class="sgr1"> 87.494 μs               </span></span><span class="sgr90">┊</span> GC <span class="sgr90">(</span>median<span class="sgr90">):    </span> 0.00%
+ Time  <span class="sgr90">(</span><span class="sgr32"><span class="sgr1">mean</span></span> ± <span class="sgr32">σ</span><span class="sgr90">):   </span><span class="sgr32"><span class="sgr1">122.471 μs</span></span> ± <span class="sgr32">  1.955 ms</span>  <span class="sgr90">┊</span> GC <span class="sgr90">(</span>mean ± σ<span class="sgr90">):  </span>20.55% ±  7.40%
+
+  ▇<span class="sgr34">█</span>▆▅▃▂▁    <span class="sgr32"> </span>                                         ▂▃       ▂
+  █<span class="sgr34">█</span>██████▇▇▅<span class="sgr32">▅</span>▅▃▃▁▁▁▃▁▃▃▁▁▁▁▁▃▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▅███▆▆▆▅▅ █
+  82.5 μs<span class="sgr90">       Histogram: <span class="sgr1">log(</span>frequency<span class="sgr1">)</span> by time</span>        305 μs <span class="sgr1">&lt;</span>
+
+ Memory estimate<span class="sgr90">: </span><span class="sgr33">502.16 KiB</span>, allocs estimate<span class="sgr90">: </span><span class="sgr33">239</span>.</code></pre><pre><code class="language-julia hljs">bc = @benchmark a1c = lsmm1($gradc, $curvc)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">BenchmarkTools.Trial: 10000 samples with 1 evaluation.
+ Range <span class="sgr90">(</span><span class="sgr36"><span class="sgr1">min</span></span> … <span class="sgr35">max</span><span class="sgr90">):  </span><span class="sgr36"><span class="sgr1">63.999 μs</span></span> … <span class="sgr35">153.877 μs</span>  <span class="sgr90">┊</span> GC <span class="sgr90">(</span>min … max<span class="sgr90">): </span>0.00% … 0.00%
+ Time  <span class="sgr90">(</span><span class="sgr34"><span class="sgr1">median</span></span><span class="sgr90">):     </span><span class="sgr34"><span class="sgr1">64.981 μs               </span></span><span class="sgr90">┊</span> GC <span class="sgr90">(</span>median<span class="sgr90">):    </span>0.00%
+ Time  <span class="sgr90">(</span><span class="sgr32"><span class="sgr1">mean</span></span> ± <span class="sgr32">σ</span><span class="sgr90">):   </span><span class="sgr32"><span class="sgr1">65.391 μs</span></span> ± <span class="sgr32">  2.354 μs</span>  <span class="sgr90">┊</span> GC <span class="sgr90">(</span>mean ± σ<span class="sgr90">):  </span>0.00% ± 0.00%
+
+  ▁▅▇██<span class="sgr34">▇</span><span class="sgr32">▆</span>▅▄▃▂▂▁                                                ▂
+  █████<span class="sgr34">█</span><span class="sgr32">█</span>████████▇▇█▇█▆▇▅▆▅▅▃▅▄▃▃▃▄▅▄▅▅▃▅▃▁▄▅▄▄▄▅▁▄▅▄▅▆▆▆▇▆▇▆▆ █
+  64 μs<span class="sgr90">         Histogram: <span class="sgr1">log(</span>frequency<span class="sgr1">)</span> by time</span>        77 μs <span class="sgr1">&lt;</span>
+
+ Memory estimate<span class="sgr90">: </span><span class="sgr33">4.95 KiB</span>, allocs estimate<span class="sgr90">: </span><span class="sgr33">179</span>.</code></pre><pre><code class="language-julia hljs">b2 = @benchmark a2 = lsmm1($gradz, $curvz)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">BenchmarkTools.Trial: 10000 samples with 1 evaluation.
+ Range <span class="sgr90">(</span><span class="sgr36"><span class="sgr1">min</span></span> … <span class="sgr35">max</span><span class="sgr90">):  </span><span class="sgr36"><span class="sgr1">111.347 μs</span></span> … <span class="sgr35">306.241 μs</span>  <span class="sgr90">┊</span> GC <span class="sgr90">(</span>min … max<span class="sgr90">): </span>0.00% … 0.00%
+ Time  <span class="sgr90">(</span><span class="sgr34"><span class="sgr1">median</span></span><span class="sgr90">):     </span><span class="sgr34"><span class="sgr1">112.229 μs               </span></span><span class="sgr90">┊</span> GC <span class="sgr90">(</span>median<span class="sgr90">):    </span>0.00%
+ Time  <span class="sgr90">(</span><span class="sgr32"><span class="sgr1">mean</span></span> ± <span class="sgr32">σ</span><span class="sgr90">):   </span><span class="sgr32"><span class="sgr1">112.941 μs</span></span> ± <span class="sgr32">  5.773 μs</span>  <span class="sgr90">┊</span> GC <span class="sgr90">(</span>mean ± σ<span class="sgr90">):  </span>0.00% ± 0.00%
+
+  ▁▆██<span class="sgr34">█</span>▇▅<span class="sgr32">▄</span>▃▁   ▁▁▁                                              ▂
+  ████<span class="sgr34">█</span>██<span class="sgr32">█</span>██████████▇▅▅▆▆▅▄▄▅▂▂▄▄▄▄▅▄▂▃▃▃▂▂▄▄▄▃▂▄▆▇▇█▇▇▇▅▆▅▅▆▅▄ █
+  111 μs<span class="sgr90">        Histogram: <span class="sgr1">log(</span>frequency<span class="sgr1">)</span> by time</span>        125 μs <span class="sgr1">&lt;</span>
+
+ Memory estimate<span class="sgr90">: </span><span class="sgr33">4.91 KiB</span>, allocs estimate<span class="sgr90">: </span><span class="sgr33">179</span>.</code></pre><pre><code class="language-julia hljs">b3 = @benchmark a3 = lsmm2($dot_gradz, $dot_curvz)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">BenchmarkTools.Trial: 10000 samples with 1 evaluation.
+ Range <span class="sgr90">(</span><span class="sgr36"><span class="sgr1">min</span></span> … <span class="sgr35">max</span><span class="sgr90">):  </span><span class="sgr36"><span class="sgr1">101.319 μs</span></span> … <span class="sgr35">140.232 μs</span>  <span class="sgr90">┊</span> GC <span class="sgr90">(</span>min … max<span class="sgr90">): </span>0.00% … 0.00%
+ Time  <span class="sgr90">(</span><span class="sgr34"><span class="sgr1">median</span></span><span class="sgr90">):     </span><span class="sgr34"><span class="sgr1">101.690 μs               </span></span><span class="sgr90">┊</span> GC <span class="sgr90">(</span>median<span class="sgr90">):    </span>0.00%
+ Time  <span class="sgr90">(</span><span class="sgr32"><span class="sgr1">mean</span></span> ± <span class="sgr32">σ</span><span class="sgr90">):   </span><span class="sgr32"><span class="sgr1">102.691 μs</span></span> ± <span class="sgr32">  2.213 μs</span>  <span class="sgr90">┊</span> GC <span class="sgr90">(</span>mean ± σ<span class="sgr90">):  </span>0.00% ± 0.00%
+
+  ▆█<span class="sgr34">▆</span>▃▁▂▁<span class="sgr32"> </span>  ▅▆▅▃▁▁   ▁▂▁                                        ▂
+  ██<span class="sgr34">█</span>████<span class="sgr32">▆</span>▅▇███████▆▅███▇▇▇▇▇▆▆▅▅▅▅▄▅▆▃▅▄▃▆▅▄▅▁▄▄▆▇█▇▇▆▆▆▆▆▅▆▆▇ █
+  101 μs<span class="sgr90">        Histogram: <span class="sgr1">log(</span>frequency<span class="sgr1">)</span> by time</span>        113 μs <span class="sgr1">&lt;</span>
+
+ Memory estimate<span class="sgr90">: </span><span class="sgr33">2.08 KiB</span>, allocs estimate<span class="sgr90">: </span><span class="sgr33">110</span>.</code></pre><p>Timing results on my Mac:</p><ul><li>95 μs</li><li>65 μs # 1c after using <code>make_</code></li><li>80 μs</li><li>69 μs (and lowest memory)</li></ul><p>The versions using <code>gradc</code> and <code>dot_gradz</code> with their &quot;properly captured&quot; variables are the fastest. But all the versions here are pretty similar so even using the simplest version seems likely to be fine.</p><h2 id="Compare-with-LineSearches.jl"><a class="docs-heading-anchor" href="#Compare-with-LineSearches.jl">Compare with LineSearches.jl</a><a id="Compare-with-LineSearches.jl-1"></a><a class="docs-heading-anchor-permalink" href="#Compare-with-LineSearches.jl" title="Permalink"></a></h2><p>Was all this specialized effort useful? Let&#39;s compare to the general line search methods in <a href="https://github.com/JuliaNLSolvers/LineSearches.jl">LineSearches.jl</a>.</p><p>It seems that some of those methods do not allow <span>$α₀ = 0$</span> so we use 1.0 instead. We use the default arguments for all the solvers, which means some of them might terminate before <code>ninner</code> iterations, giving them a potential speed advantage.</p><pre><code class="language-julia hljs">a0 = 1.0 # α0
+hdh(α) = h(α), dh(α)
+h0 = h(0)
+dh0 = dh(0);
+function ls_ls(linesearch)
+    a1, fx = linesearch(h, dh, hdh, a0, h0, dh0)
+    return a1
+end;
+
+solvers = [
+    BackTracking( ; iterations = ninner),
+    HagerZhang( ; linesearchmax = ninner),
+    MoreThuente( ; maxfev = ninner),
+]
+for ls in solvers # check that they work properly
+    als = ls_ls(ls)
+    @assert isapprox(als, αstar; atol=1e-3)
+end;</code></pre><pre><code class="language-julia hljs">bbt = @benchmark ls_ls($(solvers[1]))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">BenchmarkTools.Trial: 10000 samples with 1 evaluation.
+ Range <span class="sgr90">(</span><span class="sgr36"><span class="sgr1">min</span></span> … <span class="sgr35">max</span><span class="sgr90">):  </span><span class="sgr36"><span class="sgr1">347.949 μs</span></span> … <span class="sgr35">197.124 ms</span>  <span class="sgr90">┊</span> GC <span class="sgr90">(</span>min … max<span class="sgr90">): </span>0.00% … 99.40%
+ Time  <span class="sgr90">(</span><span class="sgr34"><span class="sgr1">median</span></span><span class="sgr90">):     </span><span class="sgr34"><span class="sgr1">361.284 μs               </span></span><span class="sgr90">┊</span> GC <span class="sgr90">(</span>median<span class="sgr90">):    </span>0.00%
+ Time  <span class="sgr90">(</span><span class="sgr32"><span class="sgr1">mean</span></span> ± <span class="sgr32">σ</span><span class="sgr90">):   </span><span class="sgr32"><span class="sgr1">396.600 μs</span></span> ± <span class="sgr32">  1.972 ms</span>  <span class="sgr90">┊</span> GC <span class="sgr90">(</span>mean ± σ<span class="sgr90">):  </span>5.40% ±  2.55%
+
+     ▆█▄ <span class="sgr34"> </span>                   <span class="sgr32"> </span>                                   
+  ▁▁▄███▇<span class="sgr34">▅</span>▃▃▂▂▂▂▂▂▂▁▁▁▂▃▆▆▆▅▃<span class="sgr32">▃</span>▂▂▂▂▂▂▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁ ▂
+  348 μs<span class="sgr90">           Histogram: frequency by time</span>          460 μs <span class="sgr1">&lt;</span>
+
+ Memory estimate<span class="sgr90">: </span><span class="sgr33">95.70 KiB</span>, allocs estimate<span class="sgr90">: </span><span class="sgr33">62</span>.</code></pre><pre><code class="language-julia hljs">bhz = @benchmark ls_ls($(solvers[2]))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">BenchmarkTools.Trial: 4975 samples with 1 evaluation.
+ Range <span class="sgr90">(</span><span class="sgr36"><span class="sgr1">min</span></span> … <span class="sgr35">max</span><span class="sgr90">):  </span><span class="sgr36"><span class="sgr1">913.382 μs</span></span> … <span class="sgr35">195.592 ms</span>  <span class="sgr90">┊</span> GC <span class="sgr90">(</span>min … max<span class="sgr90">): </span>0.00% … 99.03%
+ Time  <span class="sgr90">(</span><span class="sgr34"><span class="sgr1">median</span></span><span class="sgr90">):     </span><span class="sgr34"><span class="sgr1">933.951 μs               </span></span><span class="sgr90">┊</span> GC <span class="sgr90">(</span>median<span class="sgr90">):    </span>0.00%
+ Time  <span class="sgr90">(</span><span class="sgr32"><span class="sgr1">mean</span></span> ± <span class="sgr32">σ</span><span class="sgr90">):   </span><span class="sgr32"><span class="sgr1">  1.002 ms</span></span> ± <span class="sgr32">  2.764 ms</span>  <span class="sgr90">┊</span> GC <span class="sgr90">(</span>mean ± σ<span class="sgr90">):  </span>4.34% ±  3.35%
+
+    ▂▇█▄<span class="sgr34"> </span>                     <span class="sgr32"> </span>                                  
+  ▂▄████<span class="sgr34">█</span>█▇▇▅▄▄▃▃▃▃▂▂▂▂▂▂▂▂▂▂▂<span class="sgr32">▂</span>▂▁▂▂▂▂▂▂▂▂▄▄▄▃▃▃▃▃▃▃▂▂▂▂▂▂▂▂▂▂▂▂ ▃
+  913 μs<span class="sgr90">           Histogram: frequency by time</span>         1.11 ms <span class="sgr1">&lt;</span>
+
+ Memory estimate<span class="sgr90">: </span><span class="sgr33">316.70 KiB</span>, allocs estimate<span class="sgr90">: </span><span class="sgr33">67</span>.</code></pre><pre><code class="language-julia hljs">bmt = @benchmark ls_ls($(solvers[3]))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">BenchmarkTools.Trial: 3311 samples with 1 evaluation.
+ Range <span class="sgr90">(</span><span class="sgr36"><span class="sgr1">min</span></span> … <span class="sgr35">max</span><span class="sgr90">):  </span><span class="sgr36"><span class="sgr1">1.375 ms</span></span> … <span class="sgr35">197.304 ms</span>  <span class="sgr90">┊</span> GC <span class="sgr90">(</span>min … max<span class="sgr90">): </span>0.00% … 98.62%
+ Time  <span class="sgr90">(</span><span class="sgr34"><span class="sgr1">median</span></span><span class="sgr90">):     </span><span class="sgr34"><span class="sgr1">1.405 ms               </span></span><span class="sgr90">┊</span> GC <span class="sgr90">(</span>median<span class="sgr90">):    </span>0.00%
+ Time  <span class="sgr90">(</span><span class="sgr32"><span class="sgr1">mean</span></span> ± <span class="sgr32">σ</span><span class="sgr90">):   </span><span class="sgr32"><span class="sgr1">1.507 ms</span></span> ± <span class="sgr32">  3.419 ms</span>  <span class="sgr90">┊</span> GC <span class="sgr90">(</span>mean ± σ<span class="sgr90">):  </span>4.52% ±  3.48%
+
+   ▁█▆▅<span class="sgr34">▃</span>▁               <span class="sgr32"> </span>                                      
+  ▃████<span class="sgr34">█</span>█▆▅▃▃▃▂▂▂▂▂▂▂▂▂▂<span class="sgr32">▂</span>▂▂▂▂▂▂▂▃▄▄▄▄▃▃▃▃▂▂▂▂▂▂▂▂▂▂▂▂▂▁▂▂▂▂▁▂ ▃
+  1.37 ms<span class="sgr90">         Histogram: frequency by time</span>        1.74 ms <span class="sgr1">&lt;</span>
+
+ Memory estimate<span class="sgr90">: </span><span class="sgr33">475.27 KiB</span>, allocs estimate<span class="sgr90">: </span><span class="sgr33">148</span>.</code></pre><p>On my Mac the timings are all much longer compared to <code>line_search_mm</code>:</p><ul><li>840 μs <code>BackTracking</code></li><li>2.6 ms <code>HagerZhang</code></li><li>3.9 ms <code>MoreThuente</code></li></ul><p>This comparison illustrates the benefit of the &quot;special purpose&quot; line search.</p><p>The fastest version seems to be <code>BackTracking</code>, so plot its iterates:</p><pre><code class="language-julia hljs">alpha_bt = zeros(ninner + 1)
+alpha_bt[1] = a0
+for iter in 1:ninner
+    tmp = BackTracking( ; iterations = iter)
+    alpha_bt[iter+1] = ls_ls(tmp)
+end
+plot(0:ninner, alpha_bt, marker=:square, color=:blue,
+    xlabel=&quot;Iteration&quot;, ylabel=&quot;BackTracking α&quot;)
+plot!([0, ninner], [1,1] * αstar, color=:red)</code></pre><img src="ecac5a08.svg" alt="Example block output"/><p>Unexpectedly, <code>BackTracking</code> seems to terminate at the first iteration. But even just that single iteration is slower than 7 iterations of <code>line_search_mm</code>.</p><pre><code class="language-julia hljs">prompt()</code></pre><h3 id="Reproducibility"><a class="docs-heading-anchor" href="#Reproducibility">Reproducibility</a><a id="Reproducibility-1"></a><a class="docs-heading-anchor-permalink" href="#Reproducibility" title="Permalink"></a></h3><p>This page was generated with the following version of Julia:</p><pre><code class="language-julia hljs">using InteractiveUtils: versioninfo
+io = IOBuffer(); versioninfo(io); split(String(take!(io)), &#39;\n&#39;)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">12-element Vector{SubString{String}}:
+ &quot;Julia Version 1.10.5&quot;
+ &quot;Commit 6f3fdf7b362 (2024-08-27 14:19 UTC)&quot;
+ &quot;Build Info:&quot;
+ &quot;  Official https://julialang.org/ release&quot;
+ &quot;Platform Info:&quot;
+ &quot;  OS: Linux (x86_64-linux-gnu)&quot;
+ &quot;  CPU: 4 × AMD EPYC 7763 64-Core Processor&quot;
+ &quot;  WORD_SIZE: 64&quot;
+ &quot;  LIBM: libopenlibm&quot;
+ &quot;  LLVM: libLLVM-15.0.7 (ORCJIT, znver3)&quot;
+ &quot;Threads: 1 default, 0 interactive, 1 GC (on 4 virtual cores)&quot;
+ &quot;&quot;</code></pre><p>And with the following package versions</p><pre><code class="language-julia hljs">import Pkg; Pkg.status()</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Status `~/work/MIRT.jl/MIRT.jl/docs/Project.toml`
+  [6e4b80f9] BenchmarkTools v1.5.0
+  [e30172f5] Documenter v1.7.0
+  [d3d80556] LineSearches v7.3.0
+  [98b081ad] Literate v2.19.0
+  [7035ae7a] MIRT v0.18.2 `~/work/MIRT.jl/MIRT.jl`
+  [170b2178] MIRTjim v0.25.0
+  [91a5bcdd] Plots v1.40.8
+  [b77e0a4c] InteractiveUtils
+  [9a3f8284] Random</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../2-nufft/">« NUFFT</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.7.0 on <span class="colophon-date" title="Wednesday 4 September 2024 21:55">Wednesday 4 September 2024</span>. Using Julia version 1.10.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
