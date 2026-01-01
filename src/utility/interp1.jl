@@ -5,7 +5,8 @@ emulate matlab's interp1()
 
 export interp1
 
-using Interpolations
+using Interpolations: Gridded, Linear, extrapolate, interpolate
+import Interpolations: InterpolationType
 
 
 """
@@ -25,7 +26,7 @@ other options from Interpolations.jl are `Line()` `Periodic()` `Reflect()` `Thro
 Output is same size as input `xi`
 """
 function interp1(x::AbstractVector{<:Real}, y::AbstractVector{<:Number}, xi ;
-    how::Interpolations.InterpolationType = Gridded(Linear()),
+    how::InterpolationType = Gridded(Linear()),
     extrap::Any = 0,
 #   extrap::Union{<:Interpolations.BoundaryCondition, <:Number} = 0 # fails?
 )

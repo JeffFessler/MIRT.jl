@@ -5,9 +5,9 @@ Asense.jl
 export Asense
 
 # using MIRT: embed!, getindex!
-using FFTW: fftshift!, ifftshift!, fft!, bfft!
-using LinearAlgebra: mul!
+using FFTW: fftshift!, ifftshift!
 using FFTW: plan_fft!, plan_bfft!
+using LinearAlgebra: mul!
 
 
 """

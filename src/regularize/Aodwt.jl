@@ -5,7 +5,7 @@ Aodwt.jl
 
 export Aodwt
 
-using LinearMapsAA: LinearMapAA, LinearMapAM, LinearMapAO
+using LinearMapsAA: LinearMapAA
 using Wavelets: dwt!, idwt!, wavelet, WT
 
 
