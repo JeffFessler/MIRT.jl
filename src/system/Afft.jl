@@ -8,7 +8,7 @@ Afft.jl
 export Afft
 
 # using MIRT: embed!, getindex!
-using LinearMapsAA: LinearMapAA, LinearMapAM, LinearMapAO
+using LinearMapsAA: LinearMapAA # LinearMapAM, LinearMapAO
 using LinearAlgebra: mul!
 using FFTW: plan_fft!, plan_bfft!
 

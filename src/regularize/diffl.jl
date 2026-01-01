@@ -12,7 +12,7 @@ https://docs.julialang.org/en/latest/manual/performance-tips/#Pre-allocating-out
 
 export diffl, diffl!, diffl_adj, diffl_adj!, diffl_map
 
-using LinearMapsAA: LinearMapAA, LinearMapAM, LinearMapAO
+using LinearMapsAA: LinearMapAA
 
 
 """

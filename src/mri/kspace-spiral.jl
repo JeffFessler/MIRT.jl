@@ -1,5 +1,5 @@
 #=
-kspace_spiral.jl
+kspace-spiral.jl
 Jing Dong
 
 Based on mri_kspace_spiral.m that was based on m-files from Valur Olafsson
@@ -8,7 +8,7 @@ that he got from Brad Sutton who got them from Doug Noll...
 
 export mri_kspace_spiral
 
-using Interpolations
+using MIRT: interp1
 
 
 """

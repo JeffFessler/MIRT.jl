@@ -9,9 +9,9 @@ export Anufft, nufft_init
 
 #using MIRT: map_many
 #include("../utility/map_many.jl")
-using NFFT: plan_nfft, nfft, nfft_adjoint
+using NFFT: plan_nfft # nfft, nfft_adjoint
 using LinearAlgebra: mul!
-using LinearMapsAA: LinearMapAA, LinearMapAM, LinearMapAO
+using LinearMapsAA: LinearMapAA
 
 
 _start = N -> isodd(N) ? (N-1)÷2 : N÷2 # where the NFFT sum starts

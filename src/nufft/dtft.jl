@@ -13,7 +13,7 @@ export dtft_init, dtft, dtft_adj
 
 using Distributed: @sync, @distributed, pmap
 using SharedArrays: SharedArray, sdata
-using LinearMapsAA: LinearMapAA, LinearMapAO
+using LinearMapsAA: LinearMapAA # LinearMapAO
 
 
 """

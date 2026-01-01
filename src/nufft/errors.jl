@@ -7,7 +7,6 @@ export nufft_errors
 
 #using MIRT: dtft_init, nufft_init
 #include("dtft.jl")
-using NFFT: plan_nfft, nfft, nfft_adjoint
 using LinearAlgebra: norm
 
 
