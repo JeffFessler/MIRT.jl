@@ -4,6 +4,7 @@ extend-ignore-identifiers-re = [
     "als",
     "Nd",
     "iy",
+    "iz",
     "pn",
     "FOVx",
     "MIRTio",

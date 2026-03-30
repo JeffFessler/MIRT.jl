@@ -48,7 +48,7 @@ function Asense(
     kwargs...
 ) where {D, Tw <: Number}
 
-    all(in(1:D), dims) || throw(DimensionMismath("dims $dims"))
+    all(in(1:D), dims) || throw(DimensionMismatch("dims $dims"))
     promote_type(Tw, T) == Tw || throw("type Tw=$Tw cannot hold T=$T")
     axes(work1) == axes(work2) == axes(samp) || throw("axes mismatch: samp work")
     all(==(axes(samp)), axes.(smaps)) || throw("axes mismatch: samp smaps")
