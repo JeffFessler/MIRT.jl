@@ -5,19 +5,27 @@ on:
     paths-ignore:
       - 'README.md'
   push:
-    paths-ignore:
-      - 'README.md'
     branches:
       - 'main'
       - 'release-'
+    paths-ignore:
+      - 'README.md'
     tags: '*'
 
 jobs:
   build:
+    # These permissions are needed to:
+    # - Deploy the documentation: https://documenter.juliadocs.org/stable/man/hosting/#Permissions
+    # - Delete old caches: https://github.com/julia-actions/cache#usage
+    permissions:
+      actions: write
+      contents: write
+      pull-requests: read
+      statuses: write
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: julia-actions/setup-julia@latest
+      - uses: julia-actions/setup-julia@v3
         with:
           version: '1'
       - name: CacheArtifacts
@@ -33,15 +41,15 @@ jobs:
             ${{ runner.os }}-
       - name: InstallDependencies
         run: |
-          julia --project=docs/ -e '
+          julia --color=yes --project=docs/ -e '
             ENV["JULIA_PKG_SERVER"] = ""
             using Pkg
             Pkg.develop(PackageSpec(path=pwd()))
             Pkg.instantiate()'
       - name: BuildAndDeploy
+        run: julia --color=yes --project=docs/ docs/make.jl
         env:
 # https://juliadocs.github.io/Documenter.jl/stable/man/hosting/#Authentication:-GITHUB_TOKEN
-#         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # for previews
           ssh: ${{ secrets.DOCUMENTER_KEY }}
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
-        run: julia --project=docs/ docs/make.jl
