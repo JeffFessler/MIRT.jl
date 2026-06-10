@@ -34,7 +34,7 @@ jobs:
           version: ${{ matrix.version }}
 
       - name: Cache artifacts
-      - uses: actions/cache@v5
+        uses: actions/cache@v5
         env:
           cache-name: cache-artifacts
         with:
@@ -46,8 +46,8 @@ jobs:
             ${{ runner.os }}-
 
 #     - name: "Unit Test"
-      - uses: julia-actions/julia-buildpkg@latest
-      - uses: julia-actions/julia-runtest@latest
+      - uses: julia-actions/julia-buildpkg@v1
+      - uses: julia-actions/julia-runtest@v1
 
 #     - name: "Cover"
       - uses: julia-actions/julia-processcoverage@v1
