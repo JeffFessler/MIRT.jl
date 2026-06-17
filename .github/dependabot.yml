@@ -9,9 +9,6 @@ updates:
       interval: "weekly"
 
   - package-ecosystem: "julia"
-    directories: # Location of Julia projects
-      - "/"
-      - "/docs"
-      - "/test"
+    directory: "/"
     schedule:
       interval: "weekly"

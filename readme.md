@@ -1,17 +1,17 @@
 # MIRT (Michigan Image Reconstruction Toolbox) in Julia
 
-[![action status][action-img]][action-url]
-[![pkgeval status][pkgeval-img]][pkgeval-url]
-[![codecov][codecov-img]][codecov-url]
-[![docs stable][docs-stable-img]][docs-stable-url]
-[![docs dev][docs-dev-img]][docs-dev-url]
-[![license][license-img]][license-url]
-[![deps](https://juliahub.com/docs/MIRT/deps.svg)](https://juliahub.com/ui/Packages/MIRT)
-[![version](https://juliahub.com/docs/MIRT/version.svg)](https://juliahub.com/ui/Packages/MIRT)
-[![pkgeval](https://juliahub.com/docs/MIRT/pkgeval.svg)](https://juliahub.com/ui/Packages/MIRT)
-<img src="deps/mirt-logo.svg" alt="MIRTlogo" width="150"/>
-
 https://github.com/JeffFessler/MIRT.jl
+<img src="deps/mirt-logo.svg" alt="MIRTlogo" width="150">
+
+[![docs-stable][docs-stable-img]][docs-stable-url]
+[![docs-dev][docs-dev-img]][docs-dev-url]
+[![action][action-img]][action-url]
+[![Aqua QA][aqua-img]][aqua-url]
+[![codecov][codecov-img]][codecov-url]
+[![deps][deps-img]][deps-url]
+[![license][license-img]][license-url]
+[![pkgeval][pkgeval-img]][pkgeval-url]
+[![version][ver-img]][ver-url]
 
 This is a collection of tools for
 [image reconstruction](https://en.wikipedia.org/wiki/Iterative_reconstruction)
@@ -68,8 +68,7 @@ http://web.eecs.umich.edu/~fessler/irt/reproduce
 
 ## Compatibility
 
-Current version is tested with "latest" stable version of Julia
-(currently 1.8.3).
+Tested with Julia ≥ 1.12.
 Older tagged versions should work with older Julia versions.
 
 
@@ -118,15 +117,23 @@ As of `v0.15`, the following functions are deprecated:
 <!-- URLs -->
 [action-img]: https://github.com/JeffFessler/MIRT.jl/workflows/CI/badge.svg
 [action-url]: https://github.com/JeffFessler/MIRT.jl/actions
-[build-img]: https://github.com/JeffFessler/MIRT.jl/workflows/CI/badge.svg?branch=main
-[build-url]: https://github.com/JeffFessler/MIRT.jl/actions?query=workflow%3ACI+branch%3Amain
-[pkgeval-img]: https://juliaci.github.io/NanosoldierReports/pkgeval_badges/M/MIRT.svg
-[pkgeval-url]: https://juliaci.github.io/NanosoldierReports/pkgeval_badges/M/MIRT.html
-[codecov-img]: https://codecov.io/github/JeffFessler/MIRT.jl/coverage.svg?branch=main
-[codecov-url]: https://codecov.io/github/JeffFessler/MIRT.jl?branch=main
-[docs-stable-img]: https://img.shields.io/badge/docs-stable-blue.svg
-[docs-stable-url]: https://JeffFessler.github.io/MIRT.jl/stable
+
+[codecov-img]: https://codecov.io/github/JeffFessler/MIRT.jl/coverage.svg
+[codecov-url]: https://codecov.io/github/JeffFessler/MIRT.jl
+
+[deps-img]: https://juliahub.com/docs/MIRT/deps.svg
+[deps-url]: https://juliahub.com/ui/Packages/MIRT
+
 [docs-dev-img]: https://img.shields.io/badge/docs-dev-blue.svg
 [docs-dev-url]: https://JeffFessler.github.io/MIRT.jl/dev
-[license-img]: http://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat
+[docs-stable-img]: https://img.shields.io/badge/docs-stable-blue.svg
+[docs-stable-url]: https://JeffFessler.github.io/MIRT.jl/stable
+
+[license-img]: http://img.shields.io/badge/license-MIT-brightgreen.svg
 [license-url]: LICENSE
+
+[pkgeval-img]: https://juliaci.github.io/NanosoldierReports/pkgeval_badges/M/MIRT.svg
+[pkgeval-url]: https://juliaci.github.io/NanosoldierReports/pkgeval_badges/M/MIRT.html
+
+[ver-img]: https://juliahub.com/docs/MIRT/version.svg
+[ver-url]: https://juliahub.com/ui/Packages/MIRT

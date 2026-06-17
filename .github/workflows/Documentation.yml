@@ -3,13 +3,13 @@ name: Documentation
 on:
   pull_request:
     paths-ignore:
-      - 'README.md'
+      - 'readme.md'
   push:
     branches:
       - 'main'
       - 'release-'
     paths-ignore:
-      - 'README.md'
+      - 'readme.md'
     tags: '*'
 
 jobs:
