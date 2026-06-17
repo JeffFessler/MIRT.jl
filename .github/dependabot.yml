@@ -1,8 +1,14 @@
 # https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
+# https://discourse.julialang.org/t/psa-github-dependabot-now-supports-julia/134997
 
 version: 2
 updates:
-  - package-ecosystem: github-actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "julia"
     directory: "/"
     schedule:
       interval: "weekly"

@@ -4,6 +4,8 @@ import MIRT
 using Plots: default, plot
 using Test: @testset, detect_ambiguities
 
+include("aqua.jl")
+
 if !isinteractive() # for usual noninteractive test, do not show plots
     default(show=false, reuse=true) # trick from Plots/runtests.jl
     ENV["GKSwstype"] = "100" # also from Plots/runtests.jl
