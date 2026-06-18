@@ -118,6 +118,9 @@ As of `v0.15`, the following functions are deprecated:
 [action-img]: https://github.com/JeffFessler/MIRT.jl/workflows/CI/badge.svg
 [action-url]: https://github.com/JeffFessler/MIRT.jl/actions
 
+[aqua-img]: https://juliatesting.github.io/Aqua.jl/dev/assets/badge.svg
+[aqua-url]: https://github.com/JuliaTesting/Aqua.jl
+
 [codecov-img]: https://codecov.io/github/JeffFessler/MIRT.jl/coverage.svg
 [codecov-url]: https://codecov.io/github/JeffFessler/MIRT.jl
 
