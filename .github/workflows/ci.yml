@@ -27,7 +27,7 @@ jobs:
     outputs:
       json: ${{ steps.julia-version.outputs.resolved-json }}
     steps:
-      - uses: actions/checkout@v6 # Needed for "min" to access the Project.toml
+      - uses: actions/checkout@v7 # Needed for "min" to access the Project.toml
       - uses: julia-actions/julia-version@v0.1.0
         id: julia-version
         with:
@@ -46,7 +46,7 @@ jobs:
         version: ${{ fromJSON(needs.version.outputs.json) }}
         os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: julia-actions/setup-julia@v3
         with:
           version: ${{ matrix.version }}
