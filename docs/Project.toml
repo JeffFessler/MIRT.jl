@@ -10,3 +10,6 @@ MIRTjim = "170b2178-6dee-4cb0-8729-b3e8b57834cc"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 #Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
+
+[compat]
+LineSearches = "7.7.1"
