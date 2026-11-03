@@ -9,6 +9,7 @@ list = [
 "general/ncg.jl"
 "general/ogm_ls.jl"
 "general/pogm_restart.jl"
+"general/pogm_restart_gr.jl"
 "general/poweriter.jl"
 ]
 
